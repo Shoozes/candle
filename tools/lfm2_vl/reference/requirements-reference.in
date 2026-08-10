@@ -1,0 +1,12 @@
+# Python 3.10-3.14; the manager verification lane currently uses Python 3.10.12.
+# The CPU index and local-version suffix prevent an accidental CUDA Torch install.
+--index-url https://download.pytorch.org/whl/cpu
+--extra-index-url https://pypi.org/simple
+torch==2.8.0+cpu
+safetensors==0.8.0
+transformers @ git+https://github.com/huggingface/transformers.git@fd12552d770f745fdbe41031ff4daa688f5ed57e
+huggingface-hub==1.5.0
+tokenizers==0.22.2
+regex==2025.10.22
+Pillow==11.3.0
+pytest==8.4.1

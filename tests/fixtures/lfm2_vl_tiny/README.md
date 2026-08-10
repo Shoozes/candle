@@ -1,7 +1,20 @@
 # LFM2-VL Tiny Fixture
 
-No fixture tensors are present in Bootstrap Phase.
+This directory contains the committed deterministic CPU fixture produced by the pinned official Transformers LFM2, SigLIP2, and LFM2-VL classes:
 
-The later reference-harness phase may add a small deterministic model, inputs, metadata, and golden tensors here. Those files must preserve the real operation classes needed for LFM2-VL parity while remaining suitable for fast CPU verification.
+```bash
+python tools/lfm2_vl/reference/export_fixtures.py \
+  --mode tiny-random \
+  --seed 1234 \
+  --output tests/fixtures/lfm2_vl_tiny \
+  --overwrite
+```
 
-Do not place production model weights, Hugging Face caches, access tokens, or generated runtime output in this directory. Production files remain outside Git, and local reference outputs use ignored paths.
+- `tensors.safetensors` contains 87 sorted input, weight, vision, projector, multimodal-prefill, and three-step cached-decode tensors. The tied `lm_head.weight` duplicate is deliberately omitted to preserve the official checkpoints' missing-head loading contract.
+- `metadata.json` records the immutable source revisions, exact reference packages, synthetic image hash, official class inventory, dimensions, dtype, device, and seed.
+- `manifest.json` records the tensor inventory and SHA-256 hashes used by `tensor_dump.validate_bundle()`.
+
+Two independent exports were byte-identical in the locked Python 3.10.12 Linux x86_64 CPU environment. The fixture contains no production model weights, user content, access tokens, or Hugging Face cache data.
+
+---
+AI-edited: 2026-08-09T23:47:42-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=reference-harness | change=documented deterministic tiny fixture inventory and provenance

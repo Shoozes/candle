@@ -7,14 +7,15 @@
 - Baseline commit: `31f35b147389700ed2a178ee66a91c3cc25cc80d`
 - Working branch: `feat/lfm2-vl-mmproj`
 - Bootstrap checkpoint: `4a6b30a124abb32b4b275ea8c343ce7ef3ac8be7`
+- Source-lock checkpoint: `f007daec10e5751e5899676a7c58098183ec1256`
 - Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`
 
 ## Current Phase
 
-- Phase: 0 — Reference source lock
-- Task: Pin implementation, model, tensor-header, parity-history, and license authorities
-- Scope: documentation plus `tools/lfm2_vl/reference-lock.json`; no Candle Rust, manifest, runtime dependency, or production tensor payload changes
-- Status: green
+- Phase: 0 — Reference baseline and harness
+- Task: Implement config-only, deterministic tiny-random, and explicitly guarded production modes
+- Scope: `tools/lfm2_vl/reference/`, the committed tiny fixture, and this status handoff; no Candle Rust, Cargo manifest, source-lock pin, or production tensor payload changes
+- Status: phase gate green; checkpoint commit and tag pending
 
 ## Source-Lock Results
 
@@ -39,6 +40,20 @@
 - Local-only lockfile SHA-256: `4e059ffe6035520ca6553303932173eba562f4985f82931a90129eea9849ce54`
 - Retained log: `artifacts/verification/source-lock/baseline-final.log`; SHA-256 `563a6c97ebf416a7f85ba77296cdc73464b79a73d09238f9dc521d197d94eb6a`
 
+## Reference Harness Verification
+
+- Date: 2026-08-09 23:53–23:58 EDT
+- Environment: detached Linux-home worktree `/home/workbench/code/candle-lfm2-vl-reference-verify`; WSL2 `NVIDIA-Workbench`; Python 3.10.12 virtual environment; CPU-only
+- Direct pins: Torch `2.8.0+cpu`, safetensors `0.8.0`, Transformers `5.15.0.dev0` from `fd12552d770f745fdbe41031ff4daa688f5ed57e`, huggingface-hub `1.5.0`, tokenizers `0.22.2`, regex `2025.10.22`, Pillow `11.3.0`, pytest `8.4.1`
+- Dependency lock: `requirements-reference.txt` contains the complete resolved environment and matches `python -m pip freeze --all` exactly after comments and index directives are removed
+- Python tests: `.venv/bin/python -m pytest -q tools/lfm2_vl/reference/test_reference_tools.py` passed, 9 tests in 12.23 seconds
+- Config-only proof: both CLIs passed under bare `/usr/bin/python3` with user packages disabled; the inspector also normalized the real pinned 450M `config.json` and `processor_config.json` without downloading weights
+- Fixture proof: two independent seed-1234 exports were byte-identical; 87 tensors; raw source-image SHA-256 `08359b108fa567f5dcf319fa3434da6abbc1d595f426372666447f09cc5a87dc`
+- Fixture files: `tensors.safetensors` 61,072 bytes, SHA-256 `d4ccbd62ebd8afdecb6207fe341a0880e74c5dda8deea680a08366ece4ec96c3`; `metadata.json` 2,422 bytes, SHA-256 `3add6fa29206fe2b404f3e0959d3c51d69046eacab3f1ebb19dac43964cb0199`; `manifest.json` 8,485 bytes, SHA-256 `c5461dadb0edfd920b20f308650c59676977110a1cc2f199e317dea7d75bdd7b`
+- Fixture coverage: official class construction, padded packed patches, exact resized positions, both vision encoder layers, post-LN, factor-2 pixel unshuffle, optional projector LayerNorm, both projector linears, image-placeholder replacement, multimodal prefill logits, and three cached decode steps
+- Rust baseline: locked/offline CPU verification passed from `2026-08-10T03:53:09Z` to `2026-08-10T03:53:12Z`, including formatting, core crates, dense LFM2, quantized LFM2, and staged/unstaged diff checks
+- Retained logs: `artifacts/verification/reference-harness/python-final.log`, SHA-256 `fb46403e3315b49dcfb424b07fc062f0b2366f45ec627aa1bdd64b006bcf2c93`; `artifacts/verification/reference-harness/baseline-final.log`, SHA-256 `b08863fe6c0e6a33d86812e8d95d601e51654bcea65d4f51f6aefadb59e1d3d8`
+
 ## Bootstrap Proof
 
 - Date: 2026-08-09 22:35 EDT (`2026-08-10T02:35:09Z` to `2026-08-10T02:35:12Z`)
@@ -59,7 +74,7 @@
 - Python: `Python 3.10.12`
 - CMake: `cmake 3.22.1`
 - Ninja: missing; optional for current gates
-- System pip: missing; reference harness needs an explicit local environment decision
+- Reference Python: isolated `.venv` with a complete checked-in CPU-lane dependency lock
 
 ## Proven
 
@@ -69,6 +84,9 @@
 - The 450M effective FFN width is 4,608 and the 1.6B width is 8,192; the production headers confirm both.
 - Both checkpoints omit `lm_head.weight`, confirming the required tied-output loading path.
 - The source-lock patch changes no Candle Rust source, Cargo manifest, lockfile policy, or runtime dependency.
+- The pinned official Transformers LFM2, SigLIP2, and LFM2-VL classes execute deterministically in the tiny-random harness, including multimodal prefill and incremental cache reuse.
+- Config-only mode is stdlib-only and production model loading remains guarded by explicit production, load, and download flags.
+- The tiny fixture deliberately omits the tied `lm_head.weight` duplicate, preserving the production checkpoints' missing-head loading contract.
 
 ## Known Conflicts
 
@@ -79,20 +97,27 @@
 
 ## Blockers
 
-- None for source locking.
+- None for the reference-harness phase.
 
 ## Active Files
 
-- `docs/lfm2-vl/SOURCES.md`
-- `docs/lfm2-vl/TENSOR_MAP.md`
-- `docs/lfm2-vl/LICENSE_NOTES.md`
-- `docs/lfm2-vl/DECISIONS.md`
+- `tools/lfm2_vl/reference/README.md`
+- `tools/lfm2_vl/reference/requirements-reference.in`
+- `tools/lfm2_vl/reference/requirements-reference.txt`
+- `tools/lfm2_vl/reference/export_fixtures.py`
+- `tools/lfm2_vl/reference/inspect_config.py`
+- `tools/lfm2_vl/reference/manifest.py`
+- `tools/lfm2_vl/reference/tensor_dump.py`
+- `tools/lfm2_vl/reference/test_reference_tools.py`
+- `tests/fixtures/lfm2_vl_tiny/README.md`
+- `tests/fixtures/lfm2_vl_tiny/metadata.json`
+- `tests/fixtures/lfm2_vl_tiny/manifest.json`
+- `tests/fixtures/lfm2_vl_tiny/tensors.safetensors`
 - `docs/lfm2-vl/STATUS.md`
-- `tools/lfm2_vl/reference-lock.json`
 
 ## Next Task
 
-Implement Reference Harness Phase only: config-only, deterministic tiny-random, and explicit opt-in production modes under `tools/lfm2_vl/reference/`, without modifying Candle Rust source.
+Phase 1 — repair text-only dense and quantized LFM2 configuration, add embedding-driven forward paths, and prove normalized FFN widths, prefill, incremental decode, and legacy compatibility before starting vision work.
 
 ---
-AI-edited: 2026-08-09T23:11:30-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=source-lock | change=recorded immutable pins and final green Linux source-lock proof
+AI-edited: 2026-08-09T23:58:47-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=reference-harness | change=recorded green deterministic fixture and local verification proof
