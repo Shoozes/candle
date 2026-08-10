@@ -95,5 +95,44 @@ Replaced the synthetic text test with deterministic hash-pinned GGUF bytes loade
 Environment result:
 `nvidia-smi` exposes an RTX 4090 at compute capability 8.9, but `cargo test -p candle-transformers --features cuda split_vision_cuda_text_cpu_transfers_only_projected_features -- --nocapture` stops in the cached `cudarc 0.19.8` build script because `nvcc` is absent. No toolkit was installed. The exact attempt is retained in `artifacts/verification/hybrid-mmproj/cuda-distinct-device-skipped.log`; CPU hybrid evidence is green and executed CUDA parity remains unclaimed.
 
+## F-0008: Unbounded llama.cpp Oracle Residency Can Exhaust Host Memory
+
+Status: Host recovered only after an operator restart; bounded prevention is locally proven with harmless child processes. Exact root cause and first real-model reuse remain unproven. No Candle test failure was observed.
+
+### Q: What pitfall are we preventing?
+
+**What:** Do not leave a large `llama-mtmd-cli` parity-oracle process resident after its bounded proof, and do not overlap it with another large model or inference run.
+
+**Context and constraints:** The Windows-local parity oracle was the legacy `C:\llamacpp\llama-mtmd-cli.exe` b9981 bundle. PID 32000 had already completed the comparison needed by the current proof step, so the model no longer needed to remain resident. The response had to preserve unrelated processes, avoid reading secrets or publishing, and keep further large inference paused. The user later installed `C:\llamacpp\tools-b10344` side by side and authorized an owner build from the exact pinned llama.cpp revision; neither new bundle justified deleting or overwriting the incident bundle.
+
+**Why it happened:** The oracle run had no enforced owner-scoped timeout, memory ceiling, or finally-style exit verification. It remained alive after useful output was captured. The cause of its approximately 131 GB private allocation is not diagnosed. WER recorded `RADAR_PRE_LEAK_64` for `llama-mtmd-cli.exe`, and Windows recorded repeated low-virtual-memory popups. Official llama.cpp reports #19639, #20315, and #25835 describe related MTMD/CUDA or CUDA-graph memory growth, so disabling CUDA graphs is a justified precaution. These reports do not prove the same defect here. Matching `Access is denied` results from Task Manager and the native termination API make a Codex token, Job Object, or process-ACL boundary plausible, but association with Codex is not proof of a Codex bug.
+
+**Where:** Windows host process PID 32000 at `C:\llamacpp\llama-mtmd-cli.exe`; local llama.cpp parity execution and host-resource coordination, not Candle production code.
+
+**Evidence:** The first exact-PID inspection reported start time `2026-08-10T12:19:08.1938932-04:00`, working set `12,283,891,712` bytes, and private memory `131,549,319,168` bytes. A later inspection still reported the same executable and PID with working set `10,809,024,512` bytes and private memory `130,960,982,016` bytes. Exact `Stop-Process -Id 32000` failed with a PowerShell/.NET null-reference error. Exact `taskkill /PID 32000 /T /F` and `taskkill /PID 32000 /F` each timed out. A path-checked direct `TerminateProcess` call returned Windows error 5, `Access is denied`; Task Manager also denied `End process tree` while displaying the process under Codex. When an elevated exact-PID command was attempted later, its initial `Get-Process -Id 32000 -ErrorAction Stop` reported that PID 32000 was already absent, so its `taskkill` line did not execute. A snapshot showed the PID absent and substantial physical memory free, but the host remained memory-starved and slow; an operator restart was required before useful performance returned. WER event 1001 at `2026-08-10T12:39:27-04:00` classified `llama-mtmd-cli.exe` as `RADAR_PRE_LEAK_64`. Defender Operational, Code Integrity, and Defender threat-history checks found no llama-related detection. The b9981 install manifest, timestamps, hashes, imports, and absence of Mark-of-the-Web alternate streams are internally coherent, so DLL mixing or Defender blocking is unsupported by current evidence. No second model was launched. The already-running offline Rust gate, `cargo test --locked --offline -p candle-core -p candle-transformers -p candle-vlm`, ultimately exited 0; therefore this incident is a resource-lifecycle hazard, not evidence of an OOM-caused test failure.
+
+**Developer story:** A live host census identified the llama.cpp oracle as the dominant memory consumer after about 1.8 hours. Path and PID checks confirmed the process identity and showed that the current parity proof no longer needed it. Normal exact-PID termination paths failed, timed out, or were denied while the private allocation remained nearly unchanged. The process later disappeared before the elevated recovery command could target it, but PID absence and a favorable physical-memory snapshot did not restore host performance; restart was the only observed recovery boundary. Future prevention therefore cannot depend on best-effort cleanup or PID absence alone. It needs owner-scoped containment plus post-run host commit, physical-memory, GPU-memory, and responsiveness checks.
+
+**How to catch it:** Before a model run, record existing large inference processes and refuse concurrent launch. Capture available physical memory, Windows committed bytes/limit, matching process private/working-set bytes, and dedicated GPU use. Launch the oracle through a wrapper that creates the child suspended, assigns it to a kill-on-close Job Object with per-process/per-job memory ceilings, then resumes it. Enforce elapsed time, record peak process/job memory, and verify exact PID plus descendant absence. Re-measure host and GPU memory before the next large step. Treat failed cleanup or degraded post-run memory as a resource blocker.
+
+**Solutions tried:**
+
+1. `30/100` — Exact `Stop-Process` after checking executable identity; failed with a null-reference error and did not release the process.
+2. `35/100` — Exact native `taskkill`, first with and then without tree traversal; both attempts timed out and did not provide verified exit.
+3. `35/100` — Path-checked native `TerminateProcess`; proved the Windows permission boundary with error 5 but could not terminate the process.
+4. `65/100` — Serialize heavy work, pause new inference, and retain exact-PID evidence; this prevented compounding pressure but did not restore the host after the PID disappeared.
+5. `75/100` — Operator restart; restored the host but is disruptive and does not prevent recurrence.
+6. `94/100` — `scripts/lfm2-vl/run-bounded-oracle.ps1`; creates the child suspended, assigns it to a kill-on-close memory-limited Job Object before resume, defaults CUDA graphs off, serializes matching names, enforces timeout, records atomic JSON evidence, and requires exact PID absence. The harmless smoke suite proves normal exit, timeout with descendant cleanup, owner-exit cleanup, concurrent-name refusal, and pre-resume assignment.
+
+**Current solution:** The restart recovered the host. The bounded wrapper and its harmless smoke suite are green, and all expensive owner builds now use the same Job Object containment. The wrapper defaults to a 24 GiB job ceiling, refuses any ceiling above 75% of physical RAM, uses a 900-second default timeout, and sets `GGML_CUDA_DISABLE_GRAPHS=1` unless explicitly overridden. No new model has been loaded through it yet.
+
+**Decision rationale:** Exact process identity protects unrelated user work, serialization prevents compounding host pressure, and suspended creation closes the allocation/spawn race before Job Object assignment. Broad process-name termination, in-place bundle deletion, a second concurrent oracle, or an unverified assumption that PID absence restored memory were rejected. CUDA graphs are disabled by default as a reversible precaution, not a root-cause claim.
+
+**Effectiveness:** `94/100`, very good for containment. Harmless process-tree behavior is proven. The score remains below complete until the pinned bundle passes a no-model identity probe and the first smallest-checkpoint run proves peak-memory evidence, cleanup, and post-run host recovery.
+
+**Relevance check:** Current. Official 450M, 1.6B, GGUF, and CUDA parity work still requires local model execution on this host.
+
+**Next prevention step:** Finish and manifest the exact pinned llama.cpp owner build, run only a bounded no-model identity probe, then admit the smallest official 450M CPU-F32 task with explicit context/batch settings and before/after host/GPU census evidence. Do not run another model if any cleanup or recovery postcondition fails.
+
 ---
-AI-edited: 2026-08-10T06:04:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-5-docs | change=recorded hybrid audit resolutions and CUDA toolkit skip
+AI-edited: 2026-08-10T15:34:55-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=resource-pitfall | change=corrected restart-required recovery, ranked incident evidence, and recorded the smoke-proven suspended Job Object wrapper

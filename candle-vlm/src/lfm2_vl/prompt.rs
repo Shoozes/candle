@@ -155,10 +155,15 @@ impl Lfm2VlPrompt {
                 )
             }
             let encoding = self.encode_without_truncation(text)?;
-            let input_ids = encoding.get_ids().to_vec();
+            let mut input_ids =
+                try_vec_with_capacity(encoding.get_ids().len(), "LFM2-VL prompt token IDs")?;
+            input_ids.extend_from_slice(encoding.get_ids());
             self.check_context_length(input_ids.len())?;
+            let mut expanded_text =
+                try_string_with_capacity(text.len(), "LFM2-VL text-only prompt")?;
+            expanded_text.push_str(text);
             return Ok(ExpandedPrompt {
-                expanded_text: text.to_owned(),
+                expanded_text,
                 input_ids,
                 image_spans: Vec::new(),
                 per_image_spans: Vec::new(),
@@ -187,12 +192,33 @@ impl Lfm2VlPrompt {
                 )
             }
         }
-        let mut expanded_text = String::new();
+        self.preflight_expanded_context(text, sentinel_count, expected_placeholder_count, images)?;
+        let sentinel_bytes = sentinel_count
+            .checked_mul(IMAGE_SENTINEL.len())
+            .ok_or_else(|| candle::Error::Msg("LFM2-VL sentinel byte count overflow".into()))?;
+        let mut expanded_bytes = text
+            .len()
+            .checked_sub(sentinel_bytes)
+            .ok_or_else(|| candle::Error::Msg("LFM2-VL sentinel byte count is invalid".into()))?;
+        let mut image_blocks =
+            try_vec_with_capacity(images.images.len(), "LFM2-VL image prompt blocks")?;
+        for image_index in 0..images.images.len() {
+            let block = self.image_block(images, image_index)?;
+            expanded_bytes = expanded_bytes.checked_add(block.len()).ok_or_else(|| {
+                candle::Error::Msg("LFM2-VL expanded prompt size overflow".into())
+            })?;
+            image_blocks.push(block);
+        }
+        let mut expanded_text =
+            try_string_with_capacity(expanded_bytes, "LFM2-VL expanded prompt")?;
         let mut source_end = 0usize;
         let mut image_index = 0usize;
         for (start, _) in text.match_indices(IMAGE_SENTINEL) {
             expanded_text.push_str(&text[source_end..start]);
-            expanded_text.push_str(&self.image_block(images, image_index)?);
+            let block = image_blocks.get(image_index).ok_or_else(|| {
+                candle::Error::Msg("LFM2-VL image prompt block index is out of bounds".into())
+            })?;
+            expanded_text.push_str(block);
             source_end = start
                 .checked_add(IMAGE_SENTINEL.len())
                 .ok_or_else(|| candle::Error::Msg("LFM2-VL prompt offset overflow".into()))?;
@@ -202,20 +228,31 @@ impl Lfm2VlPrompt {
         }
         expanded_text.push_str(&text[source_end..]);
         let encoding = self.encode_without_truncation(&expanded_text)?;
-        let input_ids = encoding.get_ids().to_vec();
+        let mut input_ids =
+            try_vec_with_capacity(encoding.get_ids().len(), "LFM2-VL expanded token IDs")?;
+        input_ids.extend_from_slice(encoding.get_ids());
         self.check_context_length(input_ids.len())?;
         let image_spans = find_crop_spans(
             &input_ids,
             self.special_tokens.image_token_id,
             &expected_lengths,
         )?;
-        let mut per_image_spans = Vec::with_capacity(images.images.len());
-        let mut span_image_indices = Vec::with_capacity(image_spans.len());
-        let mut span_crop_indices = Vec::with_capacity(image_spans.len());
+        let mut per_image_spans =
+            try_vec_with_capacity(images.images.len(), "LFM2-VL per-image span table")?;
+        let mut span_image_indices =
+            try_vec_with_capacity(image_spans.len(), "LFM2-VL span image indices")?;
+        let mut span_crop_indices =
+            try_vec_with_capacity(image_spans.len(), "LFM2-VL span crop indices")?;
         for (image_index, image) in images.images.iter().enumerate() {
             let start = image.crop_range.start;
             let end = image.crop_range.end;
-            let spans = image_spans[start..end].to_vec();
+            let mut spans = try_vec_with_capacity(
+                end.checked_sub(start).ok_or_else(|| {
+                    candle::Error::Msg("LFM2-VL per-image span range is invalid".into())
+                })?,
+                "LFM2-VL per-image crop spans",
+            )?;
+            spans.extend_from_slice(&image_spans[start..end]);
             for (local_crop_index, _) in spans.iter().enumerate() {
                 span_image_indices.push(image_index);
                 span_crop_indices.push(local_crop_index);
@@ -243,9 +280,9 @@ impl Lfm2VlPrompt {
         if text.match_indices(IMAGE_SENTINEL).count() != 0 {
             return self.expand(text, images);
         }
-        let prefix = IMAGE_SENTINEL.repeat(images.images.len());
-        let mut prompt = prefix;
-        prompt.push_str(text);
+        let mut prompt = String::new();
+        append_repeated(&mut prompt, IMAGE_SENTINEL, images.images.len())?;
+        try_push_str(&mut prompt, text, "LFM2-VL image-first prompt")?;
         self.expand(&prompt, images)
     }
 
@@ -279,8 +316,62 @@ impl Lfm2VlPrompt {
         Ok(())
     }
 
+    fn preflight_expanded_context(
+        &self,
+        text: &str,
+        sentinel_count: usize,
+        expected_placeholder_count: usize,
+        images: &ProcessedVisionBatch,
+    ) -> Result<()> {
+        let Some(limit) = self.options.context_length.or(self.config.context_length) else {
+            return Ok(());
+        };
+        let raw = self.encode_without_truncation(text)?;
+        let raw_image_tokens = raw
+            .get_ids()
+            .iter()
+            .filter(|&&token_id| token_id == self.special_tokens.image_token_id)
+            .count();
+        if raw_image_tokens != sentinel_count {
+            candle::bail!(
+                "LFM2-VL raw prompt encoded {raw_image_tokens} image tokens for {sentinel_count} sentinels"
+            )
+        }
+        let marker_tokens = if self.options.use_image_special_tokens {
+            let wrappers =
+                images.images.len().checked_mul(2).ok_or_else(|| {
+                    candle::Error::Msg("LFM2-VL image wrapper count overflow".into())
+                })?;
+            let crop_markers = images
+                .crops
+                .iter()
+                .filter(|crop| !matches!(crop.kind, CropKind::Whole))
+                .count();
+            wrappers
+                .checked_add(crop_markers)
+                .ok_or_else(|| candle::Error::Msg("LFM2-VL image marker count overflow".into()))?
+        } else {
+            0
+        };
+        let predicted = raw
+            .get_ids()
+            .len()
+            .checked_sub(sentinel_count)
+            .and_then(|value| value.checked_add(expected_placeholder_count))
+            .and_then(|value| value.checked_add(marker_tokens))
+            .ok_or_else(|| candle::Error::Msg("LFM2-VL prompt token count overflow".into()))?;
+        if predicted > limit {
+            candle::bail!(
+                "LFM2-VL predicted expanded prompt length {predicted} exceeds context length {limit}"
+            )
+        }
+        Ok(())
+    }
+
     fn expected_crop_lengths(&self, images: &ProcessedVisionBatch) -> Result<Vec<usize>> {
-        let mut lengths = Vec::with_capacity(images.crops.len());
+        let mut lengths =
+            try_vec_with_capacity(images.crops.len(), "LFM2-VL expected crop lengths")?;
+        let mut total_projected_tokens = 0usize;
         for crop in &images.crops {
             let expected = self
                 .config
@@ -291,8 +382,20 @@ impl Lfm2VlPrompt {
                     crop.projected_tokens
                 )
             }
+            self.config
+                .vision_limits
+                .check_crop(crop.patch_rows, crop.patch_cols, expected)?;
+            total_projected_tokens =
+                total_projected_tokens
+                    .checked_add(expected)
+                    .ok_or_else(|| {
+                        candle::Error::Msg("LFM2-VL projected token total overflow".into())
+                    })?;
             lengths.push(expected);
         }
+        self.config
+            .vision_limits
+            .check_total_projected_tokens(total_projected_tokens)?;
         Ok(lengths)
     }
 
@@ -301,6 +404,10 @@ impl Lfm2VlPrompt {
             candle::bail!("LFM2-VL prompt requires at least one image")
         }
         let crop_count = images.crops.len();
+        self.config
+            .vision_limits
+            .check_image_count(images.images.len())?;
+        self.config.vision_limits.check_total_crops(crop_count)?;
         self.validate_tensor_crop_counts(images, crop_count)?;
         let mut next_crop = 0usize;
         for (image_index, image) in images.images.iter().enumerate() {
@@ -310,13 +417,17 @@ impl Lfm2VlPrompt {
             {
                 candle::bail!("LFM2-VL image crop ranges are not ordered and contiguous")
             }
-            if image.rows == 0
-                || image.cols == 0
-                || image.resized_width == 0
-                || image.resized_height == 0
-            {
-                candle::bail!("LFM2-VL image metadata dimensions must be positive")
+            self.config
+                .vision_limits
+                .check_crops_per_image(image.crop_range.len())?;
+            if image.rows == 0 || image.cols == 0 {
+                candle::bail!("LFM2-VL image tile-grid dimensions must be positive")
             }
+            self.config.vision_limits.check_image_surface(
+                "resized image metadata",
+                image.resized_width,
+                image.resized_height,
+            )?;
             let tile_count = image
                 .rows
                 .checked_mul(image.cols)
@@ -381,8 +492,14 @@ impl Lfm2VlPrompt {
                 {
                     candle::bail!("LFM2-VL crop patch shape does not match image metadata")
                 }
-                self.config
+                let projected_tokens = self
+                    .config
                     .projected_token_count(crop.patch_rows, crop.patch_cols)?;
+                self.config.vision_limits.check_crop(
+                    crop.patch_rows,
+                    crop.patch_cols,
+                    projected_tokens,
+                )?;
             }
             next_crop = image.crop_range.end;
         }
@@ -425,7 +542,11 @@ impl Lfm2VlPrompt {
             .ok_or_else(|| candle::Error::Msg("LFM2-VL image index is out of bounds".into()))?;
         let mut block = String::new();
         if self.options.use_image_special_tokens {
-            block.push_str(&self.special_tokens.image_start_token);
+            try_push_str(
+                &mut block,
+                &self.special_tokens.image_start_token,
+                "LFM2-VL image prompt block",
+            )?;
         }
         for crop_index in image.crop_range.clone() {
             let crop = images
@@ -450,14 +571,18 @@ impl Lfm2VlPrompt {
                         {
                             let _ = resolve_atomic_token(&self.tokenizer, &name)?;
                         }
-                        block.push_str(&name);
+                        try_push_str(&mut block, &name, "LFM2-VL image prompt block")?;
                     }
                     CropKind::Thumbnail => {
                         let _ = resolve_atomic_token(
                             &self.tokenizer,
                             &self.special_tokens.image_thumbnail_token,
                         )?;
-                        block.push_str(&self.special_tokens.image_thumbnail_token);
+                        try_push_str(
+                            &mut block,
+                            &self.special_tokens.image_thumbnail_token,
+                            "LFM2-VL image prompt block",
+                        )?;
                     }
                 }
             }
@@ -468,7 +593,11 @@ impl Lfm2VlPrompt {
             )?;
         }
         if self.options.use_image_special_tokens {
-            block.push_str(&self.special_tokens.image_end_token);
+            try_push_str(
+                &mut block,
+                &self.special_tokens.image_end_token,
+                "LFM2-VL image prompt block",
+            )?;
         }
         Ok(block)
     }
@@ -509,6 +638,37 @@ fn append_repeated(target: &mut String, token: &str, count: usize) -> Result<()>
     Ok(())
 }
 
+fn try_string_with_capacity(capacity: usize, label: &str) -> Result<String> {
+    let mut value = String::new();
+    value.try_reserve_exact(capacity).map_err(|err| {
+        candle::Error::Msg(format!(
+            "failed to allocate {label} ({capacity} bytes): {err}"
+        ))
+    })?;
+    Ok(value)
+}
+
+fn try_push_str(target: &mut String, value: &str, label: &str) -> Result<()> {
+    target.try_reserve(value.len()).map_err(|err| {
+        candle::Error::Msg(format!(
+            "failed to grow {label} by {} bytes: {err}",
+            value.len()
+        ))
+    })?;
+    target.push_str(value);
+    Ok(())
+}
+
+fn try_vec_with_capacity<T>(capacity: usize, label: &str) -> Result<Vec<T>> {
+    let mut values = Vec::new();
+    values.try_reserve_exact(capacity).map_err(|err| {
+        candle::Error::Msg(format!(
+            "failed to allocate {label} ({capacity} elements): {err}"
+        ))
+    })?;
+    Ok(values)
+}
+
 fn resolve_atomic_token(tokenizer: &Tokenizer, token: &str) -> Result<u32> {
     let id = tokenizer.token_to_id(token).ok_or_else(|| {
         candle::Error::Msg(format!("tokenizer is missing required token {token:?}"))
@@ -543,7 +703,7 @@ fn find_crop_spans(
     if expected_lengths.is_empty() {
         candle::bail!("LFM2-VL prompt contains no expected crop spans")
     }
-    let mut spans = Vec::with_capacity(expected_lengths.len());
+    let mut spans = try_vec_with_capacity(expected_lengths.len(), "LFM2-VL crop span table")?;
     let mut cursor = 0usize;
     for &length in expected_lengths {
         if length == 0 {
@@ -823,6 +983,58 @@ mod tests {
         let output = prompt.image_before_text("hello", &whole_batch(2))?;
         assert_eq!(output.image_spans.len(), 2);
         assert_eq!(output.input_ids.last(), Some(&1));
+        Ok(())
+    }
+
+    #[test]
+    fn prompt_revalidates_request_limits_for_external_batches() -> Result<()> {
+        let mut processor_config = config();
+        processor_config.vision_limits.max_images = 1;
+        let prompt = Lfm2VlPrompt::new(
+            tokenizer(false),
+            Some(3),
+            processor_config,
+            PromptOptions {
+                use_image_special_tokens: false,
+                context_length: None,
+            },
+        )?;
+        let error = prompt
+            .image_before_text("hello", &whole_batch(2))
+            .expect_err("prompt must enforce the image-count limit");
+        assert!(error.to_string().contains("2 images"));
+
+        let mut processor_config = config();
+        processor_config.vision_limits.max_total_projected_tokens = 3;
+        let prompt = Lfm2VlPrompt::new(
+            tokenizer(false),
+            Some(3),
+            processor_config,
+            PromptOptions {
+                use_image_special_tokens: false,
+                context_length: None,
+            },
+        )?;
+        let error = prompt
+            .expand("<image>", &whole_batch(1))
+            .expect_err("prompt must enforce the projected-token limit");
+        assert!(error.to_string().contains("4 projected tokens"));
+
+        let mut processor_config = config();
+        processor_config.vision_limits.max_source_pixels = 63;
+        let prompt = Lfm2VlPrompt::new(
+            tokenizer(false),
+            Some(3),
+            processor_config,
+            PromptOptions {
+                use_image_special_tokens: false,
+                context_length: None,
+            },
+        )?;
+        let error = prompt
+            .expand("<image>", &whole_batch(1))
+            .expect_err("prompt must enforce the resized-surface limit");
+        assert!(error.to_string().contains("resized image metadata"));
         Ok(())
     }
 

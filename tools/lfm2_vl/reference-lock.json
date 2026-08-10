@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "locked_at_utc": "2026-08-10T10:57:28Z",
+  "locked_at_utc": "2026-08-10T15:39:44Z",
   "candle_baseline": {
     "repository": "https://github.com/huggingface/candle",
     "revision": "31f35b147389700ed2a178ee66a91c3cc25cc80d",
@@ -373,7 +373,9 @@
         ],
         "header_bytes": 46864,
         "tensor_records": 349,
-        "tensor_payload_bytes_read": 0
+        "tensor_payload_bytes_read": 0,
+        "tensor_inventory_canonicalization": "UTF-8 lines sorted by tensor name: name\\tdtype\\tcomma-separated-shape\\n",
+        "tensor_inventory_sha256": "08f544b4495804ed842a37acf0936544ec88aa5d947bef8304a47816fee5b1a7"
       },
       "source_confirmed_config": {
         "architecture": "Lfm2VlForConditionalGeneration",
@@ -517,7 +519,9 @@
         ],
         "header_bytes": 82400,
         "tensor_records": 589,
-        "tensor_payload_bytes_read": 0
+        "tensor_payload_bytes_read": 0,
+        "tensor_inventory_canonicalization": "UTF-8 lines sorted by tensor name: name\\tdtype\\tcomma-separated-shape\\n",
+        "tensor_inventory_sha256": "24728d0ed10229e788c5b9baf25e0cc6c92c93b9cdb12ebb252a3c140a861703"
       },
       "source_confirmed_config": {
         "architecture": "Lfm2VlForConditionalGeneration",

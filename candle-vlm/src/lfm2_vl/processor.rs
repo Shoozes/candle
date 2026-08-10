@@ -54,6 +54,12 @@ struct ImageWork {
     resized_height: usize,
 }
 
+#[derive(Clone, Copy, Debug)]
+struct ImageBudget {
+    crop_count: usize,
+    projected_tokens: usize,
+}
+
 /// Processor for the raw RGB-to-packed-tensor part of LFM2.5-VL.
 #[derive(Clone, Debug)]
 pub struct Lfm2VlProcessor {
@@ -92,6 +98,7 @@ impl Lfm2VlProcessor {
         if !self.config.do_pad {
             candle::bail!("LFM2-VL processor requires do_pad=true for packed output")
         }
+        self.preflight_request(images)?;
         let mut work = try_vec_with_capacity(images.len(), "LFM2-VL image work list")?;
         for (image_index, image) in images.iter().enumerate() {
             work.push(self.process_image(image, image_index)?);
@@ -105,6 +112,26 @@ impl Lfm2VlProcessor {
         if crop_count == 0 {
             candle::bail!("LFM2-VL processor produced no crops")
         }
+        let total_projected_tokens = work.iter().try_fold(0usize, |total, image| {
+            self.config
+                .vision_limits
+                .check_crops_per_image(image.crops.len())?;
+            image.crops.iter().try_fold(total, |total, crop| {
+                self.config.vision_limits.check_crop(
+                    crop.patch_rows,
+                    crop.patch_cols,
+                    crop.projected_tokens,
+                )?;
+                total.checked_add(crop.projected_tokens).ok_or_else(|| {
+                    candle::Error::Msg("LFM2-VL projected token total overflow".into())
+                })
+            })
+        })?;
+        self.config.vision_limits.check_request(
+            images.len(),
+            crop_count,
+            total_projected_tokens,
+        )?;
         let max_patches = self.config.effective_max_num_patches()?;
         let patch_dimension = self
             .config
@@ -327,7 +354,118 @@ impl Lfm2VlProcessor {
         Ok((rounded_area as f64) > (max_tokens as f64) * self.config.max_pixels_tolerance)
     }
 
+    fn preflight_request(&self, images: &[DynamicImage]) -> Result<()> {
+        self.config.vision_limits.validate()?;
+        self.config.vision_limits.check_image_count(images.len())?;
+        let mut total_crops = 0usize;
+        let mut total_projected_tokens = 0usize;
+        for image in images {
+            let (width, height) = dynamic_image_dimensions(image)?;
+            self.config
+                .vision_limits
+                .check_source_image(width, height)?;
+            let budget = self.image_budget(width, height)?;
+            self.config
+                .vision_limits
+                .check_crops_per_image(budget.crop_count)?;
+            total_crops = total_crops
+                .checked_add(budget.crop_count)
+                .ok_or_else(|| candle::Error::Msg("LFM2-VL crop count overflow".into()))?;
+            total_projected_tokens = total_projected_tokens
+                .checked_add(budget.projected_tokens)
+                .ok_or_else(|| {
+                    candle::Error::Msg("LFM2-VL projected token total overflow".into())
+                })?;
+        }
+        self.config
+            .vision_limits
+            .check_request(images.len(), total_crops, total_projected_tokens)
+    }
+
+    fn image_budget(&self, width: usize, height: usize) -> Result<ImageBudget> {
+        let split = self.config.do_image_splitting && self.is_image_too_large(width, height)?;
+        if !split {
+            let (resized_width, resized_height) = if self.config.do_resize {
+                self.smart_resize(width, height)?
+            } else {
+                (width, height)
+            };
+            let projected_tokens = self.crop_projected_tokens(resized_width, resized_height)?;
+            return Ok(ImageBudget {
+                crop_count: 1,
+                projected_tokens,
+            });
+        }
+
+        let (cols, rows) = self.closest_tile_grid(width, height)?;
+        let tile_count = rows
+            .checked_mul(cols)
+            .ok_or_else(|| candle::Error::Msg("LFM2-VL tile count overflow".into()))?;
+        let tile_projected_tokens =
+            self.crop_projected_tokens(self.config.tile_size, self.config.tile_size)?;
+        let canvas_width = self
+            .config
+            .tile_size
+            .checked_mul(cols)
+            .ok_or_else(|| candle::Error::Msg("LFM2-VL tiled width overflow".into()))?;
+        let canvas_height = self
+            .config
+            .tile_size
+            .checked_mul(rows)
+            .ok_or_else(|| candle::Error::Msg("LFM2-VL tiled height overflow".into()))?;
+        self.config.vision_limits.check_image_surface(
+            "tiled resize canvas",
+            canvas_width,
+            canvas_height,
+        )?;
+        let mut projected_tokens =
+            tile_count
+                .checked_mul(tile_projected_tokens)
+                .ok_or_else(|| {
+                    candle::Error::Msg("LFM2-VL tiled projected token count overflow".into())
+                })?;
+        let has_thumbnail = self.config.use_thumbnail && tile_count > 1;
+        if has_thumbnail {
+            let (thumbnail_width, thumbnail_height) = self.smart_resize(width, height)?;
+            projected_tokens = projected_tokens
+                .checked_add(self.crop_projected_tokens(thumbnail_width, thumbnail_height)?)
+                .ok_or_else(|| {
+                    candle::Error::Msg("LFM2-VL thumbnail projected token count overflow".into())
+                })?;
+        }
+        let crop_count = tile_count
+            .checked_add(usize::from(has_thumbnail))
+            .ok_or_else(|| candle::Error::Msg("LFM2-VL crop count overflow".into()))?;
+        Ok(ImageBudget {
+            crop_count,
+            projected_tokens,
+        })
+    }
+
+    fn crop_projected_tokens(&self, width: usize, height: usize) -> Result<usize> {
+        self.config
+            .vision_limits
+            .check_image_surface("processed crop", width, height)?;
+        let patch = self.config.encoder_patch_size;
+        if width == 0 || height == 0 || width % patch != 0 || height % patch != 0 {
+            candle::bail!(
+                "LFM2-VL crop dimensions [{width}, {height}] must be positive and divisible by patch size {patch}"
+            )
+        }
+        let patch_rows = height / patch;
+        let patch_cols = width / patch;
+        let projected_tokens = self.config.projected_token_count(patch_rows, patch_cols)?;
+        self.config
+            .vision_limits
+            .check_crop(patch_rows, patch_cols, projected_tokens)?;
+        Ok(projected_tokens)
+    }
+
     fn process_image(&self, image: &DynamicImage, image_index: usize) -> Result<ImageWork> {
+        let (source_width, source_height) = dynamic_image_dimensions(image)?;
+        self.config
+            .vision_limits
+            .check_source_image(source_width, source_height)?;
         let rgb = to_rgb8(image);
         let width = usize::try_from(rgb.width())
             .map_err(|_| candle::Error::Msg("LFM2-VL image width does not fit usize".into()))?;
@@ -554,6 +692,17 @@ fn try_vec_with_capacity<T>(capacity: usize, label: &str) -> Result<Vec<T>> {
     Ok(values)
 }
 
+fn dynamic_image_dimensions(image: &DynamicImage) -> Result<(usize, usize)> {
+    let width = usize::try_from(image.width())
+        .map_err(|_| candle::Error::Msg("LFM2-VL image width does not fit usize".into()))?;
+    let height = usize::try_from(image.height())
+        .map_err(|_| candle::Error::Msg("LFM2-VL image height does not fit usize".into()))?;
+    if width == 0 || height == 0 {
+        candle::bail!("LFM2-VL image dimensions must be positive")
+    }
+    Ok((width, height))
+}
+
 fn try_filled_vec<T: Clone>(length: usize, value: T, label: &str) -> Result<Vec<T>> {
     let mut values = try_vec_with_capacity(length, label)?;
     values.resize(length, value);
@@ -616,6 +765,7 @@ mod tests {
             max_num_patches: Some(64),
             max_pixels_tolerance: 2.0,
             context_length: Some(256),
+            vision_limits: Default::default(),
         }
     }
 
@@ -666,8 +816,64 @@ mod tests {
     fn configured_packed_capacity_overflow_is_controlled() -> Result<()> {
         let mut config = tiny_config();
         config.max_num_patches = Some(usize::MAX);
-        let processor = Lfm2VlProcessor::new(config)?;
-        assert!(processor.process(&[image(1, 1)], &Device::Cpu).is_err());
+        assert!(Lfm2VlProcessor::new(config).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn request_limits_fail_at_source_crop_and_token_boundaries() -> Result<()> {
+        let mut exact = tiny_config();
+        exact.do_image_splitting = false;
+        exact.vision_limits.max_source_pixels = 16;
+        exact.vision_limits.max_images = 1;
+        exact.vision_limits.max_crops_per_image = 1;
+        exact.vision_limits.max_total_crops = 1;
+        exact.vision_limits.max_patches_per_crop = 64;
+        exact.vision_limits.max_total_projected_tokens = 1;
+        let processor = Lfm2VlProcessor::new(exact.clone())?;
+        let output = processor.process(&[image(4, 4)], &Device::Cpu)?;
+        assert_eq!(output.images.len(), 1);
+        assert_eq!(output.crops.len(), 1);
+        assert_eq!(output.crops[0].projected_tokens, 1);
+
+        let mut source_over = exact.clone();
+        source_over.vision_limits.max_source_pixels = 15;
+        let error = Lfm2VlProcessor::new(source_over)?
+            .process(&[image(4, 4)], &Device::Cpu)
+            .expect_err("source pixel limit should reject one-over input");
+        assert!(error.to_string().contains("source image has 16 pixels"));
+
+        let error = processor
+            .process(&[image(4, 4), image(4, 4)], &Device::Cpu)
+            .expect_err("image count limit should reject one-over input");
+        assert!(error.to_string().contains("2 images"));
+
+        let mut token_over = exact.clone();
+        token_over.vision_limits.max_source_pixels = 32;
+        let error = Lfm2VlProcessor::new(token_over)?
+            .process(&[image(8, 4)], &Device::Cpu)
+            .expect_err("projected token limit should reject one-over input");
+        assert!(error.to_string().contains("2 projected tokens"));
+
+        let mut crop_over = tiny_config();
+        crop_over.max_pixels_tolerance = 0.01;
+        crop_over.vision_limits.max_crops_per_image = 1;
+        crop_over.vision_limits.max_total_crops = 1;
+        let error = Lfm2VlProcessor::new(crop_over)?
+            .process(&[image(32, 16)], &Device::Cpu)
+            .expect_err("crop limit should reject a tiled image");
+        assert!(error
+            .to_string()
+            .contains("crops, exceeding per-image limit 1"));
+
+        let mut total_crop_over = exact;
+        total_crop_over.vision_limits.max_images = 2;
+        let error = Lfm2VlProcessor::new(total_crop_over)?
+            .process(&[image(4, 4), image(4, 4)], &Device::Cpu)
+            .expect_err("total crop limit should reject the second image");
+        assert!(error
+            .to_string()
+            .contains("2 crops, exceeding total limit 1"));
         Ok(())
     }
 

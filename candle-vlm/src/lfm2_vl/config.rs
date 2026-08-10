@@ -1,7 +1,7 @@
 //! Dynamic processor configuration and source-precedence resolution.
 
 use candle::Result;
-use candle_transformers::models::lfm2_vl::{Lfm2VlConfig, MmprojMetadata};
+use candle_transformers::models::lfm2_vl::{Lfm2VlConfig, MmprojMetadata, VisionLimits};
 use serde::Deserialize;
 
 fn default_do_resize() -> bool {
@@ -79,6 +79,7 @@ fn default_max_pixels_tolerance() -> f64 {
 /// sources in increasing authority order.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct ProcessorConfigPatch {
     pub do_resize: Option<bool>,
     pub do_rescale: Option<bool>,
@@ -105,6 +106,13 @@ pub struct ProcessorConfigPatch {
 
     #[serde(alias = "max_context_length", alias = "max_position_embeddings")]
     pub context_length: Option<usize>,
+
+    pub max_source_pixels: Option<usize>,
+    pub max_images: Option<usize>,
+    pub max_crops_per_image: Option<usize>,
+    pub max_total_crops: Option<usize>,
+    pub max_patches_per_crop: Option<usize>,
+    pub max_total_projected_tokens: Option<usize>,
 }
 
 impl ProcessorConfigPatch {
@@ -144,7 +152,10 @@ pub type ProcessorConfigOverride = ProcessorConfigPatch;
 /// Typed future GGUF processor metadata. GGUF parsing remains out of scope.
 pub type GgufProcessorMetadata = ProcessorConfigPatch;
 
+/// Resolved processor settings. This fork-local crate is not yet a released
+/// Candle API; the non-exhaustive boundary keeps future safety fields additive.
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub struct Lfm2VlProcessorConfig {
     pub do_resize: bool,
     pub do_rescale: bool,
@@ -168,6 +179,7 @@ pub struct Lfm2VlProcessorConfig {
     pub max_num_patches: Option<usize>,
     pub max_pixels_tolerance: f64,
     pub context_length: Option<usize>,
+    pub vision_limits: VisionLimits,
 }
 
 impl Default for Lfm2VlProcessorConfig {
@@ -192,6 +204,7 @@ impl Default for Lfm2VlProcessorConfig {
             max_num_patches: None,
             max_pixels_tolerance: default_max_pixels_tolerance(),
             context_length: None,
+            vision_limits: VisionLimits::default(),
         }
     }
 }
@@ -320,6 +333,24 @@ impl Lfm2VlProcessorConfig {
         if let Some(value) = patch.context_length {
             self.context_length = Some(value);
         }
+        if let Some(value) = patch.max_source_pixels {
+            self.vision_limits.max_source_pixels = value;
+        }
+        if let Some(value) = patch.max_images {
+            self.vision_limits.max_images = value;
+        }
+        if let Some(value) = patch.max_crops_per_image {
+            self.vision_limits.max_crops_per_image = value;
+        }
+        if let Some(value) = patch.max_total_crops {
+            self.vision_limits.max_total_crops = value;
+        }
+        if let Some(value) = patch.max_patches_per_crop {
+            self.vision_limits.max_patches_per_crop = value;
+        }
+        if let Some(value) = patch.max_total_projected_tokens {
+            self.vision_limits.max_total_projected_tokens = value;
+        }
     }
 
     pub fn validate(&self) -> Result<()> {
@@ -382,7 +413,14 @@ impl Lfm2VlProcessorConfig {
         if self.context_length == Some(0) {
             candle::bail!("processor context_length must be positive when provided")
         }
-        let _ = self.effective_max_num_patches()?;
+        self.vision_limits.validate()?;
+        let max_num_patches = self.effective_max_num_patches()?;
+        if max_num_patches > self.vision_limits.max_patches_per_crop {
+            candle::bail!(
+                "processor packed maximum {max_num_patches} exceeds vision patch limit {}",
+                self.vision_limits.max_patches_per_crop
+            )
+        }
         Ok(())
     }
 
@@ -536,6 +574,54 @@ mod tests {
         assert_eq!(config.downsample_factor, 2);
         assert_eq!(config.max_num_patches, Some(64));
         assert_eq!(config.context_length, Some(128));
+        Ok(())
+    }
+
+    #[test]
+    fn vision_limit_overrides_follow_processor_precedence() -> Result<()> {
+        let model = ProcessorConfigPatch {
+            max_images: Some(2),
+            ..ProcessorConfigPatch::default()
+        };
+        let gguf = ProcessorConfigPatch {
+            max_images: Some(3),
+            ..ProcessorConfigPatch::default()
+        };
+        let processor = ProcessorConfigPatch {
+            max_images: Some(4),
+            ..ProcessorConfigPatch::default()
+        };
+        let explicit = ProcessorConfigPatch {
+            max_images: Some(5),
+            max_source_pixels: Some(1234),
+            ..ProcessorConfigPatch::default()
+        };
+        let resolved = Lfm2VlProcessorConfig::resolve(
+            Some(&explicit),
+            Some(&processor),
+            Some(&gguf),
+            Some(&model),
+        )?;
+        assert_eq!(resolved.vision_limits.max_images, 5);
+        assert_eq!(resolved.vision_limits.max_source_pixels, 1234);
+
+        let parsed = Lfm2VlProcessorConfig::from_json(
+            r#"{"max_source_pixels":100,"max_images":2,"max_crops_per_image":5,"max_total_crops":10,"max_patches_per_crop":1024,"max_total_projected_tokens":200}"#,
+        )?;
+        assert_eq!(parsed.vision_limits.max_source_pixels, 100);
+        assert_eq!(parsed.vision_limits.max_images, 2);
+        assert_eq!(parsed.vision_limits.max_total_projected_tokens, 200);
+
+        assert!(Lfm2VlProcessorConfig::from_json(r#"{"max_images":0}"#).is_err());
+        let above_hard_ceiling = VisionLimits::default().max_source_pixels + 1;
+        assert!(Lfm2VlProcessorConfig::from_json(&format!(
+            r#"{{"max_source_pixels":{above_hard_ceiling}}}"#
+        ))
+        .is_err());
+        assert!(Lfm2VlProcessorConfig::from_json(
+            r#"{"max_num_patches":2048,"max_patches_per_crop":1024}"#
+        )
+        .is_err());
         Ok(())
     }
 }

@@ -1,10 +1,12 @@
 //! Split/direct MMProj loading and quantized-text hybrid execution.
 
 use super::gguf::{GgufMmprojExecution, GgufMmprojMetadata};
-use super::model::{encode_images_with_parts, merge_projected_embeddings};
+use super::model::{
+    encode_images_with_parts, merge_projected_embeddings, preflight_packed_vision_limits,
+};
 use super::{
     EncodedImages, ImageTokenSpan, Lfm2VlConfig, Lfm2VlMmprojConfig, Lfm2VlProjector,
-    ProcessedVisionBatch,
+    ProcessedVisionBatch, VisionLimits,
 };
 use crate::models::{quantized_lfm2, siglip2};
 use candle::{DType, Device, Result, Tensor};
@@ -543,6 +545,23 @@ impl Mmproj {
         inputs: &ProcessedVisionBatch,
         vision_batch_size: usize,
     ) -> Result<EncodedImages> {
+        self.encode_images_with_limits(inputs, vision_batch_size, &VisionLimits::default())
+    }
+
+    pub fn encode_images_with_limits(
+        &self,
+        inputs: &ProcessedVisionBatch,
+        vision_batch_size: usize,
+        limits: &VisionLimits,
+    ) -> Result<EncodedImages> {
+        let patch_dimension = self.config.vision_config.patch_dimension_for_vl()?;
+        preflight_packed_vision_limits(
+            inputs,
+            patch_dimension,
+            self.config.downsample_factor,
+            vision_batch_size,
+            limits,
+        )?;
         let device_inputs = ProcessedVisionBatch {
             pixel_values: inputs
                 .pixel_values
@@ -560,6 +579,7 @@ impl Mmproj {
             self.config.downsample_factor,
             &device_inputs,
             vision_batch_size,
+            limits,
         )
     }
 
@@ -630,6 +650,16 @@ impl QuantizedLfm2VlModel {
         self.mmproj.encode_images(inputs, vision_batch_size)
     }
 
+    pub fn encode_images_with_limits(
+        &self,
+        inputs: &ProcessedVisionBatch,
+        vision_batch_size: usize,
+        limits: &VisionLimits,
+    ) -> Result<EncodedImages> {
+        self.mmproj
+            .encode_images_with_limits(inputs, vision_batch_size, limits)
+    }
+
     pub fn prefill(
         &mut self,
         input_ids: &Tensor,
@@ -693,6 +723,14 @@ impl QuantizedLfm2VlModel {
 
     pub fn text_device(&self) -> &Device {
         self.text.device()
+    }
+
+    pub fn context_length(&self) -> usize {
+        self.text.metadata().context_length
+    }
+
+    pub fn eos_token_id(&self) -> Option<u32> {
+        self.text.metadata().eos_token_id
     }
 }
 
@@ -1266,6 +1304,7 @@ mod tests {
             rms_norm_eps: text.norm_eps,
             rope_freq_base: text.rope_theta,
             shortconv_l_cache: text.conv_l_cache,
+            eos_token_id: None,
             tied_output: true,
         }
     }
@@ -1671,6 +1710,14 @@ mod tests {
         );
         let mut malformed_reader = Cursor::new(gguf_bytes.clone());
         let mut malformed_gguf = gguf_file::Content::read(&mut malformed_reader)?;
+        malformed_gguf.metadata.insert(
+            "tokenizer.ggml.eos_token_id".to_string(),
+            gguf_file::Value::U32(2),
+        );
+        assert_eq!(
+            quantized_lfm2::inspect_gguf_metadata(&malformed_gguf)?.eos_token_id,
+            Some(2)
+        );
         malformed_gguf.metadata.insert(
             "lfm2.rope.freq_base".to_string(),
             gguf_file::Value::String("not-a-frequency".to_string()),

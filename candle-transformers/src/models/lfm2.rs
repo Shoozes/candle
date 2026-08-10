@@ -829,6 +829,10 @@ impl Model {
         self.embed_tokens.forward(input_ids)
     }
 
+    pub fn device(&self) -> &Device {
+        self.embed_tokens.embeddings().device()
+    }
+
     pub fn forward_hidden(
         &self,
         input_embeds: &Tensor,

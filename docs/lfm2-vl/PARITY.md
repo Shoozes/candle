@@ -2,7 +2,7 @@
 
 ## Current State
 
-The deterministic reference fixture, LFM2 text compatibility path, SigLIP2 NaFlex tensor path, native projector/composite path, Rust-native raw-image/prompt path, Phase 5 quantized-text plus split-dense-MMProj path, Phase 6 direct-GGUF-MMProj dense compatibility path, and Phase 7 CPU-F32 native-Q8 vision/projector path are established. No production-checkpoint numerical parity, production-GGUF payload execution, llama.cpp runtime parity, generated-text parity, or executed native-Q8 CUDA parity is claimed.
+The deterministic reference fixture, LFM2 text compatibility path, SigLIP2 NaFlex tensor path, native projector/composite path, Rust-native raw-image/prompt path, Phase 5 quantized-text plus split-dense-MMProj path, Phase 6 direct-GGUF-MMProj dense compatibility path, Phase 7 CPU-F32 native-Q8 vision/projector path, bounded unmodified native-checkpoint loader, deterministic native/hybrid inference runner, and local same-artifact Candle/llama.cpp decoded-sequence comparison are established. No official production-checkpoint numerical parity, official-base text-GGUF execution, llama.cpp component/logit equality, or executed native-Q8 CUDA parity is claimed.
 
 ## Required Gates
 
@@ -24,6 +24,9 @@ The deterministic reference fixture, LFM2 text compatibility path, SigLIP2 NaFle
 | Hybrid GGUF text + dense MMProj | Real GGUF parse/load, split/native image-feature equivalence, prefill/decode/cache comparison | Green on the committed deterministic fixture; image features exact, hybrid text-logit max abs `4.457309842e-5` |
 | Direct GGUF MMProj dense compatibility | Strict metadata/inventory/range load, patch inverse, dequantization, image-feature and hybrid execution comparison | Green on deterministic GGUF fixtures; dense image features exact, Q8_0 dequantized max abs `8.463021368e-5`, direct hybrid errors equal Phase 5 |
 | Native Q8_0 GGUF MMProj | Eligible weights remain QTensor, all vision/projector linear roles execute through QMatMul, dense fallback remains intact, and hybrid prefill/decode/cache stay within documented drift | Green on CPU F32 deterministic fixtures; 14/14 two-layer linear roles quantized, feature cosine `0.999923348`, prefill max abs `1.650899649e-4`, cache reset exact |
+| Unified native checkpoint loading | Unmodified single/indexed Hugging Face directory, exact official inventories, tied output, config/processor/tokenizer pairing, and pre-map diagnostics | Green on real tiny safetensors; 19/19 focused tests; pinned 450M/1.6B name/BF16/shape digests and counts 349/589 exact |
+| Deterministic inference evidence | Bounded prompt/image/generation inputs, exact consumed-file hashes, native and hybrid prefill/decode, full-logit hashes, greedy top-k/token trace, and exact reset replay | Green; 26/26 focused example tests, including real split-MMProj hybrid execution, exact direct/split/override source lists, and one-line JSON |
+| Local same-artifact oracle | Identical text GGUF, MMProj, tokenizer, processor policy, image, prompt framing, context, and deterministic decode settings in Candle and llama.cpp | Green for the local fine-tuned text GGUF plus byte-identical official Q8_0 MMProj: 608x416, 247 image tokens, 268 prompt tokens, and exact eight-token output agreement |
 | Official MMProj header contract | Pinned F16/Q8_0 metadata, names, physical shapes, dtype placement, and zero-payload evidence | Green; 32 metadata records, 201 tensors, tensor-data offset 12,736, no retained payload bytes |
 | Distinct devices | Vision and text may differ; only projected image features cross at merge | Source-complete CUDA-vision/CPU-text test committed; local execution skipped because Linux `nvcc`/toolkit is absent |
 | Production checkpoints and GGUF | Native versus production and GGUF numerical validation | Not run; no production weights or GGUF files downloaded |
@@ -90,6 +93,24 @@ The committed hybrid fixture's native-Q8 GGUF SHA-256 is `225241e57bc84c62d097aa
 
 The example automatically selects native Q8 for valid F32 Q8 artifacts and reports the selected execution mode/count. F16/BF16 automatic loading deliberately stays on the Phase 6 dense path. No production payload or llama.cpp runtime was used, so official-file numerical parity, top-k/token agreement, and native-Q8 CUDA remain evidence gaps rather than claims.
 
+## Native Unified Loader Evidence
+
+The local native loader accepts the official unified namespace without file renaming and supports one safetensors file or an indexed shard set. It bounds and validates the complete header/index inventory before memory mapping, resolves tied versus explicit output weights, pairs processor and tokenizer semantics with model configuration, and reports roots, shards, bytes, dtypes, devices, and all inventory defects. Its 19 focused tests construct real tiny checkpoint files and compare the generated official 450M/1.6B inventories against canonical sorted name/BF16/shape digests from zero-payload pinned header reads. This is loader proof, not production numerical parity. The feature-gated native CUDA test is construction-only; native CUDA inference remains unclaimed.
+
+## Local llama.cpp Oracle Boundary
+
+The read-only local runtime at `C:\llamacpp` reports build b9981 / `(34558825a)` and executable SHA-256 `01e191f9dd389b6e3b091eeaa8b6142784bd0e1b0e19ed7c67039afc6626ae1d`. That build is not proven identical to the pinned implementation-reference commit `74ce15741b420b8d6f12e720398458b576c51c2c`.
+
+The local text GGUF is a fine-tuned game-QA SFT derivative with SHA-256 `84540fa23696ab9000f4a670b72e3405962264a920c3b7582d0e5a38b978abae`; it is not the official base checkpoint. The local Q8_0 MMProj SHA-256 `ebfc428baa37efad8bae93864f914b2634a09009f91ad59f974fe1a1565d8561` and size exactly match the pinned official LiquidAI file. The tokenizer is pinned to the official 450M revision and hashes to `f3910942aa907c48b0cc20ec426ee38bfa8dcda8feecf035ced981918cb30f14`.
+
+With identical artifacts, image, prompt framing, 4,096-token context, and greedy settings, both runtimes produced 608x416 preprocessing, 247 projected image tokens, 268 prompt tokens, and `A group of cyclists race on a road`. Candle IDs were `[542, 2514, 803, 62480, 7736, 884, 768, 6671]` with exact reset replay. This is same-artifact runtime behavior parity, not official-base or component-tensor parity. `llama-mtmd-cli` still exposes no stable logits or intermediate-tensor dump; unavailable stages remain explicitly unavailable.
+
+After that comparison, the Windows `llama-mtmd-cli` process remained resident with approximately 131.5 GB private memory and normal user/task-manager termination was denied or timed out. The PID later disappeared, but host pressure and degraded performance persisted until an operator restart. WER recorded `RADAR_PRE_LEAK_64`; Defender and bundle-coherence checks did not support a security block or mixed DLL set. `FAILURE_LOG.md` F-0008 records the evidence without assigning an unproven root cause.
+
+The owner boundary is now locally proven without loading a model. `scripts/lfm2-vl/test-bounded-oracle.ps1` passes normal exit, timeout plus descendant cleanup, owner-exit cleanup, concurrent-name refusal, suspended creation, assignment before resume, and exact PID absence. The wrapper enforces per-process/per-job memory ceilings, kill-on-close, timeout, a 75%-of-physical-RAM admission maximum, and CUDA-graph disablement by default.
+
+Three bundles remain deliberately separate: legacy b9981 incident evidence; user-supplied `tools-b10344` as a current-master comparison; and the exact pinned b10335 owner build at `74ce15741b420b8d6f12e720398458b576c51c2c`. The pinned CUDA 13.3/SM89 bundle has executable SHA-256 `848e638069699149210b70945bdbb422494d7d03b8a18d7fb31a240d10e8abd0`, a complete local dependency manifest, and a green bounded `--version` probe reporting `10335 (74ce15741)`. This proves artifact identity and containment only, not model parity.
+
 ## Evidence Rules
 
 - Plausible captions are not parity evidence.
@@ -99,7 +120,7 @@ The example automatically selects native Q8 for valid F32 Q8 artifacts and repor
 
 ## Next Parity Task
 
-The Phase 7 CPU-F32 checkpoint and sprint audit are complete. Any production-payload llama.cpp comparison, native-Q8 CUDA execution, or lower-bit vision support requires a separately authorized follow-up.
+Download the pinned official 450M native checkpoint only through the guarded production path, record every file identity, and compare selected production processor/vision/projector/merge/prefill/decode tensors on CPU F32 against the pinned Transformers oracle. Re-measure host commit, physical memory, GPU memory, and exact process absence afterward. Obtain the pinned official base text GGUF only after native CPU parity, and repeat the same-artifact Candle/pinned-llama.cpp decoded-sequence comparison without using the fine-tuned local text model as a substitute.
 
 ---
-AI-edited: 2026-08-10T08:56:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-7 | change=closed the native Q8 checkpoint while preserving remaining evidence boundaries
+AI-edited: 2026-08-10T15:41:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-nr5a | change=recorded restart-required recovery, pinned bundle identity, and the green bounded-oracle gate

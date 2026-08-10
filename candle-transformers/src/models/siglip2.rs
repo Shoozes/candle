@@ -584,6 +584,14 @@ impl Siglip2VisionModel {
         })
     }
 
+    pub fn device(&self) -> &Device {
+        &self.embeddings.device
+    }
+
+    pub fn dtype(&self) -> DType {
+        self.embeddings.dtype
+    }
+
     pub(crate) fn new_with_quantized_linears(
         config: &Siglip2VisionConfig,
         vb: VarBuilder,

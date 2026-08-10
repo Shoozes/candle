@@ -5,6 +5,199 @@ use serde::de::Error as DeError;
 
 pub const DEFAULT_LFM2_VL_IMAGE_TOKEN_ID: u32 = 396;
 
+/// Absolute safety ceilings for one LFM2-VL request. Configured limits may
+/// tighten these values but cannot raise them.
+pub const MAX_VISION_SOURCE_PIXELS: usize = 64 * 1024 * 1024;
+pub const MAX_VISION_IMAGES: usize = 16;
+pub const MAX_VISION_CROPS_PER_IMAGE: usize = 11;
+pub const MAX_VISION_TOTAL_CROPS: usize = 64;
+pub const MAX_VISION_PATCHES_PER_CROP: usize = 1024;
+pub const MAX_VISION_TOTAL_PROJECTED_TOKENS: usize = 64 * 1024;
+
+/// Request-wide allocation limits shared by raw-image and packed-tensor callers.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct VisionLimits {
+    pub max_source_pixels: usize,
+    pub max_images: usize,
+    pub max_crops_per_image: usize,
+    pub max_total_crops: usize,
+    pub max_patches_per_crop: usize,
+    pub max_total_projected_tokens: usize,
+}
+
+impl Default for VisionLimits {
+    fn default() -> Self {
+        Self {
+            max_source_pixels: MAX_VISION_SOURCE_PIXELS,
+            max_images: MAX_VISION_IMAGES,
+            max_crops_per_image: MAX_VISION_CROPS_PER_IMAGE,
+            max_total_crops: MAX_VISION_TOTAL_CROPS,
+            max_patches_per_crop: MAX_VISION_PATCHES_PER_CROP,
+            max_total_projected_tokens: MAX_VISION_TOTAL_PROJECTED_TOKENS,
+        }
+    }
+}
+
+impl VisionLimits {
+    pub fn validate(&self) -> Result<()> {
+        for (name, value, ceiling) in [
+            (
+                "max_source_pixels",
+                self.max_source_pixels,
+                MAX_VISION_SOURCE_PIXELS,
+            ),
+            ("max_images", self.max_images, MAX_VISION_IMAGES),
+            (
+                "max_crops_per_image",
+                self.max_crops_per_image,
+                MAX_VISION_CROPS_PER_IMAGE,
+            ),
+            (
+                "max_total_crops",
+                self.max_total_crops,
+                MAX_VISION_TOTAL_CROPS,
+            ),
+            (
+                "max_patches_per_crop",
+                self.max_patches_per_crop,
+                MAX_VISION_PATCHES_PER_CROP,
+            ),
+            (
+                "max_total_projected_tokens",
+                self.max_total_projected_tokens,
+                MAX_VISION_TOTAL_PROJECTED_TOKENS,
+            ),
+        ] {
+            if value == 0 {
+                candle::bail!("LFM2-VL vision limit {name} must be positive")
+            }
+            if value > ceiling {
+                candle::bail!(
+                    "LFM2-VL vision limit {name}={value} exceeds implementation ceiling {ceiling}"
+                )
+            }
+        }
+        Ok(())
+    }
+
+    pub fn check_source_image(&self, width: usize, height: usize) -> Result<usize> {
+        self.check_image_surface("source image", width, height)
+    }
+
+    pub fn check_image_surface(&self, label: &str, width: usize, height: usize) -> Result<usize> {
+        self.validate()?;
+        if width == 0 || height == 0 {
+            candle::bail!("LFM2-VL {label} dimensions must be positive")
+        }
+        let pixels = width
+            .checked_mul(height)
+            .ok_or_else(|| candle::Error::Msg(format!("LFM2-VL {label} pixel count overflow")))?;
+        if pixels > self.max_source_pixels {
+            candle::bail!(
+                "LFM2-VL {label} has {pixels} pixels, exceeding max_source_pixels {}",
+                self.max_source_pixels
+            )
+        }
+        Ok(pixels)
+    }
+
+    pub fn check_image_count(&self, image_count: usize) -> Result<()> {
+        self.validate()?;
+        if image_count == 0 {
+            candle::bail!("LFM2-VL request must contain at least one image")
+        }
+        if image_count > self.max_images {
+            candle::bail!(
+                "LFM2-VL request has {image_count} images, exceeding limit {}",
+                self.max_images
+            )
+        }
+        Ok(())
+    }
+
+    pub fn check_crops_per_image(&self, crop_count: usize) -> Result<()> {
+        self.validate()?;
+        if crop_count == 0 {
+            candle::bail!("LFM2-VL image must contain at least one crop")
+        }
+        if crop_count > self.max_crops_per_image {
+            candle::bail!(
+                "LFM2-VL image has {crop_count} crops, exceeding per-image limit {}",
+                self.max_crops_per_image
+            )
+        }
+        Ok(())
+    }
+
+    pub fn check_total_crops(&self, crop_count: usize) -> Result<()> {
+        self.validate()?;
+        if crop_count == 0 {
+            candle::bail!("LFM2-VL request must contain at least one crop")
+        }
+        if crop_count > self.max_total_crops {
+            candle::bail!(
+                "LFM2-VL request has {crop_count} crops, exceeding total limit {}",
+                self.max_total_crops
+            )
+        }
+        Ok(())
+    }
+
+    pub fn check_crop(
+        &self,
+        patch_rows: usize,
+        patch_cols: usize,
+        projected_tokens: usize,
+    ) -> Result<usize> {
+        self.validate()?;
+        if patch_rows == 0 || patch_cols == 0 || projected_tokens == 0 {
+            candle::bail!("LFM2-VL crop dimensions and projected token count must be positive")
+        }
+        let patches = patch_rows
+            .checked_mul(patch_cols)
+            .ok_or_else(|| candle::Error::Msg("LFM2-VL crop patch count overflow".into()))?;
+        if patches > self.max_patches_per_crop {
+            candle::bail!(
+                "LFM2-VL crop has {patches} patches, exceeding limit {}",
+                self.max_patches_per_crop
+            )
+        }
+        if projected_tokens > self.max_total_projected_tokens {
+            candle::bail!(
+                "LFM2-VL crop has {projected_tokens} projected tokens, exceeding request limit {}",
+                self.max_total_projected_tokens
+            )
+        }
+        Ok(patches)
+    }
+
+    pub fn check_total_projected_tokens(&self, projected_tokens: usize) -> Result<()> {
+        self.validate()?;
+        if projected_tokens == 0 {
+            candle::bail!("LFM2-VL request must contain projected image tokens")
+        }
+        if projected_tokens > self.max_total_projected_tokens {
+            candle::bail!(
+                "LFM2-VL request has {projected_tokens} projected tokens, exceeding limit {}",
+                self.max_total_projected_tokens
+            )
+        }
+        Ok(())
+    }
+
+    pub fn check_request(
+        &self,
+        image_count: usize,
+        crop_count: usize,
+        projected_tokens: usize,
+    ) -> Result<()> {
+        self.validate()?;
+        self.check_image_count(image_count)?;
+        self.check_total_crops(crop_count)?;
+        self.check_total_projected_tokens(projected_tokens)
+    }
+}
+
 fn default_image_token_id() -> u32 {
     DEFAULT_LFM2_VL_IMAGE_TOKEN_ID
 }
@@ -334,5 +527,57 @@ mod tests {
         let config = Lfm2VlConfig::from_json(&value.to_string())?;
         assert!(!config.text_config.tie_embedding);
         Ok(())
+    }
+
+    #[test]
+    fn vision_limits_accept_boundaries_and_reject_overages() -> Result<()> {
+        let limits = VisionLimits {
+            max_source_pixels: 6,
+            max_images: 2,
+            max_crops_per_image: 2,
+            max_total_crops: 3,
+            max_patches_per_crop: 6,
+            max_total_projected_tokens: 5,
+        };
+        limits.validate()?;
+        assert_eq!(limits.check_source_image(3, 2)?, 6);
+        limits.check_crops_per_image(2)?;
+        assert_eq!(limits.check_crop(2, 3, 5)?, 6);
+        limits.check_request(2, 3, 5)?;
+
+        assert!(limits.check_source_image(7, 1).is_err());
+        assert!(limits.check_image_count(3).is_err());
+        assert!(limits.check_crops_per_image(3).is_err());
+        assert!(limits.check_total_crops(4).is_err());
+        assert!(limits.check_crop(1, 7, 5).is_err());
+        assert!(limits.check_total_projected_tokens(6).is_err());
+        assert!(limits.check_source_image(usize::MAX, 2).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn vision_limits_reject_zero_caps() {
+        assert!(VisionLimits {
+            max_images: 0,
+            ..VisionLimits::default()
+        }
+        .validate()
+        .is_err());
+    }
+
+    #[test]
+    fn vision_limits_reject_configured_values_above_hard_ceilings() {
+        assert!(VisionLimits {
+            max_source_pixels: MAX_VISION_SOURCE_PIXELS + 1,
+            ..VisionLimits::default()
+        }
+        .validate()
+        .is_err());
+        assert!(VisionLimits {
+            max_total_projected_tokens: usize::MAX,
+            ..VisionLimits::default()
+        }
+        .validate()
+        .is_err());
     }
 }

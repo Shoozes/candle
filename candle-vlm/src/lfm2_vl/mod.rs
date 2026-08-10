@@ -5,6 +5,7 @@ pub mod processor;
 pub mod prompt;
 pub mod types;
 
+pub use candle_transformers::models::lfm2_vl::VisionLimits;
 pub use config::{
     GgufProcessorMetadata, Lfm2VlProcessorConfig, ProcessorConfigOverride, ProcessorConfigPatch,
 };

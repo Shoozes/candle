@@ -1464,6 +1464,7 @@ pub(crate) mod tests {
             rms_norm_eps: text.norm_eps,
             rope_freq_base: text.rope_theta,
             shortconv_l_cache: text.conv_l_cache,
+            eos_token_id: None,
             tied_output: true,
         }
     }

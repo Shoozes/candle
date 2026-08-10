@@ -277,6 +277,7 @@ pub struct Lfm2GgufMetadata {
     pub rms_norm_eps: f64,
     pub rope_freq_base: f32,
     pub shortconv_l_cache: usize,
+    pub eos_token_id: Option<u32>,
     pub tied_output: bool,
 }
 
@@ -361,6 +362,13 @@ pub fn inspect_gguf_metadata(ct: &gguf_file::Content) -> Result<Lfm2GgufMetadata
         None => 1_000_000f32,
     };
     let shortconv_l_cache = md_get("lfm2.shortconv.l_cache")?.to_u32()? as usize;
+    let eos_token_id = ct
+        .metadata
+        .get("tokenizer.ggml.eos_token_id")
+        .map(value_to_usize)
+        .transpose()?
+        .map(|token_id| u32::try_from(token_id).map_err(candle::Error::wrap))
+        .transpose()?;
     if head_count == 0 || embedding_length == 0 || embedding_length > MAX_LFM2_GGUF_EMBEDDING {
         bail!(
             "invalid quantized LFM2 embedding/head dimensions: embedding_length={embedding_length}, head_count={head_count}"
@@ -424,6 +432,7 @@ pub fn inspect_gguf_metadata(ct: &gguf_file::Content) -> Result<Lfm2GgufMetadata
         rms_norm_eps,
         rope_freq_base,
         shortconv_l_cache,
+        eos_token_id,
         tied_output,
     })
 }
@@ -466,6 +475,14 @@ impl ModelWeights {
             bail!(
                 "quantized LFM2 token embedding width {loaded_embedding_length} does not match GGUF metadata {embedding_length}"
             )
+        }
+        if let Some(eos_token_id) = metadata.eos_token_id {
+            let eos_index = usize::try_from(eos_token_id).map_err(candle::Error::wrap)?;
+            if eos_index >= vocab_size {
+                bail!(
+                    "quantized LFM2 EOS token ID {eos_token_id} is outside vocabulary size {vocab_size}"
+                )
+            }
         }
         tracing::debug!(
             tok_embd_shape = ?tok_embeddings.shape().dims(),
@@ -841,6 +858,7 @@ mod tests {
                 rms_norm_eps: 1e-5,
                 rope_freq_base: 10_000.0,
                 shortconv_l_cache: 1,
+                eos_token_id: Some(2),
                 tied_output: false,
             },
             masks: HashMap::new(),

@@ -20,10 +20,10 @@
 
 ## Current Phase
 
-- Phase: 7 — Native Q8_0 Vision and Projector Linear Execution
-- Task: Retain eligible Q8_0 GGUF vision/projector matrices as quantized storage, execute them through Candle `QMatMul`, preserve dense biases/norms/positions/patch projection and the Phase 6 dense loader, and prove image-feature plus hybrid prefill/decode/cache behavior
-- Scope: CPU F32 native Q8_0 linears for vision Q/K/V/out, vision MLP, and both projector matrices; mixed dense eligible matrices; strict lower-bit/dense-role/alignment rejection; automatic direct-GGUF example selection with explicit execution diagnostics; deterministic two-layer and committed hybrid fixtures; no production tensor payload download, llama.cpp runtime comparison, generated-caption parity, executed CUDA parity, or lower-bit native vision operators
-- Status: Implementation, full local Rust/Python verification, strict scoped Clippy, the exact staged locked/offline baseline, checkpoint commit/tag, and the assigned worker's final re-audit are complete with no remaining P0/P1 defect in the bounded CPU-F32 scope.
+- Phase: Post-Phase 7 Stabilization — Bounded Oracle Complete; Official 450M CPU-F32 Next
+- Task: Publish the locally verified NR-4/NR-5A checkpoint for review, then execute official 450M native CPU-F32 component parity
+- Scope: deterministic native/split/direct inference evidence, immutable llama.cpp bundle identity, suspended Job Object containment, and local-only verification; no new model execution, hosted verification, GitHub Actions, PR, or secret inspection in NR-5A
+- Status: The runner implementation, exact file-level native/split/direct provenance, GGUF EOS metadata, 26/26 focused example tests, 32/32 focused transformer/LFM2 tests, full core/transformer/VLM tests, strict scoped Clippy, full baseline, exact mod/fork classification, local same-artifact decoded output, and the harmless bounded-oracle process-tree smoke suite are green. The exact pinned llama.cpp b10335 owner build passes a bounded no-model identity probe. Official-base payload parity remains unclaimed. The designated independent NR-4 worker could not start because its Codex agent loop died; the manager audit closed the direct-provenance coverage gap, but no independent NR-4 verdict is claimed.
 
 ## Source-Lock Results
 
@@ -36,7 +36,7 @@
 - Transformers.js: `353007be131c2e44d16d46ba49b9a56f2955dfd8`
 - Official safetensors metadata: 349 tensors for 450M and 589 for 1.6B; header-only Range reads; zero tensor payload bytes
 - Official 450M MMProj GGUF: `166cd80bbe157dc86d65f964eb8cc6a2cede62ca`; F16 and Q8_0 headers each 12,736 bytes, 32 metadata records, 201 tensors, zero retained tensor payload bytes
-- Production weights or complete GGUF files downloaded: none
+- Production weight payloads or complete GGUF files downloaded by this project: none. NR-4 downloaded only the pinned official 450M `tokenizer.json`; the complete GGUF files under `C:\llamacpp` pre-existed this worktree.
 
 ## Source-Lock Verification
 
@@ -183,6 +183,78 @@
 - Phase 7 checkpoint/tag: complete at commit `1a9cf291ba9a1bbac1de83029f9d8f057aca00b5`, annotated tag `lfm2-vl-phase-7-q8`
 - Not claimed: production-checkpoint numerical parity, production MMProj payload execution, llama.cpp runtime numerical parity, executed native-Q8 CUDA parity, generated-caption parity, or lower-bit native vision execution
 
+## Vision Safety Limits Verification
+
+- Candidate base HEAD: `f14a46a6967c38e84d99c08801234fd98aa2203a`; WSL2 `NVIDIA-Workbench`; CPU-only, locked, offline lane; no network, model payload, hosted runner, commit, tag, push, or PR
+- Shared contract: default and hard ceilings are 67,108,864 pixels per source/derived image surface, 16 images, 11 crops per image, 64 total crops, 1,024 patches per crop, and 65,536 projected tokens; configuration can only tighten them
+- Pre-allocation order: raw images are checked before RGB conversion/resizing/cropping/patchification; external prompt batches are revalidated before expansion; packed shapes, ranges, resized surfaces, spatial values, masks, projected counts, and vision batch size are checked before MMProj device transfer
+- Focused transformer command: `cargo test --locked --offline -p candle-transformers lfm2_vl -- --nocapture`; 27/27 passed
+- Focused VLM command: `cargo test --locked --offline -p candle-vlm lfm2_vl -- --nocapture`; 24/24 passed; all existing processor fixture tensors retain maximum absolute error `1.192092896e-7`
+- Full Rust command: `cargo test --locked --offline -p candle-core -p candle-transformers -p candle-vlm`; passed 21/21 core library tests plus all core integration/doc tests, 53/53 transformer library tests, 5/5 generation tests, 8/8 NMS tests, and 29/29 VLM tests
+- Checks: locked/offline `cargo check` passed for `candle-core`, `candle-nn`, `candle-transformers`, and `candle-vlm`; the `lfm2`, `quantized-lfm2`, and `lfm2-vl` examples all passed
+- Strict scoped Clippy: core/transformer/VLM libraries and the `lfm2-vl` example passed with `-D warnings` plus the five recorded pre-existing Rust 1.97 allowances
+- Full baseline: `bash scripts/lfm2-vl/verify-baseline.sh` passed from `2026-08-10T14:11:01Z` to `2026-08-10T14:12:00Z`, including formatting, affected crates, all three examples, and staged/unstaged diff checks; verifier-only Cargo.lock SHA-256 `acd9419056b786da820b5120db8e78be06902721689c39b55f29445abdddaffc`
+- Independent re-audit: the assigned GPT-5.6 Luna worker found no remaining P0/P1 or concrete P2; it confirmed hard ceilings, resized-surface coverage, the non-exhaustive pre-release API boundary, full pre-transfer validation, and removal of the merge coverage allocation
+- Not claimed: pre-decode image-file header enforcement, production-payload parity, llama.cpp runtime parity, executed CUDA parity, generated-caption parity, or lower-bit native vision execution
+
+## Example Execution Policy Verification
+
+- Candidate base HEAD: `f14a46a6967c38e84d99c08801234fd98aa2203a`; WSL2 `NVIDIA-Workbench`; CPU-only, locked, offline lane; no network, model payload, hosted runner, commit, tag, push, or PR
+- Compatibility: both original positional split-MMProj loading and explicit path flags remain accepted; `--processor-config`, `--cpu`, and `--vision-cpu` retain their prior meanings
+- Dtype policy: absent `--dtype` remains F32 on CPU and BF16 on CUDA; all canonical and long-form F32/BF16/F16 spellings are covered; diagnostics distinguish requested/defaulted from resolved dtype
+- Execution policy: split input resolves dense; direct GGUF auto/dense/Q8 maps to `load_gguf_auto`/`load_gguf`/`load_gguf_q8`; strict Q8 rejects split input and non-F32 activations before any model/tokenizer file is opened
+- Focused command: `cargo test --locked --offline -p candle-examples --example lfm2-vl`; 10/10 parser, placement-policy, routing-matrix, pre-I/O, help, and controlled-error tests passed
+- Affected check: `cargo check --locked --offline -p candle-examples --example lfm2-vl`; passed
+- Strict scoped Clippy: the `lfm2-vl` example passed with `-D warnings` plus the five recorded pre-existing Rust 1.97 allowances
+- Full baseline: `bash scripts/lfm2-vl/verify-baseline.sh` passed from `2026-08-10T14:39:59Z` to `2026-08-10T14:40:33Z`, including formatting, all required library and example checks, and staged/unstaged diff checks; verifier-only Cargo.lock SHA-256 `acd9419056b786da820b5120db8e78be06902721689c39b55f29445abdddaffc`
+- Independent final re-audit: the assigned GPT-5.6 Luna worker confirmed requested/defaulted and resolved dtype diagnostics, all six dtype spellings, the tested device policy consumed by `main`, loader routing, and pre-I/O Q8 rejection; no P0/P1/P2 defect remains
+- Not claimed: successful production-file loading, production numerical parity, executed CUDA behavior, or llama.cpp runtime parity
+
+## Native Unified Checkpoint Verification
+
+- Candidate base HEAD: `f14a46a6967c38e84d99c08801234fd98aa2203a`; WSL2 `NVIDIA-Workbench`; local-only, locked, offline CPU lane; no network, model payload, hosted runner, commit, tag, push, or PR
+- File contract: require exactly one `model.safetensors` or `model.safetensors.index.json`; canonicalize every file under the model directory; bound index/header/file/aggregate sizes, shard/tensor counts, shapes, offsets, overlaps, gaps, and payload coverage before memory mapping
+- Model contract: derive the complete expected inventory from normalized configuration; accept the official `model.vision_tower.vision_model` root and committed-fixture direct root; support tied embeddings or explicit `lm_head`; reject missing, unexpected, or shape-incompatible tensors before payload construction
+- Pairing contract: require local `config.json`, `processor_config.json`, and `tokenizer.json`; apply explicit processor override precedence; require processor patch/downsample compatibility and exact tokenizer/model image-token ID agreement
+- Placement contract: explicit dtype applies to both native components; default dtype resolves independently per text and vision device, and distinct dtype builders are not silently shared
+- Focused command: `cargo test --locked --offline -p candle-examples --example lfm2-vl`; 19/19 passed, covering actual tiny single/sharded safetensors, canonical/direct roots, tied/explicit heads, exact official 349/589 inventories, independent component dtypes, wrong index mappings, bad `total_size`, duplicate shard tensors, traversal, missing files, and pairing failures
+- Official header contract: bounded pinned Range reads consumed 46,864 and 82,400 header bytes and zero payload bytes; canonical sorted name/BF16/shape SHA-256 values are `08f544b4495804ed842a37acf0936544ec88aa5d947bef8304a47816fee5b1a7` for 450M and `24728d0ed10229e788c5b9baf25e0cc6c92c93b9cdb12ebb252a3c140a861703` for 1.6B; the test also asserts raw FFN 6,656/12,288 normalization to 4,608/8,192
+- Full Rust command: `cargo test --locked --offline -p candle-core -p candle-transformers -p candle-vlm`; passed all core library/integration/doc tests, 53/53 transformer library tests, 5/5 generation tests, 8/8 NMS tests, and 29/29 VLM tests
+- Strict scoped Clippy: core/transformer/VLM libraries and the `lfm2-vl` example passed with `-D warnings` plus the five recorded pre-existing Rust 1.97 allowances
+- Full baseline: `bash scripts/lfm2-vl/verify-baseline.sh` passed from `2026-08-10T15:42:32Z` to `2026-08-10T15:43:14Z`, including formatting, all required library/example checks, and both diff gates; verifier-only Cargo.lock SHA-256 `7292957b78b688fe2d8d0f61ba5987b92638d6138a0faa9a13db014d09b06a26`
+- Launcher note: the first non-login WSL invocation at `2026-08-10T15:29:39Z` stopped before the formatting step because `cargo` was absent from that shell's `PATH`; the corrected login-shell command above is the verification result
+- Integrity boundary: checkpoint files are an immutable local snapshot from header inspection through the returned model lifetime, as required by memory-mapped safetensors
+- CUDA source boundary: the feature-gated native test covers distinct-device construction/loading only; the earlier hybrid test owns projected-feature transfer and forward coverage. Executed native CUDA inference is not claimed.
+- Independent final re-audit: the assigned GPT-5.6 Luna worker confirmed the full official inventory digests, correct raw-to-effective FFN normalization, independent dtype policy, indexed-shard defenses, roots, tied/explicit heads, pairing, pre-payload rejection, CLI routing, mmap precondition, and honest CUDA scope; no P0/P1/P2 finding remains
+- Reference-suite note: the ad hoc system-Python discovery command could not import `pytest`, and the previously documented repo `.venv` is not present in this checkout. No dependency was installed; the changed lock JSON was parsed directly and the exact digests are enforced by the green Rust test.
+- Not claimed: production-payload construction or numerical parity, generated output, local llama.cpp runtime parity, executed native CUDA inference, or lower-bit native vision execution
+
+## Deterministic Runner and Local llama.cpp Verification
+
+- Candidate base HEAD: `f14a46a6967c38e84d99c08801234fd98aa2203a`; local-only CPU execution; no hosted runner, commit, tag, push, PR, production-weight download, or secret inspection
+- Runner contract: `candle-lfm2-vl-inference-v1`; bounded prompt/image/generation inputs; deterministic greedy selection with lower-token-ID tie breaking; finite-logit enforcement; full F32-logit SHA-256 plus top-5 per step; exact expanded prompt, token IDs, image spans, crop metadata, packed tensor shapes, EOS provenance, decoded forms, and two-run cache-reset equality
+- Artifact evidence: native, split, and direct loaders provide the exact config, tokenizer, processor, index/shard, manifest, and weight files they consumed. The runner canonicalizes, deduplicates, sizes, and SHA-256 hashes each regular file and rejects directory-only evidence. Input files must remain immutable from loader open through report emission.
+- Focused command: `cargo test --locked --offline -p candle-examples --example lfm2-vl`; 26/26 passed. The real hybrid runner regression constructs deterministic text GGUF bytes from the committed tiny tensors, loads the committed split MMProj bundle, processes a generated 8x4 PNG, performs prefill plus three cached decode steps twice, resolves EOS from GGUF metadata, hashes all five consumed files, and serializes one-line JSON. A pure source-list regression asserts exact split, direct-GGUF, bundled-processor deduplication, and explicit-override inputs.
+- Focused transformer command: `cargo test --locked --offline -p candle-transformers lfm2 -- --nocapture`; 32/32 focused tests passed with the established deterministic GGUF hashes and numerical tolerances unchanged. Optional `tokenizer.ggml.eos_token_id` parsing and validation are covered.
+- Affected check: `cargo check --locked --offline -p candle-examples --example lfm2-vl`; passed in the WSL2 locked/offline lane.
+- Full Rust command: `cargo test --locked --offline -p candle-core -p candle-transformers -p candle-vlm`; passed all library, integration, and doc-test lanes with 53/53 transformer library tests, 5/5 generation tests, 8/8 NMS tests, and 29/29 VLM tests.
+- Strict scoped Clippy: core/transformer/VLM libraries and the `lfm2-vl` example passed with `-D warnings` plus the five recorded pre-existing Rust 1.97 allowances. The final example pass followed a small `GenerationInputs` grouping fix and the 26/26 test replay.
+- Full baseline: `bash scripts/lfm2-vl/verify-baseline.sh` passed from `2026-08-10T19:42:13Z` to `2026-08-10T19:42:46Z`, including formatting, every required library/example check, and both diff gates; verifier-only Cargo.lock SHA-256 `7292957b78b688fe2d8d0f61ba5987b92638d6138a0faa9a13db014d09b06a26`.
+- Provenance classification: relative to untouched Candle `31f35b147389700ed2a178ee66a91c3cc25cc80d`, the current 72-path delta is exactly nine fork-origin modifications plus 63 mod-owned additions. There are no unexpected baseline edits and no changed paths absent from `MOD_MANIFEST.md`.
+- Independent audit boundary: the designated GPT-5.6 Luna task failed to start with `agent loop died unexpectedly`. No replacement user task was created. The manager's local audit added the missing direct-GGUF source-list regression and found no remaining P0/P1/P2 defect in the NR-4 scope.
+- Resource incident: the completed local llama.cpp proof left PID 32000 resident with up to `131,549,319,168` private bytes. PowerShell, exact `taskkill`, Task Manager, and native termination attempts failed, timed out, or were denied. The PID later disappeared, but host performance and memory pressure did not recover sufficiently; an operator restart was required. WER recorded `RADAR_PRE_LEAK_64` and Windows recorded low-virtual-memory events. The legacy b9981 bundle is coherent and Defender/Code Integrity checks found no llama-related block. Exact root cause remains unproven; F-0008 records the evidence and closes the operational mystery with containment rather than a speculative attribution.
+- Bounded owner proof: `pwsh -NoProfile -NonInteractive -File scripts/lfm2-vl/test-bounded-oracle.ps1` passes harmless normal-exit, timeout/descendant, owner-exit, concurrent-name-refusal, suspended-start, assign-before-resume, and exact-PID-absence cases. The wrapper defaults to a 24 GiB ceiling, rejects limits above 75% of physical RAM, defaults CUDA graphs off, and writes atomic JSON evidence.
+- Installed oracle: `C:\llamacpp\llama-mtmd-cli.exe`, build b9981 / `(34558825a)`, 82,944 bytes, SHA-256 `01e191f9dd389b6e3b091eeaa8b6142784bd0e1b0e19ed7c67039afc6626ae1d`
+- Manual current comparison: `C:\llamacpp\tools-b10344\llama-mtmd-cli.exe`, 84,480 bytes, SHA-256 `78ef208334fec62d62068cfd242a0b7358c602211125ceead3dd82b1347f717c`; inventoried read-only and not used as the pinned authority.
+- Pinned owner oracle: ignored bundle `artifacts/llama-oracle/74ce1574-cuda-sm89/bundle`, exact source `74ce15741b420b8d6f12e720398458b576c51c2c`, CUDA 13.3/SM89/MSVC 19.33, executable SHA-256 `848e638069699149210b70945bdbb422494d7d03b8a18d7fb31a240d10e8abd0`. The parallel-1 build exited 0 with peak Job Object memory `7,889,661,952` bytes. Its bounded no-model probe reports `version: 10335 (74ce15741)`, peaks at `291,172,352` Job bytes, and verifies suspended assignment, exit 0, and PID absence. `bundle-manifest.json` records the complete EXE/DLL closure and hashes; no model was loaded.
+- Text GGUF: local fine-tuned SFT derivative, 219,310,432 bytes, SHA-256 `84540fa23696ab9000f4a670b72e3405962264a920c3b7582d0e5a38b978abae`; exact bounded header ends at byte 2,387,296, contains 27 metadata records and 148 tensors, and reports LFM2 hidden width 1,024, 16 layers, vocabulary 65,536, context 128,000, image token 396, and EOS 7
+- MMProj GGUF: 102,815,168 bytes, SHA-256 `ebfc428baa37efad8bae93864f914b2634a09009f91ad59f974fe1a1565d8561`. Its size and complete-file hash exactly match `LiquidAI/LFM2.5-VL-450M-GGUF@166cd80bbe157dc86d65f964eb8cc6a2cede62ca`, proving the local Q8_0 MMProj is byte-for-byte official.
+- Tokenizer: pinned `LiquidAI/LFM2.5-VL-450M@fc6221ca597f3315e4f82fc2df606783267b34ba/tokenizer.json`, 4,733,040 bytes, SHA-256 `f3910942aa907c48b0cc20ec426ee38bfa8dcda8feecf035ced981918cb30f14`; image token 396. The unrelated local 2.6B tokenizer was rejected because its image token 124,907 is outside this model's 65,536-token vocabulary.
+- Image: `candle-examples/examples/yolo-v8/assets/bike.jpg`, 182,991 bytes, SHA-256 `317e4a9d2d2be7859ba0ab8726a526f5ece9d77daf92857f3e93fb7b367824c1`, source dimensions 800x556
+- Aligned structure: llama.cpp and Candle used the same text/MMProj/tokenizer/image, deterministic greedy settings, 4,096-token context, eight requested tokens, and equivalent chat framing. Both produced 608x416 vision input, 247 projected tokens, and 268 prompt tokens; Candle recorded the image span as `[5, 252)`.
+- Exact output agreement: both runtimes decoded `A group of cyclists race on a road`. Candle generated IDs `[542, 2514, 803, 62480, 7736, 884, 768, 6671]` and tokens `["A", "Ġgroup", "Ġof", "Ġcyclists", "Ġrace", "Ġon", "Ġa", "Ġroad"]`; cache reset replay was exact. Candle prefill full-logit SHA-256 was `b2f21e55e855d162ecb3a4a91fdda102728c76c5e39c489377fb6ddae66d287b`.
+- Claim boundary: this proves same-artifact preprocessing structure and greedy decoded-sequence/output behavior for the local fine-tuned text GGUF plus official MMProj. It does not prove official-base text parity, installed-build identity with the pinned llama.cpp commit, or component/logit equality because `llama-mtmd-cli` exposes no stable intermediate/logit dump.
+
 ## Bootstrap Proof
 
 - Date: 2026-08-09 22:35 EDT (`2026-08-10T02:35:09Z` to `2026-08-10T02:35:12Z`)
@@ -225,6 +297,14 @@
 - The Phase 6 direct GGUF dense compatibility loader has exact dense/native image features, Q8_0-dequantized feature error `8.463021368e-5`, and direct-hybrid prefill/decode equal to the Phase 5 deterministic bounds.
 - Official F16 and Q8_0 MMProj physical shapes, dtype placement, metadata, and names are locked from exact zero-payload header ranges; only the patch tensor requires a layout inverse.
 - The Phase 7 native-Q8 path retains eligible GGUF weights as `QMatMul::QTensor`; the two-layer all-linear fixture reaches cosine `0.999923348`, and the committed hybrid fixture stays within `1.650899649e-4` prefill drift with exact cache reset.
+- Shared request-wide vision limits now reject zero, one-over, overflow, above-hard-ceiling, malformed packed metadata, and oversized derived surfaces before expensive allocation or MMProj device transfer while preserving every existing tiny fixture result.
+- The `lfm2-vl` example now exposes explicit dtype and MMProj execution intent, preserves original path and device flags, rejects invalid strict-Q8 policy before file I/O, and reports requested versus resolved policy.
+- The example now loads an unmodified local unified Hugging Face directory from single or indexed safetensors, validates the entire normalized tensor contract before mapping, honors tied output weights, pairs processor/tokenizer/config inputs, and resolves text/vision dtype independently by device.
+- The deterministic runner covers native and hybrid image prefill, cached decode, exact reset replay, finite full-logit hashes, stable top-k/token evidence, one-line JSON, and bounded external image/prompt/model-file diagnostics.
+- Native, split-MMProj, and direct-GGUF inference evidence identifies and hashes every exact consumed file; directory paths are not accepted as artifact identity.
+- The local fine-tuned text GGUF and byte-for-byte official Q8_0 MMProj produce the exact same eight-token caption under aligned deterministic Candle and llama.cpp execution.
+- The Windows bounded-oracle smoke suite proves suspended Job Object assignment before resume, timeout and owner-exit tree cleanup, concurrency refusal, and exact PID absence without loading a model.
+- The pinned llama.cpp b10335 CUDA/SM89 bundle is source-, build-, and file-identified and passes a 512 MiB/30-second bounded no-model identity probe with no residual process.
 - Tiny-fixture dense parity is within `2.38418579e-7` for hidden states and `2.98023224e-8` for logits; production-checkpoint and GGUF numerical parity remain unclaimed.
 
 ## Known Conflicts
@@ -234,10 +314,14 @@
 - llama.cpp PR #25524 for reading LFM2 tiling parameters from GGUF metadata is open and unmerged; official processor config remains authoritative.
 - The official MMProj headers omit all three tiling metadata keys; direct loading therefore depends on pinned architecture defaults or an explicit processor document.
 - The local WSL verifier exposes an RTX 4090 through the driver but has no Linux CUDA toolkit or `nvcc`; the committed distinct-device test remains an owner-scoped execution gap.
+- The legacy `C:\llamacpp` runtime is build `b9981` / `(34558825a)` and the manual `tools-b10344` bundle is a newer current-master comparison. Neither substitutes for the exact pinned b10335 owner build.
+- The only local text GGUF is a fine-tuned game-QA SFT derivative, not the official base checkpoint. Its pairing with the pinned official tokenizer and byte-identical official MMProj is proven for same-artifact execution, but it cannot serve as official-base text parity evidence.
+- `llama-mtmd-cli` exposes deterministic sampling controls but no stable logits or intermediate-tensor dump contract, so local llama.cpp can currently prove same-artifact prompt/token/output behavior, not component-tensor equality by itself.
+- A completed `llama-mtmd-cli` run remained attached under Codex with approximately 131.5 GB private memory, while normal exact-PID termination was denied or timed out. PID disappearance did not restore usable host performance; restart was required. WER leak evidence, virtual-memory pressure, related upstream CUDA/MTMD reports, and a possible Codex token/job boundary are recorded, but none is proven as the unique cause; see F-0008.
 
 ## Blockers
 
-- None for the bounded Phase 7 CPU-F32 checkpoint. The separately listed production-payload, llama.cpp-runtime, native-Q8 CUDA, and lower-bit evidence gaps are not claimed complete.
+- None for starting official 450M native CPU-F32 work or the pinned llama.cpp lane: containment and the no-model identity probe are green. Git publication still needs an accessible `origin`; this worktree currently has none, and local `gh` is unauthenticated. Official-base production payload parity, the 1.6B checkpoint, executed native-Q8 CUDA, and lower-bit evidence remain incomplete and unclaimed.
 
 ## Active Files
 
@@ -249,10 +333,16 @@
 - `candle-transformers/src/models/lfm2_vl/linear.rs`
 - `candle-core/src/quantized/gguf_file.rs`
 - `candle-vlm/`
+- `candle-vlm/src/lfm2_vl/config.rs`
+- `candle-vlm/src/lfm2_vl/processor.rs`
+- `candle-vlm/src/lfm2_vl/prompt.rs`
 - `candle-examples/examples/lfm2-vl/`
+- `candle-examples/examples/lfm2-vl/runner.rs`
 - `tools/lfm2_vl/reference/inspect_gguf_header.py`
 - `tools/lfm2_vl/reference/test_gguf_header.py`
 - `tools/export_lfm2_vl_mmproj.py`
+- `scripts/lfm2-vl/run-bounded-oracle.ps1`
+- `scripts/lfm2-vl/test-bounded-oracle.ps1`
 - `tests/fixtures/lfm2_vl_mmproj_tiny/`
 - `candle-transformers/src/models/mod.rs`
 - `candle-examples/examples/lfm2/main.rs`
@@ -260,11 +350,13 @@
 - `tools/lfm2_vl/reference/export_processor_fixture.py`
 - `docs/lfm2-vl/DECISIONS.md`
 - `docs/lfm2-vl/PARITY.md`
+- `docs/lfm2-vl/MOD_MANIFEST.md`
+- `docs/lfm2-vl/FAILURE_LOG.md`
 - `docs/lfm2-vl/STATUS.md`
 
 ## Next Task
 
-The Phase 7 CPU-F32 checkpoint and sprint audit are complete. Production-payload comparison against llama.cpp, executed native-Q8 CUDA, lower-bit vision formats, and later optimization work require separately authorized follow-ups.
+NR-5B — obtain the pinned official `LiquidAI/LFM2.5-VL-450M@fc6221ca597f3315e4f82fc2df606783267b34ba` native files only through the guarded production path. Record repository, revision, filename, size, and SHA-256; preflight host commit/physical/GPU memory; run CPU F32 first; and compare selected processor, vision, projector, merge, prefill, and cached-decode tensors against the pinned Transformers oracle. Use the bounded llama.cpp owner only for a later same-artifact comparison. Done when every selected production tensor is within the specified tolerance, the deterministic trace replays exactly, all consumed files are identified, the process tree is absent, and post-run host memory is healthy. Do not start 1.6B or CUDA inference before this gate is green.
 
 ---
-AI-edited: 2026-08-10T08:56:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-7 | change=closed the native Q8 checkpoint and recorded its bounded acceptance result
+AI-edited: 2026-08-10T15:41:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-nr5a | change=closed the memory incident operationally, proved the bounded pinned oracle, and advanced the exact next task to official 450M CPU-F32 parity

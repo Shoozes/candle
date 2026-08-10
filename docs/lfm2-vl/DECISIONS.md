@@ -290,5 +290,101 @@ Direct `QMatMul::QTensor` construction guarantees that this path cannot be silen
 Consequences:
 The two-layer block-aligned fixture retains all 14 eligible linears and records native/dense projected-feature max abs `5.300968885e-3` with cosine `0.999923348`. The committed hybrid fixture records image-feature max abs `1.533385366e-4`, prefill `1.650899649e-4`, cached decode no worse than `7.853843272e-5`, and exact cache reset. Native F16/BF16 activations, lower-bit vision execution, production-payload comparison, llama.cpp runtime parity, and executed native-Q8 CUDA remain outside this decision.
 
+## D-0023: Shared Request-Wide Vision Safety Limits
+
+Status: Accepted
+
+Decision:
+Define `VisionLimits` in the dependency-neutral `candle-transformers` LFM2-VL module and re-export it from `candle-vlm`. Use the same limits at the raw-image processor, prompt/metadata, packed native model, split MMProj, direct GGUF MMProj, and quantized-text composition boundaries. Preserve the existing `encode_images` APIs with safe defaults and add explicit `encode_images_with_limits` variants.
+
+Set the default and absolute implementation ceilings to 67,108,864 pixels per source or derived image surface, 16 images, 11 crops per image, 64 crops per request, 1,024 patches per crop, and 65,536 projected tokens per request. Processor/model/GGUF/explicit configuration may tighten these values through the normal precedence chain but cannot raise the hard ceilings. Treat `max_source_pixels` as a surface-allocation bound: it applies to source images, resized images, tiled canvases, crops, and packed `ImageMeta` surfaces.
+
+Run raw-image request preflight before RGB conversion, resizing, crop extraction, patchification, or packed-tensor reservation. Revalidate externally supplied batches in prompt expansion and at the packed model boundary. Validate tensor shapes, image/crop ranges, resized surfaces, spatial values, masks, projected-token counts, and vision batch size before an MMProj moves tensors across devices. Use checked arithmetic and fallible reservations for prompt expansion and reject predicted context overflow before constructing the expanded image string.
+
+Mark the two public `candle-vlm` processor configuration structs non-exhaustive. `candle-vlm` is new on this unreleased feature branch, so adding the initial safety contract is an intentional pre-release source-boundary change; no Candle 0.11 upstream public API is removed or changed.
+
+Why:
+Image dimensions, processor documents, packed tensors, and metadata can be untrusted. Checked arithmetic prevents integer overflow but does not stop a valid enormous allocation, and shallow shape checks do not protect a device transfer from malicious mask/spatial metadata. A shared, ceiling-bounded contract makes rejection order consistent and prevents individual entry points from bypassing request-wide budgets.
+
+Consequences:
+Exact-limit inputs remain valid; one-over, overflow, zero-limit, hard-ceiling, malformed metadata, and pre-transfer semantic cases return controlled errors. The existing tiny processor fixture remains numerically unchanged. The processor currently receives an already-decoded `DynamicImage`; a future file/CLI decoder must inspect dimensions before full decode where the codec permits it.
+
+## D-0024: Explicit Example Dtype and MMProj Execution Policy
+
+Status: Accepted
+
+Decision:
+Keep the `lfm2-vl` example dependency-free and move its fallible argument parser into a focused module. Preserve both the original three-position split-MMProj form and the explicit `--model-file` plus `--mmproj-file`/`--mmproj-dir` form, including `--processor-config`, `--cpu`, and `--vision-cpu`.
+
+Add explicit `--dtype f32|bf16|f16` and `--mmproj-execution auto|dense|q8` policy flags. An omitted dtype preserves the existing device-dependent policy: F32 on CPU and BF16 on CUDA. Split safetensors MMProj input is always dense. Direct GGUF `auto`, `dense`, and `q8` requests route respectively to `load_gguf_auto`, `load_gguf`, and `load_gguf_q8`. Strict Q8 requires a direct GGUF MMProj and F32 activations; reject either policy violation before opening the text model or tokenizer.
+
+Print requested/defaulted and resolved vision dtype separately, and print requested and resolved MMProj execution plus retained native-Q8 tensor count. Treat `float32`, `bfloat16`, and `float16` as dtype aliases; treat `dequantize`, `q8_0`, and `native-q8` as execution aliases. Keep device placement as a separately tested policy consumed by `main`.
+
+Why:
+The previous automatic path hid whether execution was selected by user intent or loader fallback. Explicit policy makes compatibility, benchmarking, and failure diagnosis reproducible while retaining every existing invocation form and avoiding a new CLI dependency.
+
+Consequences:
+Parser and load-plan tests cover defaults, every dtype spelling, aliases, conflicting path forms, missing/unknown values, CPU/vision-CPU placement, the complete input/execution routing matrix, and pre-I/O Q8 rejection. This decision changes only the local example interface and loader selection; model math, checkpoint formats, automatic GGUF semantics, production downloads, and CUDA claims are unchanged.
+
+## D-0025: Bounded Unmodified Native Checkpoint Loading
+
+Status: Accepted
+
+Decision:
+Add a local-only example loader for an unmodified Hugging Face LFM2-VL directory. Require exactly one unified `model.safetensors` or `model.safetensors.index.json`, canonicalize every referenced file beneath the model root, and bound JSON/header/file/aggregate bytes plus shard, tensor, shape, offset, and payload coverage before memory mapping. Validate the complete normalized configuration-derived inventory before constructing any model tensor.
+
+Resolve the official `model.vision_tower.vision_model`, `model.multi_modal_projector`, and `model.language_model` namespaces directly while retaining the shorter vision root used only by the committed tiny fixture. Reuse `model.language_model.embed_tokens.weight` when output embeddings are tied; require `lm_head.weight` otherwise. Require and pair `config.json`, `processor_config.json`, and `tokenizer.json`, with an optional explicit processor override. Resolve default text and vision dtypes independently from their devices; an explicit dtype applies to both. Treat the model directory as an immutable local snapshot for the lifetime of the memory-mapped model.
+
+Why:
+Native safetensors is the first production artifact format in the required execution order. Loading renamed or pre-split files would avoid proving the official namespace and shard contract, while mapping before full inventory validation would turn malformed external configuration into large allocations or partial construction. Separate component builders preserve distinct-device execution without silently forcing CPU vision to determine CUDA text dtype.
+
+Consequences:
+The focused suite constructs real single-file and indexed tiny checkpoints and covers canonical/direct vision roots, tied/explicit heads, processor/tokenizer mismatches, traversal, missing files, wrong shard mappings, bad index sizes, duplicate tensors, malformed inventories, and independent BF16/F32 component loading. Header-only tests compare every expected official name, BF16 dtype, and exact shape through canonical SHA-256 inventories, derive exactly 349 and 589 tensors, and assert raw FFN 6,656/12,288 normalization to 4,608/8,192. Production payloads, inference, and numerical parity remain separate gates.
+
+## D-0026: Local llama.cpp Is a Same-Artifact Parity Oracle
+
+Status: Accepted
+
+Decision:
+Use `C:\llamacpp` read-only as an execution oracle only when Candle and llama.cpp receive the same text model, MMProj, tokenizer, processor policy, image bytes, prompt, context, and deterministic decode settings. Keep the pinned llama.cpp revision in `SOURCES.md` as the implementation authority; record the installed runtime build separately and do not imply commit identity when it is unproven. Never compare the discovered fine-tuned SFT pair against official-base Candle weights and call the result parity.
+
+Build a deterministic Candle runner before executing comparisons. Compare exact preprocessing structure and prompt/token data where both runtimes expose it, then greedy decoded token sequences and output text. If the installed llama tools do not expose logits or intermediate tensors, mark those stages unavailable; captions or token agreement do not substitute for component-tensor parity.
+
+Why:
+Near-1:1 behavior is only meaningful under artifact identity. The installed b9981 runtime and local fine-tuned GGUF pair are useful independent evidence, but neither is the pinned source build nor the official base checkpoint. A strict same-artifact matrix prevents model, tokenizer, processor, sampling, or prompt differences from being misdiagnosed as an implementation defect.
+
+Consequences:
+No local llama.cpp inference runs until the GGUF/MMProj/tokenizer/processor pair is validated. Runtime comparisons will report the installed build, exact file identities, command lines, and available evidence stages. Official production parity still requires the pinned official artifacts and remains unclaimed.
+
+## D-0027: Deterministic Inference Is a File-Identified Replay Contract
+
+Status: Accepted
+
+Decision:
+Expose one bounded inference path for native safetensors and quantized-text hybrid models. Resolve and hash every exact file consumed by the loader rather than treating a model directory as artifact identity. Native evidence includes config, processor, tokenizer, optional index, every shard, and an optional processor override. Split-MMProj evidence includes its manifest, safetensors, processor document, text GGUF, and tokenizer. Direct-GGUF evidence includes the text GGUF, MMProj GGUF, tokenizer, and an explicit processor override when present. Directory-only evidence is rejected. Treat every local input as an immutable snapshot from loader open through report emission; mutable replacement during that interval is unsupported because native weights are memory-mapped and post-load hashing otherwise cannot identify the bytes already consumed.
+
+Process each image and encode its vision features once, then execute deterministic greedy prefill and cached decode twice from a cleared text cache. Require complete trace equality across both runs, including generated IDs/tokens, full F32-logit SHA-256 values, stable top-k with lower-token-ID tie breaking, stop reason, and decoded forms. Reject empty/non-finite/oversized logit surfaces. Resolve EOS by `CLI > native model config or GGUF metadata > tokenizer candidate`, and record the source. Emit a versioned one-line JSON record without timings.
+
+Why:
+Decoded text alone cannot distinguish artifact drift, prompt mismatch, cache leakage, nondeterminism, or a plausible but numerically unrelated answer. Canonical paths plus file sizes and hashes make comparisons reproducible, while exact replay makes cache reset an observed invariant rather than a claim. Timings are excluded because they would make otherwise identical evidence records differ.
+
+Consequences:
+Committed tests cover native and real split-MMProj hybrid image prefill, cached decode, EOS provenance, all consumed-file hashes, exact direct/split/override source lists, and exact reset replay. The local fine-tuned text GGUF plus byte-identical official MMProj produces the same eight-token caption in Candle and llama.cpp under aligned deterministic settings. That result is same-artifact runtime evidence only: official-base text parity and llama.cpp component/logit equality remain separate gates.
+
+## D-0028: Immutable llama.cpp Bundles and Suspended Job Containment
+
+Status: Accepted
+
+Decision:
+Keep the incident b9981 install, the user-supplied current b10344 tools, and the exact pinned source build as separate immutable bundles. Identify each by source/release revision, build configuration, executable/DLL inventory, size, and SHA-256. Do not repair suspected mixing by deleting or updating in place; first prove the bundle's internal provenance and import resolution.
+
+Run every expensive Windows llama.cpp build or oracle process through `scripts/lfm2-vl/run-bounded-oracle.ps1`. Serialize matching process names, create the child suspended, assign it before resume to a kill-on-close Job Object with per-process and per-job memory limits, enforce timeout, and require exact PID absence. Default CUDA graphs off for Windows CUDA/MTMD work while related upstream leak reports remain plausible; any override is explicit evidence. Admit a model only after a no-model identity probe and before/after physical, commit, and GPU memory census.
+
+Why:
+The completed b9981 parity run left approximately 131.5 GB of private allocation and could not be terminated through normal or elevated-looking paths. PID disappearance did not restore usable host performance; restart was required. Bundle audit found no DLL-mixing or Defender evidence, while WER recorded `RADAR_PRE_LEAK_64` and official llama.cpp reports describe related CUDA/MTMD memory growth. Containment is therefore required even though exact root cause is unresolved.
+
+Consequences:
+The harmless smoke suite proves normal exit, timeout plus descendant cleanup, owner-exit cleanup, concurrent-name refusal, suspended creation, assignment before resume, and exact PID absence. The legacy bundle remains evidence, b10344 is a comparison lane rather than the pinned parity authority, and the pinned source build is the preferred oracle. No real-model safety or numerical claim follows from the smoke test; the first bounded model run remains a separate gate.
+
 ---
-AI-edited: 2026-08-10T08:45:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-7 | change=accepted direct Q8 storage with strict roles and an explicit dense fallback
+AI-edited: 2026-08-10T15:34:55-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=bounded-llamacpp | change=made immutable bundles and suspended Job Object containment the Windows oracle contract

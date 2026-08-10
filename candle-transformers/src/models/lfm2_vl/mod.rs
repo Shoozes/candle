@@ -12,7 +12,10 @@ pub mod projector;
 pub mod weights;
 
 pub use config::{
-    projected_token_count, Lfm2VlConfig, Lfm2VlMmprojConfig, DEFAULT_LFM2_VL_IMAGE_TOKEN_ID,
+    projected_token_count, Lfm2VlConfig, Lfm2VlMmprojConfig, VisionLimits,
+    DEFAULT_LFM2_VL_IMAGE_TOKEN_ID, MAX_VISION_CROPS_PER_IMAGE, MAX_VISION_IMAGES,
+    MAX_VISION_PATCHES_PER_CROP, MAX_VISION_SOURCE_PIXELS, MAX_VISION_TOTAL_CROPS,
+    MAX_VISION_TOTAL_PROJECTED_TOKENS,
 };
 pub use gguf::{GgufMmprojExecution, GgufMmprojMetadata};
 pub use linear::LinearOp;
