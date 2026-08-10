@@ -104,5 +104,44 @@ Upstream Candle 0.11 intentionally ignores `Cargo.lock`, but the sprint requires
 Consequences:
 A fresh verification lane must resolve the lockfile deliberately, hydrate only the required local dependencies, and then run the phase verifier offline. Different lock hashes are different proof environments and must not be compared as identical baselines.
 
+## D-0009: Immutable Authority Order
+
+Status: Accepted
+
+Decision:
+Resolve every external source to an immutable revision and use the following authority order: official Transformers plus LiquidAI checkpoint files; mistral.rs as the Rust donor; llama.cpp for GGUF and independent parity; MLX-VLM and Transformers.js as secondary cross-checks; Candle only for local integration patterns.
+
+Why:
+The implementations evolve independently and have previously differed on image resizing, marker placement, positional interpolation, tiling, and config defaults.
+
+Consequences:
+A moving branch name is never sufficient evidence. When a secondary implementation disagrees with the pinned official config or Transformers output, the official behavior wins and the disagreement becomes a regression case.
+
+## D-0010: Reference-First Adaptation Boundary
+
+Status: Accepted
+
+Decision:
+Treat Transformers, llama.cpp, MLX-VLM, and Transformers.js as reference-only. Permit only narrow, explicitly attributed ports from the pinned MIT-licensed mistral.rs files, with the applicable notice retained.
+
+Why:
+Keeping the numerical oracle independent makes parity failures meaningful, while mistral.rs is the closest Candle-based donor and avoids re-inventing already-reviewed Rust structure.
+
+Consequences:
+Every directly adapted future file must cite repository, commit, path, license, and the parity test covering the port. No external implementation code was adapted during source locking.
+
+## D-0011: Header-Only Production Tensor Inventory
+
+Status: Accepted
+
+Decision:
+Use bounded safetensors HTTP Range reads to inspect production tensor headers without reading tensor payload bytes. Do not fetch production weights during source locking or reference-harness bootstrap.
+
+Why:
+The phase requires exact native names and shapes but explicitly excludes model downloads. Safetensors separates its JSON metadata header from tensor payloads.
+
+Consequences:
+`TENSOR_MAP.md` may record header-confirmed native shapes. Production numerics remain untested until the explicit production mode is invoked in a later phase.
+
 ---
-AI-edited: 2026-08-09T22:38:03-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=docs | change=recorded worktree and local lockfile decisions
+AI-edited: 2026-08-09T22:56:01-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=source-lock | change=locked source authority, adaptation, and header-only inventory decisions

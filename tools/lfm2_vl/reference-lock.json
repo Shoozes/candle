@@ -1,0 +1,682 @@
+{
+  "schema_version": 1,
+  "locked_at_utc": "2026-08-10T02:56:01Z",
+  "candle_baseline": {
+    "repository": "https://github.com/huggingface/candle",
+    "revision": "31f35b147389700ed2a178ee66a91c3cc25cc80d",
+    "tag": "0.11.0",
+    "authority_level": "integration-baseline"
+  },
+  "lock_policy": {
+    "moving_refs_resolved_to_immutable_revisions": true,
+    "production_weight_payloads_downloaded": false,
+    "safetensors_header_metadata_only": true,
+    "authority_order": [
+      "official-transformers-and-liquidai",
+      "mistral-rs-rust-donor",
+      "llama-cpp-gguf-and-parity",
+      "mlx-vlm-and-transformers-js-secondary",
+      "candle-integration-patterns"
+    ]
+  },
+  "repositories": [
+    {
+      "id": "huggingface-transformers",
+      "repository": "https://github.com/huggingface/transformers",
+      "observed_ref": "main",
+      "revision": "fd12552d770f745fdbe41031ff4daa688f5ed57e",
+      "revision_url": "https://github.com/huggingface/transformers/commit/fd12552d770f745fdbe41031ff4daa688f5ed57e",
+      "authority_level": "primary-numerical-oracle",
+      "license": {
+        "identifier": "Apache-2.0",
+        "path": "LICENSE",
+        "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/LICENSE"
+      },
+      "adaptation": {
+        "mode": "reference-only",
+        "reason": "Project policy keeps the numerical oracle independent from the Candle implementation."
+      },
+      "files": [
+        {
+          "path": "src/transformers/models/lfm2/configuration_lfm2.py",
+          "purpose": "LFM2 config defaults and normalization fields",
+          "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2/configuration_lfm2.py"
+        },
+        {
+          "path": "src/transformers/models/lfm2/modular_lfm2.py",
+          "purpose": "Authored modular LFM2 implementation",
+          "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2/modular_lfm2.py"
+        },
+        {
+          "path": "src/transformers/models/lfm2/modeling_lfm2.py",
+          "purpose": "Generated runtime LFM2 graph and tensor attributes",
+          "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2/modeling_lfm2.py"
+        },
+        {
+          "path": "src/transformers/models/lfm2_vl/configuration_lfm2_vl.py",
+          "purpose": "Composite LFM2-VL config",
+          "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/configuration_lfm2_vl.py"
+        },
+        {
+          "path": "src/transformers/models/lfm2_vl/modular_lfm2_vl.py",
+          "purpose": "Projector, pixel unshuffle, feature selection, and placeholder replacement",
+          "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/modular_lfm2_vl.py"
+        },
+        {
+          "path": "src/transformers/models/lfm2_vl/modeling_lfm2_vl.py",
+          "purpose": "Generated runtime LFM2-VL graph",
+          "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/modeling_lfm2_vl.py"
+        },
+        {
+          "path": "src/transformers/models/lfm2_vl/processing_lfm2_vl.py",
+          "purpose": "Prompt expansion and processor composition",
+          "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/processing_lfm2_vl.py"
+        },
+        {
+          "path": "src/transformers/models/lfm2_vl/image_processing_lfm2_vl.py",
+          "purpose": "Slow image-processing oracle",
+          "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/image_processing_lfm2_vl.py"
+        },
+        {
+          "path": "src/transformers/models/lfm2_vl/image_processing_lfm2_vl_fast.py",
+          "purpose": "Checkpoint-selected fast image processor",
+          "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/image_processing_lfm2_vl_fast.py"
+        },
+        {
+          "path": "src/transformers/models/siglip2/configuration_siglip2.py",
+          "purpose": "SigLIP2 config",
+          "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/siglip2/configuration_siglip2.py"
+        },
+        {
+          "path": "src/transformers/models/siglip2/modular_siglip2.py",
+          "purpose": "Authored modular SigLIP2 implementation",
+          "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/siglip2/modular_siglip2.py"
+        },
+        {
+          "path": "src/transformers/models/siglip2/modeling_siglip2.py",
+          "purpose": "Packed patch embedding, positional interpolation, masking, encoder, and post-norm",
+          "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/siglip2/modeling_siglip2.py"
+        }
+      ]
+    },
+    {
+      "id": "mistral-rs",
+      "repository": "https://github.com/EricLBuehler/mistral.rs",
+      "observed_ref": "master",
+      "revision": "8010b6a0578e416120b590ed72fd46ed5f24ee85",
+      "revision_url": "https://github.com/EricLBuehler/mistral.rs/commit/8010b6a0578e416120b590ed72fd46ed5f24ee85",
+      "authority_level": "primary-rust-donor-subordinate-to-transformers",
+      "license": {
+        "identifier": "MIT",
+        "copyright": "Copyright (c) 2024 Eric Buehler",
+        "path": "LICENSE",
+        "url": "https://github.com/EricLBuehler/mistral.rs/blob/8010b6a0578e416120b590ed72fd46ed5f24ee85/LICENSE"
+      },
+      "adaptation": {
+        "mode": "narrow-direct-adaptation-with-provenance-and-notice",
+        "excluded": [
+          "request-pipeline",
+          "sharded-loader",
+          "cache",
+          "sdpa",
+          "device-mapping",
+          "quantization-abstractions"
+        ]
+      },
+      "files": [
+        {
+          "path": "mistralrs-core/src/models/lfm2.rs",
+          "purpose": "LFM2 FFN normalization and embedding-driven text reference",
+          "url": "https://github.com/EricLBuehler/mistral.rs/blob/8010b6a0578e416120b590ed72fd46ed5f24ee85/mistralrs-core/src/models/lfm2.rs"
+        },
+        {
+          "path": "mistralrs-core/src/vision_models/lfm2_vl/config.rs",
+          "purpose": "Rust config normalization",
+          "url": "https://github.com/EricLBuehler/mistral.rs/blob/8010b6a0578e416120b590ed72fd46ed5f24ee85/mistralrs-core/src/vision_models/lfm2_vl/config.rs"
+        },
+        {
+          "path": "mistralrs-core/src/vision_models/lfm2_vl/mod.rs",
+          "purpose": "Projector, pixel unshuffle, and multimodal composition",
+          "url": "https://github.com/EricLBuehler/mistral.rs/blob/8010b6a0578e416120b590ed72fd46ed5f24ee85/mistralrs-core/src/vision_models/lfm2_vl/mod.rs"
+        },
+        {
+          "path": "mistralrs-core/src/vision_models/lfm2_vl/vision.rs",
+          "purpose": "Candle-based SigLIP2 NaFlex vision reference",
+          "url": "https://github.com/EricLBuehler/mistral.rs/blob/8010b6a0578e416120b590ed72fd46ed5f24ee85/mistralrs-core/src/vision_models/lfm2_vl/vision.rs"
+        },
+        {
+          "path": "mistralrs-core/src/vision_models/lfm2_vl/inputs_processor.rs",
+          "purpose": "Dynamic tiling, prompt markers, and packed processor reference",
+          "url": "https://github.com/EricLBuehler/mistral.rs/blob/8010b6a0578e416120b590ed72fd46ed5f24ee85/mistralrs-core/src/vision_models/lfm2_vl/inputs_processor.rs"
+        }
+      ]
+    },
+    {
+      "id": "llama-cpp",
+      "repository": "https://github.com/ggml-org/llama.cpp",
+      "observed_ref": "master",
+      "revision": "74ce15741b420b8d6f12e720398458b576c51c2c",
+      "revision_url": "https://github.com/ggml-org/llama.cpp/commit/74ce15741b420b8d6f12e720398458b576c51c2c",
+      "authority_level": "gguf-names-conversion-and-independent-parity",
+      "license": {
+        "identifier": "MIT",
+        "copyright": "Copyright (c) 2023-2026 The ggml authors",
+        "path": "LICENSE",
+        "url": "https://github.com/ggml-org/llama.cpp/blob/74ce15741b420b8d6f12e720398458b576c51c2c/LICENSE"
+      },
+      "adaptation": {
+        "mode": "reference-only-unless-a-future-file-records-a-narrow-mit-port"
+      },
+      "files": [
+        {
+          "path": "conversion/lfm2.py",
+          "purpose": "LFM2 text and LFM2-VL mmproj conversion, metadata, and patch reshape",
+          "url": "https://github.com/ggml-org/llama.cpp/blob/74ce15741b420b8d6f12e720398458b576c51c2c/conversion/lfm2.py"
+        },
+        {
+          "path": "gguf-py/gguf/constants.py",
+          "purpose": "GGUF metadata and tensor names",
+          "url": "https://github.com/ggml-org/llama.cpp/blob/74ce15741b420b8d6f12e720398458b576c51c2c/gguf-py/gguf/constants.py"
+        },
+        {
+          "path": "gguf-py/gguf/tensor_mapping.py",
+          "purpose": "Hugging Face-to-GGUF tensor aliases",
+          "url": "https://github.com/ggml-org/llama.cpp/blob/74ce15741b420b8d6f12e720398458b576c51c2c/gguf-py/gguf/tensor_mapping.py"
+        },
+        {
+          "path": "src/models/lfm2.cpp",
+          "purpose": "Independent LFM2 text runtime",
+          "url": "https://github.com/ggml-org/llama.cpp/blob/74ce15741b420b8d6f12e720398458b576c51c2c/src/models/lfm2.cpp"
+        },
+        {
+          "path": "tools/mtmd/clip.cpp",
+          "purpose": "mmproj metadata loading and graph/preprocessor plumbing",
+          "url": "https://github.com/ggml-org/llama.cpp/blob/74ce15741b420b8d6f12e720398458b576c51c2c/tools/mtmd/clip.cpp"
+        },
+        {
+          "path": "tools/mtmd/clip-model.h",
+          "purpose": "Projector and preprocessing parameter structures",
+          "url": "https://github.com/ggml-org/llama.cpp/blob/74ce15741b420b8d6f12e720398458b576c51c2c/tools/mtmd/clip-model.h"
+        },
+        {
+          "path": "tools/mtmd/models/siglip.cpp",
+          "purpose": "SigLIP/LFM2 position resize, pixel unshuffle, and projector graph",
+          "url": "https://github.com/ggml-org/llama.cpp/blob/74ce15741b420b8d6f12e720398458b576c51c2c/tools/mtmd/models/siglip.cpp"
+        },
+        {
+          "path": "tools/mtmd/mtmd.cpp",
+          "purpose": "LFM2 media-marker and image-position token handling",
+          "url": "https://github.com/ggml-org/llama.cpp/blob/74ce15741b420b8d6f12e720398458b576c51c2c/tools/mtmd/mtmd.cpp"
+        },
+        {
+          "path": "tools/mtmd/mtmd-image.cpp",
+          "purpose": "Current LFM2 tiling and thumbnail preprocessing",
+          "url": "https://github.com/ggml-org/llama.cpp/blob/74ce15741b420b8d6f12e720398458b576c51c2c/tools/mtmd/mtmd-image.cpp"
+        }
+      ]
+    },
+    {
+      "id": "mlx-vlm",
+      "repository": "https://github.com/Blaizzy/mlx-vlm",
+      "observed_ref": "main",
+      "revision": "ffd7aeff0bd213c31534a969e0003d49451eef39",
+      "revision_url": "https://github.com/Blaizzy/mlx-vlm/commit/ffd7aeff0bd213c31534a969e0003d49451eef39",
+      "authority_level": "secondary-independent-cross-check",
+      "license": {
+        "identifier": "MIT",
+        "copyright": "Copyright © 2025 Prince Canuma",
+        "path": "LICENSE",
+        "url": "https://github.com/Blaizzy/mlx-vlm/blob/ffd7aeff0bd213c31534a969e0003d49451eef39/LICENSE"
+      },
+      "adaptation": {
+        "mode": "reference-only"
+      },
+      "files": [
+        {
+          "path": "mlx_vlm/models/lfm2_vl/config.py",
+          "purpose": "Secondary config cross-check",
+          "url": "https://github.com/Blaizzy/mlx-vlm/blob/ffd7aeff0bd213c31534a969e0003d49451eef39/mlx_vlm/models/lfm2_vl/config.py"
+        },
+        {
+          "path": "mlx_vlm/models/lfm2_vl/language.py",
+          "purpose": "Secondary LFM2 language cross-check",
+          "url": "https://github.com/Blaizzy/mlx-vlm/blob/ffd7aeff0bd213c31534a969e0003d49451eef39/mlx_vlm/models/lfm2_vl/language.py"
+        },
+        {
+          "path": "mlx_vlm/models/lfm2_vl/lfm2_vl.py",
+          "purpose": "Secondary composite model and projector cross-check",
+          "url": "https://github.com/Blaizzy/mlx-vlm/blob/ffd7aeff0bd213c31534a969e0003d49451eef39/mlx_vlm/models/lfm2_vl/lfm2_vl.py"
+        },
+        {
+          "path": "mlx_vlm/models/lfm2_vl/processing_lfm2_vl.py",
+          "purpose": "Secondary crop-order and processor cross-check",
+          "url": "https://github.com/Blaizzy/mlx-vlm/blob/ffd7aeff0bd213c31534a969e0003d49451eef39/mlx_vlm/models/lfm2_vl/processing_lfm2_vl.py"
+        },
+        {
+          "path": "mlx_vlm/models/lfm2_vl/vision.py",
+          "purpose": "Secondary vision-shape cross-check",
+          "url": "https://github.com/Blaizzy/mlx-vlm/blob/ffd7aeff0bd213c31534a969e0003d49451eef39/mlx_vlm/models/lfm2_vl/vision.py"
+        }
+      ]
+    },
+    {
+      "id": "transformers-js",
+      "repository": "https://github.com/huggingface/transformers.js",
+      "observed_ref": "main",
+      "revision": "353007be131c2e44d16d46ba49b9a56f2955dfd8",
+      "revision_url": "https://github.com/huggingface/transformers.js/commit/353007be131c2e44d16d46ba49b9a56f2955dfd8",
+      "authority_level": "secondary-browser-runtime-cross-check",
+      "license": {
+        "identifier": "Apache-2.0",
+        "path": "LICENSE",
+        "url": "https://github.com/huggingface/transformers.js/blob/353007be131c2e44d16d46ba49b9a56f2955dfd8/LICENSE"
+      },
+      "adaptation": {
+        "mode": "reference-only"
+      },
+      "files": [
+        {
+          "path": "packages/transformers/src/models/lfm2/modeling_lfm2.js",
+          "purpose": "Secondary LFM2 runtime cross-check",
+          "url": "https://github.com/huggingface/transformers.js/blob/353007be131c2e44d16d46ba49b9a56f2955dfd8/packages/transformers/src/models/lfm2/modeling_lfm2.js"
+        },
+        {
+          "path": "packages/transformers/src/models/lfm2_vl/modeling_lfm2_vl.js",
+          "purpose": "Secondary LFM2-VL graph cross-check",
+          "url": "https://github.com/huggingface/transformers.js/blob/353007be131c2e44d16d46ba49b9a56f2955dfd8/packages/transformers/src/models/lfm2_vl/modeling_lfm2_vl.js"
+        },
+        {
+          "path": "packages/transformers/src/models/lfm2_vl/processing_lfm2_vl.js",
+          "purpose": "Secondary prompt processor cross-check",
+          "url": "https://github.com/huggingface/transformers.js/blob/353007be131c2e44d16d46ba49b9a56f2955dfd8/packages/transformers/src/models/lfm2_vl/processing_lfm2_vl.js"
+        },
+        {
+          "path": "packages/transformers/src/models/lfm2_vl/image_processing_lfm2_vl.js",
+          "purpose": "Secondary image processor cross-check",
+          "url": "https://github.com/huggingface/transformers.js/blob/353007be131c2e44d16d46ba49b9a56f2955dfd8/packages/transformers/src/models/lfm2_vl/image_processing_lfm2_vl.js"
+        },
+        {
+          "path": "packages/transformers/tests/models/lfm2/test_modeling_lfm2.js",
+          "purpose": "Secondary text test cases",
+          "url": "https://github.com/huggingface/transformers.js/blob/353007be131c2e44d16d46ba49b9a56f2955dfd8/packages/transformers/tests/models/lfm2/test_modeling_lfm2.js"
+        },
+        {
+          "path": "packages/transformers/tests/models/lfm2_vl/test_image_processing_lfm2_vl.js",
+          "purpose": "Secondary image-processing test cases",
+          "url": "https://github.com/huggingface/transformers.js/blob/353007be131c2e44d16d46ba49b9a56f2955dfd8/packages/transformers/tests/models/lfm2_vl/test_image_processing_lfm2_vl.js"
+        }
+      ]
+    }
+  ],
+  "model_repositories": [
+    {
+      "id": "LiquidAI/LFM2.5-VL-450M",
+      "repository": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M",
+      "observed_ref": "main",
+      "revision": "fc6221ca597f3315e4f82fc2df606783267b34ba",
+      "revision_url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M/tree/fc6221ca597f3315e4f82fc2df606783267b34ba",
+      "authority_level": "official-checkpoint-config-processor-tokenizer-and-tensor-header",
+      "license": {
+        "model_card_tag": "other",
+        "identifier": "LFM Open License v1.0",
+        "path": "LICENSE",
+        "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M/resolve/fc6221ca597f3315e4f82fc2df606783267b34ba/LICENSE"
+      },
+      "adaptation": {
+        "mode": "reference-artifacts-only",
+        "production_artifacts_may_be_committed": false
+      },
+      "files": [
+        {
+          "path": "config.json",
+          "purpose": "Official composite text, vision, projector, and token-ID config",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M/resolve/fc6221ca597f3315e4f82fc2df606783267b34ba/config.json"
+        },
+        {
+          "path": "processor_config.json",
+          "purpose": "Official image tiling, normalization, patch, and token-budget config",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M/resolve/fc6221ca597f3315e4f82fc2df606783267b34ba/processor_config.json"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "purpose": "Tokenizer special-token and behavior config",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M/resolve/fc6221ca597f3315e4f82fc2df606783267b34ba/tokenizer_config.json"
+        },
+        {
+          "path": "tokenizer.json",
+          "purpose": "Pinned tokenizer vocabulary and token-ID authority",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M/resolve/fc6221ca597f3315e4f82fc2df606783267b34ba/tokenizer.json"
+        },
+        {
+          "path": "chat_template.jinja",
+          "purpose": "Official multimodal chat-template and media-marker placement",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M/resolve/fc6221ca597f3315e4f82fc2df606783267b34ba/chat_template.jinja"
+        },
+        {
+          "path": "generation_config.json",
+          "purpose": "Official generation-token defaults",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M/resolve/fc6221ca597f3315e4f82fc2df606783267b34ba/generation_config.json"
+        },
+        {
+          "path": "LICENSE",
+          "purpose": "Model-artifact license",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M/resolve/fc6221ca597f3315e4f82fc2df606783267b34ba/LICENSE"
+        }
+      ],
+      "file_url_prefix": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M/resolve/fc6221ca597f3315e4f82fc2df606783267b34ba/",
+      "absent_files": [
+        "special_tokens_map.json",
+        "tokenizer.model",
+        "vocab.json"
+      ],
+      "safetensors_header": {
+        "file": "model.safetensors",
+        "ranges_read": [
+          "bytes=0-7",
+          "bytes=8-46871"
+        ],
+        "header_bytes": 46864,
+        "tensor_records": 349,
+        "tensor_payload_bytes_read": 0
+      },
+      "source_confirmed_config": {
+        "architecture": "Lfm2VlForConditionalGeneration",
+        "model_type": "lfm2_vl",
+        "image_token_id": 396,
+        "downsample_factor": 2,
+        "projector_hidden_size": 2048,
+        "projector_hidden_act": "gelu",
+        "projector_bias": true,
+        "projector_use_layernorm": false,
+        "text": {
+          "model_type": "lfm2",
+          "hidden_size": 1024,
+          "vocab_size": 65536,
+          "num_hidden_layers": 16,
+          "num_attention_heads": 16,
+          "num_key_value_heads": 8,
+          "intermediate_size": 6656,
+          "block_ff_dim": 6656,
+          "block_auto_adjust_ff_dim": true,
+          "block_ffn_dim_multiplier": 1.0,
+          "block_multiple_of": 256,
+          "conv_L_cache": 3,
+          "max_position_embeddings": 128000,
+          "full_attention_layers": [
+            2,
+            5,
+            8,
+            10,
+            12,
+            14
+          ]
+        },
+        "vision": {
+          "model_type": "siglip2_vision_model",
+          "hidden_size": 768,
+          "intermediate_size": 3072,
+          "num_hidden_layers": 12,
+          "num_attention_heads": 12,
+          "num_channels": 3,
+          "patch_size": 16,
+          "num_patches": 256
+        },
+        "processor": {
+          "type": "Lfm2VlImageProcessorFast",
+          "tile_size": 512,
+          "min_tiles": 2,
+          "max_tiles": 10,
+          "min_image_tokens": 64,
+          "max_image_tokens": 256,
+          "max_num_patches": 1024,
+          "use_thumbnail": true,
+          "image_mean": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "image_std": [
+            0.5,
+            0.5,
+            0.5
+          ]
+        },
+        "special_token_ids": {
+          "bos": 1,
+          "eos": 7,
+          "pad": 0
+        }
+      },
+      "derived_and_header_confirmed": {
+        "effective_ffn_size": 4608,
+        "projector_input_size": 3072,
+        "tied_output_embedding": true
+      }
+    },
+    {
+      "id": "LiquidAI/LFM2.5-VL-1.6B",
+      "repository": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B",
+      "observed_ref": "main",
+      "revision": "919fde3d022e3f90a4716006f993938ee8c2eb97",
+      "revision_url": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B/tree/919fde3d022e3f90a4716006f993938ee8c2eb97",
+      "authority_level": "official-checkpoint-config-processor-tokenizer-and-tensor-header",
+      "license": {
+        "model_card_tag": "other",
+        "identifier": "LFM Open License v1.0",
+        "path": "LICENSE",
+        "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B/resolve/919fde3d022e3f90a4716006f993938ee8c2eb97/LICENSE"
+      },
+      "adaptation": {
+        "mode": "reference-artifacts-only",
+        "production_artifacts_may_be_committed": false
+      },
+      "files": [
+        {
+          "path": "config.json",
+          "purpose": "Official composite text, vision, projector, and token-ID config",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B/resolve/919fde3d022e3f90a4716006f993938ee8c2eb97/config.json"
+        },
+        {
+          "path": "processor_config.json",
+          "purpose": "Official image tiling, normalization, patch, and token-budget config",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B/resolve/919fde3d022e3f90a4716006f993938ee8c2eb97/processor_config.json"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "purpose": "Tokenizer special-token and behavior config",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B/resolve/919fde3d022e3f90a4716006f993938ee8c2eb97/tokenizer_config.json"
+        },
+        {
+          "path": "tokenizer.json",
+          "purpose": "Pinned tokenizer vocabulary and token-ID authority",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B/resolve/919fde3d022e3f90a4716006f993938ee8c2eb97/tokenizer.json"
+        },
+        {
+          "path": "chat_template.jinja",
+          "purpose": "Official multimodal chat-template and media-marker placement",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B/resolve/919fde3d022e3f90a4716006f993938ee8c2eb97/chat_template.jinja"
+        },
+        {
+          "path": "generation_config.json",
+          "purpose": "Official generation-token defaults",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B/resolve/919fde3d022e3f90a4716006f993938ee8c2eb97/generation_config.json"
+        },
+        {
+          "path": "LICENSE",
+          "purpose": "Model-artifact license",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B/resolve/919fde3d022e3f90a4716006f993938ee8c2eb97/LICENSE"
+        }
+      ],
+      "file_url_prefix": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B/resolve/919fde3d022e3f90a4716006f993938ee8c2eb97/",
+      "absent_files": [
+        "special_tokens_map.json",
+        "tokenizer.model",
+        "vocab.json"
+      ],
+      "safetensors_header": {
+        "file": "model.safetensors",
+        "ranges_read": [
+          "bytes=0-7",
+          "bytes=8-82407"
+        ],
+        "header_bytes": 82400,
+        "tensor_records": 589,
+        "tensor_payload_bytes_read": 0
+      },
+      "source_confirmed_config": {
+        "architecture": "Lfm2VlForConditionalGeneration",
+        "model_type": "lfm2_vl",
+        "image_token_id": 396,
+        "downsample_factor": 2,
+        "projector_hidden_size": 2048,
+        "projector_hidden_act": "gelu",
+        "projector_bias": true,
+        "projector_use_layernorm": false,
+        "text": {
+          "model_type": "lfm2",
+          "hidden_size": 2048,
+          "vocab_size": 65536,
+          "num_hidden_layers": 16,
+          "num_attention_heads": 32,
+          "num_key_value_heads": 8,
+          "intermediate_size": 12288,
+          "block_ff_dim": 12288,
+          "block_auto_adjust_ff_dim": true,
+          "block_ffn_dim_multiplier": 1.0,
+          "block_multiple_of": 256,
+          "conv_L_cache": 3,
+          "max_position_embeddings": 128000,
+          "full_attention_layers": [
+            2,
+            5,
+            8,
+            10,
+            12,
+            14
+          ]
+        },
+        "vision": {
+          "model_type": "siglip2_vision_model",
+          "hidden_size": 1152,
+          "intermediate_size": 4304,
+          "num_hidden_layers": 27,
+          "num_attention_heads": 16,
+          "num_channels": 3,
+          "patch_size": 16,
+          "num_patches": 256
+        },
+        "processor": {
+          "type": "Lfm2VlImageProcessorFast",
+          "tile_size": 512,
+          "min_tiles": 2,
+          "max_tiles": 10,
+          "min_image_tokens": 64,
+          "max_image_tokens": 256,
+          "max_num_patches": 1024,
+          "use_thumbnail": true,
+          "image_mean": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "image_std": [
+            0.5,
+            0.5,
+            0.5
+          ]
+        },
+        "special_token_ids": {
+          "bos": 1,
+          "eos": 7,
+          "pad": 0
+        }
+      },
+      "derived_and_header_confirmed": {
+        "effective_ffn_size": 8192,
+        "projector_input_size": 4608,
+        "tied_output_embedding": true
+      }
+    }
+  ],
+  "llama_cpp_history": [
+    {
+      "role": "initial-lfm2-vl-support",
+      "pull_request": 15347,
+      "url": "https://github.com/ggml-org/llama.cpp/pull/15347",
+      "status": "merged",
+      "head_revision": "6fce2d590c8c87af61c622241625e419f9241fad",
+      "merge_revision": "65349f26f2299e06477ec8e85e46243046801358"
+    },
+    {
+      "role": "smart-resize-media-wrappers-and-antialiased-position-parity",
+      "pull_request": 17577,
+      "url": "https://github.com/ggml-org/llama.cpp/pull/17577",
+      "status": "merged",
+      "head_revision": "2385ecf1b7b2952a81e335d2be80bba18d611c5d",
+      "merge_revision": "2ba719519d950c5a62c00cdb8b119cc0914c1fa3"
+    },
+    {
+      "role": "lfm2-5-vl-tiling",
+      "pull_request": 19454,
+      "url": "https://github.com/ggml-org/llama.cpp/pull/19454",
+      "status": "merged",
+      "head_revision": "e9dfabb8553de0e74869faa88e4a3491f91c5e61",
+      "merge_revision": "262364e31d1da43596fe84244fba44e94a0de64e"
+    },
+    {
+      "role": "read-lfm2-tiling-parameters-from-gguf-metadata",
+      "pull_request": 25524,
+      "url": "https://github.com/ggml-org/llama.cpp/pull/25524",
+      "status": "open-unmerged-not-authoritative",
+      "head_revision": "e9d636c46df330e0372087d953b249c337898792"
+    }
+  ],
+  "secondary_fix_history": [
+    {
+      "repository_id": "mlx-vlm",
+      "role": "fix-lfm2-vl-model",
+      "pull_request": 1162,
+      "url": "https://github.com/Blaizzy/mlx-vlm/pull/1162",
+      "merge_revision": "8113973482620b67f8b553196fa26ac18a07dea8"
+    },
+    {
+      "repository_id": "mlx-vlm",
+      "role": "channels-last-image-preprocessing-fix",
+      "pull_request": 1190,
+      "url": "https://github.com/Blaizzy/mlx-vlm/pull/1190",
+      "merge_revision": "3d0db8db79ba7fd19726ac379dda475bcbccfbe3"
+    }
+  ],
+  "unresolved_conflicts": [
+    {
+      "id": "context-length",
+      "official_config": 128000,
+      "model_card": 32768,
+      "policy": "Use config for construction; production context policy remains unresolved."
+    },
+    {
+      "id": "tie-word-embeddings-omitted",
+      "checkpoint_field_present": false,
+      "transformers_default": true,
+      "safetensors_lm_head_present": false,
+      "policy": "Treat output as tied and test the missing-lm-head path."
+    },
+    {
+      "id": "image-wrapper-token-ids",
+      "known_image_placeholder_id": 396,
+      "unresolved": "Numeric IDs for wrapper, row-column, and thumbnail marker strings",
+      "policy": "Resolve in the pinned tokenizer config-only harness."
+    },
+    {
+      "id": "llama-cpp-tiling-metadata",
+      "open_pull_request": 25524,
+      "policy": "Official processor_config.json remains authoritative."
+    },
+    {
+      "id": "gguf-physical-orientation",
+      "known": "Converter-defined patch reshape and logical GGUF tensor names",
+      "unresolved": "Physical shapes and quantization types from a pinned production GGUF header",
+      "policy": "Inspect metadata without payload before implementing direct GGUF mmproj loading."
+    }
+  ]
+}
