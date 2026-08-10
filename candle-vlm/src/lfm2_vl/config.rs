@@ -239,9 +239,27 @@ impl Lfm2VlProcessorConfig {
     /// dependency. This conversion applies the bundled processor over the
     /// embedded model hints and validates the resolved result.
     pub fn from_mmproj_metadata(metadata: &MmprojMetadata) -> Result<Self> {
+        Self::from_mmproj_metadata_with_processor(metadata, None)
+    }
+
+    /// Resolve an MMProj's embedded processor facts with an optional explicit
+    /// processor document. For GGUF, embedded facts occupy the GGUF precedence
+    /// layer; for split bundles, the bundled JSON occupies the processor layer.
+    pub fn from_mmproj_metadata_with_processor(
+        metadata: &MmprojMetadata,
+        processor: Option<&ProcessorConfigPatch>,
+    ) -> Result<Self> {
         let processor_patch = ProcessorConfigPatch::from_value(&metadata.processor)?;
-        let model_patch = ProcessorConfigPatch::from_model_config(&metadata.manifest.model_config);
-        Self::resolve(None, Some(&processor_patch), None, Some(&model_patch))
+        let model_patch = ProcessorConfigPatch {
+            downsample_factor: Some(metadata.downsample_factor),
+            encoder_patch_size: Some(metadata.patch_size),
+            ..ProcessorConfigPatch::default()
+        };
+        if metadata.gguf_metadata().is_some() {
+            Self::resolve(None, processor, Some(&processor_patch), Some(&model_patch))
+        } else {
+            Self::resolve(processor, Some(&processor_patch), None, Some(&model_patch))
+        }
     }
 
     fn apply(&mut self, patch: &ProcessorConfigPatch) {
@@ -447,6 +465,27 @@ mod tests {
         )?;
         assert_eq!(resolved.max_image_tokens, 96);
         assert_eq!(resolved.downsample_factor, 2);
+        Ok(())
+    }
+
+    #[test]
+    fn sparse_official_gguf_metadata_retains_lfm2_vl_processor_defaults() -> Result<()> {
+        let gguf = ProcessorConfigPatch {
+            downsample_factor: Some(2),
+            encoder_patch_size: Some(16),
+            image_mean: Some([0.5; 3]),
+            image_std: Some([0.5; 3]),
+            ..ProcessorConfigPatch::default()
+        };
+        let resolved = Lfm2VlProcessorConfig::resolve(None, None, Some(&gguf), None)?;
+        assert_eq!(resolved.min_tiles, 2);
+        assert_eq!(resolved.max_tiles, 10);
+        assert!(resolved.use_thumbnail);
+        assert_eq!(resolved.tile_size, 512);
+        assert_eq!(resolved.min_image_tokens, 64);
+        assert_eq!(resolved.max_image_tokens, 256);
+        assert_eq!(resolved.max_num_patches, None);
+        assert_eq!(resolved.effective_max_num_patches()?, 1024);
         Ok(())
     }
 

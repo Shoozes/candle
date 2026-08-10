@@ -179,7 +179,8 @@ impl Lfm2VlModel {
         encode_images_with_parts(
             &self.vision_tower,
             &self.projector,
-            &self.config,
+            &self.config.vision_config,
+            self.config.downsample_factor,
             inputs,
             vision_batch_size,
         )
@@ -249,7 +250,8 @@ impl Lfm2VlModel {
 pub(super) fn encode_images_with_parts(
     vision_tower: &siglip2::Siglip2VisionModel,
     projector: &Lfm2VlProjector,
-    config: &Lfm2VlConfig,
+    vision_config: &siglip2::Siglip2VisionConfig,
+    downsample_factor: usize,
     inputs: &ProcessedVisionBatch,
     vision_batch_size: usize,
 ) -> Result<EncodedImages> {
@@ -266,7 +268,7 @@ pub(super) fn encode_images_with_parts(
     if inputs.spatial_shapes.dims() != [crop_count, 2] {
         candle::bail!("LFM2-VL spatial_shapes shape does not match pixel_values")
     }
-    if patch_dimension != config.vision_config.patch_dimension_for_vl()? {
+    if patch_dimension != vision_config.patch_dimension_for_vl()? {
         candle::bail!(
             "LFM2-VL patch dimension {patch_dimension} does not match vision configuration"
         )
@@ -289,7 +291,7 @@ pub(super) fn encode_images_with_parts(
                     crop.patch_cols
                 )
         }
-        let projected_tokens = config.projected_token_count(rows, cols)?;
+        let projected_tokens = super::projected_token_count(rows, cols, downsample_factor)?;
         if crop.projected_tokens != projected_tokens {
             candle::bail!(
                 "LFM2-VL crop {crop_index} metadata projects to {}, expected {projected_tokens}",
@@ -344,10 +346,10 @@ pub(super) fn encode_images_with_parts(
                 1,
                 rows,
                 cols,
-                config.vision_config.hidden_size,
+                vision_config.hidden_size,
             ))?;
             let projected = projector.forward(&crop_hidden)?.reshape((
-                config.projected_token_count(rows, cols)?,
+                super::projected_token_count(rows, cols, downsample_factor)?,
                 projector.output_size(),
             ))?;
             let token_count = projected.dim(0)?;

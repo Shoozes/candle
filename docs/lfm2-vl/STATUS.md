@@ -13,14 +13,15 @@
 - Phase 2 checkpoint: `74e109aec5f9801cfead3eeb27fe3f93ac646b84`
 - Phase 3 checkpoint: `37264b49cf74d0cf7697317eda0183f084db6ff8`
 - Phase 4 checkpoint: `8d1bbe471404848730685c98e7dd56b13a457eb4`
-- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`, `lfm2-vl-phase-1-text`, `lfm2-vl-phase-2-siglip2`, `lfm2-vl-phase-3-native-composite`, `lfm2-vl-phase-4-native-e2e`
+- Phase 5 checkpoint: `1535a0a5fef09f243811b83553b9c75baad78ee2`
+- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`, `lfm2-vl-phase-1-text`, `lfm2-vl-phase-2-siglip2`, `lfm2-vl-phase-3-native-composite`, `lfm2-vl-phase-4-native-e2e`, `lfm2-vl-phase-5-hybrid`
 
 ## Current Phase
 
-- Phase: 5 — Hybrid Quantized Text and Split Dense MMProj
-- Task: Pair quantized LFM2 GGUF text with a versioned, dense split-safetensors SigLIP2/projector bundle and prove image-feature, multimodal prefill, decode, cache-reset, pairing, and loader behavior
-- Scope: deterministic split exporter and fixture, strict manifest/inventory/provenance validation, bounded single-buffer safetensors loading, GGUF metadata hardening, quantized embedding-driven multimodal execution, typed processor metadata bridge, local-only example loading, and distinct-device test coverage; no direct GGUF mmproj parsing, quantized vision operators, production model download, generated-caption parity, or CUDA optimization
-- Status: The pinned Python suite is green at 19/19, `candle-transformers` is green at 42/42, `candle-vlm` is green at 25/25, the local example, scoped Clippy gates, and final staged baseline pass, and all nine worker-audit findings are resolved. The real CUDA distinct-device test is committed but locally skipped because this WSL environment exposes the RTX 4090 driver without a Linux `nvcc`/CUDA toolkit. The Phase 5 checkpoint is pending.
+- Phase: 6 — Direct llama.cpp-Compatible GGUF MMProj, Dense Compatibility Path
+- Task: Load an LFM2-VL MMProj directly from GGUF, reconstruct the proven SigLIP2/projector configuration, validate the complete artifact before allocation/inference, and prove dense and Q8_0-dequantized fixture behavior through multimodal prefill/decode/cache reset
+- Scope: official zero-payload GGUF-header lock, bounded GGUF directory parsing, duplicate/alignment hardening in Candle core, exact metadata/tensor/range validation, patch-only layout inversion, dense F32/F16/BF16 construction, processor/tokenizer pairing, direct/split example selection, and deterministic direct-hybrid tests; no production tensor payload download, llama.cpp runtime comparison, generated-caption parity, executed CUDA parity, or native quantized vision operators
+- Status: Implementation, full local verification, and the assigned worker's final re-audit are green with no remaining P0/P1 defect. The exact staged locked/offline baseline passed. Checkpoint commit and tag remain pending.
 
 ## Source-Lock Results
 
@@ -32,7 +33,8 @@
 - MLX-VLM: `ffd7aeff0bd213c31534a969e0003d49451eef39`
 - Transformers.js: `353007be131c2e44d16d46ba49b9a56f2955dfd8`
 - Official safetensors metadata: 349 tensors for 450M and 589 for 1.6B; header-only Range reads; zero tensor payload bytes
-- Production weights or GGUF files downloaded: none
+- Official 450M MMProj GGUF: `166cd80bbe157dc86d65f964eb8cc6a2cede62ca`; F16 and Q8_0 headers each 12,736 bytes, 32 metadata records, 201 tensors, zero retained tensor payload bytes
+- Production weights or complete GGUF files downloaded: none
 
 ## Source-Lock Verification
 
@@ -138,8 +140,27 @@
 - Independent worker re-audit: all nine implementation findings are resolved; the worker confirmed no code blocker remains and classified the CUDA result as an environment-owned evidence gap
 - Full locked/offline staged CPU baseline: passed `2026-08-10T10:07:11Z`–`2026-08-10T10:07:19Z` against pre-Phase-5-checkpoint HEAD `8d1bbe471404848730685c98e7dd56b13a457eb4` with exactly the Phase 5 candidate staged; retained log `artifacts/verification/hybrid-mmproj/baseline-final.log`; SHA-256 `594932158f4a99702cedd47ced1fe0ffd8e4aa18835346e65a0f9003963bc369`
 - Verifier-only Cargo.lock SHA-256: `acd9419056b786da820b5120db8e78be06902721689c39b55f29445abdddaffc`
-- Phase 5 checkpoint/tag: pending manager commit/tag
-- Not claimed: production-checkpoint numerical parity, production GGUF numerical parity, direct GGUF mmproj compatibility, executed CUDA parity, generated-caption parity, or quantized vision execution
+- Phase 5 checkpoint/tag: complete at commit `1535a0a5fef09f243811b83553b9c75baad78ee2`, annotated tag `lfm2-vl-phase-5-hybrid`
+- Not claimed at Phase 5: production-checkpoint numerical parity, production GGUF numerical parity, direct GGUF mmproj compatibility, executed CUDA parity, generated-caption parity, or quantized vision execution
+
+## Phase 6 Verification
+
+- Phase 5 checkpoint/tag: complete at commit `1535a0a5fef09f243811b83553b9c75baad78ee2`, annotated tag `lfm2-vl-phase-5-hybrid`
+- Official header evidence: `LiquidAI/LFM2.5-VL-450M-GGUF@166cd80bbe157dc86d65f964eb8cc6a2cede62ca`; exact range `bytes=0-12735`; header end 12,708; aligned tensor-data offset 12,736; 32 metadata records; 201 tensors; tensor-name SHA-256 `45e3f6cf0b51dc9f5e458b8af3375d368cc59daff70b79e2938c7490a94df828`; zero retained payload bytes
+- Official dtype evidence: F16 file 75 F16 plus 126 F32 tensors, prefix SHA-256 `338099d49dd803963c9496cfbba56ab46a425ca7895c5edf59010337ae4436ac`; Q8_0 file 74 Q8_0 plus 127 F32 tensors, prefix SHA-256 `7a4f0f1e168d52b70a03f2773f0f20b9f65d1692f8e973aa0cf9ecee25e43d1c`
+- Loader contract: one stable handle; required `clip/mmproj/lfm2` metadata; exact config-derived 201-tensor production inventory; paired optional input LayerNorm/projector biases; supported target dtypes F32/F16/BF16; no Phase 7 quantized operator
+- Security boundary: caller-specific GGUF limits apply before allocation (16,384 tensor, metadata, and array records; 1 MiB strings; 16 MiB aligned header), followed by checked 8 GiB file, retained-dense, and conservative peak-allocation bounds plus alignment/offset/overlap/truncation validation
+- Orientation: official headers prove every non-patch matrix is already in Candle `[out,in]`; only patch `[V,3,P,P]` is converted with `permute(0,2,3,1)`, contiguous, and reshape to `[V,3P²]`
+- Processor/prompt boundary: absent GGUF tiling keys retain pinned official architecture defaults (2–10 tiles, thumbnail, 512 tile size, 64–256 image tokens, effective 1,024 packed patches); direct GGUF uses image markers and resolves image token ID through the tokenizer
+- Deterministic dense MMProj GGUF SHA-256: `7361b57e6d9dbf2d7809d4f446944fdc7325b368e4444fee2bc3497376695256`
+- Numerical evidence: dense direct/native image features max abs `0`; Q8_0-dequantized/dense image features `8.463021368e-5`; direct prefill `4.457309842e-5`; cached decode `2.650916576e-5`, `2.175569534e-5`, and `1.309439540e-5`; cache reset `0`
+- Full Python reference suite: 23/23 passed `2026-08-10T11:46:49Z`–`2026-08-10T11:47:03Z`; retained log `artifacts/verification/gguf-mmproj/python-final.log`; SHA-256 `508b999476bf3dac595479f29d41f3831698c23395ab68f02f17c43c537ae998`
+- Full Rust gate: `cargo test --locked --offline -p candle-core -p candle-transformers -p candle-vlm` passed `2026-08-10T11:43:47Z`–`2026-08-10T11:44:06Z`; this includes 21/21 core library tests, all core integration/doc tests, 47/47 transformer library tests, 5/5 generation, 8/8 NMS, and 26/26 VLM tests; retained log `artifacts/verification/gguf-mmproj/rust-tests-final.log`; SHA-256 `e8aa97169506331362d5a0446de9d5d8837f78e9963fca4636f87fd9a277b9ec`
+- Strict scoped Clippy: core/transformer/VLM libraries and the `lfm2-vl` example passed with `-D warnings` plus the five recorded pre-existing Rust 1.97 allowances (`useless_borrows_in_formatting`, `manual_filter`, `manual_is_multiple_of`, `needless_range_loop`, `manual_contains`); library log SHA-256 `4c994e3ab472ac4b39abac4750304ca1c74da31581d65c3cdf8530d114f5adc6`; example log SHA-256 `96ff6e913ed4421d0e5111f4311c605409b5b978250ef0cb2eb21ac2dbc50c4d`
+- Full locked/offline staged CPU baseline: passed `2026-08-10T11:51:12Z`–`2026-08-10T11:51:24Z` against pre-Phase-6-checkpoint HEAD `1535a0a5fef09f243811b83553b9c75baad78ee2` with exactly the 19 Phase 6 paths staged and no unstaged delta; retained log `artifacts/verification/gguf-mmproj/baseline-final.log`; SHA-256 `1f4c755e4271da48ea7906f4804181e75a5a0b4b61e5e0db37cdc1fd95bdedd3`
+- Audit: the initial assigned-worker audit found no P0; processor markers/tokenizer ID, pre-allocation header bounds, transient memory accounting, official lock coverage, range negatives, required `general.type`, and CLI ID compatibility were addressed. The final bounded re-audit found no remaining P0/P1 defect; exact dtype-distribution assertions were added from its only actionable test-polish note.
+- Phase 6 checkpoint/tag: pending final staged verification and manager commit/tag
+- Not claimed: production-checkpoint numerical parity, production MMProj payload execution, llama.cpp runtime numerical parity, executed CUDA parity, generated-caption parity, or native quantized vision execution
 
 ## Bootstrap Proof
 
@@ -179,6 +200,9 @@
 - The focused Phase 2 SigLIP2 gate is green: all 7 tests pass with the exact stage errors recorded above; the Phase 2 checkpoint/tag is complete at `74e109aec5f9801cfead3eeb27fe3f93ac646b84` / `lfm2-vl-phase-2-siglip2`.
 - The Phase 3 focused gate is green at 11/11, the SigLIP2 repeated-crop regression is green at 8/8, and the `candle-transformers` library gate is green at 37/37. Phase 3 is checkpointed at `37264b49cf74d0cf7697317eda0183f084db6ff8` and tagged `lfm2-vl-phase-3-native-composite`.
 - The Phase 4 Rust-native raw-image and prompt path is green at 24/24 against all required pinned fixtures. Packed integer metadata, exact prompt strings/IDs/spans, crop ordering, and fixture regeneration are exact; normalized pixel values differ by at most `1.192092896e-7`.
+- Phase 5 is checkpointed at `1535a0a5fef09f243811b83553b9c75baad78ee2` / `lfm2-vl-phase-5-hybrid`; split/native image features are exact and deterministic quantized-text hybrid prefill/decode remains within `4.457309842e-5`.
+- The Phase 6 direct GGUF dense compatibility loader has exact dense/native image features, Q8_0-dequantized feature error `8.463021368e-5`, and direct-hybrid prefill/decode equal to the Phase 5 deterministic bounds.
+- Official F16 and Q8_0 MMProj physical shapes, dtype placement, metadata, and names are locked from exact zero-payload header ranges; only the patch tensor requires a layout inverse.
 - Tiny-fixture dense parity is within `2.38418579e-7` for hidden states and `2.98023224e-8` for logits; production-checkpoint and GGUF numerical parity remain unclaimed.
 
 ## Known Conflicts
@@ -186,12 +210,12 @@
 - Official config context is 128,000 while model cards advertise 32,768; construction follows config and production policy remains unresolved.
 - Numeric IDs for image wrapper, row/column, and thumbnail marker strings must be exported by the tokenizer harness; only image placeholder ID 396 is config-explicit.
 - llama.cpp PR #25524 for reading LFM2 tiling parameters from GGUF metadata is open and unmerged; official processor config remains authoritative.
-- Physical GGUF tensor orientation beyond the converter-defined patch reshape awaits header-only inspection of a pinned GGUF.
+- The official MMProj headers omit all three tiling metadata keys; direct loading therefore depends on pinned architecture defaults or an explicit processor document.
 - The local WSL verifier exposes an RTX 4090 through the driver but has no Linux CUDA toolkit or `nvcc`; the committed distinct-device test remains an owner-scoped execution gap.
 
 ## Blockers
 
-- None. The Phase 5 checkpoint remains pending manager commit/tag.
+- None. Phase 6 final staged verification and checkpointing are in progress.
 
 ## Active Files
 
@@ -199,8 +223,12 @@
 - `candle-transformers/src/models/quantized_lfm2.rs`
 - `candle-transformers/src/models/siglip2.rs`
 - `candle-transformers/src/models/lfm2_vl/`
+- `candle-transformers/src/models/lfm2_vl/gguf.rs`
+- `candle-core/src/quantized/gguf_file.rs`
 - `candle-vlm/`
 - `candle-examples/examples/lfm2-vl/`
+- `tools/lfm2_vl/reference/inspect_gguf_header.py`
+- `tools/lfm2_vl/reference/test_gguf_header.py`
 - `tools/export_lfm2_vl_mmproj.py`
 - `tests/fixtures/lfm2_vl_mmproj_tiny/`
 - `candle-transformers/src/models/mod.rs`
@@ -213,7 +241,7 @@
 
 ## Next Task
 
-Complete the Phase 5 staged baseline and checkpoint/tag, then begin Phase 6 direct llama.cpp-compatible GGUF mmproj loading. Keep direct GGUF, quantized-vision, CUDA, production-checkpoint, generated-caption, and CLI claims separately labeled.
+Create the Phase 6 checkpoint/tag, then begin Phase 7 Q8 native vision/projection execution while preserving the dense compatibility fallback. Keep native quantized execution, CUDA, production-payload, llama.cpp-runtime, generated-caption, and CLI claims separately labeled.
 
 ---
-AI-edited: 2026-08-10T06:08:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-5-docs | change=recorded hybrid split-MMProj implementation, final baseline, audit closure, and CUDA environment gap
+AI-edited: 2026-08-10T07:50:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-6 | change=recorded direct GGUF implementation, final local proof, audit closure, and pending checkpoint boundary

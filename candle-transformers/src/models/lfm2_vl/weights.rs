@@ -1,7 +1,11 @@
 //! Split dense MMProj loading and quantized-text hybrid execution.
 
+use super::gguf::GgufMmprojMetadata;
 use super::model::{encode_images_with_parts, merge_projected_embeddings};
-use super::{EncodedImages, ImageTokenSpan, Lfm2VlConfig, Lfm2VlProjector, ProcessedVisionBatch};
+use super::{
+    EncodedImages, ImageTokenSpan, Lfm2VlConfig, Lfm2VlMmprojConfig, Lfm2VlProjector,
+    ProcessedVisionBatch,
+};
 use crate::models::{quantized_lfm2, siglip2};
 use candle::{DType, Device, Result, Tensor};
 use candle_nn::VarBuilder;
@@ -225,59 +229,19 @@ impl MmprojManifest {
         tokenizer_image_token_id: u32,
     ) -> Result<PairingReport> {
         self.validate()?;
-        if text.architecture != "lfm2" {
-            candle::bail!(
-                "split MMProj requires quantized text architecture \"lfm2\", got {:?}",
-                text.architecture
-            )
-        }
-        if text.embedding_length != self.expected_text_hidden_size {
-            candle::bail!(
-                "split MMProj output width {} does not match quantized text hidden size {}",
-                self.expected_text_hidden_size,
-                text.embedding_length
-            )
-        }
-        if text.block_count != self.expected_text_layer_count {
-            candle::bail!(
-                "split MMProj expects {} text layers, but GGUF declares {}",
-                self.expected_text_layer_count,
-                text.block_count
-            )
-        }
-        if processor_patch_size != self.patch_size {
-            candle::bail!(
-                "processor patch size {processor_patch_size} does not match split MMProj {}",
-                self.patch_size
-            )
-        }
-        if processor_downsample_factor != self.downsample_factor {
-            candle::bail!(
-                "processor downsample factor {processor_downsample_factor} does not match split MMProj {}",
-                self.downsample_factor
-            )
-        }
-        if tokenizer_image_token_id != self.image_token_id {
-            candle::bail!(
-                "tokenizer image token ID {tokenizer_image_token_id} does not match split MMProj {}",
-                self.image_token_id
-            )
-        }
-        Ok(PairingReport {
-            text_architecture: text.architecture.clone(),
-            text_hidden_size: text.embedding_length,
-            text_layer_count: text.block_count,
-            vision_layer_count: self.vision_layer_count,
-            patch_size: self.patch_size,
-            downsample_factor: self.downsample_factor,
-            image_token_id: self.image_token_id,
-            text_output_resolution: if text.tied_output {
-                "tied token embeddings".to_string()
-            } else {
-                "explicit GGUF output tensor".to_string()
-            },
-            only_projected_features_cross_devices: true,
-        })
+        validate_pairing_facts(
+            "split MMProj",
+            text,
+            self.expected_text_hidden_size,
+            Some(self.expected_text_layer_count),
+            self.vision_layer_count,
+            self.patch_size,
+            self.downsample_factor,
+            self.image_token_id,
+            processor_patch_size,
+            processor_downsample_factor,
+            tokenizer_image_token_id,
+        )
     }
 }
 
@@ -289,12 +253,52 @@ pub struct MmprojMetadata {
     pub patch_size: usize,
     pub downsample_factor: usize,
     pub image_token_id: u32,
+    pub use_image_special_tokens: bool,
+    pub expected_text_layer_count: Option<usize>,
     /// Kept neutral at this crate boundary because `candle-vlm` depends on
     /// `candle-transformers`; `candle-vlm` provides the typed conversion.
     pub processor: serde_json::Value,
     pub source_model: Option<String>,
     pub source_revision: Option<String>,
-    pub manifest: MmprojManifest,
+    pub manifest: Option<MmprojManifest>,
+    pub gguf: Option<GgufMmprojMetadata>,
+}
+
+impl MmprojMetadata {
+    pub fn split_manifest(&self) -> Option<&MmprojManifest> {
+        self.manifest.as_ref()
+    }
+
+    pub fn gguf_metadata(&self) -> Option<&GgufMmprojMetadata> {
+        self.gguf.as_ref()
+    }
+
+    pub(super) fn validate_pair(
+        &self,
+        text: &quantized_lfm2::Lfm2GgufMetadata,
+        processor_patch_size: usize,
+        processor_downsample_factor: usize,
+        tokenizer_image_token_id: u32,
+    ) -> Result<PairingReport> {
+        let (label, vision_layer_count) = match (&self.manifest, &self.gguf) {
+            (Some(manifest), None) => ("split MMProj", manifest.vision_layer_count),
+            (None, Some(metadata)) => ("GGUF MMProj", metadata.vision_layer_count),
+            _ => candle::bail!("MMProj metadata must contain exactly one source description"),
+        };
+        validate_pairing_facts(
+            label,
+            text,
+            self.text_hidden_size,
+            self.expected_text_layer_count,
+            vision_layer_count,
+            self.patch_size,
+            self.downsample_factor,
+            self.image_token_id,
+            processor_patch_size,
+            processor_downsample_factor,
+            tokenizer_image_token_id,
+        )
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -316,10 +320,10 @@ impl MmprojLoadReport {
             && self.shape_or_dtype_mismatches.is_empty()
     }
 
-    fn require_clean(&self) -> Result<()> {
+    pub(super) fn require_clean(&self) -> Result<()> {
         if !self.is_clean() {
             candle::bail!(
-                "split MMProj tensor validation failed; missing={:?}, unexpected={:?}, mismatches={:?}",
+                "MMProj tensor validation failed; missing={:?}, unexpected={:?}, mismatches={:?}",
                 self.missing_tensors,
                 self.unexpected_tensors,
                 self.shape_or_dtype_mismatches
@@ -342,16 +346,105 @@ pub struct PairingReport {
     pub only_projected_features_cross_devices: bool,
 }
 
+#[allow(clippy::too_many_arguments)]
+fn validate_pairing_facts(
+    artifact_label: &str,
+    text: &quantized_lfm2::Lfm2GgufMetadata,
+    text_hidden_size: usize,
+    expected_text_layer_count: Option<usize>,
+    vision_layer_count: usize,
+    patch_size: usize,
+    downsample_factor: usize,
+    image_token_id: u32,
+    processor_patch_size: usize,
+    processor_downsample_factor: usize,
+    tokenizer_image_token_id: u32,
+) -> Result<PairingReport> {
+    if text.architecture != "lfm2" {
+        candle::bail!(
+            "{artifact_label} requires quantized text architecture \"lfm2\", got {:?}",
+            text.architecture
+        )
+    }
+    if text.embedding_length != text_hidden_size {
+        candle::bail!(
+            "{artifact_label} output width {text_hidden_size} does not match quantized text hidden size {}",
+            text.embedding_length
+        )
+    }
+    if let Some(expected) = expected_text_layer_count {
+        if text.block_count != expected {
+            candle::bail!(
+                "{artifact_label} expects {expected} text layers, but GGUF declares {}",
+                text.block_count
+            )
+        }
+    }
+    if processor_patch_size != patch_size {
+        candle::bail!(
+            "processor patch size {processor_patch_size} does not match {artifact_label} {patch_size}"
+        )
+    }
+    if processor_downsample_factor != downsample_factor {
+        candle::bail!(
+            "processor downsample factor {processor_downsample_factor} does not match {artifact_label} {downsample_factor}"
+        )
+    }
+    if tokenizer_image_token_id != image_token_id {
+        candle::bail!(
+            "tokenizer image token ID {tokenizer_image_token_id} does not match {artifact_label} {image_token_id}"
+        )
+    }
+    Ok(PairingReport {
+        text_architecture: text.architecture.clone(),
+        text_hidden_size: text.embedding_length,
+        text_layer_count: text.block_count,
+        vision_layer_count,
+        patch_size,
+        downsample_factor,
+        image_token_id,
+        text_output_resolution: if text.tied_output {
+            "tied token embeddings".to_string()
+        } else {
+            "explicit GGUF output tensor".to_string()
+        },
+        only_projected_features_cross_devices: true,
+    })
+}
+
+#[derive(Debug)]
 pub struct Mmproj {
     pub vision_tower: siglip2::Siglip2VisionModel,
     pub projector: Lfm2VlProjector,
     pub metadata: MmprojMetadata,
     pub report: MmprojLoadReport,
+    config: Lfm2VlMmprojConfig,
     device: Device,
     dtype: DType,
 }
 
 impl Mmproj {
+    #[allow(clippy::too_many_arguments)]
+    pub(super) fn from_parts(
+        vision_tower: siglip2::Siglip2VisionModel,
+        projector: Lfm2VlProjector,
+        config: Lfm2VlMmprojConfig,
+        metadata: MmprojMetadata,
+        report: MmprojLoadReport,
+        dtype: DType,
+        device: &Device,
+    ) -> Self {
+        Self {
+            vision_tower,
+            projector,
+            metadata,
+            report,
+            config,
+            device: device.clone(),
+            dtype,
+        }
+    }
+
     pub fn load(bundle_dir: impl AsRef<Path>, dtype: DType, device: &Device) -> Result<Self> {
         let bundle_dir = bundle_dir.as_ref();
         Self::from_files(
@@ -406,10 +499,11 @@ impl Mmproj {
         let report = inspect_safetensors_bytes(&weights_bytes, &manifest, dtype, device)?;
         report.require_clean()?;
         let vb = VarBuilder::from_buffered_safetensors(weights_bytes, dtype, device)?;
-        let config = manifest.model_config.clone();
+        let model_config = manifest.model_config.clone();
+        let config = Lfm2VlMmprojConfig::from(&model_config);
         let vision_tower =
             siglip2::Siglip2VisionModel::new(&config.vision_config, vb.pp(VISION_ROOT))?;
-        let projector = Lfm2VlProjector::new(&config, vb.pp(PROJECTOR_ROOT))?;
+        let projector = Lfm2VlProjector::from_mmproj_config(&config, vb.pp(PROJECTOR_ROOT))?;
         let metadata = MmprojMetadata {
             architecture: manifest.architecture.clone(),
             vision_hidden_size: manifest.vision_hidden_size,
@@ -417,16 +511,20 @@ impl Mmproj {
             patch_size: manifest.patch_size,
             downsample_factor: manifest.downsample_factor,
             image_token_id: manifest.image_token_id,
+            use_image_special_tokens: model_config.use_image_special_tokens,
+            expected_text_layer_count: Some(manifest.expected_text_layer_count),
             processor,
             source_model: Some(manifest.source_model.clone()),
             source_revision: Some(manifest.source_revision.clone()),
-            manifest,
+            manifest: Some(manifest),
+            gguf: None,
         };
         Ok(Self {
             vision_tower,
             projector,
             metadata,
             report,
+            config,
             device: device.clone(),
             dtype,
         })
@@ -450,7 +548,8 @@ impl Mmproj {
         encode_images_with_parts(
             &self.vision_tower,
             &self.projector,
-            &self.metadata.manifest.model_config,
+            &self.config.vision_config,
+            self.config.downsample_factor,
             &device_inputs,
             vision_batch_size,
         )
@@ -465,7 +564,7 @@ impl Mmproj {
     }
 }
 
-/// Quantized GGUF LFM2 text paired with a split dense vision/projector bundle.
+/// Quantized GGUF LFM2 text paired with a split or GGUF MMProj bundle.
 pub struct QuantizedLfm2VlModel {
     text: quantized_lfm2::ModelWeights,
     mmproj: Mmproj,
@@ -489,12 +588,12 @@ impl QuantizedLfm2VlModel {
         }
         if mmproj.metadata.image_token_id as usize >= text.vocab_size() {
             candle::bail!(
-                "split MMProj image token ID {} is outside quantized text vocabulary size {}",
+                "MMProj image token ID {} is outside quantized text vocabulary size {}",
                 mmproj.metadata.image_token_id,
                 text.vocab_size()
             )
         }
-        let pairing = mmproj.metadata.manifest.validate_pair(
+        let pairing = mmproj.metadata.validate_pair(
             text.metadata(),
             processor_patch_size,
             processor_downsample_factor,
@@ -1318,9 +1417,13 @@ mod tests {
         let mmproj = Mmproj::load(bundle_dir(), DType::F32, &device)?;
         assert!(mmproj.report.is_clean());
         assert_eq!(mmproj.report.loaded_tensors.len(), 43);
-        assert_eq!(mmproj.metadata.manifest.vision_layer_count, 2);
-        assert_eq!(mmproj.metadata.manifest.expected_text_layer_count, 2);
-        assert_eq!(mmproj.metadata.manifest.tensor_count, 43);
+        let manifest = mmproj
+            .metadata
+            .split_manifest()
+            .ok_or_else(|| candle::Error::Msg("expected split MMProj metadata".into()))?;
+        assert_eq!(manifest.vision_layer_count, 2);
+        assert_eq!(manifest.expected_text_layer_count, 2);
+        assert_eq!(manifest.tensor_count, 43);
         assert_eq!(
             mmproj.metadata.source_revision.as_deref(),
             Some("fc6221ca597f3315e4f82fc2df606783267b34ba")
@@ -1331,7 +1434,7 @@ mod tests {
             .iter()
             .all(|name| name.starts_with(VISION_ROOT) || name.starts_with(PROJECTOR_ROOT)));
 
-        let mut bad = mmproj.metadata.manifest.clone();
+        let mut bad = manifest.clone();
         let linear_2 = format!("{PROJECTOR_ROOT}.linear_2.weight");
         bad.tensor_inventory
             .get_mut(&linear_2)
@@ -1350,7 +1453,7 @@ mod tests {
         let error = bad.validate().unwrap_err().to_string();
         assert!(error.contains("linear_2.weight") && error.contains("expected"));
 
-        let mut bad_names = mmproj.metadata.manifest.clone();
+        let mut bad_names = manifest.clone();
         let moved = bad_names
             .tensor_inventory
             .remove(&linear_2)
@@ -1493,6 +1596,29 @@ mod tests {
             native_encoded.per_image_ranges
         );
 
+        let direct_bytes = crate::models::lfm2_vl::gguf::tests::tiny_mmproj_gguf(
+            &tensors,
+            &config,
+            false,
+            &[],
+            None,
+            false,
+        )?;
+        let direct_hash = format!("{:x}", Sha256::digest(&direct_bytes));
+        assert_eq!(
+            direct_hash,
+            "7361b57e6d9dbf2d7809d4f446944fdc7325b368e4444fee2bc3497376695256"
+        );
+        let mut direct_reader = Cursor::new(direct_bytes);
+        let direct_mmproj = Mmproj::from_gguf(&mut direct_reader, DType::F32, &device, 3)?;
+        let direct_encoded = direct_mmproj.encode_images(&batch, 1)?;
+        assert_close(
+            &direct_encoded.embeddings,
+            &native_encoded.embeddings,
+            1e-6,
+            "direct GGUF image features",
+        )?;
+
         let text_config = config.text_model_config()?;
         let gguf_bytes = tiny_text_gguf(&tensors, &config)?;
         let gguf_hash = format!("{:x}", Sha256::digest(&gguf_bytes));
@@ -1511,37 +1637,68 @@ mod tests {
             .unwrap_err()
             .to_string()
             .contains("f32"));
-        let mut gguf_reader = Cursor::new(gguf_bytes);
+        let mut gguf_reader = Cursor::new(gguf_bytes.clone());
         let gguf = gguf_file::Content::read(&mut gguf_reader)?;
         let quantized_text =
             quantized_lfm2::ModelWeights::from_gguf(gguf, &mut gguf_reader, &device)?;
-        let mut hybrid = QuantizedLfm2VlModel::new(quantized_text, mmproj, 2, 2, 3)?;
-        assert!(hybrid.vision_device().same_device(&device));
-        assert!(hybrid.text_device().same_device(&device));
+        let mut split_hybrid = QuantizedLfm2VlModel::new(quantized_text, mmproj, 2, 2, 3)?;
+        let mut direct_text_reader = Cursor::new(gguf_bytes);
+        let direct_text_gguf = gguf_file::Content::read(&mut direct_text_reader)?;
+        let direct_text = quantized_lfm2::ModelWeights::from_gguf(
+            direct_text_gguf,
+            &mut direct_text_reader,
+            &device,
+        )?;
+        let mut direct_hybrid = QuantizedLfm2VlModel::new(direct_text, direct_mmproj, 2, 2, 3)?;
+        assert!(split_hybrid.vision_device().same_device(&device));
+        assert!(split_hybrid.text_device().same_device(&device));
+        assert!(direct_hybrid.vision_device().same_device(&device));
+        assert!(direct_hybrid.text_device().same_device(&device));
         let input_ids = fixture_tensor(&tensors, "input.input_ids")?;
         let spans = image_spans(input_ids, 3)?;
         let mut native_cache = lfm2::Cache::new(true, DType::F32, &text_config, &device)?;
         let native_prefill =
             native.prefill(input_ids, &spans, Some(&native_encoded), &mut native_cache)?;
-        let hybrid_prefill = hybrid.prefill(input_ids, &spans, Some(&split_encoded))?;
+        let hybrid_prefill = split_hybrid.prefill(input_ids, &spans, Some(&split_encoded))?;
+        let direct_prefill = direct_hybrid.prefill(input_ids, &spans, Some(&direct_encoded))?;
         let native_last = native_prefill.i((.., input_ids.dim(1)? - 1, ..))?;
         assert_close(&hybrid_prefill, &native_last, 1e-4, "hybrid prefill logits")?;
+        assert_close(
+            &direct_prefill,
+            &native_last,
+            1e-4,
+            "direct GGUF prefill logits",
+        )?;
 
         let decode_ids = fixture_tensor(&tensors, "input.decode_token_ids")?;
         for step in 0..3 {
             let token = decode_ids.i((.., step..step + 1))?;
             let native_logits = native.decode(&token, 5 + step, &mut native_cache)?;
-            let hybrid_logits = hybrid.decode(&token, 5 + step)?;
+            let hybrid_logits = split_hybrid.decode(&token, 5 + step)?;
+            let direct_logits = direct_hybrid.decode(&token, 5 + step)?;
             assert_close(
                 &hybrid_logits,
                 &native_logits,
                 1e-4,
                 &format!("hybrid cached decode step {step}"),
             )?;
+            assert_close(
+                &direct_logits,
+                &native_logits,
+                1e-4,
+                &format!("direct GGUF cached decode step {step}"),
+            )?;
         }
 
-        let reset = hybrid.prefill(input_ids, &spans, Some(&split_encoded))?;
+        let reset = split_hybrid.prefill(input_ids, &spans, Some(&split_encoded))?;
         assert_close(&reset, &hybrid_prefill, 1e-6, "hybrid cache reset")?;
+        let direct_reset = direct_hybrid.prefill(input_ids, &spans, Some(&direct_encoded))?;
+        assert_close(
+            &direct_reset,
+            &direct_prefill,
+            1e-6,
+            "direct GGUF cache reset",
+        )?;
         Ok(())
     }
 

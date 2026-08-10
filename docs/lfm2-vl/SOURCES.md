@@ -2,9 +2,9 @@
 
 ## Lock Boundary
 
-The source lock was taken at `2026-08-10T02:56:01Z`. Every moving branch or model `main` reference below is resolved to an immutable commit. Production tensor payloads and GGUF files were not downloaded.
+The source lock was taken at `2026-08-10T02:56:01Z` and extended with official GGUF-header evidence at `2026-08-10T10:57:28Z`. Every moving branch or model `main` reference below is resolved to an immutable commit. Production tensor payloads and complete GGUF files were not downloaded.
 
-The two official safetensors files were inspected only through the bounded header ranges documented in `TENSOR_MAP.md`. This exposed tensor names, dtypes, shapes, and byte offsets without reading tensor payload bytes.
+The two official safetensors files and two official 450M MMProj GGUF files were inspected only through the bounded header ranges documented in `TENSOR_MAP.md`. This exposed tensor names, dtypes, shapes, metadata, and byte offsets without retaining any tensor payload bytes.
 
 The machine-readable inventory is `tools/lfm2_vl/reference-lock.json`. It is the authority for exact paths and URLs; this document records the reasoning and adaptation boundary.
 
@@ -54,6 +54,15 @@ Both model repositories identify their artifacts as LFM Open License v1.0. They 
 | `LiquidAI/LFM2.5-VL-1.6B` | [`919fde3d022e3f90a4716006f993938ee8c2eb97`](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B/tree/919fde3d022e3f90a4716006f993938ee8c2eb97) | `config.json`, `processor_config.json`, `tokenizer_config.json`, `tokenizer.json`, `chat_template.jinja`, `generation_config.json`, `LICENSE` | `special_tokens_map.json` |
 
 There is no separate tokenizer model or vocabulary file in either pinned tree. Direct immutable URLs for every present file are in `reference-lock.json`.
+
+The official direct-MMProj authority is `LiquidAI/LFM2.5-VL-450M-GGUF` at immutable revision [`166cd80bbe157dc86d65f964eb8cc6a2cede62ca`](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF/tree/166cd80bbe157dc86d65f964eb8cc6a2cede62ca). Exactly bytes `0-12735` were retained temporarily for each MMProj header; the parsed tensor-data offset is byte `12736`, so the retained evidence contains zero tensor payload bytes.
+
+| File | Declared bytes | Header-prefix SHA-256 | Dtype counts |
+| --- | ---: | --- | --- |
+| `mmproj-LFM2.5-VL-450m-F16.gguf` | 189,126,080 | `338099d49dd803963c9496cfbba56ab46a425ca7895c5edf59010337ae4436ac` | F16 75; F32 126 |
+| `mmproj-LFM2.5-VL-450m-Q8_0.gguf` | 102,815,168 | `7a4f0f1e168d52b70a03f2773f0f20b9f65d1692f8e973aa0cf9ecee25e43d1c` | Q8_0 74; F32 127 |
+
+Both headers are GGUF v3 with 32 metadata records, 201 tensor records, tensor-name-set SHA-256 `45e3f6cf0b51dc9f5e458b8af3375d368cc59daff70b79e2938c7490a94df828`, and 32-byte alignment. Exact metadata, absent preprocessing keys, shapes, and URLs are machine-locked in `reference-lock.json`.
 
 ## mistral.rs
 
@@ -144,7 +153,8 @@ All are locked by the Candle baseline commit `31f35b147389700ed2a178ee66a91c3cc2
 - The checkpoint files override generic Transformers projector defaults: hidden size `2048`, no projector LayerNorm, and EOS ID `7`.
 - Only image placeholder ID `396` is explicit in `config.json`. The numeric IDs of image wrapper and tile-marker strings remain a tokenizer-harness output, not a source-lock assumption.
 - llama.cpp PR #25524 was open and unmerged at the lock. Official `processor_config.json` values remain authoritative for min/max tiles and tile size.
-- Exact physical GGUF matrix orientation remains a direct-GGUF fixture task. Only the converter-defined patch reshape and logical GGUF names are locked now; `TENSOR_MAP.md` marks this boundary explicitly.
+- The official F16 and Q8_0 headers resolve physical GGUF orientation: Candle presents non-patch matrices directly in `[out, in]`; only `v.patch_embd.weight` needs the converter-defined inverse from `[V,3,16,16]` to packed `[V,768]`.
+- The official headers omit `clip.vision.preproc_min_tiles`, `clip.vision.preproc_max_tiles`, and `clip.vision.preproc_image_size`; pinned official `processor_config.json` values and architecture defaults remain authoritative unless an explicit processor document overrides them.
 
 ---
-AI-edited: 2026-08-10T02:22:25-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-4-source-lock | change=corrected the pinned unified image-processor source and removed a nonexistent legacy fast-file link
+AI-edited: 2026-08-10T07:31:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-6 | change=locked official F16 and Q8_0 MMProj headers with a zero-payload evidence boundary

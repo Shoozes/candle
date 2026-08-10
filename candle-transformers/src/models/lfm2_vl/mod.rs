@@ -5,11 +5,15 @@
 //! outside this module.
 
 pub mod config;
+pub mod gguf;
 pub mod model;
 pub mod projector;
 pub mod weights;
 
-pub use config::{projected_token_count, Lfm2VlConfig};
+pub use config::{
+    projected_token_count, Lfm2VlConfig, Lfm2VlMmprojConfig, DEFAULT_LFM2_VL_IMAGE_TOKEN_ID,
+};
+pub use gguf::GgufMmprojMetadata;
 pub use model::{
     merge_projected_embeddings, CropKind, CropMeta, EncodedImages, ImageMeta, ImageTokenSpan,
     Lfm2VlModel, ProcessedVisionBatch,

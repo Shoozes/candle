@@ -1,4 +1,4 @@
-use crate::models::lfm2_vl::config::Lfm2VlConfig;
+use crate::models::lfm2_vl::config::{Lfm2VlConfig, Lfm2VlMmprojConfig};
 use crate::models::with_tracing::{linear, linear_no_bias, Linear};
 use candle::{Module, Result, Tensor};
 use candle_nn::{layer_norm, Activation, LayerNorm, LayerNormConfig, VarBuilder};
@@ -28,6 +28,11 @@ struct ProjectorStages {
 impl Lfm2VlProjector {
     pub fn new(config: &Lfm2VlConfig, vb: VarBuilder) -> Result<Self> {
         config.validate()?;
+        Self::from_mmproj_config(&Lfm2VlMmprojConfig::from(config), vb)
+    }
+
+    pub fn from_mmproj_config(config: &Lfm2VlMmprojConfig, vb: VarBuilder) -> Result<Self> {
+        config.validate()?;
         let input_size = config.projector_input_size()?;
         let layer_norm = if config.projector_use_layernorm {
             Some(layer_norm(
@@ -49,13 +54,13 @@ impl Lfm2VlProjector {
         let linear_2 = if config.projector_bias {
             linear(
                 config.projector_hidden_size,
-                config.text_config.hidden_size,
+                config.text_hidden_size,
                 vb.pp("linear_2"),
             )?
         } else {
             linear_no_bias(
                 config.projector_hidden_size,
-                config.text_config.hidden_size,
+                config.text_hidden_size,
                 vb.pp("linear_2"),
             )?
         };
@@ -66,7 +71,7 @@ impl Lfm2VlProjector {
             linear_1,
             activation: config.projector_hidden_act,
             linear_2,
-            output_size: config.text_config.hidden_size,
+            output_size: config.text_hidden_size,
         })
     }
 

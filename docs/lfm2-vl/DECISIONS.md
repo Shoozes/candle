@@ -260,5 +260,20 @@ A synthetic in-memory quantized model would not prove file-format aliases, metad
 Consequences:
 The pinned tiny GGUF SHA-256 is `8fbd510aeea4715547c57975a7adcb91c148a8bc5e8d869d9617b69af6a006b1`. CPU F32 split/native image features are exact; hybrid prefill and decode remain within `4.457309842e-5`. The source path transfers projected features only at merge. Executed CUDA parity and production-GGUF parity remain explicitly unclaimed.
 
+## D-0021: Strict Dense Compatibility Boundary for Direct GGUF MMProj
+
+Status: Accepted
+
+Decision:
+Implement Format C first as a strict one-handle GGUF loader that reconstructs only the SigLIP2 tower and LFM2 projector, validates the complete metadata/tensor/range contract before construction, and dequantizes supported GGML tensors into F32, F16, or BF16 native operators. Require `general.architecture=clip`, `general.type=mmproj`, `clip.projector_type=lfm2`, the locked vision facts, and an exact config-derived inventory. Apply only the header-proven patch inverse `permute(0,2,3,1) -> contiguous -> reshape`; keep every other matrix in Candle `[out,in]` order.
+
+Use caller-specific GGUF parser limits before allocation: at most 16,384 tensors, metadata records, and array elements; 1 MiB strings; a 16 MiB aligned header; an 8 GiB file; and checked 8 GiB retained-dense and conservative peak-allocation bounds. Reject duplicates, invalid alignment, missing/unexpected tensors, unsupported target dtypes, malformed offsets, overlaps, truncation, incomplete optional LayerNorm/bias pairs, and configuration mismatches before inference. When the official GGUF omits preprocessing metadata, retain pinned LFM2-VL architecture/processor defaults; resolve the image token ID from the tokenizer. Do not introduce a quantized vision operator in this phase.
+
+Why:
+The dense path separates format/orientation compatibility from Phase 7 operator design. Exact official headers resolve the prior orientation ambiguity without downloading production payloads, while narrow parser and memory limits keep untrusted artifact declarations from allocating according to generic GGUF maxima. Processor defaults and tokenizer-derived IDs are outside the official MMProj header and must not be silently replaced with false or hardcoded values.
+
+Consequences:
+The deterministic dense MMProj GGUF hash is `7361b57e6d9dbf2d7809d4f446944fdc7325b368e4444fee2bc3497376695256`; direct dense/native image features are exact. A synthetic Q8_0 MMProj dequantizes with image-feature max abs `8.463021368e-5`. Direct GGUF MMProj plus deterministic quantized text reproduces the Phase 5 hybrid prefill/decode errors and exact cache reset. The official F16/Q8_0 evidence remains header-only with zero retained payload bytes, so production numerical parity and native Q8 execution remain separate gates.
+
 ---
-AI-edited: 2026-08-10T06:04:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-5-docs | change=recorded split artifact/load boundary and deterministic hybrid evidence policy
+AI-edited: 2026-08-10T07:31:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-6 | change=accepted the strict dense direct-GGUF compatibility and allocation boundary

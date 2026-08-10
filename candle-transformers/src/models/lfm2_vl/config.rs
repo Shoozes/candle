@@ -3,8 +3,10 @@ use candle::Result;
 use candle_nn::Activation;
 use serde::de::Error as DeError;
 
+pub const DEFAULT_LFM2_VL_IMAGE_TOKEN_ID: u32 = 396;
+
 fn default_image_token_id() -> u32 {
-    396
+    DEFAULT_LFM2_VL_IMAGE_TOKEN_ID
 }
 
 fn default_projector_hidden_size() -> usize {
@@ -46,6 +48,72 @@ pub struct Lfm2VlConfig {
     pub projector_bias: bool,
     pub projector_use_layernorm: bool,
     pub use_image_special_tokens: bool,
+}
+
+/// Vision/projector configuration shared by native, split, and GGUF MMProj loaders.
+///
+/// A GGUF MMProj does not contain the complete language-model configuration, so
+/// this intentionally carries only the fields required to construct and run the
+/// vision tower and multimodal projector.
+#[derive(Debug, Clone)]
+pub struct Lfm2VlMmprojConfig {
+    pub vision_config: siglip2::Siglip2VisionConfig,
+    pub text_hidden_size: usize,
+    pub image_token_id: u32,
+    pub downsample_factor: usize,
+    pub projector_hidden_size: usize,
+    pub projector_hidden_act: Activation,
+    pub projector_bias: bool,
+    pub projector_use_layernorm: bool,
+    pub use_image_special_tokens: bool,
+}
+
+impl From<&Lfm2VlConfig> for Lfm2VlMmprojConfig {
+    fn from(config: &Lfm2VlConfig) -> Self {
+        Self {
+            vision_config: config.vision_config.clone(),
+            text_hidden_size: config.text_config.hidden_size,
+            image_token_id: config.image_token_id,
+            downsample_factor: config.downsample_factor,
+            projector_hidden_size: config.projector_hidden_size,
+            projector_hidden_act: config.projector_hidden_act,
+            projector_bias: config.projector_bias,
+            projector_use_layernorm: config.projector_use_layernorm,
+            use_image_special_tokens: config.use_image_special_tokens,
+        }
+    }
+}
+
+impl Lfm2VlMmprojConfig {
+    pub fn validate(&self) -> Result<()> {
+        self.vision_config.validate()?;
+        if self.text_hidden_size == 0 {
+            candle::bail!("LFM2-VL MMProj text hidden size must be greater than zero")
+        }
+        if self.downsample_factor == 0 {
+            candle::bail!("LFM2-VL downsample_factor must be greater than zero")
+        }
+        if self.projector_hidden_size == 0 {
+            candle::bail!("LFM2-VL projector_hidden_size must be greater than zero")
+        }
+        let _ = self.projector_input_size()?;
+        Ok(())
+    }
+
+    pub fn projector_input_size(&self) -> Result<usize> {
+        let factor_squared = self
+            .downsample_factor
+            .checked_mul(self.downsample_factor)
+            .ok_or_else(|| candle::Error::Msg("LFM2-VL downsample factor overflow".into()))?;
+        self.vision_config
+            .hidden_size
+            .checked_mul(factor_squared)
+            .ok_or_else(|| candle::Error::Msg("LFM2-VL projector input width overflow".into()))
+    }
+
+    pub fn projected_token_count(&self, patch_rows: usize, patch_cols: usize) -> Result<usize> {
+        projected_token_count(patch_rows, patch_cols, self.downsample_factor)
+    }
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -125,22 +193,7 @@ impl Lfm2VlConfig {
     }
 
     pub fn validate(&self) -> Result<()> {
-        self.vision_config.validate()?;
-        if self.downsample_factor == 0 {
-            candle::bail!("LFM2-VL downsample_factor must be greater than zero")
-        }
-        if self.projector_hidden_size == 0 {
-            candle::bail!("LFM2-VL projector_hidden_size must be greater than zero")
-        }
-        let factor_squared = self
-            .downsample_factor
-            .checked_mul(self.downsample_factor)
-            .ok_or_else(|| candle::Error::Msg("LFM2-VL downsample factor overflow".into()))?;
-        let _projector_input = self
-            .vision_config
-            .hidden_size
-            .checked_mul(factor_squared)
-            .ok_or_else(|| candle::Error::Msg("LFM2-VL projector input width overflow".into()))?;
+        Lfm2VlMmprojConfig::from(self).validate()?;
 
         let text_config = self.text_config.clone().try_into_config(false)?;
         if text_config.num_hidden_layers == 0 {
@@ -175,14 +228,7 @@ impl Lfm2VlConfig {
     }
 
     pub fn projector_input_size(&self) -> Result<usize> {
-        let factor_squared = self
-            .downsample_factor
-            .checked_mul(self.downsample_factor)
-            .ok_or_else(|| candle::Error::Msg("LFM2-VL downsample factor overflow".into()))?;
-        self.vision_config
-            .hidden_size
-            .checked_mul(factor_squared)
-            .ok_or_else(|| candle::Error::Msg("LFM2-VL projector input width overflow".into()))
+        Lfm2VlMmprojConfig::from(self).projector_input_size()
     }
 
     pub fn projected_token_count(&self, patch_rows: usize, patch_cols: usize) -> Result<usize> {

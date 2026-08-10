@@ -2,14 +2,16 @@
 
 ## Evidence Boundary
 
-This map is locked to the official model revisions in `SOURCES.md`. Shapes and native names were confirmed from the safetensors JSON headers using HTTP Range requests; no tensor payload bytes were read.
+This map is locked to the official model revisions in `SOURCES.md`. Shapes and names were confirmed from bounded safetensors and GGUF headers using HTTP Range requests; no retained evidence includes tensor payload bytes.
 
 | Model | Header ranges read | Header bytes | Tensor records | Payload bytes read |
 | --- | --- | ---: | ---: | ---: |
 | 450M at `fc6221ca597f3315e4f82fc2df606783267b34ba` | `0-7`, `8-46871` | 46,864 | 349 | 0 |
 | 1.6B at `919fde3d022e3f90a4716006f993938ee8c2eb97` | `0-7`, `8-82407` | 82,400 | 589 | 0 |
+| 450M F16 MMProj GGUF at `166cd80bbe157dc86d65f964eb8cc6a2cede62ca` | `0-12735` | 12,736 | 201 | 0 |
+| 450M Q8_0 MMProj GGUF at `166cd80bbe157dc86d65f964eb8cc6a2cede62ca` | `0-12735` | 12,736 | 201 | 0 |
 
-All inspected production tensors are BF16. Shape notation follows safetensors/PyTorch logical order: linear weights are `[out, in]`; embeddings are `[rows, hidden]`; the depthwise short-convolution kernel is `[channels, 1, kernel]`.
+All inspected safetensors production tensors are BF16. The official MMProj headers contain F16/F32 or Q8_0/F32 tensors as recorded below. Shape notation follows Candle logical order: linear weights are `[out, in]`; embeddings are `[rows, hidden]`; the depthwise short-convolution kernel is `[channels, 1, kernel]`.
 
 ## Normalized Dimensions
 
@@ -78,11 +80,19 @@ The production files use the nested vision namespace `model.vision_tower.vision_
 | Projector linear 1 | `model.multi_modal_projector.linear_1.{weight,bias}` | Same native path | `mm.1.{weight,bias}` | Weight `[2048,3072]`; bias `[2048]` | Weight `[2048,4608]`; bias `[2048]` | Apply factor-2 pixel unshuffle before the linear layer; native weight needs no transpose. |
 | Projector linear 2 | `model.multi_modal_projector.linear_2.{weight,bias}` | Same native path | `mm.2.{weight,bias}` | Weight `[1024,2048]`; bias `[1024]` | Weight `[2048,2048]`; bias `[2048]` | Native: none. Output width must equal text hidden `H`. |
 
+## Official 450M MMProj GGUF Inventory
+
+Both official headers contain 201 tensors: 9 fixed tensors plus 16 tensors for each of 12 vision blocks. The fixed set is `v.patch_embd.{weight,bias}`, `v.position_embd.weight`, `v.post_ln.{weight,bias}`, and `mm.{1,2}.{weight,bias}`. `mm.input_norm` is absent, matching `projector_use_layernorm=false`.
+
+The F16 file contains 75 F16 and 126 F32 tensors. The Q8_0 file contains 74 Q8_0 and 127 F32 tensors. Both have tensor-name-set SHA-256 `45e3f6cf0b51dc9f5e458b8af3375d368cc59daff70b79e2938c7490a94df828`, header end 12,708, alignment 32, and tensor-data offset 12,736.
+
+Header-confirmed representative Candle shapes are patch `[768,3,16,16]`, position `[256,768]`, `mm.1.weight` `[2048,3072]`, and `mm.2.weight` `[1024,2048]`. Every non-patch matrix already appears in Candle `[out,in]` order.
+
 ## Orientation and Loading Rules
 
 1. Native safetensors weights are already in Candle linear order `[out, in]`; do not transpose them.
 2. The only source-locked mmproj reshape is llama.cpp's patch conversion: Hugging Face `[V, 16 × 16 × 3]` becomes GGUF `[V, 3, 16, 16]`. The inverse must preserve the original pixel/channel ordering exactly.
-3. GGUF matrix names and logical shapes are locked, but the physical shape presented by Candle's GGUF reader must be proven against a real pinned GGUF header before a direct loader chooses any additional transpose. No speculative transpose is authorized by this document.
+3. The pinned official F16 and Q8_0 headers prove that Candle presents all non-patch GGUF matrices in `[out,in]` order. The direct loader applies no additional transpose.
 4. LayerNorm weights/biases and embeddings are not transposed.
 5. `lm_head.weight` is absent from both official safetensors headers. Native construction must honor tied output embeddings rather than report a missing tensor.
 6. The 450M FFN shapes are the mandatory first text-only gate: any constructor that computes width 4,096 instead of 4,608 is wrong even if the 1.6B checkpoint loads.
@@ -90,8 +100,8 @@ The production files use the nested vision namespace `model.vision_tower.vision_
 ## Remaining Mapping Work
 
 - Capture the tokenizer-derived numeric IDs for image wrapper, row/column, and thumbnail tokens in the config-only reference harness.
-- Inspect a pinned llama.cpp-compatible GGUF header without tensor payloads before direct mmproj implementation; record physical shapes, quantization types, and metadata values.
-- Add exact Candle implementation paths only after the corresponding Rust modules exist. The current target paths intentionally preserve native checkpoint namespaces.
+- Run production-payload numerical parity only under a separately authorized model-download task; header evidence alone does not establish production numerical parity.
+- Extend the map for lower-bit vision formats only after the Q8 native-execution gate is complete.
 
 ---
-AI-edited: 2026-08-09T22:56:01-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=source-lock | change=locked native and GGUF tensor names, checkpoint shapes, and orientation boundaries
+AI-edited: 2026-08-10T07:31:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-6 | change=resolved official MMProj shapes, dtypes, inventory, and the patch-only GGUF transform

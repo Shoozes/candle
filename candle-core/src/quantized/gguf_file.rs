@@ -18,6 +18,32 @@ const GGUF_MAX_ARRAY_ELEMENTS: u64 = 1 << 30;
 const GGUF_MAX_TENSOR_DIMS: u32 = 4;
 const GGUF_MAX_VALUE_DEPTH: usize = 64;
 
+/// Allocation and header bounds used while parsing a GGUF directory.
+///
+/// [`Content::read`] retains the format-wide defaults. Callers loading a more
+/// narrowly specified artifact can use [`Content::read_with_limits`] to reject
+/// oversized declarations before allocating their strings, arrays, or maps.
+#[derive(Debug, Clone, Copy)]
+pub struct ContentReadLimits {
+    pub max_tensor_count: u64,
+    pub max_metadata_count: u64,
+    pub max_string_length: u64,
+    pub max_array_elements: u64,
+    pub max_header_bytes: u64,
+}
+
+impl Default for ContentReadLimits {
+    fn default() -> Self {
+        Self {
+            max_tensor_count: GGUF_MAX_ARRAY_ELEMENTS,
+            max_metadata_count: GGUF_MAX_ARRAY_ELEMENTS,
+            max_string_length: GGUF_MAX_STRING_LENGTH,
+            max_array_elements: GGUF_MAX_ARRAY_ELEMENTS,
+            max_header_bytes: u64::MAX,
+        }
+    }
+}
+
 // `file_size` is the byte length captured once up front, so this avoids
 // seeking to the end and back on every length-prefixed read.
 fn remaining_bytes<R: std::io::Seek>(reader: &mut R, file_size: u64) -> Result<u64> {
@@ -131,10 +157,14 @@ fn read_string<R: std::io::Read + std::io::Seek>(
     reader: &mut R,
     magic: &VersionedMagic,
     file_size: u64,
+    limits: &ContentReadLimits,
 ) -> Result<String> {
     let len = read_length(reader, magic)?;
-    if len > GGUF_MAX_STRING_LENGTH {
-        crate::bail!("gguf: string length {len} exceeds max {GGUF_MAX_STRING_LENGTH}")
+    if len > limits.max_string_length {
+        crate::bail!(
+            "gguf: string length {len} exceeds max {}",
+            limits.max_string_length
+        )
     }
     let remaining = remaining_bytes(reader, file_size)?;
     if len > remaining {
@@ -322,6 +352,7 @@ impl Value {
         magic: &VersionedMagic,
         depth: usize,
         file_size: u64,
+        limits: &ContentReadLimits,
     ) -> Result<Self> {
         if depth > GGUF_MAX_VALUE_DEPTH {
             crate::bail!("gguf: value nesting depth exceeds max {GGUF_MAX_VALUE_DEPTH}")
@@ -342,13 +373,16 @@ impl Value {
                 1 => Self::Bool(true),
                 b => crate::bail!("unexpected bool value {b}"),
             },
-            ValueType::String => Self::String(read_string(reader, magic, file_size)?),
+            ValueType::String => Self::String(read_string(reader, magic, file_size, limits)?),
             ValueType::Array => {
                 let value_type = reader.read_u32::<LittleEndian>()?;
                 let value_type = ValueType::from_u32(value_type)?;
                 let len = read_length(reader, magic)?;
-                if len > GGUF_MAX_ARRAY_ELEMENTS {
-                    crate::bail!("gguf: array length {len} exceeds max {GGUF_MAX_ARRAY_ELEMENTS}")
+                if len > limits.max_array_elements {
+                    crate::bail!(
+                        "gguf: array length {len} exceeds max {}",
+                        limits.max_array_elements
+                    )
                 }
                 let needed = len.saturating_mul(value_type.min_disk_size(magic));
                 let remaining = remaining_bytes(reader, file_size)?;
@@ -365,6 +399,7 @@ impl Value {
                         magic,
                         depth + 1,
                         file_size,
+                        limits,
                     )?)
                 }
                 Self::Array(vs)
@@ -467,22 +502,35 @@ impl ValueType {
 
 impl Content {
     pub fn read<R: std::io::Seek + std::io::Read>(reader: &mut R) -> Result<Self> {
+        Self::read_with_limits(reader, ContentReadLimits::default())
+    }
+
+    pub fn read_with_limits<R: std::io::Seek + std::io::Read>(
+        reader: &mut R,
+        limits: ContentReadLimits,
+    ) -> Result<Self> {
         // Capture the file size once so the bounds checks below don't have to
         // seek to the end and back on every length-prefixed read.
         let start = reader.stream_position()?;
         let file_size = reader.seek(std::io::SeekFrom::End(0))?;
         reader.seek(std::io::SeekFrom::Start(start))?;
+        let header_cap = start.saturating_add(limits.max_header_bytes);
+        let header_limit = header_cap.min(file_size);
 
         let magic = VersionedMagic::read(reader)?;
         let tensor_count = read_length(reader, &magic)?;
         let metadata_kv_count = read_length(reader, &magic)?;
 
-        if tensor_count > GGUF_MAX_ARRAY_ELEMENTS {
-            crate::bail!("gguf: tensor_count {tensor_count} exceeds max {GGUF_MAX_ARRAY_ELEMENTS}")
-        }
-        if metadata_kv_count > GGUF_MAX_ARRAY_ELEMENTS {
+        if tensor_count > limits.max_tensor_count {
             crate::bail!(
-                "gguf: metadata_kv_count {metadata_kv_count} exceeds max {GGUF_MAX_ARRAY_ELEMENTS}"
+                "gguf: tensor_count {tensor_count} exceeds max {}",
+                limits.max_tensor_count
+            )
+        }
+        if metadata_kv_count > limits.max_metadata_count {
+            crate::bail!(
+                "gguf: metadata_kv_count {metadata_kv_count} exceeds max {}",
+                limits.max_metadata_count
             )
         }
 
@@ -496,7 +544,7 @@ impl Content {
         let needed = metadata_kv_count
             .saturating_mul(min_per_kv)
             .saturating_add(tensor_count.saturating_mul(min_per_tensor));
-        let remaining = remaining_bytes(reader, file_size)?;
+        let remaining = remaining_bytes(reader, header_limit)?;
         if needed > remaining {
             crate::bail!(
                 "gguf: header declares {tensor_count} tensors and {metadata_kv_count} metadata entries, needs at least {needed} bytes, only {remaining} remaining"
@@ -505,15 +553,17 @@ impl Content {
 
         let mut metadata = HashMap::new();
         for _idx in 0..metadata_kv_count {
-            let key = read_string(reader, &magic, file_size)?;
+            let key = read_string(reader, &magic, header_limit, &limits)?;
             let value_type = reader.read_u32::<LittleEndian>()?;
             let value_type = ValueType::from_u32(value_type)?;
-            let value = Value::read(reader, value_type, &magic, 0, file_size)?;
-            metadata.insert(key, value);
+            let value = Value::read(reader, value_type, &magic, 0, header_limit, &limits)?;
+            if metadata.insert(key.clone(), value).is_some() {
+                crate::bail!("gguf: duplicate metadata key '{key}'")
+            }
         }
         let mut tensor_infos = HashMap::new();
         for _idx in 0..tensor_count {
-            let tensor_name = read_string(reader, &magic, file_size)?;
+            let tensor_name = read_string(reader, &magic, header_limit, &limits)?;
             let n_dimensions = reader.read_u32::<LittleEndian>()?;
             if n_dimensions > GGUF_MAX_TENSOR_DIMS {
                 crate::bail!(
@@ -538,26 +588,53 @@ impl Content {
             let ggml_dtype = reader.read_u32::<LittleEndian>()?;
             let ggml_dtype = GgmlDType::from_u32(ggml_dtype)?;
             let offset = reader.read_u64::<LittleEndian>()?;
-            tensor_infos.insert(
-                tensor_name,
-                TensorInfo {
-                    shape: crate::Shape::from(dimensions),
-                    offset,
-                    ggml_dtype,
-                },
-            );
+            if tensor_infos
+                .insert(
+                    tensor_name.clone(),
+                    TensorInfo {
+                        shape: crate::Shape::from(dimensions),
+                        offset,
+                        ggml_dtype,
+                    },
+                )
+                .is_some()
+            {
+                crate::bail!("gguf: duplicate tensor name '{tensor_name}'")
+            }
         }
         let position = reader.stream_position()?;
+        if position > header_limit {
+            crate::bail!("gguf: header exceeds max {} bytes", limits.max_header_bytes)
+        }
         let alignment = match metadata.get("general.alignment") {
+            None => DEFAULT_ALIGNMENT,
             Some(Value::U8(v)) => *v as u64,
             Some(Value::U16(v)) => *v as u64,
             Some(Value::U32(v)) => *v as u64,
-            Some(Value::I8(v)) if *v >= 0 => *v as u64,
-            Some(Value::I16(v)) if *v >= 0 => *v as u64,
-            Some(Value::I32(v)) if *v >= 0 => *v as u64,
-            _ => DEFAULT_ALIGNMENT,
+            Some(Value::U64(v)) => *v,
+            Some(Value::I8(v)) if *v > 0 => *v as u64,
+            Some(Value::I16(v)) if *v > 0 => *v as u64,
+            Some(Value::I32(v)) if *v > 0 => *v as u64,
+            Some(Value::I64(v)) if *v > 0 => *v as u64,
+            Some(value) => crate::bail!(
+                "gguf: general.alignment must be a positive integer, got {:?}",
+                value.value_type()
+            ),
         };
-        let tensor_data_offset = position.div_ceil(alignment) * alignment;
+        if alignment == 0 || !alignment.is_power_of_two() {
+            crate::bail!("gguf: general.alignment {alignment} must be a positive power of two")
+        }
+        let tensor_data_offset = position
+            .checked_add(alignment - 1)
+            .ok_or_else(|| crate::Error::Msg("gguf: tensor data alignment overflow".into()))?
+            / alignment
+            * alignment;
+        if tensor_data_offset > header_cap {
+            crate::bail!(
+                "gguf: aligned header exceeds max {} bytes",
+                limits.max_header_bytes
+            )
+        }
         Ok(Self {
             magic,
             metadata,
@@ -635,4 +712,98 @@ pub fn write<W: std::io::Seek + std::io::Write>(
         w.write_all(&vec![0u8; padding])?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::{Cursor, Write};
+
+    fn version_two_prefix(tensor_count: u64, metadata_count: u64) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.write_u32::<LittleEndian>(0x46554747).unwrap();
+        bytes.write_u32::<LittleEndian>(2).unwrap();
+        bytes.write_u64::<LittleEndian>(tensor_count).unwrap();
+        bytes.write_u64::<LittleEndian>(metadata_count).unwrap();
+        bytes
+    }
+
+    fn append_string(bytes: &mut Vec<u8>, value: &str) {
+        bytes.write_u64::<LittleEndian>(value.len() as u64).unwrap();
+        bytes.write_all(value.as_bytes()).unwrap();
+    }
+
+    #[test]
+    fn duplicate_metadata_keys_are_rejected() {
+        let mut bytes = version_two_prefix(0, 2);
+        for value in [1u32, 2u32] {
+            append_string(&mut bytes, "duplicate");
+            bytes
+                .write_u32::<LittleEndian>(ValueType::U32.to_u32())
+                .unwrap();
+            bytes.write_u32::<LittleEndian>(value).unwrap();
+        }
+        let error = Content::read(&mut Cursor::new(bytes))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("duplicate metadata key 'duplicate'"));
+    }
+
+    #[test]
+    fn duplicate_tensor_names_are_rejected() {
+        let mut bytes = version_two_prefix(2, 0);
+        for offset in [0u64, 32u64] {
+            append_string(&mut bytes, "duplicate");
+            bytes.write_u32::<LittleEndian>(1).unwrap();
+            bytes.write_u64::<LittleEndian>(1).unwrap();
+            bytes.write_u32::<LittleEndian>(0).unwrap();
+            bytes.write_u64::<LittleEndian>(offset).unwrap();
+        }
+        let error = Content::read(&mut Cursor::new(bytes))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("duplicate tensor name 'duplicate'"));
+    }
+
+    #[test]
+    fn invalid_alignment_is_rejected_without_panicking() {
+        for alignment in [0u32, 3u32] {
+            let mut bytes = version_two_prefix(0, 1);
+            append_string(&mut bytes, "general.alignment");
+            bytes
+                .write_u32::<LittleEndian>(ValueType::U32.to_u32())
+                .unwrap();
+            bytes.write_u32::<LittleEndian>(alignment).unwrap();
+            let error = Content::read(&mut Cursor::new(bytes))
+                .unwrap_err()
+                .to_string();
+            assert!(error.contains("alignment") && error.contains("power of two"));
+        }
+    }
+
+    #[test]
+    fn caller_limits_reject_counts_and_strings_before_allocation() {
+        let count_limits = ContentReadLimits {
+            max_tensor_count: 1,
+            max_metadata_count: 1,
+            ..ContentReadLimits::default()
+        };
+        let error =
+            Content::read_with_limits(&mut Cursor::new(version_two_prefix(2, 0)), count_limits)
+                .unwrap_err()
+                .to_string();
+        assert!(error.contains("tensor_count 2 exceeds max 1"));
+
+        let mut oversized_string = version_two_prefix(0, 1);
+        oversized_string.write_u64::<LittleEndian>(9).unwrap();
+        oversized_string.extend_from_slice(&[0; 9]);
+        let string_limits = ContentReadLimits {
+            max_string_length: 8,
+            ..ContentReadLimits::default()
+        };
+        let error = Content::read_with_limits(&mut Cursor::new(oversized_string), string_limits)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("string length 9 exceeds max 8"));
+    }
 }

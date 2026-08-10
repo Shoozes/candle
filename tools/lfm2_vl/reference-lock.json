@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "locked_at_utc": "2026-08-10T02:56:01Z",
+  "locked_at_utc": "2026-08-10T10:57:28Z",
   "candle_baseline": {
     "repository": "https://github.com/huggingface/candle",
     "revision": "31f35b147389700ed2a178ee66a91c3cc25cc80d",
@@ -11,6 +11,7 @@
     "moving_refs_resolved_to_immutable_revisions": true,
     "production_weight_payloads_downloaded": false,
     "safetensors_header_metadata_only": true,
+    "gguf_header_metadata_only": true,
     "authority_order": [
       "official-transformers-and-liquidai",
       "mistral-rs-rust-donor",
@@ -591,6 +592,147 @@
         "projector_input_size": 4608,
         "tied_output_embedding": true
       }
+    },
+    {
+      "id": "LiquidAI/LFM2.5-VL-450M-GGUF",
+      "repository": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF",
+      "observed_ref": "main",
+      "revision": "166cd80bbe157dc86d65f964eb8cc6a2cede62ca",
+      "revision_url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF/tree/166cd80bbe157dc86d65f964eb8cc6a2cede62ca",
+      "authority_level": "official-gguf-mmproj-header",
+      "license": {
+        "model_card_tag": "other",
+        "identifier": "LFM Open License v1.0",
+        "path": "LICENSE",
+        "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF/resolve/166cd80bbe157dc86d65f964eb8cc6a2cede62ca/LICENSE"
+      },
+      "adaptation": {
+        "mode": "header-evidence-only",
+        "production_artifacts_may_be_committed": false,
+        "tensor_payload_bytes_read_for_retained_evidence": 0
+      },
+      "gguf_header_contract": {
+        "version": 3,
+        "metadata_records": 32,
+        "tensor_records": 201,
+        "tensor_names_sha256": "45e3f6cf0b51dc9f5e458b8af3375d368cc59daff70b79e2938c7490a94df828",
+        "header_end": 12708,
+        "alignment": 32,
+        "tensor_data_offset": 12736,
+        "ranges_read": [
+          "bytes=0-12735"
+        ],
+        "header_bytes": 12736,
+        "tensor_payload_bytes_read": 0,
+        "metadata": {
+          "general.architecture": "clip",
+          "general.type": "mmproj",
+          "clip.projector_type": "lfm2",
+          "clip.has_vision_encoder": true,
+          "clip.use_gelu": true,
+          "clip.vision.image_size": 256,
+          "clip.vision.patch_size": 16,
+          "clip.vision.embedding_length": 768,
+          "clip.vision.feed_forward_length": 3072,
+          "clip.vision.block_count": 12,
+          "clip.vision.attention.head_count": 12,
+          "clip.vision.attention.layer_norm_epsilon": 0.000001,
+          "clip.vision.image_mean": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "clip.vision.image_std": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "clip.vision.projection_dim": 1024,
+          "clip.vision.projector.scale_factor": 2
+        },
+        "absent_metadata": [
+          "clip.vision.preproc_min_tiles",
+          "clip.vision.preproc_max_tiles",
+          "clip.vision.preproc_image_size"
+        ],
+        "tensor_schema": {
+          "fixed_names": [
+            "v.patch_embd.weight",
+            "v.patch_embd.bias",
+            "v.position_embd.weight",
+            "v.post_ln.weight",
+            "v.post_ln.bias",
+            "mm.1.weight",
+            "mm.1.bias",
+            "mm.2.weight",
+            "mm.2.bias"
+          ],
+          "per_layer_names": [
+            "v.blk.{i}.ln1.weight",
+            "v.blk.{i}.ln1.bias",
+            "v.blk.{i}.attn_q.weight",
+            "v.blk.{i}.attn_q.bias",
+            "v.blk.{i}.attn_k.weight",
+            "v.blk.{i}.attn_k.bias",
+            "v.blk.{i}.attn_v.weight",
+            "v.blk.{i}.attn_v.bias",
+            "v.blk.{i}.attn_out.weight",
+            "v.blk.{i}.attn_out.bias",
+            "v.blk.{i}.ln2.weight",
+            "v.blk.{i}.ln2.bias",
+            "v.blk.{i}.ffn_up.weight",
+            "v.blk.{i}.ffn_up.bias",
+            "v.blk.{i}.ffn_down.weight",
+            "v.blk.{i}.ffn_down.bias"
+          ],
+          "layer_indices": "0-11",
+          "optional_projector_input_norm_present": false,
+          "patch_shape": [
+            768,
+            3,
+            16,
+            16
+          ],
+          "position_shape": [
+            256,
+            768
+          ],
+          "projector_shapes": {
+            "mm.1.weight": [
+              2048,
+              3072
+            ],
+            "mm.2.weight": [
+              1024,
+              2048
+            ]
+          }
+        }
+      },
+      "files": [
+        {
+          "path": "mmproj-LFM2.5-VL-450m-F16.gguf",
+          "purpose": "Official dense-compatible F16 MMProj header and physical-shape authority",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF/resolve/166cd80bbe157dc86d65f964eb8cc6a2cede62ca/mmproj-LFM2.5-VL-450m-F16.gguf",
+          "header_prefix_sha256": "338099d49dd803963c9496cfbba56ab46a425ca7895c5edf59010337ae4436ac",
+          "declared_file_bytes": 189126080,
+          "dtype_counts": {
+            "F16": 75,
+            "F32": 126
+          }
+        },
+        {
+          "path": "mmproj-LFM2.5-VL-450m-Q8_0.gguf",
+          "purpose": "Official Q8_0 MMProj header and quantization-placement authority",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF/resolve/166cd80bbe157dc86d65f964eb8cc6a2cede62ca/mmproj-LFM2.5-VL-450m-Q8_0.gguf",
+          "header_prefix_sha256": "7a4f0f1e168d52b70a03f2773f0f20b9f65d1692f8e973aa0cf9ecee25e43d1c",
+          "declared_file_bytes": 102815168,
+          "dtype_counts": {
+            "F32": 127,
+            "Q8_0": 74
+          }
+        }
+      ]
     }
   ],
   "llama_cpp_history": [
@@ -666,12 +808,6 @@
       "id": "llama-cpp-tiling-metadata",
       "open_pull_request": 25524,
       "policy": "Official processor_config.json remains authoritative."
-    },
-    {
-      "id": "gguf-physical-orientation",
-      "known": "Converter-defined patch reshape and logical GGUF tensor names",
-      "unresolved": "Physical shapes and quantization types from a pinned production GGUF header",
-      "policy": "Inspect metadata without payload before implementing direct GGUF mmproj loading."
     }
   ]
 }

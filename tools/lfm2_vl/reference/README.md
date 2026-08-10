@@ -69,9 +69,30 @@ The loader calls the pinned `Lfm2VlForConditionalGeneration.from_pretrained` pat
 
 The committed `tests/fixtures/lfm2_vl_mmproj_tiny/` bundle is derived byte-for-byte from the no-production-weight tiny fixture. `test_mmproj_exporter.py` proves deterministic regeneration, the exact 43-tensor namespace, hashes and version fields, overwrite refusal, processor/model mismatch diagnostics, and controlled failure when the requested source namespace is absent.
 
+## Bounded GGUF header inspection
+
+`inspect_gguf_header.py` is a stdlib-only parser for a local bounded GGUF prefix. It validates magic, version, counts, string/array lengths, dimensions, dtypes, alignment, and header completeness, then reports both raw GGUF dimensions and Candle logical shapes. It never fetches a URL itself.
+
+For the pinned official 450M F16 and Q8_0 MMProj files, the complete aligned header is exactly bytes `0-12735` and tensor data starts at byte `12736`. Keep the temporary prefix outside the repository and request only that exact range:
+
+```bash
+curl --fail --location \
+  --header 'Range: bytes=0-12735' \
+  --output /tmp/mmproj-header.gguf \
+  'https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF/resolve/166cd80bbe157dc86d65f964eb8cc6a2cede62ca/mmproj-LFM2.5-VL-450m-Q8_0.gguf'
+
+python3 tools/lfm2_vl/reference/inspect_gguf_header.py \
+  /tmp/mmproj-header.gguf \
+  --source-revision 166cd80bbe157dc86d65f964eb8cc6a2cede62ca \
+  --byte-range bytes=0-12735 \
+  --summary-only
+```
+
+Omit `--summary-only` for the complete metadata and tensor inventory, or use `--output` to write JSON outside the repository. The result must report `contains_tensor_payload=false`; do not retain or commit production prefixes. Exact official hashes and parsed facts live in `reference-lock.json`, and the unit test checks their zero-payload boundary.
+
 ## Validation
 
 `requirements-reference.in` is the direct CPU-lane intent. `requirements-reference.txt` is the fully resolved Python 3.10.12 / Linux x86_64 CPU verification lock. `tensor_dump.validate_bundle()` checks stable JSON, safetensors SHA-256, tensor names, shapes, and dtypes. The focused tests cover config-only behavior, official tiny construction, deterministic regeneration, overwrite refusal, production opt-in, mocked production loading, and hash failure.
 
 ---
-AI-edited: 2026-08-10T05:29:29-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-5 | change=documented the local streaming split-MMProj exporter and deterministic fixture proof
+AI-edited: 2026-08-10T07:31:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-6 | change=documented bounded zero-payload GGUF header inspection and locked official ranges
