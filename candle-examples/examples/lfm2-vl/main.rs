@@ -154,8 +154,10 @@ fn main() -> Result<()> {
         loaded.model.text_device(),
     );
     println!(
-        "MMProj tensors={} processor_max_patches={:?} output={}",
+        "MMProj tensors={} execution={:?} native_q8_tensors={} processor_max_patches={:?} output={}",
         loaded.model.mmproj().report.loaded_tensors.len(),
+        loaded.model.mmproj().gguf_execution(),
+        loaded.model.mmproj().native_quantized_tensor_count(),
         loaded.processor.config().max_num_patches,
         pairing.text_output_resolution,
     );

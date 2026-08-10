@@ -50,7 +50,7 @@ pub fn load_hybrid(
     let mmproj = match mmproj_input {
         MmprojInput::SplitDirectory(path) => Mmproj::load(path, vision_dtype, vision_device)?,
         MmprojInput::GgufFile(path) => {
-            Mmproj::load_gguf(path, vision_dtype, vision_device, tokenizer_image_token_id)?
+            Mmproj::load_gguf_auto(path, vision_dtype, vision_device, tokenizer_image_token_id)?
         }
     };
     let processor_patch = processor_config_path

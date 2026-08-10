@@ -14,14 +14,15 @@
 - Phase 3 checkpoint: `37264b49cf74d0cf7697317eda0183f084db6ff8`
 - Phase 4 checkpoint: `8d1bbe471404848730685c98e7dd56b13a457eb4`
 - Phase 5 checkpoint: `1535a0a5fef09f243811b83553b9c75baad78ee2`
-- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`, `lfm2-vl-phase-1-text`, `lfm2-vl-phase-2-siglip2`, `lfm2-vl-phase-3-native-composite`, `lfm2-vl-phase-4-native-e2e`, `lfm2-vl-phase-5-hybrid`
+- Phase 6 checkpoint: `dc6321cde3a9b8a019c1f0fd82780d90afa046df`
+- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`, `lfm2-vl-phase-1-text`, `lfm2-vl-phase-2-siglip2`, `lfm2-vl-phase-3-native-composite`, `lfm2-vl-phase-4-native-e2e`, `lfm2-vl-phase-5-hybrid`, `lfm2-vl-phase-6-gguf`
 
 ## Current Phase
 
-- Phase: 6 — Direct llama.cpp-Compatible GGUF MMProj, Dense Compatibility Path
-- Task: Load an LFM2-VL MMProj directly from GGUF, reconstruct the proven SigLIP2/projector configuration, validate the complete artifact before allocation/inference, and prove dense and Q8_0-dequantized fixture behavior through multimodal prefill/decode/cache reset
-- Scope: official zero-payload GGUF-header lock, bounded GGUF directory parsing, duplicate/alignment hardening in Candle core, exact metadata/tensor/range validation, patch-only layout inversion, dense F32/F16/BF16 construction, processor/tokenizer pairing, direct/split example selection, and deterministic direct-hybrid tests; no production tensor payload download, llama.cpp runtime comparison, generated-caption parity, executed CUDA parity, or native quantized vision operators
-- Status: Implementation, full local verification, and the assigned worker's final re-audit are green with no remaining P0/P1 defect. The exact staged locked/offline baseline passed. Checkpoint commit and tag remain pending.
+- Phase: 7 — Native Q8_0 Vision and Projector Linear Execution
+- Task: Retain eligible Q8_0 GGUF vision/projector matrices as quantized storage, execute them through Candle `QMatMul`, preserve dense biases/norms/positions/patch projection and the Phase 6 dense loader, and prove image-feature plus hybrid prefill/decode/cache behavior
+- Scope: CPU F32 native Q8_0 linears for vision Q/K/V/out, vision MLP, and both projector matrices; mixed dense eligible matrices; strict lower-bit/dense-role/alignment rejection; automatic direct-GGUF example selection with explicit execution diagnostics; deterministic two-layer and committed hybrid fixtures; no production tensor payload download, llama.cpp runtime comparison, generated-caption parity, executed CUDA parity, or lower-bit native vision operators
+- Status: Implementation, full local Rust/Python verification, strict scoped Clippy, the exact staged locked/offline baseline, and the assigned worker's final re-audit are green with no remaining P0/P1 defect. The checkpoint commit/tag are pending.
 
 ## Source-Lock Results
 
@@ -159,8 +160,27 @@
 - Strict scoped Clippy: core/transformer/VLM libraries and the `lfm2-vl` example passed with `-D warnings` plus the five recorded pre-existing Rust 1.97 allowances (`useless_borrows_in_formatting`, `manual_filter`, `manual_is_multiple_of`, `needless_range_loop`, `manual_contains`); library log SHA-256 `4c994e3ab472ac4b39abac4750304ca1c74da31581d65c3cdf8530d114f5adc6`; example log SHA-256 `96ff6e913ed4421d0e5111f4311c605409b5b978250ef0cb2eb21ac2dbc50c4d`
 - Full locked/offline staged CPU baseline: passed `2026-08-10T11:51:12Z`–`2026-08-10T11:51:24Z` against pre-Phase-6-checkpoint HEAD `1535a0a5fef09f243811b83553b9c75baad78ee2` with exactly the 19 Phase 6 paths staged and no unstaged delta; retained log `artifacts/verification/gguf-mmproj/baseline-final.log`; SHA-256 `1f4c755e4271da48ea7906f4804181e75a5a0b4b61e5e0db37cdc1fd95bdedd3`
 - Audit: the initial assigned-worker audit found no P0; processor markers/tokenizer ID, pre-allocation header bounds, transient memory accounting, official lock coverage, range negatives, required `general.type`, and CLI ID compatibility were addressed. The final bounded re-audit found no remaining P0/P1 defect; exact dtype-distribution assertions were added from its only actionable test-polish note.
-- Phase 6 checkpoint/tag: pending final staged verification and manager commit/tag
+- Phase 6 checkpoint/tag: complete at commit `dc6321cde3a9b8a019c1f0fd82780d90afa046df`, annotated tag `lfm2-vl-phase-6-gguf`
 - Not claimed: production-checkpoint numerical parity, production MMProj payload execution, llama.cpp runtime numerical parity, executed CUDA parity, generated-caption parity, or native quantized vision execution
+
+## Phase 7 Verification
+
+- Phase 6 checkpoint/tag: complete at commit `dc6321cde3a9b8a019c1f0fd82780d90afa046df`, annotated tag `lfm2-vl-phase-6-gguf`
+- Operator boundary: `LinearOp` keeps the existing dense `candle_nn::Linear` path and stores native Q8_0 weights directly as `QMatMul::QTensor`; the constructor deliberately bypasses the environment-sensitive eager-dequantization helper; a unit test pattern-matches the retained Q8_0 storage
+- Tensor roles: native Q8_0 is accepted only for vision Q/K/V/out, vision MLP up/down, and projector linear 1/2; patch projection, positional embeddings, LayerNorms, and all biases remain dense; dense eligible matrices remain supported for mixed-width checkpoints
+- Loader boundary: `from_gguf`/`load_gguf` remain the explicit Phase 6 dense compatibility APIs; `from_gguf_q8`/`load_gguf_q8` require at least one valid Q8_0 linear; `*_auto` selects native Q8 on F32 Q8 artifacts and propagates invalid Q8 role/alignment errors rather than silently dequantizing
+- Dtype/device boundary: native Q8 activation dtype is currently F32; automatic F16/BF16 loading uses the dense compatibility path and the CLI prints the selected execution mode plus native-Q8 tensor count; native CUDA execution remains unverified and unclaimed
+- Comprehensive two-layer fixture: all 14 eligible attention/MLP/projector matrices are Q8_0; GGUF SHA-256 `241f59dc92c033c9877654261cf538dc107087eab5834920bd4b0e52cbdcc056`; native versus dequantized-Q8 operator max abs `3.734588623e-3`; native versus dense max abs `5.300968885e-3`; cosine `0.999923348`
+- Committed hybrid fixture: Q8_0 MMProj GGUF SHA-256 `225241e57bc84c62d097aab6daa9466a75e920dbb858daf4cba4cc18ef8bb3f0`; native-Q8 image-feature max abs `1.533385366e-4`; prefill max abs `1.650899649e-4`; cached decode `7.853843272e-5`, `6.113573909e-5`, and `4.052370787e-5`; cache reset `0`
+- Negative coverage: dense-only strict-Q8 request, BF16 strict-Q8 activation, Q4_0, Q8_0 dense roles, Q8_0 patch role, non-block-aligned Q8_0 input width, malformed metadata/inventory/ranges/payload, and cross-artifact pairing mismatches return controlled errors
+- Full Python reference suite: 23/23 passed at 2026-08-10 08:40 EDT; retained log `artifacts/verification/q8-mmproj/python-final.log`; SHA-256 `798ecb8a3cdc1cd63b635e249b230b9d536aa55e1b5fddcab632366e3d7cfd24`
+- Full Rust gate: `cargo test --locked --offline -p candle-core -p candle-transformers -p candle-vlm` passed 2026-08-10 08:40 EDT; this includes 21/21 core library tests, all core integration/doc tests, 49/49 transformer library tests, 5/5 generation, 8/8 NMS, and 26/26 VLM tests; retained log `artifacts/verification/q8-mmproj/rust-tests-final.log`; SHA-256 `1638e2f86728770a4a46da4fc39d4b5cca9dcd2af165408189a18d7de1e2f68e`
+- Strict scoped Clippy: core/transformer/VLM libraries and the `lfm2-vl` example passed with `-D warnings` plus the five recorded pre-existing Rust 1.97 allowances; library log SHA-256 `efc623c3b62b1114ffbfe3dd08ae83ef03a9d7baf17a24887580fc73451bd910`; example log SHA-256 `c24c4549a12dabcabd8f67e75b4349881b84bd1aa8778a9ed1fbdfb19f598238`
+- Full locked/offline staged CPU baseline: passed `2026-08-10T12:49:32Z`–`2026-08-10T12:49:53Z` against pre-Phase-7-checkpoint HEAD `dc6321cde3a9b8a019c1f0fd82780d90afa046df` with exactly the 12 Phase 7 paths staged and no unstaged delta; retained log `artifacts/verification/q8-mmproj/baseline-final.log`; SHA-256 `ff46cc0b23a28050ffe856be2cb81ef7144667977587021f1d3cd221e00ed330`
+- Verifier-only Cargo.lock SHA-256: `acd9419056b786da820b5120db8e78be06902721689c39b55f29445abdddaffc`
+- Audit: the assigned worker verified that eligible weights remain `QMatMul::QTensor`, dense Phase 6 APIs remain intact, F32 auto-selection propagates validation failures, CLI diagnostics are explicit, the two-layer fixture covers 14 linears, and no P0/P1 defect remains in the initial CPU-F32 scope
+- Phase 7 checkpoint/tag: pending exact staged baseline and manager commit/tag
+- Not claimed: production-checkpoint numerical parity, production MMProj payload execution, llama.cpp runtime numerical parity, executed native-Q8 CUDA parity, generated-caption parity, or lower-bit native vision execution
 
 ## Bootstrap Proof
 
@@ -203,6 +223,7 @@
 - Phase 5 is checkpointed at `1535a0a5fef09f243811b83553b9c75baad78ee2` / `lfm2-vl-phase-5-hybrid`; split/native image features are exact and deterministic quantized-text hybrid prefill/decode remains within `4.457309842e-5`.
 - The Phase 6 direct GGUF dense compatibility loader has exact dense/native image features, Q8_0-dequantized feature error `8.463021368e-5`, and direct-hybrid prefill/decode equal to the Phase 5 deterministic bounds.
 - Official F16 and Q8_0 MMProj physical shapes, dtype placement, metadata, and names are locked from exact zero-payload header ranges; only the patch tensor requires a layout inverse.
+- The Phase 7 native-Q8 path retains eligible GGUF weights as `QMatMul::QTensor`; the two-layer all-linear fixture reaches cosine `0.999923348`, and the committed hybrid fixture stays within `1.650899649e-4` prefill drift with exact cache reset.
 - Tiny-fixture dense parity is within `2.38418579e-7` for hidden states and `2.98023224e-8` for logits; production-checkpoint and GGUF numerical parity remain unclaimed.
 
 ## Known Conflicts
@@ -215,7 +236,7 @@
 
 ## Blockers
 
-- None. Phase 6 final staged verification and checkpointing are in progress.
+- None. Phase 7 final staged verification and checkpointing are in progress.
 
 ## Active Files
 
@@ -224,6 +245,7 @@
 - `candle-transformers/src/models/siglip2.rs`
 - `candle-transformers/src/models/lfm2_vl/`
 - `candle-transformers/src/models/lfm2_vl/gguf.rs`
+- `candle-transformers/src/models/lfm2_vl/linear.rs`
 - `candle-core/src/quantized/gguf_file.rs`
 - `candle-vlm/`
 - `candle-examples/examples/lfm2-vl/`
@@ -241,7 +263,7 @@
 
 ## Next Task
 
-Create the Phase 6 checkpoint/tag, then begin Phase 7 Q8 native vision/projection execution while preserving the dense compatibility fallback. Keep native quantized execution, CUDA, production-payload, llama.cpp-runtime, generated-caption, and CLI claims separately labeled.
+Create the Phase 7 checkpoint/tag and complete the sprint acceptance audit. Production-payload comparison against llama.cpp, executed native-Q8 CUDA, lower-bit vision formats, and later optimization work remain separately authorized follow-ups.
 
 ---
-AI-edited: 2026-08-10T07:50:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-6 | change=recorded direct GGUF implementation, final local proof, audit closure, and pending checkpoint boundary
+AI-edited: 2026-08-10T08:50:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-7 | change=recorded native Q8 execution, deterministic parity, staged baseline, and audit closure

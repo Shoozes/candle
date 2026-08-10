@@ -1,4 +1,4 @@
-//! llama.cpp-compatible GGUF MMProj loading through dense dequantization.
+//! llama.cpp-compatible GGUF MMProj loading through dense or native Q8 execution.
 
 use super::weights::{Mmproj, MmprojLoadReport, MmprojMetadata};
 use super::{Lfm2VlMmprojConfig, Lfm2VlProjector};
@@ -25,6 +25,13 @@ const MAX_GGUF_MMPROJ_HEADER_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_GGUF_VISION_LAYERS: usize = 512;
 const NATIVE_VISION_ROOT: &str = "model.vision_tower.vision_model";
 const NATIVE_PROJECTOR_ROOT: &str = "model.multi_modal_projector";
+
+#[allow(non_camel_case_types)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GgufMmprojExecution {
+    DenseCompatibility,
+    Q8_0,
+}
 
 #[derive(Debug, Clone)]
 pub struct GgufMmprojMetadata {
@@ -72,6 +79,14 @@ struct ExpectedTensor {
     native_name: String,
     shape: Vec<usize>,
     patch_layout: bool,
+    quantized_linear: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RequestedExecution {
+    Dense,
+    Q8,
+    Auto,
 }
 
 impl Mmproj {
@@ -82,6 +97,48 @@ impl Mmproj {
         device: &Device,
         image_token_id: u32,
     ) -> Result<Self> {
+        Self::load_gguf_with_execution(
+            path,
+            dtype,
+            device,
+            image_token_id,
+            RequestedExecution::Dense,
+        )
+    }
+
+    /// Load a GGUF MMProj and retain supported Q8_0 linear weights for native matmul.
+    pub fn load_gguf_q8(
+        path: impl AsRef<Path>,
+        dtype: DType,
+        device: &Device,
+        image_token_id: u32,
+    ) -> Result<Self> {
+        Self::load_gguf_with_execution(path, dtype, device, image_token_id, RequestedExecution::Q8)
+    }
+
+    /// Prefer native Q8_0 execution when the artifact and activation dtype support it.
+    pub fn load_gguf_auto(
+        path: impl AsRef<Path>,
+        dtype: DType,
+        device: &Device,
+        image_token_id: u32,
+    ) -> Result<Self> {
+        Self::load_gguf_with_execution(
+            path,
+            dtype,
+            device,
+            image_token_id,
+            RequestedExecution::Auto,
+        )
+    }
+
+    fn load_gguf_with_execution(
+        path: impl AsRef<Path>,
+        dtype: DType,
+        device: &Device,
+        image_token_id: u32,
+        requested_execution: RequestedExecution,
+    ) -> Result<Self> {
         let path = path.as_ref();
         let mut file = File::open(path).map_err(|error| {
             candle::Error::Msg(format!(
@@ -89,8 +146,14 @@ impl Mmproj {
                 path.display()
             ))
         })?;
-        Self::from_gguf(&mut file, dtype, device, image_token_id)
-            .map_err(|error| error.with_path(path))
+        Self::from_gguf_with_execution(
+            &mut file,
+            dtype,
+            device,
+            image_token_id,
+            requested_execution,
+        )
+        .map_err(|error| error.with_path(path))
     }
 
     /// Load a GGUF MMProj from a seekable reader using the dense compatibility path.
@@ -99,6 +162,54 @@ impl Mmproj {
         dtype: DType,
         device: &Device,
         image_token_id: u32,
+    ) -> Result<Self> {
+        Self::from_gguf_with_execution(
+            reader,
+            dtype,
+            device,
+            image_token_id,
+            RequestedExecution::Dense,
+        )
+    }
+
+    /// Load a GGUF MMProj from a seekable reader using native Q8_0 linears.
+    pub fn from_gguf_q8<R: Read + Seek>(
+        reader: &mut R,
+        dtype: DType,
+        device: &Device,
+        image_token_id: u32,
+    ) -> Result<Self> {
+        Self::from_gguf_with_execution(
+            reader,
+            dtype,
+            device,
+            image_token_id,
+            RequestedExecution::Q8,
+        )
+    }
+
+    /// Auto-select native Q8_0 execution or the dense compatibility path.
+    pub fn from_gguf_auto<R: Read + Seek>(
+        reader: &mut R,
+        dtype: DType,
+        device: &Device,
+        image_token_id: u32,
+    ) -> Result<Self> {
+        Self::from_gguf_with_execution(
+            reader,
+            dtype,
+            device,
+            image_token_id,
+            RequestedExecution::Auto,
+        )
+    }
+
+    fn from_gguf_with_execution<R: Read + Seek>(
+        reader: &mut R,
+        dtype: DType,
+        device: &Device,
+        image_token_id: u32,
+        requested_execution: RequestedExecution,
     ) -> Result<Self> {
         let dense_element_size = match dtype {
             DType::F32 => 4u64,
@@ -136,6 +247,8 @@ impl Mmproj {
         let expected = expected_tensors(&config)?;
         let report = inspect_inventory(&content, &expected, dtype, device)?;
         report.require_clean()?;
+        let (execution, native_quantized_tensor_count) =
+            select_execution(&content, &expected, dtype, requested_execution)?;
         let allocations =
             validate_ranges_and_sizes(&content, &expected, file_size, dense_element_size)?;
 
@@ -143,12 +256,52 @@ impl Mmproj {
         native_tensors.try_reserve(expected.len()).map_err(|_| {
             candle::Error::Msg("GGUF MMProj dense tensor-map allocation failed".into())
         })?;
+        let mut vision_quantized = HashMap::new();
+        let mut projector_quantized = HashMap::new();
+        vision_quantized
+            .try_reserve(native_quantized_tensor_count)
+            .map_err(|_| {
+                candle::Error::Msg("GGUF MMProj Q8 tensor-map allocation failed".into())
+            })?;
+        projector_quantized
+            .try_reserve(native_quantized_tensor_count)
+            .map_err(|_| {
+                candle::Error::Msg("GGUF MMProj Q8 tensor-map allocation failed".into())
+            })?;
         for (gguf_name, expected_tensor) in &expected {
             let quantized = content.tensor(reader, gguf_name, device).map_err(|error| {
                 candle::Error::Msg(format!(
                     "failed to read GGUF MMProj tensor {gguf_name:?}: {error}"
                 ))
             })?;
+            if execution == GgufMmprojExecution::Q8_0
+                && expected_tensor.quantized_linear
+                && quantized.dtype() == GgmlDType::Q8_0
+            {
+                let (target, relative_name) = if let Some(name) =
+                    relative_native_name(&expected_tensor.native_name, NATIVE_VISION_ROOT)
+                {
+                    (&mut vision_quantized, name)
+                } else if let Some(name) =
+                    relative_native_name(&expected_tensor.native_name, NATIVE_PROJECTOR_ROOT)
+                {
+                    (&mut projector_quantized, name)
+                } else {
+                    candle::bail!(
+                        "GGUF MMProj Q8 tensor {:?} is outside the vision/projector roots",
+                        expected_tensor.native_name
+                    )
+                };
+                if target
+                    .insert(relative_name.to_string(), quantized)
+                    .is_some()
+                {
+                    candle::bail!(
+                        "GGUF MMProj names normalize to duplicate Q8 tensor {relative_name:?}"
+                    )
+                }
+                continue;
+            }
             let mut tensor = quantized.dequantize(device)?.to_dtype(dtype)?;
             if expected_tensor.patch_layout {
                 let [vision_hidden, channels, patch_rows, patch_cols] =
@@ -182,9 +335,24 @@ impl Mmproj {
         }
 
         let vb = VarBuilder::from_tensors(native_tensors, dtype, device);
-        let vision_tower =
-            siglip2::Siglip2VisionModel::new(&config.vision_config, vb.pp(NATIVE_VISION_ROOT))?;
-        let projector = Lfm2VlProjector::from_mmproj_config(&config, vb.pp(NATIVE_PROJECTOR_ROOT))?;
+        let (vision_tower, projector) = match execution {
+            GgufMmprojExecution::DenseCompatibility => (
+                siglip2::Siglip2VisionModel::new(&config.vision_config, vb.pp(NATIVE_VISION_ROOT))?,
+                Lfm2VlProjector::from_mmproj_config(&config, vb.pp(NATIVE_PROJECTOR_ROOT))?,
+            ),
+            GgufMmprojExecution::Q8_0 => (
+                siglip2::Siglip2VisionModel::new_with_quantized_linears(
+                    &config.vision_config,
+                    vb.pp(NATIVE_VISION_ROOT),
+                    vision_quantized,
+                )?,
+                Lfm2VlProjector::from_mmproj_config_with_quantized_linears(
+                    &config,
+                    vb.pp(NATIVE_PROJECTOR_ROOT),
+                    projector_quantized,
+                )?,
+            ),
+        };
         let tensor_dtypes: BTreeMap<_, _> = content
             .tensor_infos
             .iter()
@@ -239,8 +407,85 @@ impl Mmproj {
             report,
             dtype,
             device,
+            Some(execution),
+            native_quantized_tensor_count,
         ))
     }
+}
+
+fn select_execution(
+    content: &gguf_file::Content,
+    expected: &BTreeMap<String, ExpectedTensor>,
+    dtype: DType,
+    requested: RequestedExecution,
+) -> Result<(GgufMmprojExecution, usize)> {
+    match requested {
+        RequestedExecution::Dense => Ok((GgufMmprojExecution::DenseCompatibility, 0)),
+        RequestedExecution::Q8 => {
+            let count = validate_native_q8_tensors(content, expected, dtype)?;
+            Ok((GgufMmprojExecution::Q8_0, count))
+        }
+        RequestedExecution::Auto => {
+            let has_q8 = expected
+                .keys()
+                .any(|name| content.tensor_infos[name].ggml_dtype == GgmlDType::Q8_0);
+            if dtype == DType::F32 && has_q8 {
+                let count = validate_native_q8_tensors(content, expected, dtype)?;
+                Ok((GgufMmprojExecution::Q8_0, count))
+            } else {
+                Ok((GgufMmprojExecution::DenseCompatibility, 0))
+            }
+        }
+    }
+}
+
+fn validate_native_q8_tensors(
+    content: &gguf_file::Content,
+    expected: &BTreeMap<String, ExpectedTensor>,
+    dtype: DType,
+) -> Result<usize> {
+    if dtype != DType::F32 {
+        candle::bail!(
+            "GGUF MMProj native Q8_0 execution currently requires F32 activations, got {dtype:?}"
+        )
+    }
+    let mut count = 0usize;
+    for (name, expected_tensor) in expected {
+        let info = &content.tensor_infos[name];
+        match info.ggml_dtype {
+            GgmlDType::Q8_0 if expected_tensor.quantized_linear => {
+                let input_width = *info.shape.dims().last().ok_or_else(|| {
+                    candle::Error::Msg(format!(
+                        "GGUF MMProj Q8_0 linear tensor {name:?} has no input dimension"
+                    ))
+                })?;
+                let block_size = GgmlDType::Q8_0.block_size();
+                if !input_width.is_multiple_of(block_size) {
+                    candle::bail!(
+                        "GGUF MMProj Q8_0 linear tensor {name:?} input width {input_width} is not divisible by block size {block_size}"
+                    )
+                }
+                count = count.checked_add(1).ok_or_else(|| {
+                    candle::Error::Msg("GGUF MMProj native Q8 tensor count overflowed".into())
+                })?;
+            }
+            GgmlDType::Q8_0 => {
+                candle::bail!("GGUF MMProj tensor {name:?} is Q8_0 but its role must remain dense")
+            }
+            GgmlDType::F32 | GgmlDType::F16 | GgmlDType::BF16 => {}
+            other => candle::bail!(
+                "GGUF MMProj native Q8_0 execution does not support {other:?} tensor {name:?}"
+            ),
+        }
+    }
+    if count == 0 {
+        candle::bail!("GGUF MMProj native Q8_0 execution requires at least one Q8_0 linear tensor")
+    }
+    Ok(count)
+}
+
+fn relative_native_name<'a>(name: &'a str, root: &str) -> Option<&'a str> {
+    name.strip_prefix(root)?.strip_prefix('.')
 }
 
 fn parse_metadata(content: &gguf_file::Content) -> Result<ParsedMetadata> {
@@ -415,12 +660,14 @@ fn expected_tensors(config: &Lfm2VlMmprojConfig) -> Result<BTreeMap<String, Expe
     let projector_input = config.projector_input_size()?;
     let mut expected = BTreeMap::new();
     let mut insert = |gguf: String, native: String, shape: Vec<usize>, patch_layout: bool| {
+        let quantized_linear = is_quantized_linear_name(&gguf);
         expected.insert(
             gguf,
             ExpectedTensor {
                 native_name: native,
                 shape,
                 patch_layout,
+                quantized_linear,
             },
         );
     };
@@ -549,6 +796,13 @@ fn expected_tensors(config: &Lfm2VlMmprojConfig) -> Result<BTreeMap<String, Expe
         );
     }
     Ok(expected)
+}
+
+fn is_quantized_linear_name(name: &str) -> bool {
+    name == "mm.1.weight"
+        || name == "mm.2.weight"
+        || (name.contains(".attn_") && name.ends_with(".weight"))
+        || (name.contains(".ffn_") && name.ends_with(".weight"))
 }
 
 fn inspect_inventory(
@@ -926,6 +1180,107 @@ pub(crate) mod tests {
             .fold(0f32, f32::max))
     }
 
+    fn cosine_similarity(actual: &Tensor, expected: &Tensor) -> Result<f32> {
+        let actual = actual
+            .to_dtype(DType::F32)?
+            .flatten_all()?
+            .to_vec1::<f32>()?;
+        let expected = expected
+            .to_dtype(DType::F32)?
+            .flatten_all()?
+            .to_vec1::<f32>()?;
+        if actual.len() != expected.len() {
+            candle::bail!("GGUF MMProj cosine element count mismatch")
+        }
+        let (dot, actual_norm, expected_norm) = actual.iter().zip(expected).fold(
+            (0f64, 0f64, 0f64),
+            |(dot, actual_norm, expected_norm), (&lhs, rhs)| {
+                let lhs = lhs as f64;
+                let rhs = rhs as f64;
+                (
+                    dot + lhs * rhs,
+                    actual_norm + lhs * lhs,
+                    expected_norm + rhs * rhs,
+                )
+            },
+        );
+        if actual_norm == 0.0 || expected_norm == 0.0 {
+            candle::bail!("GGUF MMProj cosine requires non-zero tensors")
+        }
+        Ok((dot / (actual_norm.sqrt() * expected_norm.sqrt())) as f32)
+    }
+
+    fn block_aligned_config() -> Result<Lfm2VlConfig> {
+        let mut config = Lfm2VlConfig::from_json(TINY_CONFIG)?;
+        config.vision_config.hidden_size = 32;
+        config.vision_config.intermediate_size = 64;
+        config.vision_config.num_hidden_layers = 2;
+        config.vision_config.num_attention_heads = 4;
+        config.projector_hidden_size = 64;
+        config.text_config.hidden_size = 32;
+        config.text_config.intermediate_size = Some(64);
+        config.text_config.num_attention_heads = 4;
+        config.text_config.num_key_value_heads = 1;
+        config.validate()?;
+        Ok(config)
+    }
+
+    fn synthetic_mmproj_tensors(
+        config: &Lfm2VlConfig,
+        device: &Device,
+    ) -> Result<HashMap<String, Tensor>> {
+        let runtime = Lfm2VlMmprojConfig::from(config);
+        let mut tensors = HashMap::new();
+        for (tensor_index, tensor_info) in expected_tensors(&runtime)?.into_values().enumerate() {
+            let element_count = tensor_info.shape.iter().try_fold(1usize, |count, &dim| {
+                count.checked_mul(dim).ok_or_else(|| {
+                    candle::Error::Msg("synthetic MMProj tensor size overflowed".into())
+                })
+            })?;
+            let is_norm_weight = tensor_info.native_name.ends_with(".weight")
+                && (tensor_info.native_name.contains("layer_norm")
+                    || tensor_info.native_name.contains("layernorm"));
+            let values = (0..element_count)
+                .map(|index| {
+                    if is_norm_weight {
+                        1.0 + ((index + tensor_index) % 7) as f32 * 1e-3
+                    } else {
+                        (((index * 17 + tensor_index * 29) % 101) as f32 - 50.0) * 2e-3
+                    }
+                })
+                .collect::<Vec<_>>();
+            let tensor = Tensor::from_vec(values, tensor_info.shape, device)?;
+            tensors.insert(format!("weights.{}", tensor_info.native_name), tensor);
+        }
+        Ok(tensors)
+    }
+
+    fn block_aligned_batch(device: &Device) -> Result<ProcessedVisionBatch> {
+        let values = (0..(8 * 12))
+            .map(|index| (index as f32 - 47.5) / 64.0)
+            .collect::<Vec<_>>();
+        Ok(ProcessedVisionBatch {
+            pixel_values: Tensor::from_vec(values, (1, 8, 12), device)?,
+            pixel_attention_mask: Tensor::ones((1, 8), DType::U32, device)?,
+            spatial_shapes: Tensor::new(&[[2u32, 4u32]], device)?,
+            crops: vec![CropMeta {
+                image_index: 0,
+                crop_index: 0,
+                kind: CropKind::Whole,
+                patch_rows: 2,
+                patch_cols: 4,
+                projected_tokens: 2,
+            }],
+            images: vec![ImageMeta {
+                crop_range: 0..1,
+                rows: 2,
+                cols: 4,
+                resized_width: 4,
+                resized_height: 2,
+            }],
+        })
+    }
+
     fn metadata_entries(config: &Lfm2VlConfig) -> Result<Vec<(String, Value)>> {
         let vision = &config.vision_config;
         let base_side = (vision.num_patches as f64).sqrt() as usize;
@@ -998,6 +1353,27 @@ pub(crate) mod tests {
         metadata_override: Option<(&str, Value)>,
         malformed_patch_rank: bool,
     ) -> Result<Vec<u8>> {
+        tiny_mmproj_gguf_with_dtypes(
+            tensors,
+            config,
+            quantize_linears.then_some(GgmlDType::Q8_0),
+            None,
+            omitted,
+            metadata_override,
+            malformed_patch_rank,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn tiny_mmproj_gguf_with_dtypes(
+        tensors: &HashMap<String, Tensor>,
+        config: &Lfm2VlConfig,
+        linear_dtype: Option<GgmlDType>,
+        forced_dtype: Option<(&str, GgmlDType)>,
+        omitted: &[&str],
+        metadata_override: Option<(&str, Value)>,
+        malformed_patch_rank: bool,
+    ) -> Result<Vec<u8>> {
         let runtime = Lfm2VlMmprojConfig::from(config);
         let expected = expected_tensors(&runtime)?;
         let mut qtensors = Vec::new();
@@ -1034,19 +1410,17 @@ pub(crate) mod tests {
                     ))?;
                 }
             }
-            let eligible_linear = gguf_name == "mm.1.weight"
-                || gguf_name == "mm.2.weight"
-                || (gguf_name.contains(".attn_") && gguf_name.ends_with(".weight"))
-                || (gguf_name.contains(".ffn_") && gguf_name.ends_with(".weight"));
             let last_dimension = tensor.dim(tensor.rank() - 1)?;
-            let dtype = if quantize_linears
-                && eligible_linear
-                && last_dimension.is_multiple_of(GgmlDType::Q8_0.block_size())
-            {
-                GgmlDType::Q8_0
-            } else {
-                GgmlDType::F32
-            };
+            let dtype = forced_dtype
+                .filter(|(name, _)| *name == gguf_name)
+                .map(|(_, dtype)| dtype)
+                .or_else(|| {
+                    linear_dtype.filter(|dtype| {
+                        is_quantized_linear_name(&gguf_name)
+                            && last_dimension.is_multiple_of(dtype.block_size())
+                    })
+                })
+                .unwrap_or(GgmlDType::F32);
             qtensors.push((gguf_name, QTensor::quantize(&tensor.contiguous()?, dtype)?));
         }
 
@@ -1150,8 +1524,9 @@ pub(crate) mod tests {
         let q8_bytes = tiny_mmproj_gguf(&tensors, &config, true, &[], None, false)?;
         let mut dense_reader = Cursor::new(dense_bytes);
         let dense = Mmproj::from_gguf(&mut dense_reader, DType::F32, &device, 3)?;
-        let mut q8_reader = Cursor::new(q8_bytes);
+        let mut q8_reader = Cursor::new(q8_bytes.clone());
         let q8 = Mmproj::from_gguf(&mut q8_reader, DType::F32, &device, 3)?;
+        let q8_native = Mmproj::from_gguf_q8(&mut Cursor::new(q8_bytes), DType::F32, &device, 3)?;
         assert!(q8
             .metadata
             .gguf_metadata()
@@ -1159,9 +1534,24 @@ pub(crate) mod tests {
         let batch = fixture_batch(&tensors)?;
         let dense_features = dense.encode_images(&batch, 1)?;
         let q8_features = q8.encode_images(&batch, 1)?;
+        let q8_native_features = q8_native.encode_images(&batch, 1)?;
         let error = max_abs(&q8_features.embeddings, &dense_features.embeddings)?;
         eprintln!("lfm2_vl Q8_0 dequantized MMProj image features: max_abs={error:.9e}");
         assert!(error <= 2e-2, "Q8_0 GGUF image feature error {error}");
+        let native_error = max_abs(&q8_native_features.embeddings, &dense_features.embeddings)?;
+        let native_cosine =
+            cosine_similarity(&q8_native_features.embeddings, &dense_features.embeddings)?;
+        eprintln!(
+            "lfm2_vl Q8_0 native MMProj image features: max_abs={native_error:.9e} cosine={native_cosine:.9}"
+        );
+        assert!(
+            native_error <= 5e-4,
+            "Q8_0 native image feature error {native_error}"
+        );
+        assert!(
+            native_cosine >= 0.9999,
+            "Q8_0 native image feature cosine {native_cosine}"
+        );
 
         let text = synthetic_text_metadata(&config);
         let report = q8.metadata.validate_pair(&text, 2, 2, 3)?;
@@ -1172,6 +1562,156 @@ pub(crate) mod tests {
         let mut wrong_text = text;
         wrong_text.embedding_length += 1;
         assert!(q8.metadata.validate_pair(&wrong_text, 2, 2, 3).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn native_q8_gguf_executes_all_vision_and_projector_linears() -> Result<()> {
+        let device = Device::Cpu;
+        let config = block_aligned_config()?;
+        let tensors = synthetic_mmproj_tensors(&config, &device)?;
+        let batch = block_aligned_batch(&device)?;
+        let dense_bytes = tiny_mmproj_gguf(&tensors, &config, false, &[], None, false)?;
+        let q8_bytes = tiny_mmproj_gguf(&tensors, &config, true, &[], None, false)?;
+        eprintln!(
+            "lfm2_vl block-aligned Q8_0 MMProj GGUF SHA-256: {:x}",
+            Sha256::digest(&q8_bytes)
+        );
+
+        let dense = Mmproj::from_gguf(
+            &mut Cursor::new(dense_bytes.clone()),
+            DType::F32,
+            &device,
+            3,
+        )?;
+        let q8_dequantized =
+            Mmproj::from_gguf(&mut Cursor::new(q8_bytes.clone()), DType::F32, &device, 3)?;
+        let q8_native =
+            Mmproj::from_gguf_q8(&mut Cursor::new(q8_bytes.clone()), DType::F32, &device, 3)?;
+        let q8_auto = Mmproj::from_gguf_auto(&mut Cursor::new(q8_bytes), DType::F32, &device, 3)?;
+
+        assert_eq!(
+            dense.gguf_execution(),
+            Some(GgufMmprojExecution::DenseCompatibility)
+        );
+        assert_eq!(dense.native_quantized_tensor_count(), 0);
+        let native_metadata = q8_native.metadata.gguf_metadata().unwrap();
+        assert_eq!(native_metadata.quantized_tensor_count, 14);
+        assert_eq!(q8_native.gguf_execution(), Some(GgufMmprojExecution::Q8_0));
+        assert_eq!(q8_native.native_quantized_tensor_count(), 14);
+        assert_eq!(q8_auto.gguf_execution(), Some(GgufMmprojExecution::Q8_0));
+
+        let dense_features = dense.encode_images(&batch, 1)?;
+        let dequantized_features = q8_dequantized.encode_images(&batch, 1)?;
+        let native_features = q8_native.encode_images(&batch, 1)?;
+        let auto_features = q8_auto.encode_images(&batch, 1)?;
+        let operator_error = max_abs(
+            &native_features.embeddings,
+            &dequantized_features.embeddings,
+        )?;
+        let quantization_error = max_abs(&native_features.embeddings, &dense_features.embeddings)?;
+        let cosine = cosine_similarity(&native_features.embeddings, &dense_features.embeddings)?;
+        eprintln!(
+            "lfm2_vl native Q8_0 MMProj image features: operator_max_abs={operator_error:.9e} dense_max_abs={quantization_error:.9e} cosine={cosine:.9}"
+        );
+        assert!(
+            operator_error <= 5e-3,
+            "native/dequantized Q8 operator error {operator_error}"
+        );
+        assert!(
+            quantization_error <= 1e-2,
+            "native/dense Q8 image feature error {quantization_error}"
+        );
+        assert!(cosine >= 0.9999, "native/dense Q8 cosine {cosine}");
+        assert!(max_abs(&auto_features.embeddings, &native_features.embeddings)? <= 1e-6);
+
+        let error = Mmproj::from_gguf_q8(&mut Cursor::new(dense_bytes), DType::F32, &device, 3)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("requires at least one Q8_0"));
+        let error = Mmproj::from_gguf_q8(
+            &mut Cursor::new(tiny_mmproj_gguf(&tensors, &config, true, &[], None, false)?),
+            DType::BF16,
+            &device,
+            3,
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("requires F32 activations"));
+
+        let q4_bytes = tiny_mmproj_gguf_with_dtypes(
+            &tensors,
+            &config,
+            Some(GgmlDType::Q4_0),
+            None,
+            &[],
+            None,
+            false,
+        )?;
+        let error = Mmproj::from_gguf_q8(&mut Cursor::new(q4_bytes), DType::F32, &device, 3)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("does not support Q4_0 tensor"));
+
+        for dense_role in ["v.blk.0.ln1.weight", "v.position_embd.weight"] {
+            let invalid = tiny_mmproj_gguf_with_dtypes(
+                &tensors,
+                &config,
+                Some(GgmlDType::Q8_0),
+                Some((dense_role, GgmlDType::Q8_0)),
+                &[],
+                None,
+                false,
+            )?;
+            let auto_error =
+                Mmproj::from_gguf_auto(&mut Cursor::new(invalid.clone()), DType::F32, &device, 3)
+                    .unwrap_err()
+                    .to_string();
+            assert!(
+                auto_error.contains(dense_role) && auto_error.contains("role must remain dense"),
+                "unexpected automatic Q8 dense-role error: {auto_error}"
+            );
+            let error = Mmproj::from_gguf_q8(&mut Cursor::new(invalid), DType::F32, &device, 3)
+                .unwrap_err()
+                .to_string();
+            assert!(
+                error.contains(dense_role) && error.contains("role must remain dense"),
+                "unexpected native Q8 dense-role error: {error}"
+            );
+        }
+
+        let dense_bytes = tiny_mmproj_gguf(&tensors, &config, false, &[], None, false)?;
+        let mut dense_content = gguf_file::Content::read(&mut Cursor::new(dense_bytes))?;
+        dense_content
+            .tensor_infos
+            .get_mut("v.patch_embd.weight")
+            .unwrap()
+            .ggml_dtype = GgmlDType::Q8_0;
+        let runtime = Lfm2VlMmprojConfig::from(&config);
+        let error =
+            validate_native_q8_tensors(&dense_content, &expected_tensors(&runtime)?, DType::F32)
+                .unwrap_err()
+                .to_string();
+        assert!(error.contains("v.patch_embd.weight") && error.contains("role must remain dense"));
+
+        let tiny_config = Lfm2VlConfig::from_json(TINY_CONFIG)?;
+        let tiny_tensors = candle::safetensors::load_buffer(TINY_FIXTURE, &device)?;
+        let tiny_bytes = tiny_mmproj_gguf(&tiny_tensors, &tiny_config, false, &[], None, false)?;
+        let mut unaligned_content = gguf_file::Content::read(&mut Cursor::new(tiny_bytes))?;
+        unaligned_content
+            .tensor_infos
+            .get_mut("v.blk.0.attn_q.weight")
+            .unwrap()
+            .ggml_dtype = GgmlDType::Q8_0;
+        let tiny_runtime = Lfm2VlMmprojConfig::from(&tiny_config);
+        let error = validate_native_q8_tensors(
+            &unaligned_content,
+            &expected_tensors(&tiny_runtime)?,
+            DType::F32,
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("input width 16") && error.contains("block size 32"));
         Ok(())
     }
 

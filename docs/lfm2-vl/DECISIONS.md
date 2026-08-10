@@ -275,5 +275,20 @@ The dense path separates format/orientation compatibility from Phase 7 operator 
 Consequences:
 The deterministic dense MMProj GGUF hash is `7361b57e6d9dbf2d7809d4f446944fdc7325b368e4444fee2bc3497376695256`; direct dense/native image features are exact. A synthetic Q8_0 MMProj dequantizes with image-feature max abs `8.463021368e-5`. Direct GGUF MMProj plus deterministic quantized text reproduces the Phase 5 hybrid prefill/decode errors and exact cache reset. The official F16/Q8_0 evidence remains header-only with zero retained payload bytes, so production numerical parity and native Q8 execution remain separate gates.
 
+## D-0022: Native Q8_0 Linears with an Explicit Dense Fallback
+
+Status: Accepted
+
+Decision:
+Route SigLIP2 Q/K/V/out, SigLIP2 MLP up/down, and projector linear 1/2 through a focused `LinearOp`. Dense construction keeps `candle_nn::Linear`; native Q8 construction retains the GGUF `QTensor` directly as `QMatMul::QTensor` and applies the dense bias after matmul. Keep patch projection, positions, LayerNorm parameters, biases, and any dense eligible matrix in the existing dense path.
+
+Keep `load_gguf` and `from_gguf` as the Phase 6 dense compatibility APIs. Add explicit native-Q8 APIs that require F32 activations and at least one valid Q8_0 linear, plus automatic APIs that choose native Q8 for valid F32 Q8 artifacts. Validate exact inventory, tensor roles, GGML dtype, Q8 input-width alignment, ranges, and allocation bounds before reading tensor payloads. Reject lower-bit native weights and Q8 tensors in dense-only roles. Have the example use automatic selection and print its resolved execution mode and retained-Q8 count.
+
+Why:
+Direct `QMatMul::QTensor` construction guarantees that this path cannot be silently converted to dense by `CANDLE_DEQUANTIZE_ALL`. A separate dense API preserves Phase 6 behavior and supports F16/BF16 or compatibility-first callers. Role-aware mixed construction handles checkpoints where a dimension prevents Q8_0 without hard-coding the 450M inventory. Explicit diagnostics make fallback behavior observable.
+
+Consequences:
+The two-layer block-aligned fixture retains all 14 eligible linears and records native/dense projected-feature max abs `5.300968885e-3` with cosine `0.999923348`. The committed hybrid fixture records image-feature max abs `1.533385366e-4`, prefill `1.650899649e-4`, cached decode no worse than `7.853843272e-5`, and exact cache reset. Native F16/BF16 activations, lower-bit vision execution, production-payload comparison, llama.cpp runtime parity, and executed native-Q8 CUDA remain outside this decision.
+
 ---
-AI-edited: 2026-08-10T07:31:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-6 | change=accepted the strict dense direct-GGUF compatibility and allocation boundary
+AI-edited: 2026-08-10T08:45:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-7 | change=accepted direct Q8 storage with strict roles and an explicit dense fallback

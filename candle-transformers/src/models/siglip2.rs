@@ -4,6 +4,8 @@
 //! resizing, tiling, normalization, patchification, and the LFM2.5-VL
 //! projector are separate phases.
 
+use crate::models::lfm2_vl::linear::LinearOp;
+use candle::quantized::QTensor;
 use candle::{DType, Device, IndexOp, Module, Result, Tensor};
 use candle_nn::{layer_norm, linear, Activation, LayerNorm, LayerNormConfig, Linear, VarBuilder};
 use std::collections::HashMap;
@@ -280,12 +282,28 @@ struct EmbeddingStages {
     embeddings_with_position: Tensor,
 }
 
+fn mixed_linear(
+    in_dim: usize,
+    out_dim: usize,
+    vb: VarBuilder,
+    quantized_weights: &mut HashMap<String, QTensor>,
+    weight_name: &str,
+) -> Result<LinearOp> {
+    match quantized_weights.remove(weight_name) {
+        Some(weight) => {
+            let bias = vb.get(out_dim, "bias")?;
+            Ok(LinearOp::from_qtensor(weight, Some(bias)))
+        }
+        None => Ok(LinearOp::Dense(linear(in_dim, out_dim, vb)?)),
+    }
+}
+
 #[derive(Clone, Debug)]
 struct Attention {
-    q_proj: Linear,
-    k_proj: Linear,
-    v_proj: Linear,
-    out_proj: Linear,
+    q_proj: LinearOp,
+    k_proj: LinearOp,
+    v_proj: LinearOp,
+    out_proj: LinearOp,
     num_heads: usize,
     head_dim: usize,
 }
@@ -297,10 +315,70 @@ impl Attention {
             .checked_div(config.num_attention_heads)
             .ok_or_else(|| candle::Error::Msg("SigLIP2 attention head dimension is zero".into()))?;
         Ok(Self {
-            q_proj: linear(config.hidden_size, config.hidden_size, vb.pp("q_proj"))?,
-            k_proj: linear(config.hidden_size, config.hidden_size, vb.pp("k_proj"))?,
-            v_proj: linear(config.hidden_size, config.hidden_size, vb.pp("v_proj"))?,
-            out_proj: linear(config.hidden_size, config.hidden_size, vb.pp("out_proj"))?,
+            q_proj: LinearOp::Dense(linear(
+                config.hidden_size,
+                config.hidden_size,
+                vb.pp("q_proj"),
+            )?),
+            k_proj: LinearOp::Dense(linear(
+                config.hidden_size,
+                config.hidden_size,
+                vb.pp("k_proj"),
+            )?),
+            v_proj: LinearOp::Dense(linear(
+                config.hidden_size,
+                config.hidden_size,
+                vb.pp("v_proj"),
+            )?),
+            out_proj: LinearOp::Dense(linear(
+                config.hidden_size,
+                config.hidden_size,
+                vb.pp("out_proj"),
+            )?),
+            num_heads: config.num_attention_heads,
+            head_dim,
+        })
+    }
+
+    fn new_with_quantized_linears(
+        config: &Siglip2VisionConfig,
+        vb: VarBuilder,
+        quantized_weights: &mut HashMap<String, QTensor>,
+        prefix: &str,
+    ) -> Result<Self> {
+        let head_dim = config
+            .hidden_size
+            .checked_div(config.num_attention_heads)
+            .ok_or_else(|| candle::Error::Msg("SigLIP2 attention head dimension is zero".into()))?;
+        Ok(Self {
+            q_proj: mixed_linear(
+                config.hidden_size,
+                config.hidden_size,
+                vb.pp("q_proj"),
+                quantized_weights,
+                &format!("{prefix}.q_proj.weight"),
+            )?,
+            k_proj: mixed_linear(
+                config.hidden_size,
+                config.hidden_size,
+                vb.pp("k_proj"),
+                quantized_weights,
+                &format!("{prefix}.k_proj.weight"),
+            )?,
+            v_proj: mixed_linear(
+                config.hidden_size,
+                config.hidden_size,
+                vb.pp("v_proj"),
+                quantized_weights,
+                &format!("{prefix}.v_proj.weight"),
+            )?,
+            out_proj: mixed_linear(
+                config.hidden_size,
+                config.hidden_size,
+                vb.pp("out_proj"),
+                quantized_weights,
+                &format!("{prefix}.out_proj.weight"),
+            )?,
             num_heads: config.num_attention_heads,
             head_dim,
         })
@@ -345,16 +423,49 @@ impl Attention {
 
 #[derive(Clone, Debug)]
 struct Mlp {
-    fc1: Linear,
-    fc2: Linear,
+    fc1: LinearOp,
+    fc2: LinearOp,
     activation: Activation,
 }
 
 impl Mlp {
     fn new(config: &Siglip2VisionConfig, vb: VarBuilder) -> Result<Self> {
         Ok(Self {
-            fc1: linear(config.hidden_size, config.intermediate_size, vb.pp("fc1"))?,
-            fc2: linear(config.intermediate_size, config.hidden_size, vb.pp("fc2"))?,
+            fc1: LinearOp::Dense(linear(
+                config.hidden_size,
+                config.intermediate_size,
+                vb.pp("fc1"),
+            )?),
+            fc2: LinearOp::Dense(linear(
+                config.intermediate_size,
+                config.hidden_size,
+                vb.pp("fc2"),
+            )?),
+            activation: config.hidden_act,
+        })
+    }
+
+    fn new_with_quantized_linears(
+        config: &Siglip2VisionConfig,
+        vb: VarBuilder,
+        quantized_weights: &mut HashMap<String, QTensor>,
+        prefix: &str,
+    ) -> Result<Self> {
+        Ok(Self {
+            fc1: mixed_linear(
+                config.hidden_size,
+                config.intermediate_size,
+                vb.pp("fc1"),
+                quantized_weights,
+                &format!("{prefix}.fc1.weight"),
+            )?,
+            fc2: mixed_linear(
+                config.intermediate_size,
+                config.hidden_size,
+                vb.pp("fc2"),
+                quantized_weights,
+                &format!("{prefix}.fc2.weight"),
+            )?,
             activation: config.hidden_act,
         })
     }
@@ -385,6 +496,34 @@ impl EncoderLayer {
             self_attn: Attention::new(config, vb.pp("self_attn"))?,
             layer_norm2: layer_norm(config.hidden_size, layer_norm_config, vb.pp("layer_norm2"))?,
             mlp: Mlp::new(config, vb.pp("mlp"))?,
+        })
+    }
+
+    fn new_with_quantized_linears(
+        config: &Siglip2VisionConfig,
+        vb: VarBuilder,
+        quantized_weights: &mut HashMap<String, QTensor>,
+        index: usize,
+    ) -> Result<Self> {
+        let layer_norm_config = LayerNormConfig {
+            eps: config.layer_norm_eps,
+            ..LayerNormConfig::default()
+        };
+        Ok(Self {
+            layer_norm1: layer_norm(config.hidden_size, layer_norm_config, vb.pp("layer_norm1"))?,
+            self_attn: Attention::new_with_quantized_linears(
+                config,
+                vb.pp("self_attn"),
+                quantized_weights,
+                &format!("encoder.layers.{index}.self_attn"),
+            )?,
+            layer_norm2: layer_norm(config.hidden_size, layer_norm_config, vb.pp("layer_norm2"))?,
+            mlp: Mlp::new_with_quantized_linears(
+                config,
+                vb.pp("mlp"),
+                quantized_weights,
+                &format!("encoder.layers.{index}.mlp"),
+            )?,
         })
     }
 
@@ -428,6 +567,44 @@ impl Siglip2VisionModel {
         let mut encoder = Vec::with_capacity(config.num_hidden_layers);
         for index in 0..config.num_hidden_layers {
             encoder.push(EncoderLayer::new(config, encoder_vb.pp(index))?);
+        }
+        let post_layernorm = layer_norm(
+            config.hidden_size,
+            LayerNormConfig {
+                eps: config.layer_norm_eps,
+                ..LayerNormConfig::default()
+            },
+            vb.pp("post_layernorm"),
+        )?;
+        Ok(Self {
+            config: config.clone(),
+            embeddings,
+            encoder,
+            post_layernorm,
+        })
+    }
+
+    pub(crate) fn new_with_quantized_linears(
+        config: &Siglip2VisionConfig,
+        vb: VarBuilder,
+        mut quantized_weights: HashMap<String, QTensor>,
+    ) -> Result<Self> {
+        config.validate()?;
+        let embeddings = VisionEmbeddings::new(config, vb.pp("embeddings"))?;
+        let encoder_vb = vb.pp("encoder").pp("layers");
+        let mut encoder = Vec::with_capacity(config.num_hidden_layers);
+        for index in 0..config.num_hidden_layers {
+            encoder.push(EncoderLayer::new_with_quantized_linears(
+                config,
+                encoder_vb.pp(index),
+                &mut quantized_weights,
+                index,
+            )?);
+        }
+        if !quantized_weights.is_empty() {
+            let mut names: Vec<_> = quantized_weights.into_keys().collect();
+            names.sort();
+            candle::bail!("unused SigLIP2 quantized linear weights: {names:?}")
         }
         let post_layernorm = layer_norm(
             config.hidden_size,

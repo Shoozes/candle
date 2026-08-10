@@ -1,16 +1,20 @@
 use crate::models::lfm2_vl::config::{Lfm2VlConfig, Lfm2VlMmprojConfig};
-use crate::models::with_tracing::{linear, linear_no_bias, Linear};
+use crate::models::lfm2_vl::linear::LinearOp;
+use candle::quantized::QTensor;
 use candle::{Module, Result, Tensor};
-use candle_nn::{layer_norm, Activation, LayerNorm, LayerNormConfig, VarBuilder};
+use candle_nn::{
+    layer_norm, linear, linear_no_bias, Activation, LayerNorm, LayerNormConfig, VarBuilder,
+};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct Lfm2VlProjector {
     factor: usize,
     input_size: usize,
     layer_norm: Option<LayerNorm>,
-    linear_1: Linear,
+    linear_1: LinearOp,
     activation: Activation,
-    linear_2: Linear,
+    linear_2: LinearOp,
     output_size: usize,
 }
 
@@ -46,12 +50,12 @@ impl Lfm2VlProjector {
         } else {
             None
         };
-        let linear_1 = if config.projector_bias {
+        let linear_1 = LinearOp::Dense(if config.projector_bias {
             linear(input_size, config.projector_hidden_size, vb.pp("linear_1"))?
         } else {
             linear_no_bias(input_size, config.projector_hidden_size, vb.pp("linear_1"))?
-        };
-        let linear_2 = if config.projector_bias {
+        });
+        let linear_2 = LinearOp::Dense(if config.projector_bias {
             linear(
                 config.projector_hidden_size,
                 config.text_hidden_size,
@@ -63,7 +67,58 @@ impl Lfm2VlProjector {
                 config.text_hidden_size,
                 vb.pp("linear_2"),
             )?
+        });
+        Ok(Self {
+            factor: config.downsample_factor,
+            input_size,
+            layer_norm,
+            linear_1,
+            activation: config.projector_hidden_act,
+            linear_2,
+            output_size: config.text_hidden_size,
+        })
+    }
+
+    pub(crate) fn from_mmproj_config_with_quantized_linears(
+        config: &Lfm2VlMmprojConfig,
+        vb: VarBuilder,
+        mut quantized_weights: HashMap<String, QTensor>,
+    ) -> Result<Self> {
+        config.validate()?;
+        let input_size = config.projector_input_size()?;
+        let layer_norm = if config.projector_use_layernorm {
+            Some(layer_norm(
+                input_size,
+                LayerNormConfig {
+                    eps: 1e-5,
+                    ..LayerNormConfig::default()
+                },
+                vb.pp("layer_norm"),
+            )?)
+        } else {
+            None
         };
+        let linear_1 = mixed_linear(
+            input_size,
+            config.projector_hidden_size,
+            config.projector_bias,
+            vb.pp("linear_1"),
+            &mut quantized_weights,
+            "linear_1.weight",
+        )?;
+        let linear_2 = mixed_linear(
+            config.projector_hidden_size,
+            config.text_hidden_size,
+            config.projector_bias,
+            vb.pp("linear_2"),
+            &mut quantized_weights,
+            "linear_2.weight",
+        )?;
+        if !quantized_weights.is_empty() {
+            let mut names: Vec<_> = quantized_weights.into_keys().collect();
+            names.sort();
+            candle::bail!("unused LFM2-VL projector quantized linear weights: {names:?}")
+        }
         Ok(Self {
             factor: config.downsample_factor,
             input_size,
@@ -144,6 +199,31 @@ impl Lfm2VlProjector {
 
     pub fn output_size(&self) -> usize {
         self.output_size
+    }
+}
+
+fn mixed_linear(
+    in_dim: usize,
+    out_dim: usize,
+    bias: bool,
+    vb: VarBuilder,
+    quantized_weights: &mut HashMap<String, QTensor>,
+    weight_name: &str,
+) -> Result<LinearOp> {
+    match quantized_weights.remove(weight_name) {
+        Some(weight) => {
+            let bias = if bias {
+                Some(vb.get(out_dim, "bias")?)
+            } else {
+                None
+            };
+            Ok(LinearOp::from_qtensor(weight, bias))
+        }
+        None => Ok(LinearOp::Dense(if bias {
+            linear(in_dim, out_dim, vb)?
+        } else {
+            linear_no_bias(in_dim, out_dim, vb)?
+        })),
     }
 }
 

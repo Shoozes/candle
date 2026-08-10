@@ -1,6 +1,6 @@
-//! Split dense MMProj loading and quantized-text hybrid execution.
+//! Split/direct MMProj loading and quantized-text hybrid execution.
 
-use super::gguf::GgufMmprojMetadata;
+use super::gguf::{GgufMmprojExecution, GgufMmprojMetadata};
 use super::model::{encode_images_with_parts, merge_projected_embeddings};
 use super::{
     EncodedImages, ImageTokenSpan, Lfm2VlConfig, Lfm2VlMmprojConfig, Lfm2VlProjector,
@@ -421,6 +421,8 @@ pub struct Mmproj {
     config: Lfm2VlMmprojConfig,
     device: Device,
     dtype: DType,
+    gguf_execution: Option<GgufMmprojExecution>,
+    native_quantized_tensor_count: usize,
 }
 
 impl Mmproj {
@@ -433,6 +435,8 @@ impl Mmproj {
         report: MmprojLoadReport,
         dtype: DType,
         device: &Device,
+        gguf_execution: Option<GgufMmprojExecution>,
+        native_quantized_tensor_count: usize,
     ) -> Self {
         Self {
             vision_tower,
@@ -442,6 +446,8 @@ impl Mmproj {
             config,
             device: device.clone(),
             dtype,
+            gguf_execution,
+            native_quantized_tensor_count,
         }
     }
 
@@ -527,6 +533,8 @@ impl Mmproj {
             config,
             device: device.clone(),
             dtype,
+            gguf_execution: None,
+            native_quantized_tensor_count: 0,
         })
     }
 
@@ -561,6 +569,14 @@ impl Mmproj {
 
     pub fn dtype(&self) -> DType {
         self.dtype
+    }
+
+    pub fn gguf_execution(&self) -> Option<GgufMmprojExecution> {
+        self.gguf_execution
+    }
+
+    pub fn native_quantized_tensor_count(&self) -> usize {
+        self.native_quantized_tensor_count
     }
 }
 
@@ -1137,7 +1153,10 @@ fn expected_tensor_shapes(config: &Lfm2VlConfig) -> Result<BTreeMap<String, Vec<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{lfm2, lfm2_vl::Lfm2VlModel};
+    use crate::models::{
+        lfm2,
+        lfm2_vl::{GgufMmprojExecution, Lfm2VlModel},
+    };
     use candle::quantized::{gguf_file, GgmlDType, QTensor};
     use candle::{IndexOp, Tensor};
     use std::collections::HashMap;
@@ -1618,6 +1637,29 @@ mod tests {
             1e-6,
             "direct GGUF image features",
         )?;
+        let q8_direct_bytes = crate::models::lfm2_vl::gguf::tests::tiny_mmproj_gguf(
+            &tensors,
+            &config,
+            true,
+            &[],
+            None,
+            false,
+        )?;
+        let q8_direct_hash = format!("{:x}", Sha256::digest(&q8_direct_bytes));
+        eprintln!("lfm2_vl hybrid deterministic Q8_0 MMProj GGUF SHA-256: {q8_direct_hash}");
+        let q8_direct_mmproj =
+            Mmproj::from_gguf_q8(&mut Cursor::new(q8_direct_bytes), DType::F32, &device, 3)?;
+        assert_eq!(
+            q8_direct_mmproj.gguf_execution(),
+            Some(GgufMmprojExecution::Q8_0)
+        );
+        let q8_direct_encoded = q8_direct_mmproj.encode_images(&batch, 1)?;
+        assert_close(
+            &q8_direct_encoded.embeddings,
+            &native_encoded.embeddings,
+            5e-4,
+            "native Q8_0 GGUF image features",
+        )?;
 
         let text_config = config.text_model_config()?;
         let gguf_bytes = tiny_text_gguf(&tensors, &config)?;
@@ -1642,7 +1684,7 @@ mod tests {
         let quantized_text =
             quantized_lfm2::ModelWeights::from_gguf(gguf, &mut gguf_reader, &device)?;
         let mut split_hybrid = QuantizedLfm2VlModel::new(quantized_text, mmproj, 2, 2, 3)?;
-        let mut direct_text_reader = Cursor::new(gguf_bytes);
+        let mut direct_text_reader = Cursor::new(gguf_bytes.clone());
         let direct_text_gguf = gguf_file::Content::read(&mut direct_text_reader)?;
         let direct_text = quantized_lfm2::ModelWeights::from_gguf(
             direct_text_gguf,
@@ -1650,10 +1692,17 @@ mod tests {
             &device,
         )?;
         let mut direct_hybrid = QuantizedLfm2VlModel::new(direct_text, direct_mmproj, 2, 2, 3)?;
+        let mut q8_text_reader = Cursor::new(gguf_bytes);
+        let q8_text_gguf = gguf_file::Content::read(&mut q8_text_reader)?;
+        let q8_text =
+            quantized_lfm2::ModelWeights::from_gguf(q8_text_gguf, &mut q8_text_reader, &device)?;
+        let mut q8_direct_hybrid = QuantizedLfm2VlModel::new(q8_text, q8_direct_mmproj, 2, 2, 3)?;
         assert!(split_hybrid.vision_device().same_device(&device));
         assert!(split_hybrid.text_device().same_device(&device));
         assert!(direct_hybrid.vision_device().same_device(&device));
         assert!(direct_hybrid.text_device().same_device(&device));
+        assert!(q8_direct_hybrid.vision_device().same_device(&device));
+        assert!(q8_direct_hybrid.text_device().same_device(&device));
         let input_ids = fixture_tensor(&tensors, "input.input_ids")?;
         let spans = image_spans(input_ids, 3)?;
         let mut native_cache = lfm2::Cache::new(true, DType::F32, &text_config, &device)?;
@@ -1661,6 +1710,8 @@ mod tests {
             native.prefill(input_ids, &spans, Some(&native_encoded), &mut native_cache)?;
         let hybrid_prefill = split_hybrid.prefill(input_ids, &spans, Some(&split_encoded))?;
         let direct_prefill = direct_hybrid.prefill(input_ids, &spans, Some(&direct_encoded))?;
+        let q8_direct_prefill =
+            q8_direct_hybrid.prefill(input_ids, &spans, Some(&q8_direct_encoded))?;
         let native_last = native_prefill.i((.., input_ids.dim(1)? - 1, ..))?;
         assert_close(&hybrid_prefill, &native_last, 1e-4, "hybrid prefill logits")?;
         assert_close(
@@ -1669,6 +1720,12 @@ mod tests {
             1e-4,
             "direct GGUF prefill logits",
         )?;
+        assert_close(
+            &q8_direct_prefill,
+            &native_last,
+            1e-3,
+            "native Q8_0 GGUF prefill logits",
+        )?;
 
         let decode_ids = fixture_tensor(&tensors, "input.decode_token_ids")?;
         for step in 0..3 {
@@ -1676,6 +1733,7 @@ mod tests {
             let native_logits = native.decode(&token, 5 + step, &mut native_cache)?;
             let hybrid_logits = split_hybrid.decode(&token, 5 + step)?;
             let direct_logits = direct_hybrid.decode(&token, 5 + step)?;
+            let q8_direct_logits = q8_direct_hybrid.decode(&token, 5 + step)?;
             assert_close(
                 &hybrid_logits,
                 &native_logits,
@@ -1688,6 +1746,12 @@ mod tests {
                 1e-4,
                 &format!("direct GGUF cached decode step {step}"),
             )?;
+            assert_close(
+                &q8_direct_logits,
+                &native_logits,
+                1e-3,
+                &format!("native Q8_0 GGUF cached decode step {step}"),
+            )?;
         }
 
         let reset = split_hybrid.prefill(input_ids, &spans, Some(&split_encoded))?;
@@ -1698,6 +1762,14 @@ mod tests {
             &direct_prefill,
             1e-6,
             "direct GGUF cache reset",
+        )?;
+        let q8_direct_reset =
+            q8_direct_hybrid.prefill(input_ids, &spans, Some(&q8_direct_encoded))?;
+        assert_close(
+            &q8_direct_reset,
+            &q8_direct_prefill,
+            1e-6,
+            "native Q8_0 GGUF cache reset",
         )?;
         Ok(())
     }

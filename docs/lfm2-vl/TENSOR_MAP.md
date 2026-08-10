@@ -86,6 +86,8 @@ Both official headers contain 201 tensors: 9 fixed tensors plus 16 tensors for e
 
 The F16 file contains 75 F16 and 126 F32 tensors. The Q8_0 file contains 74 Q8_0 and 127 F32 tensors. Both have tensor-name-set SHA-256 `45e3f6cf0b51dc9f5e458b8af3375d368cc59daff70b79e2938c7490a94df828`, header end 12,708, alignment 32, and tensor-data offset 12,736.
 
+The 450M native-Q8 execution inventory is dimension-derived but resolves to exactly 74 matrices: 12 blocks × (Q/K/V/out + MLP up/down) = 72 vision linears, plus `mm.1.weight` and `mm.2.weight`. Their biases remain F32. Patch projection, positional embeddings, LayerNorm parameters, and other small tensors remain dense.
+
 Header-confirmed representative Candle shapes are patch `[768,3,16,16]`, position `[256,768]`, `mm.1.weight` `[2048,3072]`, and `mm.2.weight` `[1024,2048]`. Every non-patch matrix already appears in Candle `[out,in]` order.
 
 ## Orientation and Loading Rules
@@ -96,12 +98,14 @@ Header-confirmed representative Candle shapes are patch `[768,3,16,16]`, positio
 4. LayerNorm weights/biases and embeddings are not transposed.
 5. `lm_head.weight` is absent from both official safetensors headers. Native construction must honor tied output embeddings rather than report a missing tensor.
 6. The 450M FFN shapes are the mandatory first text-only gate: any constructor that computes width 4,096 instead of 4,608 is wrong even if the 1.6B checkpoint loads.
+7. Native Q8 execution retains only eligible Q8_0 rank-2 weights as `QMatMul::QTensor`; their input width must be divisible by the Q8_0 block size. Eligible F32/F16/BF16 weights use `LinearOp::Dense`, so mixed checkpoints remain valid.
+8. Explicit native-Q8 loading rejects lower-bit weights and Q8_0 tensors assigned to patch, position, norm, or bias roles. The Phase 6 dense loader remains available as a separate compatibility API.
 
 ## Remaining Mapping Work
 
 - Capture the tokenizer-derived numeric IDs for image wrapper, row/column, and thumbnail tokens in the config-only reference harness.
 - Run production-payload numerical parity only under a separately authorized model-download task; header evidence alone does not establish production numerical parity.
-- Extend the map for lower-bit vision formats only after the Q8 native-execution gate is complete.
+- Extend the native operator map for lower-bit vision formats only in a separately scoped follow-up; Phase 7 intentionally stops at Q8_0.
 
 ---
-AI-edited: 2026-08-10T07:31:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-6 | change=resolved official MMProj shapes, dtypes, inventory, and the patch-only GGUF transform
+AI-edited: 2026-08-10T08:45:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-7 | change=classified native Q8 linear roles and preserved dense tensor boundaries

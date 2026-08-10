@@ -2,13 +2,13 @@
 
 ## Current State
 
-The deterministic reference fixture, LFM2 text compatibility path, SigLIP2 NaFlex tensor path, native projector/composite path, Rust-native raw-image/prompt path, Phase 5 quantized-text plus split-dense-MMProj path, and Phase 6 direct-GGUF-MMProj dense compatibility path are established. No production-checkpoint numerical parity, production-GGUF payload execution, generated-text parity, executed-CUDA parity, native quantized-vision execution, or production CLI run is claimed.
+The deterministic reference fixture, LFM2 text compatibility path, SigLIP2 NaFlex tensor path, native projector/composite path, Rust-native raw-image/prompt path, Phase 5 quantized-text plus split-dense-MMProj path, Phase 6 direct-GGUF-MMProj dense compatibility path, and Phase 7 CPU-F32 native-Q8 vision/projector path are established. No production-checkpoint numerical parity, production-GGUF payload execution, llama.cpp runtime parity, generated-text parity, or executed native-Q8 CUDA parity is claimed.
 
 ## Required Gates
 
 | Gate | Required evidence | Phase status |
 | --- | --- | --- |
-| Workspace baseline | Locked CPU-only Candle checks and diff check from Linux home | Phase 6 staged baseline green; log SHA-256 `1f4c755e4271da48ea7906f4804181e75a5a0b4b61e5e0db37cdc1fd95bdedd3` |
+| Workspace baseline | Locked CPU-only Candle checks and diff check from Linux home | Phase 7 staged baseline green; log SHA-256 `ff46cc0b23a28050ffe856be2cb81ef7144667977587021f1d3cd221e00ed330` |
 | Reference fixture | Deterministic pinned-Python export with component and multimodal tensors | Green; 87 tensors, byte-identical independent exports; manifest SHA-256 `c5461dadb0edfd920b20f308650c59676977110a1cc2f199e317dea7d75bdd7b` |
 | LFM2 text configuration | 450M effective FFN width `4608`; 1.6B width `8192` | Green in config tests and header evidence |
 | Dense text forwarding | Token-ID and embedding-driven prefill plus incremental decode agree | Green on the committed fixture; maximum hidden-state error `2.38418579e-7`, maximum logit error `2.98023224e-8` |
@@ -23,6 +23,7 @@ The deterministic reference fixture, LFM2 text compatibility path, SigLIP2 NaFle
 | Split MMProj artifact | Exact versioned inventory, hashes, immutable provenance, and processor pairing | Green on the deterministic 43-tensor fixture; exporter/reference suite 19/19 |
 | Hybrid GGUF text + dense MMProj | Real GGUF parse/load, split/native image-feature equivalence, prefill/decode/cache comparison | Green on the committed deterministic fixture; image features exact, hybrid text-logit max abs `4.457309842e-5` |
 | Direct GGUF MMProj dense compatibility | Strict metadata/inventory/range load, patch inverse, dequantization, image-feature and hybrid execution comparison | Green on deterministic GGUF fixtures; dense image features exact, Q8_0 dequantized max abs `8.463021368e-5`, direct hybrid errors equal Phase 5 |
+| Native Q8_0 GGUF MMProj | Eligible weights remain QTensor, all vision/projector linear roles execute through QMatMul, dense fallback remains intact, and hybrid prefill/decode/cache stay within documented drift | Green on CPU F32 deterministic fixtures; 14/14 two-layer linear roles quantized, feature cosine `0.999923348`, prefill max abs `1.650899649e-4`, cache reset exact |
 | Official MMProj header contract | Pinned F16/Q8_0 metadata, names, physical shapes, dtype placement, and zero-payload evidence | Green; 32 metadata records, 201 tensors, tensor-data offset 12,736, no retained payload bytes |
 | Distinct devices | Vision and text may differ; only projected image features cross at merge | Source-complete CUDA-vision/CPU-text test committed; local execution skipped because Linux `nvcc`/toolkit is absent |
 | Production checkpoints and GGUF | Native versus production and GGUF numerical validation | Not run; no production weights or GGUF files downloaded |
@@ -79,6 +80,16 @@ The deterministic dense GGUF has SHA-256 `7361b57e6d9dbf2d7809d4f446944fdc7325b3
 
 Final local evidence is green: pinned Python 23/23; the complete offline core/transformer/VLM test command, including all integrations and doc tests; strict scoped Clippy with five documented pre-existing Rust 1.97 allowances; and the exact staged locked/offline baseline. Retained hashes are recorded in `STATUS.md`. The assigned worker's final static re-audit found no remaining P0/P1 defect. No production model or MMProj payload was downloaded.
 
+## Phase 7 Native Q8 MMProj Evidence
+
+`LinearOp` now covers every vision attention projection, both vision MLP linears, and both projector linears. Dense construction still stores `candle_nn::Linear`; native Q8 construction stores `QMatMul::QTensor` directly and adds the dense bias afterward. Patch projection, positions, LayerNorm parameters, and biases remain dense. Mixed checkpoints may retain dense eligible matrices, while explicit native mode rejects lower-bit weights, Q8 dense roles, and non-block-aligned Q8 input widths.
+
+The two-layer block-aligned fixture quantizes all 14 eligible linears and has GGUF SHA-256 `241f59dc92c033c9877654261cf538dc107087eab5834920bd4b0e52cbdcc056`. Native versus dequantized-Q8 operator max abs is `3.734588623e-3`; native versus the dense source is `5.300968885e-3` with cosine `0.999923348`. This is a documented quantized drift gate, distinct from the earlier dense CPU-F32 target of cosine `>=0.99999`.
+
+The committed hybrid fixture's native-Q8 GGUF SHA-256 is `225241e57bc84c62d097aab6daa9466a75e920dbb858daf4cba4cc18ef8bb3f0`. Its image-feature max abs is `1.533385366e-4`; multimodal prefill is `1.650899649e-4`; three cached decode comparisons are `7.853843272e-5`, `6.113573909e-5`, and `4.052370787e-5`; cache reset is exact. The full local gate passes 23 Python tests, all core/transformer/VLM tests, and strict scoped Clippy. The assigned worker's final audit reports no P0/P1 defect in the initial CPU-F32 scope.
+
+The example automatically selects native Q8 for valid F32 Q8 artifacts and reports the selected execution mode/count. F16/BF16 automatic loading deliberately stays on the Phase 6 dense path. No production payload or llama.cpp runtime was used, so official-file numerical parity, top-k/token agreement, and native-Q8 CUDA remain evidence gaps rather than claims.
+
 ## Evidence Rules
 
 - Plausible captions are not parity evidence.
@@ -88,7 +99,7 @@ Final local evidence is green: pinned Python 23/23; the complete offline core/tr
 
 ## Next Parity Task
 
-Complete the Phase 6 staged baseline/checkpoint, then implement and prove the Phase 7 Q8 native vision/projection operator path without weakening the dense compatibility fallback.
+Complete the Phase 7 staged baseline/checkpoint and sprint audit. Any production-payload llama.cpp comparison, native-Q8 CUDA execution, or lower-bit vision support requires a separately authorized follow-up.
 
 ---
-AI-edited: 2026-08-10T07:50:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-6 | change=recorded direct GGUF header, fixture numerics, full local proof, and audit closure
+AI-edited: 2026-08-10T08:50:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-7 | change=recorded native Q8 storage, execution drift, staged baseline, and evidence boundaries
