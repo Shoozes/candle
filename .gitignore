@@ -48,3 +48,13 @@ bria.mp3
 bria.safetensors
 bria.wav
 bench_results/
+
+# LFM2-VL local-only environments, model data, and reference output
+/.venv/
+/artifacts/
+/downloads/
+/models/
+/.cache/huggingface/
+/.hf-cache/
+/.huggingface/
+/tools/lfm2_vl/reference/outputs/
