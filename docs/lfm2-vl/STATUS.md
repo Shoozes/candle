@@ -9,14 +9,15 @@
 - Bootstrap checkpoint: `4a6b30a124abb32b4b275ea8c343ce7ef3ac8be7`
 - Source-lock checkpoint: `f007daec10e5751e5899676a7c58098183ec1256`
 - Reference-harness checkpoint: `a9594101c97589f6deabe7a2dddaaffeb5471a94`
-- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`
+- Phase 1 checkpoint: `f660b8e3f2b4560f133356864e012be83f29d9c0`
+- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`, `lfm2-vl-phase-1-text`
 
 ## Current Phase
 
-- Phase: 1 — LFM2 text compatibility
-- Task: Normalize official and legacy LFM2 text configuration, add dense and quantized embedding-driven forwarding, and prove text-only parity
-- Scope: dense and quantized LFM2 source, the existing dense example, focused tests, and Phase 1 documentation; no SigLIP2, LFM2-VL, image processing, mmproj, production downloads, or CUDA-specific behavior
-- Status: complete local Phase 1 gate green; checkpoint commit and tag pending
+- Phase: 2 — SigLIP2 NaFlex tensor encoding
+- Task: Implement packed-patch SigLIP2 vision encoding with exact positional interpolation, masking, encoder layers, and post-normalization
+- Scope: SigLIP2 source, packed-tensor fixture tests, and Phase 2 documentation; no raw image processing, projector, LFM2-VL composition, GGUF, production downloads, or CUDA-specific behavior
+- Status: focused Phase 2 gate, broader library gate, and full baseline are green in the manager's Linux-home CPU F32 verifier; only the Phase 2 checkpoint/tag is pending
 
 ## Source-Lock Results
 
@@ -69,6 +70,23 @@
 - Baseline log: `artifacts/verification/text-compatibility/baseline-final.log`; SHA-256 `c72eccd8b77689878689f7e720c46a040c26f3cee8060b17727392f392862f46`
 - Local-only lockfile SHA-256: `4e059ffe6035520ca6553303932173eba562f4985f82931a90129eea9849ce54`; no production weights or GGUF files were downloaded
 
+## SigLIP2 NaFlex Verification
+
+- Environment: manager Linux-home WSL2 `NVIDIA-Workbench`; CPU-only F32 lane
+- Focused command: `cargo test --locked --offline -p candle-transformers siglip2 -- --nocapture`
+- Result: 7/7 focused tests passed
+- Broader library command: `cargo test --locked --offline -p candle-transformers --lib`; 25 passed, 0 failed
+- Broader library log: `artifacts/verification/siglip2/candle-transformers-lib.log`; SHA-256 `b4c91d4bd6a0c1850a66d9cc27d61776b5ec96c152783e6c13f23a0cfcdf5197`
+- Focused log: `artifacts/verification/siglip2/focused-tests.log`; SHA-256 `d09ec6bdf1d110711f347b89bba353eeb8ebb6172e8a45d19d3edd1aeb254645`
+- Full baseline: passed from `2026-08-10T05:14:56Z` to `2026-08-10T05:15:08Z`, including `cargo fmt`, `candle-core`, `candle-nn`, `candle-transformers`, `lfm2`, `quantized-lfm2`, and both diff checks
+- Full baseline log: `artifacts/verification/siglip2/baseline-final.log`; SHA-256 `727e0d8a029f121a7225d3d35a53addd480791323b6e0c501576408cc6460d52`
+- Phase 2 checkpoint/tag: pending
+- Gate: positional max absolute error `<=2e-5`; vision cosine similarity `>=0.99999`
+- Stage evidence: patch projection max abs `5.960464478e-8`, cosine `0.999999940`; resized positions `2.980232239e-8`, cosine `0.999999940`; embedding sum `1.192092896e-7`, cosine `1.000000119`; encoder layer 0 `4.768371582e-7`, cosine `0.999999881`; encoder layer 1 `1.192092896e-6`, cosine `0.999999881`
+- Final evidence: returned post-LN `7.152557373e-7`, cosine `1.000000119`; post-LN hook matched the same result; padding-key isolation max abs `0`, cosine `1`
+- Proven behavior: packed patch projection with bias, CPU F32 separable antialiased positional interpolation and per-shape cache, bidirectional key masking, F32 score/softmax with original-dtype value matmul, configured encoder activation, post-LN, checked malformed-input handling, and controlled exclusion of the vision pooling head
+- Production weights or GGUF files downloaded: none
+
 ## Bootstrap Proof
 
 - Date: 2026-08-09 22:35 EDT (`2026-08-10T02:35:09Z` to `2026-08-10T02:35:12Z`)
@@ -103,6 +121,8 @@
 - Config-only mode is stdlib-only and production model loading remains guarded by explicit production, load, and download flags.
 - The tiny fixture deliberately omits the tied `lm_head.weight` duplicate, preserving the production checkpoints' missing-head loading contract.
 - The complete Phase 1 text gate passes in the Linux-home CPU/offline lane: all 5 focused LFM2 tests, all 18 `candle-transformers` library tests, both existing LFM2 examples, and the full locked/offline baseline are green.
+- Phase 1 is checkpointed at `f660b8e3f2b4560f133356864e012be83f29d9c0` and tagged `lfm2-vl-phase-1-text`.
+- The focused Phase 2 SigLIP2 gate is green: all 7 tests pass with the exact stage errors recorded above; the broader library gate and full locked/offline baseline are also green. Only the Phase 2 checkpoint/tag remains pending.
 - Tiny-fixture dense parity is within `2.38418579e-7` for hidden states and `2.98023224e-8` for logits; production-checkpoint and GGUF numerical parity remain unclaimed.
 
 ## Known Conflicts
@@ -114,12 +134,14 @@
 
 ## Blockers
 
-- None for the Phase 1 text checkpoint.
+- None. Only the Phase 2 checkpoint/tag remains pending.
 
 ## Active Files
 
 - `candle-transformers/src/models/lfm2.rs`
 - `candle-transformers/src/models/quantized_lfm2.rs`
+- `candle-transformers/src/models/siglip2.rs`
+- `candle-transformers/src/models/mod.rs`
 - `candle-examples/examples/lfm2/main.rs`
 - `docs/lfm2-vl/DECISIONS.md`
 - `docs/lfm2-vl/PARITY.md`
@@ -127,7 +149,7 @@
 
 ## Next Task
 
-Create the Phase 1 checkpoint and annotated tag, then stop at the sprint's first mandatory review point. Report the text gate and wait for user continuation before beginning the SigLIP2 vision phase.
+Create the Phase 2 checkpoint/tag after review. Keep production-checkpoint, processor, projector, composite, CUDA, and GGUF parity separately labeled and unclaimed.
 
 ---
-AI-edited: 2026-08-10T00:34:34-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=text-compatibility | change=recorded complete Phase 1 local gate and mandatory stop
+AI-edited: 2026-08-10T01:15:43-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=siglip2-phase-2-status | change=recorded final Phase 2 local gates with checkpoint pending

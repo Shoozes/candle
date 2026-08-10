@@ -167,7 +167,20 @@ Why:
 The 5 focused tests cover the required configuration aliases and precedence, 450M/1.6B effective FFN widths, legacy fallback, standalone and nested roots, tied and explicit heads, dense token-ID/embedding equivalence, committed-fixture merged prefill parity, three cached decode steps, cache-reset determinism, and quantized embedding-driven forwarding. All 18 `candle-transformers` library tests and the full locked/offline baseline also pass.
 
 Consequences:
-The implementation may be checkpointed at the sprint's first mandatory stop. The tiny deterministic fixture establishes the Phase 1 code path, but this decision does not claim production-checkpoint or GGUF numerical parity and does not cover any vision behavior.
+The implementation is checkpointed at `f660b8e3f2b4560f133356864e012be83f29d9c0` and tagged `lfm2-vl-phase-1-text`. The tiny deterministic fixture establishes the Phase 1 code path, but this decision does not claim production-checkpoint or GGUF numerical parity and does not cover any vision behavior.
+
+## D-0014: SigLIP2 NaFlex CPU F32 Interpolation and Head Boundary
+
+Status: Accepted
+
+Decision:
+Implement SigLIP2 NaFlex positional resizing as CPU F32 separable bilinear interpolation with `align_corners=false`, normalized antialiased triangular weights, and width-before-height composition. Cache resized position tensors per `(patch_rows, patch_cols)` behind a poison-safe `RwLock`. Keep attention score and softmax computation in F32, then cast softmax weights back to the original query/value dtype for the value matmul. Reject `vision_use_head=true` and unsupported pooling-head configurations.
+
+Why:
+The pinned Transformers behavior requires antialiased positional interpolation and a bidirectional key-padding mask, while the attached LFM2-VL specification explicitly requires the vision tower without a pooling head. A thread-safe cache preserves the immutable inference model's shareability, and the mixed-dtype attention order matches the official execution contract.
+
+Consequences:
+The focused Linux-home CPU F32 fixture gate is green at 7/7 tests, the broader `candle-transformers` library gate is green at 25 passed and 0 failed, and the full locked/offline baseline is green. Only the Phase 2 checkpoint/tag remains pending; this decision does not claim production-checkpoint, processor, projector, composite, CUDA, or GGUF parity.
 
 ---
-AI-edited: 2026-08-10T00:34:34-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=text-compatibility | change=accepted complete Phase 1 local gate and preserved parity boundary
+AI-edited: 2026-08-10T01:15:43-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=siglip2-phase-2-decisions | change=recorded final Phase 2 gates with checkpoint pending
