@@ -10,14 +10,14 @@
 - Source-lock checkpoint: `f007daec10e5751e5899676a7c58098183ec1256`
 - Reference-harness checkpoint: `a9594101c97589f6deabe7a2dddaaffeb5471a94`
 - Phase 1 checkpoint: `f660b8e3f2b4560f133356864e012be83f29d9c0`
-- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`, `lfm2-vl-phase-1-text`
+- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`, `lfm2-vl-phase-1-text`, `lfm2-vl-phase-2-siglip2`
 
 ## Current Phase
 
-- Phase: 2 — SigLIP2 NaFlex tensor encoding
-- Task: Implement packed-patch SigLIP2 vision encoding with exact positional interpolation, masking, encoder layers, and post-normalization
-- Scope: SigLIP2 source, packed-tensor fixture tests, and Phase 2 documentation; no raw image processing, projector, LFM2-VL composition, GGUF, production downloads, or CUDA-specific behavior
-- Status: focused Phase 2 gate, broader library gate, and full baseline are green in the manager's Linux-home CPU F32 verifier; only the Phase 2 checkpoint/tag is pending
+- Phase: 3 — Projector and Native Composite
+- Task: Compose proven packed SigLIP2 and dense LFM2 paths through the exact projector, image-span merge, multimodal prefill, and cached decode APIs
+- Scope: dynamic top-level config, factor-N pixel-unshuffle, projector, crop unpadding/ranges/order, `EncodedImages`, strict image-span replacement, and native tensor-level composite tests; no raw-image preprocessing, tokenizer/chat-template, GGUF, production downloads, CUDA-specific behavior, or CLI support
+- Status: Phase 3 focused proof is green at 11/11, the SigLIP2 repeated-crop regression is green at 8/8, and the `candle-transformers` library gate is green at 37/37. The Phase 3 checkpoint remains pending manager review/commit. The retained full baseline is explicitly pre-Phase-3-checkpoint evidence.
 
 ## Source-Lock Results
 
@@ -80,12 +80,26 @@
 - Focused log: `artifacts/verification/siglip2/focused-tests.log`; SHA-256 `d09ec6bdf1d110711f347b89bba353eeb8ebb6172e8a45d19d3edd1aeb254645`
 - Full baseline: passed from `2026-08-10T05:14:56Z` to `2026-08-10T05:15:08Z`, including `cargo fmt`, `candle-core`, `candle-nn`, `candle-transformers`, `lfm2`, `quantized-lfm2`, and both diff checks
 - Full baseline log: `artifacts/verification/siglip2/baseline-final.log`; SHA-256 `727e0d8a029f121a7225d3d35a53addd480791323b6e0c501576408cc6460d52`
-- Phase 2 checkpoint/tag: pending
+- Phase 2 checkpoint/tag: complete at commit `74e109aec5f9801cfead3eeb27fe3f93ac646b84`, annotated tag `lfm2-vl-phase-2-siglip2`
 - Gate: positional max absolute error `<=2e-5`; vision cosine similarity `>=0.99999`
 - Stage evidence: patch projection max abs `5.960464478e-8`, cosine `0.999999940`; resized positions `2.980232239e-8`, cosine `0.999999940`; embedding sum `1.192092896e-7`, cosine `1.000000119`; encoder layer 0 `4.768371582e-7`, cosine `0.999999881`; encoder layer 1 `1.192092896e-6`, cosine `0.999999881`
 - Final evidence: returned post-LN `7.152557373e-7`, cosine `1.000000119`; post-LN hook matched the same result; padding-key isolation max abs `0`, cosine `1`
 - Proven behavior: packed patch projection with bias, CPU F32 separable antialiased positional interpolation and per-shape cache, bidirectional key masking, F32 score/softmax with original-dtype value matmul, configured encoder activation, post-LN, checked malformed-input handling, and controlled exclusion of the vision pooling head
 - Production weights or GGUF files downloaded: none
+
+## Phase 3 Verification
+
+- Phase 2 checkpoint: complete at commit `74e109aec5f9801cfead3eeb27fe3f93ac646b84`, annotated tag `lfm2-vl-phase-2-siglip2`
+- Implementation proven in scope: dynamic top-level config, factor-N official pixel-unshuffle, optional projector LayerNorm, linear/GELU/linear projection, crop unpadding/ranges/order, strict one-span-per-image exact-length merge, multimodal prefill, ordinary cached decode, cache reset, and `EncodedImages`
+- Focused Phase 3 gate: 11/11 passed; retained log `artifacts/verification/native-composite/focused-tests.log`; SHA-256 `7d727e1b8558f1f242ce940c8af36d44a3e292f4ffa023d1ff124ccf2cc13638`
+- Maximum absolute errors: projector stages `<=5.960464478e-8`; encoded and merged embeddings `<=6.519258022e-9`; prefill logits `<=4.470348358e-8`; cached decode `<=2.980232239e-8`
+- SigLIP2 repeated-crop regression: 8/8 passed; retained log `artifacts/verification/native-composite/siglip2-regression.log`; SHA-256 `5684568b060c6338f3e5d8bc94361d37bc64ddf84584ad4a5e05915acc275f38`
+- Runtime defect resolved: batched SigLIP2 attention received a non-contiguous transposed left-hand operand and failed with `MatMulUnexpectedStriding`; `split_heads` now materializes a contiguous tensor, protected by the repeated-crop regression
+- `candle-transformers` library gate: 37/37 passed; retained log `artifacts/verification/native-composite/candle-transformers-lib.log`; SHA-256 `0f36d6a8d54f77abfe9c5031075b7174cff83859315d0997f60a1a399f475497`
+- Full locked/offline CPU baseline: passed `2026-08-10T05:48:07Z`–`2026-08-10T05:48:10Z` against pre-Phase-3-checkpoint HEAD `74e109aec5f9801cfead3eeb27fe3f93ac646b84`; retained log `artifacts/verification/native-composite/baseline-final.log`; SHA-256 `47d984dd3afe7b92b6a72bcdb93e7d9da99bd8673e5c1067b8f1fac7ed2b8b45`
+- Cargo.lock SHA-256: `4e059ffe6035520ca6553303932173eba562f4985f82931a90129eea9849ce54`
+- Phase 3 checkpoint: pending manager review/commit
+- Not claimed: production-checkpoint parity, CUDA, GGUF, raw-image preprocessing, tokenizer/chat template, or CLI support
 
 ## Bootstrap Proof
 
@@ -122,7 +136,8 @@
 - The tiny fixture deliberately omits the tied `lm_head.weight` duplicate, preserving the production checkpoints' missing-head loading contract.
 - The complete Phase 1 text gate passes in the Linux-home CPU/offline lane: all 5 focused LFM2 tests, all 18 `candle-transformers` library tests, both existing LFM2 examples, and the full locked/offline baseline are green.
 - Phase 1 is checkpointed at `f660b8e3f2b4560f133356864e012be83f29d9c0` and tagged `lfm2-vl-phase-1-text`.
-- The focused Phase 2 SigLIP2 gate is green: all 7 tests pass with the exact stage errors recorded above; the broader library gate and full locked/offline baseline are also green. Only the Phase 2 checkpoint/tag remains pending.
+- The focused Phase 2 SigLIP2 gate is green: all 7 tests pass with the exact stage errors recorded above; the Phase 2 checkpoint/tag is complete at `74e109aec5f9801cfead3eeb27fe3f93ac646b84` / `lfm2-vl-phase-2-siglip2`.
+- The Phase 3 focused gate is green at 11/11, the SigLIP2 repeated-crop regression is green at 8/8, and the `candle-transformers` library gate is green at 37/37. These prove the packed projector/native composite scope only; production-checkpoint, CUDA, GGUF, raw-image, tokenizer/chat-template, and CLI behavior remain unclaimed.
 - Tiny-fixture dense parity is within `2.38418579e-7` for hidden states and `2.98023224e-8` for logits; production-checkpoint and GGUF numerical parity remain unclaimed.
 
 ## Known Conflicts
@@ -134,13 +149,14 @@
 
 ## Blockers
 
-- None. Only the Phase 2 checkpoint/tag remains pending.
+- None. The Phase 3 checkpoint remains pending manager review/commit.
 
 ## Active Files
 
 - `candle-transformers/src/models/lfm2.rs`
 - `candle-transformers/src/models/quantized_lfm2.rs`
 - `candle-transformers/src/models/siglip2.rs`
+- `candle-transformers/src/models/lfm2_vl/`
 - `candle-transformers/src/models/mod.rs`
 - `candle-examples/examples/lfm2/main.rs`
 - `docs/lfm2-vl/DECISIONS.md`
@@ -149,7 +165,7 @@
 
 ## Next Task
 
-Create the Phase 2 checkpoint/tag after review. Keep production-checkpoint, processor, projector, composite, CUDA, and GGUF parity separately labeled and unclaimed.
+Create the Phase 3 checkpoint/commit after manager review. Keep production-checkpoint, raw-image processor, tokenizer/chat-template, CUDA, GGUF, and CLI parity separately labeled and unclaimed.
 
 ---
-AI-edited: 2026-08-10T01:15:43-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=siglip2-phase-2-status | change=recorded final Phase 2 local gates with checkpoint pending
+AI-edited: 2026-08-10T01:49:59-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-3-docs | change=recorded Phase 3 native composite proof, regression, and checkpoint state

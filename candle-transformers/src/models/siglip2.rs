@@ -338,7 +338,8 @@ impl Attention {
         sequence_length: usize,
     ) -> Result<Tensor> {
         xs.reshape((batch_size, sequence_length, self.num_heads, self.head_dim))?
-            .transpose(1, 2)
+            .transpose(1, 2)?
+            .contiguous()
     }
 }
 
@@ -954,6 +955,40 @@ mod tests {
             &altered_output.i((.., 0..8, ..))?,
             1e-6,
             "padding key isolation",
+        )?;
+        Ok(())
+    }
+
+    #[test]
+    fn repeated_crop_batch_matches_single_crop() -> Result<()> {
+        let (model, tensors) = tiny_model()?;
+        let pixel_values = fixture_tensor(&tensors, "input.pixel_values")?;
+        let pixel_attention_mask = fixture_tensor(&tensors, "input.pixel_attention_mask")?;
+        let spatial_shapes = fixture_tensor(&tensors, "input.spatial_shapes")?;
+        let single = model.forward(&PackedVisionInputs {
+            pixel_values,
+            pixel_attention_mask,
+            spatial_shapes,
+        })?;
+        let pixel_values = Tensor::cat(&[pixel_values, pixel_values], 0)?;
+        let pixel_attention_mask = Tensor::cat(&[pixel_attention_mask, pixel_attention_mask], 0)?;
+        let spatial_shapes = Tensor::cat(&[spatial_shapes, spatial_shapes], 0)?;
+        let repeated = model.forward(&PackedVisionInputs {
+            pixel_values: &pixel_values,
+            pixel_attention_mask: &pixel_attention_mask,
+            spatial_shapes: &spatial_shapes,
+        })?;
+        assert_close(
+            &repeated.i(0)?,
+            &single.i(0)?,
+            1e-6,
+            "repeated crop batch first output",
+        )?;
+        assert_close(
+            &repeated.i(1)?,
+            &single.i(0)?,
+            1e-6,
+            "repeated crop batch second output",
         )?;
         Ok(())
     }

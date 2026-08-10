@@ -180,7 +180,33 @@ Why:
 The pinned Transformers behavior requires antialiased positional interpolation and a bidirectional key-padding mask, while the attached LFM2-VL specification explicitly requires the vision tower without a pooling head. A thread-safe cache preserves the immutable inference model's shareability, and the mixed-dtype attention order matches the official execution contract.
 
 Consequences:
-The focused Linux-home CPU F32 fixture gate is green at 7/7 tests, the broader `candle-transformers` library gate is green at 25 passed and 0 failed, and the full locked/offline baseline is green. Only the Phase 2 checkpoint/tag remains pending; this decision does not claim production-checkpoint, processor, projector, composite, CUDA, or GGUF parity.
+The focused Linux-home CPU F32 fixture gate is green at 7/7 tests, the broader `candle-transformers` library gate is green at 25 passed and 0 failed, and the full locked/offline baseline is green. The Phase 2 checkpoint/tag is complete at commit `74e109aec5f9801cfead3eeb27fe3f93ac646b84`, annotated tag `lfm2-vl-phase-2-siglip2`; this decision does not claim production-checkpoint, processor, projector, composite, CUDA, or GGUF parity.
+
+## D-0015: Native Packed-Tensor Projector and Composite Boundary
+
+Status: Accepted
+
+Decision:
+Keep Phase 3 as a native tensor-level composition boundary: consume already-packed SigLIP2 crops, apply the config-driven factor-N projector, preserve crop/image ranges through `EncodedImages`, replace exactly one contiguous image-token span per image with an exact-length feature range, and run dense LFM2 prefill followed by ordinary cached decode.
+
+Why:
+This isolates projector and multimodal embedding composition from the later raw-image processor, tokenizer/chat-template, GGUF, CUDA, and CLI phases while proving the full merged embedding and cache path against the committed official tiny fixture.
+
+Consequences:
+Phase 3 focused proof passed 11/11. Projector-stage maximum absolute error was `5.960464478e-8`; encoded and merged embeddings were `6.519258022e-9`; prefill was `4.470348358e-8`; cached decode was `2.980232239e-8`. The Phase 3 checkpoint remains pending manager review/commit. Production-checkpoint parity, raw-image preprocessing, tokenizer/chat-template behavior, CUDA, GGUF, and CLI support remain unclaimed.
+
+## D-0016: Contiguous Batched SigLIP2 Attention Layout
+
+Status: Accepted
+
+Decision:
+Materialize the tensor returned by SigLIP2 `split_heads` after its transpose before batched attention matmul.
+
+Why:
+The real multi-crop Phase 3 path exposed `MatMulUnexpectedStriding` when batched attention received a non-contiguous transposed left-hand operand. Making the layout contiguous preserves values and resolves the runtime layout precondition without changing attention math.
+
+Consequences:
+The repeated-crop SigLIP2 regression passed 8/8, and the full `candle-transformers` library gate passed 37/37 in the manager's locked/offline CPU lane. The fix is a layout compatibility measure, not a CUDA optimization or a production-checkpoint parity claim.
 
 ---
-AI-edited: 2026-08-10T01:15:43-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=siglip2-phase-2-decisions | change=recorded final Phase 2 gates with checkpoint pending
+AI-edited: 2026-08-10T01:49:59-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-3-docs | change=recorded Phase 3 native composite decisions and verification state
