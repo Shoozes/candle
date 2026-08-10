@@ -8,14 +8,15 @@
 - Working branch: `feat/lfm2-vl-mmproj`
 - Bootstrap checkpoint: `4a6b30a124abb32b4b275ea8c343ce7ef3ac8be7`
 - Source-lock checkpoint: `f007daec10e5751e5899676a7c58098183ec1256`
-- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`
+- Reference-harness checkpoint: `a9594101c97589f6deabe7a2dddaaffeb5471a94`
+- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`
 
 ## Current Phase
 
-- Phase: 0 — Reference baseline and harness
-- Task: Implement config-only, deterministic tiny-random, and explicitly guarded production modes
-- Scope: `tools/lfm2_vl/reference/`, the committed tiny fixture, and this status handoff; no Candle Rust, Cargo manifest, source-lock pin, or production tensor payload changes
-- Status: phase gate green; checkpoint commit and tag pending
+- Phase: 1 — LFM2 text compatibility
+- Task: Normalize official and legacy LFM2 text configuration, add dense and quantized embedding-driven forwarding, and prove text-only parity
+- Scope: dense and quantized LFM2 source, the existing dense example, focused tests, and Phase 1 documentation; no SigLIP2, LFM2-VL, image processing, mmproj, production downloads, or CUDA-specific behavior
+- Status: complete local Phase 1 gate green; checkpoint commit and tag pending
 
 ## Source-Lock Results
 
@@ -54,6 +55,20 @@
 - Rust baseline: locked/offline CPU verification passed from `2026-08-10T03:53:09Z` to `2026-08-10T03:53:12Z`, including formatting, core crates, dense LFM2, quantized LFM2, and staged/unstaged diff checks
 - Retained logs: `artifacts/verification/reference-harness/python-final.log`, SHA-256 `fb46403e3315b49dcfb424b07fc062f0b2366f45ec627aa1bdd64b006bcf2c93`; `artifacts/verification/reference-harness/baseline-final.log`, SHA-256 `b08863fe6c0e6a33d86812e8d95d601e51654bcea65d4f51f6aefadb59e1d3d8`
 
+## Text Compatibility Verification
+
+- Date: 2026-08-10 00:31–00:32 EDT
+- Environment: detached Linux-home worktree `/home/workbench/code/candle-lfm2-vl-text-verify`; WSL2 `NVIDIA-Workbench`; CPU-only, locked, offline lane; staged Phase 1 candidate based on `a9594101c97589f6deabe7a2dddaaffeb5471a94`
+- Implementation scope: config aliases and normalization, checked `try_into_config` plus the preserved `into_config` API, standalone/nested dense roots, tied/explicit output heads, dense hidden/logit APIs, quantized embedding-driven forwarding, and cache clearing
+- Focused command: `cargo test --locked --offline -p candle-transformers lfm2 -- --nocapture` passed all 5 focused tests plus filtered integration binaries
+- Focused proof: official 450M/1.6B effective FFN widths, legacy aliases/fallback/precedence, standalone and nested roots, explicit and tied heads, dense token-ID versus embedding forwarding, committed-fixture merged prefill parity, three cached decode steps, cache-reset determinism, and quantized embedding-driven equivalence
+- Maximum absolute errors: token embeddings `0`; token-ID versus embedding-driven output `0`; prefill hidden states `2.38418579e-7`; prefill logits `2.98023224e-8`; cached decode steps `1.86264515e-8`, `2.98023224e-8`, and `1.49011612e-8`; reset prefill hidden states `2.38418579e-7`; reset decode `1.86264515e-8`
+- Focused log: `artifacts/verification/text-compatibility/focused-tests.log`; SHA-256 `022e7e7fed20f0b255424d04334108c419b9aee49e722132a6563dff4b67d034`
+- Broader library command: `cargo test --locked --offline -p candle-transformers --lib` passed all 18 tests; retained log `artifacts/verification/text-compatibility/candle-transformers-lib.log`; SHA-256 `cc8faae1c192569ba3952e14e9bbcbc2a5ad3a24132e0cf20424eb12b0606db3`
+- Full baseline: `scripts/lfm2-vl/verify-baseline.sh` passed from `2026-08-10T04:32:23Z` to `2026-08-10T04:32:51Z`, including formatting, `candle-core`, `candle-nn`, `candle-transformers`, the `lfm2` and `quantized-lfm2` examples, and staged/unstaged diff checks
+- Baseline log: `artifacts/verification/text-compatibility/baseline-final.log`; SHA-256 `c72eccd8b77689878689f7e720c46a040c26f3cee8060b17727392f392862f46`
+- Local-only lockfile SHA-256: `4e059ffe6035520ca6553303932173eba562f4985f82931a90129eea9849ce54`; no production weights or GGUF files were downloaded
+
 ## Bootstrap Proof
 
 - Date: 2026-08-09 22:35 EDT (`2026-08-10T02:35:09Z` to `2026-08-10T02:35:12Z`)
@@ -87,6 +102,8 @@
 - The pinned official Transformers LFM2, SigLIP2, and LFM2-VL classes execute deterministically in the tiny-random harness, including multimodal prefill and incremental cache reuse.
 - Config-only mode is stdlib-only and production model loading remains guarded by explicit production, load, and download flags.
 - The tiny fixture deliberately omits the tied `lm_head.weight` duplicate, preserving the production checkpoints' missing-head loading contract.
+- The complete Phase 1 text gate passes in the Linux-home CPU/offline lane: all 5 focused LFM2 tests, all 18 `candle-transformers` library tests, both existing LFM2 examples, and the full locked/offline baseline are green.
+- Tiny-fixture dense parity is within `2.38418579e-7` for hidden states and `2.98023224e-8` for logits; production-checkpoint and GGUF numerical parity remain unclaimed.
 
 ## Known Conflicts
 
@@ -97,27 +114,20 @@
 
 ## Blockers
 
-- None for the reference-harness phase.
+- None for the Phase 1 text checkpoint.
 
 ## Active Files
 
-- `tools/lfm2_vl/reference/README.md`
-- `tools/lfm2_vl/reference/requirements-reference.in`
-- `tools/lfm2_vl/reference/requirements-reference.txt`
-- `tools/lfm2_vl/reference/export_fixtures.py`
-- `tools/lfm2_vl/reference/inspect_config.py`
-- `tools/lfm2_vl/reference/manifest.py`
-- `tools/lfm2_vl/reference/tensor_dump.py`
-- `tools/lfm2_vl/reference/test_reference_tools.py`
-- `tests/fixtures/lfm2_vl_tiny/README.md`
-- `tests/fixtures/lfm2_vl_tiny/metadata.json`
-- `tests/fixtures/lfm2_vl_tiny/manifest.json`
-- `tests/fixtures/lfm2_vl_tiny/tensors.safetensors`
+- `candle-transformers/src/models/lfm2.rs`
+- `candle-transformers/src/models/quantized_lfm2.rs`
+- `candle-examples/examples/lfm2/main.rs`
+- `docs/lfm2-vl/DECISIONS.md`
+- `docs/lfm2-vl/PARITY.md`
 - `docs/lfm2-vl/STATUS.md`
 
 ## Next Task
 
-Phase 1 — repair text-only dense and quantized LFM2 configuration, add embedding-driven forward paths, and prove normalized FFN widths, prefill, incremental decode, and legacy compatibility before starting vision work.
+Create the Phase 1 checkpoint and annotated tag, then stop at the sprint's first mandatory review point. Report the text gate and wait for user continuation before beginning the SigLIP2 vision phase.
 
 ---
-AI-edited: 2026-08-09T23:58:47-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=reference-harness | change=recorded green deterministic fixture and local verification proof
+AI-edited: 2026-08-10T00:34:34-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=text-compatibility | change=recorded complete Phase 1 local gate and mandatory stop

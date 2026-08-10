@@ -143,5 +143,31 @@ The phase requires exact native names and shapes but explicitly excludes model d
 Consequences:
 `TENSOR_MAP.md` may record header-confirmed native shapes. Production numerics remain untested until the explicit production mode is invoked in a later phase.
 
+## D-0012: Canonical LFM2 Text Normalization
+
+Status: Accepted
+
+Decision:
+Normalize LFM2 text configuration at deserialization and checked conversion boundaries. When both spellings are supplied, pinned Transformers behavior gives legacy `block_ff_dim` precedence over `intermediate_size` and legacy `tie_embedding` precedence over `tie_word_embeddings`. Nested `rope_parameters.rope_theta` takes precedence over top-level `rope_theta`; absent FFN spellings retain the text compatibility fallback of `hidden_size * 4`. `full_attn_idxs` is accepted as an alias for the full-attention index list, while explicit `layer_types` remains authoritative. Preserve the public infallible `into_config` wrapper for valid legacy callers and provide `try_into_config` for fallible validation.
+
+Why:
+The official 450M and 1.6B text towers require effective FFN widths 4608 and 8192 respectively, while the VL checkpoints omit a separate tied `lm_head.weight`. A single normalized configuration path prevents alias drift between standalone and nested language roots.
+
+Consequences:
+Dense loading exposes `embed_tokens`, hidden-state forwarding, logit projection, and embedding-driven forwarding. Nested VL callers pass `model.language_model` directly through `new_from_parts`; standalone callers retain the `model` prefix. Quantized GGUF loading keeps its existing tensor aliases and adds only the embedding-driven route and cache reset API. The complete Phase 1 local gate is green.
+
+## D-0013: Phase 1 Text Gate Evidence
+
+Status: Accepted
+
+Decision:
+Accept the LFM2 text compatibility phase as green after its focused tests, broader library tests, existing examples, formatting, core crate checks, and staged/unstaged diff checks all passed in the Linux-home CPU/offline lane.
+
+Why:
+The 5 focused tests cover the required configuration aliases and precedence, 450M/1.6B effective FFN widths, legacy fallback, standalone and nested roots, tied and explicit heads, dense token-ID/embedding equivalence, committed-fixture merged prefill parity, three cached decode steps, cache-reset determinism, and quantized embedding-driven forwarding. All 18 `candle-transformers` library tests and the full locked/offline baseline also pass.
+
+Consequences:
+The implementation may be checkpointed at the sprint's first mandatory stop. The tiny deterministic fixture establishes the Phase 1 code path, but this decision does not claim production-checkpoint or GGUF numerical parity and does not cover any vision behavior.
+
 ---
-AI-edited: 2026-08-09T22:56:01-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=source-lock | change=locked source authority, adaptation, and header-only inventory decisions
+AI-edited: 2026-08-10T00:34:34-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=text-compatibility | change=accepted complete Phase 1 local gate and preserved parity boundary

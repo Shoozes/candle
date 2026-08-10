@@ -597,16 +597,33 @@ impl ModelWeights {
         }
     }
 
-    pub fn forward(&mut self, x: &Tensor, index_pos: usize) -> Result<Tensor> {
-        let (_b_sz, seq_len) = x.dims2()?;
+    pub fn embed_tokens(&self, input_ids: &Tensor) -> Result<Tensor> {
+        self.tok_embeddings.forward(input_ids)
+    }
+
+    pub fn clear_cache(&mut self) {
+        self.masks.clear();
+        for layer in &mut self.layers {
+            match &mut layer.kind {
+                LayerKind::Attention(attn) => attn.kv_cache = None,
+                LayerKind::ShortConv(conv) => conv.cache = None,
+            }
+        }
+    }
+
+    pub fn forward_embeds(&mut self, input_embeds: &Tensor, index_pos: usize) -> Result<Tensor> {
+        let (_b_sz, seq_len, _) = input_embeds.dims3()?;
+        if seq_len == 0 {
+            candle::bail!("quantized LFM2 cannot forward an empty sequence")
+        }
         let mask = if seq_len == 1 {
             None
         } else {
-            Some(self.mask(seq_len, index_pos, x.device())?)
+            Some(self.mask(seq_len, index_pos, input_embeds.device())?)
         };
 
         let _enter = self.span.enter();
-        let mut hidden = self.tok_embeddings.forward(x)?;
+        let mut hidden = input_embeds.clone();
         for layer in self.layers.iter_mut() {
             let residual = hidden.clone();
             let normed = layer.operator_norm.forward(&hidden)?;
@@ -626,5 +643,58 @@ impl ModelWeights {
         let hidden = hidden.i((.., seq_len - 1, ..))?;
         let _enter = self.span_output.enter();
         self.output.forward(&hidden)
+    }
+
+    pub fn forward(&mut self, input_ids: &Tensor, index_pos: usize) -> Result<Tensor> {
+        input_ids.dims2()?;
+        let input_embeds = self.embed_tokens(input_ids)?;
+        self.forward_embeds(&input_embeds, index_pos)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candle::quantized::{GgmlDType, QMatMul, QTensor};
+    use candle::{DType, Device, Tensor};
+    use std::collections::HashMap;
+
+    fn assert_close(actual: &Tensor, expected: &Tensor, tolerance: f32) -> Result<()> {
+        let max_abs = (actual - expected)?.abs()?.max_all()?.to_scalar::<f32>()?;
+        assert!(max_abs <= tolerance, "max absolute error {max_abs}");
+        Ok(())
+    }
+
+    #[test]
+    fn embedding_driven_forward_matches_quantized_token_forward() -> Result<()> {
+        let device = Device::Cpu;
+        let values: Vec<f32> = (0..(32 * 32)).map(|idx| (idx % 17) as f32 / 17.0).collect();
+        let embedding_weights = Tensor::from_slice(&values, (32, 32), &device)?;
+        let output_weights = Tensor::from_slice(&values, (32, 32), &device)?;
+        let norm_weights = Tensor::ones(32, DType::F32, &device)?;
+
+        let embedding = Embedding::new(embedding_weights, 32);
+        let norm = RmsNorm::from_qtensor(QTensor::quantize(&norm_weights, GgmlDType::Q8_0)?, 1e-5)?;
+        let output = QMatMul::from_qtensor(QTensor::quantize(&output_weights, GgmlDType::Q8_0)?)?;
+        let mut model = ModelWeights {
+            tok_embeddings: embedding,
+            layers: Vec::new(),
+            norm,
+            output,
+            masks: HashMap::new(),
+            span: tracing::span!(tracing::Level::TRACE, "test-model"),
+            span_output: tracing::span!(tracing::Level::TRACE, "test-output"),
+        };
+
+        let input_ids = Tensor::from_slice(&[1u32, 2u32], (1, 2), &device)?;
+        let token_logits = model.forward(&input_ids, 0)?;
+        let input_embeds = model.embed_tokens(&input_ids)?;
+        let embed_logits = model.forward_embeds(&input_embeds, 0)?;
+        assert_close(&token_logits, &embed_logits, 1e-5)?;
+
+        model.clear_cache();
+        let reset_logits = model.forward_embeds(&input_embeds, 0)?;
+        assert_close(&embed_logits, &reset_logits, 1e-5)?;
+        Ok(())
     }
 }

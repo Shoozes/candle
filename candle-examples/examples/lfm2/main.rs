@@ -311,7 +311,7 @@ fn main() -> Result<()> {
             serde_json::from_slice(&std::fs::read(config_file)?)?
         }
     };
-    let config = config.into_config(args.use_flash_attn);
+    let config = config.try_into_config(args.use_flash_attn)?;
 
     let device = candle_examples::device(args.cpu)?;
     let dtype = if device.is_cuda() {
