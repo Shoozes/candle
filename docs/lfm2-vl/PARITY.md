@@ -99,7 +99,7 @@ The example automatically selects native Q8 for valid F32 Q8 artifacts and repor
 
 ## Next Parity Task
 
-Complete the Phase 7 staged baseline/checkpoint and sprint audit. Any production-payload llama.cpp comparison, native-Q8 CUDA execution, or lower-bit vision support requires a separately authorized follow-up.
+The Phase 7 CPU-F32 checkpoint and sprint audit are complete. Any production-payload llama.cpp comparison, native-Q8 CUDA execution, or lower-bit vision support requires a separately authorized follow-up.
 
 ---
-AI-edited: 2026-08-10T08:50:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-7 | change=recorded native Q8 storage, execution drift, staged baseline, and evidence boundaries
+AI-edited: 2026-08-10T08:56:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-7 | change=closed the native Q8 checkpoint while preserving remaining evidence boundaries

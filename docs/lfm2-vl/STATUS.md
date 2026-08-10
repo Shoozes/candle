@@ -15,14 +15,15 @@
 - Phase 4 checkpoint: `8d1bbe471404848730685c98e7dd56b13a457eb4`
 - Phase 5 checkpoint: `1535a0a5fef09f243811b83553b9c75baad78ee2`
 - Phase 6 checkpoint: `dc6321cde3a9b8a019c1f0fd82780d90afa046df`
-- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`, `lfm2-vl-phase-1-text`, `lfm2-vl-phase-2-siglip2`, `lfm2-vl-phase-3-native-composite`, `lfm2-vl-phase-4-native-e2e`, `lfm2-vl-phase-5-hybrid`, `lfm2-vl-phase-6-gguf`
+- Phase 7 checkpoint: `1a9cf291ba9a1bbac1de83029f9d8f057aca00b5`
+- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`, `lfm2-vl-phase-1-text`, `lfm2-vl-phase-2-siglip2`, `lfm2-vl-phase-3-native-composite`, `lfm2-vl-phase-4-native-e2e`, `lfm2-vl-phase-5-hybrid`, `lfm2-vl-phase-6-gguf`, `lfm2-vl-phase-7-q8`
 
 ## Current Phase
 
 - Phase: 7 — Native Q8_0 Vision and Projector Linear Execution
 - Task: Retain eligible Q8_0 GGUF vision/projector matrices as quantized storage, execute them through Candle `QMatMul`, preserve dense biases/norms/positions/patch projection and the Phase 6 dense loader, and prove image-feature plus hybrid prefill/decode/cache behavior
 - Scope: CPU F32 native Q8_0 linears for vision Q/K/V/out, vision MLP, and both projector matrices; mixed dense eligible matrices; strict lower-bit/dense-role/alignment rejection; automatic direct-GGUF example selection with explicit execution diagnostics; deterministic two-layer and committed hybrid fixtures; no production tensor payload download, llama.cpp runtime comparison, generated-caption parity, executed CUDA parity, or lower-bit native vision operators
-- Status: Implementation, full local Rust/Python verification, strict scoped Clippy, the exact staged locked/offline baseline, and the assigned worker's final re-audit are green with no remaining P0/P1 defect. The checkpoint commit/tag are pending.
+- Status: Implementation, full local Rust/Python verification, strict scoped Clippy, the exact staged locked/offline baseline, checkpoint commit/tag, and the assigned worker's final re-audit are complete with no remaining P0/P1 defect in the bounded CPU-F32 scope.
 
 ## Source-Lock Results
 
@@ -179,7 +180,7 @@
 - Full locked/offline staged CPU baseline: passed `2026-08-10T12:49:32Z`–`2026-08-10T12:49:53Z` against pre-Phase-7-checkpoint HEAD `dc6321cde3a9b8a019c1f0fd82780d90afa046df` with exactly the 12 Phase 7 paths staged and no unstaged delta; retained log `artifacts/verification/q8-mmproj/baseline-final.log`; SHA-256 `ff46cc0b23a28050ffe856be2cb81ef7144667977587021f1d3cd221e00ed330`
 - Verifier-only Cargo.lock SHA-256: `acd9419056b786da820b5120db8e78be06902721689c39b55f29445abdddaffc`
 - Audit: the assigned worker verified that eligible weights remain `QMatMul::QTensor`, dense Phase 6 APIs remain intact, F32 auto-selection propagates validation failures, CLI diagnostics are explicit, the two-layer fixture covers 14 linears, and no P0/P1 defect remains in the initial CPU-F32 scope
-- Phase 7 checkpoint/tag: pending exact staged baseline and manager commit/tag
+- Phase 7 checkpoint/tag: complete at commit `1a9cf291ba9a1bbac1de83029f9d8f057aca00b5`, annotated tag `lfm2-vl-phase-7-q8`
 - Not claimed: production-checkpoint numerical parity, production MMProj payload execution, llama.cpp runtime numerical parity, executed native-Q8 CUDA parity, generated-caption parity, or lower-bit native vision execution
 
 ## Bootstrap Proof
@@ -236,7 +237,7 @@
 
 ## Blockers
 
-- None. Phase 7 final staged verification and checkpointing are in progress.
+- None for the bounded Phase 7 CPU-F32 checkpoint. The separately listed production-payload, llama.cpp-runtime, native-Q8 CUDA, and lower-bit evidence gaps are not claimed complete.
 
 ## Active Files
 
@@ -263,7 +264,7 @@
 
 ## Next Task
 
-Create the Phase 7 checkpoint/tag and complete the sprint acceptance audit. Production-payload comparison against llama.cpp, executed native-Q8 CUDA, lower-bit vision formats, and later optimization work remain separately authorized follow-ups.
+The Phase 7 CPU-F32 checkpoint and sprint audit are complete. Production-payload comparison against llama.cpp, executed native-Q8 CUDA, lower-bit vision formats, and later optimization work require separately authorized follow-ups.
 
 ---
-AI-edited: 2026-08-10T08:50:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-7 | change=recorded native Q8 execution, deterministic parity, staged baseline, and audit closure
+AI-edited: 2026-08-10T08:56:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-7 | change=closed the native Q8 checkpoint and recorded its bounded acceptance result
