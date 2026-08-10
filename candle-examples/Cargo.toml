@@ -15,6 +15,7 @@ candle = { workspace = true }
 candle-datasets = { workspace = true, optional = true }
 candle-nn = { workspace = true }
 candle-transformers = { workspace = true }
+candle-vlm = { workspace = true }
 candle-flash-attn = { workspace = true, optional = true }
 candle-onnx = { workspace = true, optional = true }
 

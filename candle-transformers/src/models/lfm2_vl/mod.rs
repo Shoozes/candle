@@ -7,9 +7,15 @@
 pub mod config;
 pub mod model;
 pub mod projector;
+pub mod weights;
 
 pub use config::{projected_token_count, Lfm2VlConfig};
 pub use model::{
-    CropKind, CropMeta, EncodedImages, ImageMeta, ImageTokenSpan, Lfm2VlModel, ProcessedVisionBatch,
+    merge_projected_embeddings, CropKind, CropMeta, EncodedImages, ImageMeta, ImageTokenSpan,
+    Lfm2VlModel, ProcessedVisionBatch,
 };
 pub use projector::Lfm2VlProjector;
+pub use weights::{
+    inspect_safetensors, Mmproj, MmprojLoadReport, MmprojManifest, MmprojMetadata,
+    MmprojTensorInfo, PairingReport, QuantizedLfm2VlModel,
+};

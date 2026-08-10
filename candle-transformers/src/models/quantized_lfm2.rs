@@ -13,8 +13,8 @@ fn get_qtensor<R: std::io::Seek + std::io::Read>(
     names: &[String],
 ) -> Result<candle::quantized::QTensor> {
     for name in names {
-        if let Ok(t) = ct.tensor(reader, name, device) {
-            return Ok(t);
+        if ct.tensor_infos.contains_key(name) {
+            return ct.tensor(reader, name, device);
         }
     }
     bail!("cannot find tensor info for {}", names.join(" | "))
@@ -259,25 +259,51 @@ pub struct ModelWeights {
     layers: Vec<LayerWeights>,
     norm: RmsNorm,
     output: QMatMul,
+    metadata: Lfm2GgufMetadata,
     masks: HashMap<(usize, usize), Tensor>,
     span: tracing::Span,
     span_output: tracing::Span,
 }
 
+/// Header metadata required to construct and pair a quantized LFM2 text model.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Lfm2GgufMetadata {
+    pub architecture: String,
+    pub embedding_length: usize,
+    pub context_length: usize,
+    pub block_count: usize,
+    pub head_count: usize,
+    pub head_count_kv: Vec<usize>,
+    pub rms_norm_eps: f64,
+    pub rope_freq_base: f32,
+    pub shortconv_l_cache: usize,
+    pub tied_output: bool,
+}
+
+const MAX_LFM2_GGUF_BLOCKS: usize = 512;
+const MAX_LFM2_GGUF_EMBEDDING: usize = 1 << 16;
+const MAX_LFM2_GGUF_CONTEXT: usize = 1 << 22;
+const MAX_LFM2_GGUF_ROPE_ELEMENTS: usize = 1 << 26;
+
 fn value_to_usize(v: &gguf_file::Value) -> Result<usize> {
     use gguf_file::Value::*;
     match v {
         U8(x) => Ok(*x as usize),
-        I8(x) => Ok(*x as usize),
+        I8(x) => usize::try_from(*x).map_err(candle::Error::wrap),
         U16(x) => Ok(*x as usize),
-        I16(x) => Ok(*x as usize),
-        U32(x) => Ok(*x as usize),
-        I32(x) => Ok(*x as usize),
-        U64(x) => Ok(*x as usize),
-        I64(x) => Ok(*x as usize),
-        F32(x) => Ok(*x as usize),
-        F64(x) => Ok(*x as usize),
-        Bool(x) => Ok(usize::from(*x)),
+        I16(x) => usize::try_from(*x).map_err(candle::Error::wrap),
+        U32(x) => usize::try_from(*x).map_err(candle::Error::wrap),
+        I32(x) => usize::try_from(*x).map_err(candle::Error::wrap),
+        U64(x) => usize::try_from(*x).map_err(candle::Error::wrap),
+        I64(x) => usize::try_from(*x).map_err(candle::Error::wrap),
+        F32(x) if x.is_finite() && *x >= 0.0 && x.fract() == 0.0 => {
+            usize::try_from(*x as u64).map_err(candle::Error::wrap)
+        }
+        F64(x) if x.is_finite() && *x >= 0.0 && x.fract() == 0.0 => {
+            usize::try_from(*x as u64).map_err(candle::Error::wrap)
+        }
+        F32(_) | F64(_) => bail!("metadata value is not a non-negative integer"),
+        Bool(_) => bail!("unexpected boolean metadata"),
         String(_) => bail!("unexpected string metadata"),
         Array(_) => bail!("array should be handled separately"),
     }
@@ -287,7 +313,16 @@ fn read_usize_list(v: &gguf_file::Value, len: usize) -> Result<Vec<usize>> {
     use gguf_file::Value::Array;
     match v {
         Array(arr) => {
-            let mut out = Vec::with_capacity(arr.len());
+            if arr.len() > MAX_LFM2_GGUF_BLOCKS {
+                bail!(
+                    "quantized LFM2 metadata array length {} exceeds {MAX_LFM2_GGUF_BLOCKS}",
+                    arr.len()
+                )
+            }
+            let mut out = Vec::new();
+            out.try_reserve_exact(arr.len()).map_err(|_| {
+                candle::Error::Msg("quantized LFM2 metadata allocation failed".into())
+            })?;
             for item in arr {
                 out.push(value_to_usize(item)?);
             }
@@ -306,29 +341,108 @@ fn read_usize_list(v: &gguf_file::Value, len: usize) -> Result<Vec<usize>> {
     }
 }
 
+/// Inspect and validate quantized LFM2 GGUF metadata before tensor allocation.
+pub fn inspect_gguf_metadata(ct: &gguf_file::Content) -> Result<Lfm2GgufMetadata> {
+    let md_get = |name: &str| match ct.metadata.get(name) {
+        None => bail!("cannot find {name} in metadata"),
+        Some(value) => Ok(value),
+    };
+    let architecture = md_get("general.architecture")?.to_string()?.clone();
+    if architecture != "lfm2" {
+        bail!("unsupported quantized LFM2 GGUF architecture {architecture:?}")
+    }
+    let head_count = md_get("lfm2.attention.head_count")?.to_u32()? as usize;
+    let embedding_length = md_get("lfm2.embedding_length")?.to_u32()? as usize;
+    let context_length = md_get("lfm2.context_length")?.to_u32()? as usize;
+    let block_count = md_get("lfm2.block_count")?.to_u32()? as usize;
+    let rms_norm_eps = md_get("lfm2.attention.layer_norm_rms_epsilon")?.to_f32()? as f64;
+    let rope_freq_base = match ct.metadata.get("lfm2.rope.freq_base") {
+        Some(value) => value.to_f32()?,
+        None => 1_000_000f32,
+    };
+    let shortconv_l_cache = md_get("lfm2.shortconv.l_cache")?.to_u32()? as usize;
+    if head_count == 0 || embedding_length == 0 || embedding_length > MAX_LFM2_GGUF_EMBEDDING {
+        bail!(
+            "invalid quantized LFM2 embedding/head dimensions: embedding_length={embedding_length}, head_count={head_count}"
+        )
+    }
+    if !embedding_length.is_multiple_of(head_count) {
+        bail!(
+            "quantized LFM2 embedding length {embedding_length} is not divisible by head count {head_count}"
+        )
+    }
+    if block_count == 0 || block_count > MAX_LFM2_GGUF_BLOCKS {
+        bail!("invalid quantized LFM2 block count {block_count}")
+    }
+    if context_length == 0 || context_length > MAX_LFM2_GGUF_CONTEXT {
+        bail!("invalid quantized LFM2 context length {context_length}")
+    }
+    let rotary_width = (embedding_length / head_count).div_ceil(2);
+    let rotary_elements = context_length
+        .checked_mul(rotary_width)
+        .ok_or_else(|| candle::Error::Msg("quantized LFM2 RoPE table size overflows".into()))?;
+    if rotary_elements > MAX_LFM2_GGUF_ROPE_ELEMENTS {
+        bail!(
+            "quantized LFM2 RoPE table requires {rotary_elements} elements, limit is {MAX_LFM2_GGUF_ROPE_ELEMENTS}"
+        )
+    }
+    if !rms_norm_eps.is_finite() || rms_norm_eps <= 0.0 {
+        bail!("invalid quantized LFM2 RMS norm epsilon {rms_norm_eps}")
+    }
+    if !rope_freq_base.is_finite() || rope_freq_base <= 0.0 {
+        bail!("invalid quantized LFM2 RoPE frequency base {rope_freq_base}")
+    }
+    if shortconv_l_cache == 0 || shortconv_l_cache > context_length {
+        bail!(
+            "invalid quantized LFM2 short-convolution cache length {shortconv_l_cache} for context {context_length}"
+        )
+    }
+    let head_count_kv = read_usize_list(md_get("lfm2.attention.head_count_kv")?, block_count)?;
+    for (layer, &kv_heads) in head_count_kv.iter().enumerate() {
+        if kv_heads != 0 && (kv_heads > head_count || !head_count.is_multiple_of(kv_heads)) {
+            bail!(
+                "invalid quantized LFM2 key/value head count {kv_heads} at layer {layer} for {head_count} attention heads"
+            )
+        }
+    }
+    let tied_output = ![
+        "output.weight",
+        "lm_head.weight",
+        "model.output.weight",
+        "model.lm_head.weight",
+    ]
+    .iter()
+    .any(|name| ct.tensor_infos.contains_key(*name));
+
+    Ok(Lfm2GgufMetadata {
+        architecture,
+        embedding_length,
+        context_length,
+        block_count,
+        head_count,
+        head_count_kv,
+        rms_norm_eps,
+        rope_freq_base,
+        shortconv_l_cache,
+        tied_output,
+    })
+}
+
 impl ModelWeights {
     pub fn from_gguf<R: std::io::Seek + std::io::Read>(
         ct: gguf_file::Content,
         reader: &mut R,
         device: &Device,
     ) -> Result<Self> {
-        let md_get = |s: &str| match ct.metadata.get(s) {
-            None => bail!("cannot find {s} in metadata"),
-            Some(v) => Ok(v),
-        };
-
-        let head_count = md_get("lfm2.attention.head_count")?.to_u32()? as usize;
-        let head_count_kv_meta = md_get("lfm2.attention.head_count_kv")?;
-        let embedding_length = md_get("lfm2.embedding_length")?.to_u32()? as usize;
-        let context_length = md_get("lfm2.context_length")?.to_u32()? as usize;
-        let block_count = md_get("lfm2.block_count")?.to_u32()? as usize;
-        let rms_norm_eps = md_get("lfm2.attention.layer_norm_rms_epsilon")?.to_f32()? as f64;
-        let rope_freq_base = md_get("lfm2.rope.freq_base")
-            .and_then(|m| m.to_f32())
-            .unwrap_or(1_000_000f32);
-        let l_cache = md_get("lfm2.shortconv.l_cache")?.to_u32()? as usize;
-
-        let head_count_kv = read_usize_list(head_count_kv_meta, block_count)?;
+        let metadata = inspect_gguf_metadata(&ct)?;
+        let head_count = metadata.head_count;
+        let head_count_kv = &metadata.head_count_kv;
+        let embedding_length = metadata.embedding_length;
+        let context_length = metadata.context_length;
+        let block_count = metadata.block_count;
+        let rms_norm_eps = metadata.rms_norm_eps;
+        let rope_freq_base = metadata.rope_freq_base;
+        let l_cache = metadata.shortconv_l_cache;
         let head_dim = embedding_length / head_count;
         let (cos, sin) = precomput_freqs_cis(head_dim, rope_freq_base, context_length, device)?;
         let neg_inf = Tensor::new(f32::NEG_INFINITY, device)?;
@@ -347,6 +461,12 @@ impl ModelWeights {
             .collect::<Vec<_>>(),
         )?;
         let tok_embeddings = tok_embeddings_q.dequantize(device)?;
+        let (vocab_size, loaded_embedding_length) = tok_embeddings.dims2()?;
+        if loaded_embedding_length != embedding_length {
+            bail!(
+                "quantized LFM2 token embedding width {loaded_embedding_length} does not match GGUF metadata {embedding_length}"
+            )
+        }
         tracing::debug!(
             tok_embd_shape = ?tok_embeddings.shape().dims(),
             "loaded lfm2 token embeddings"
@@ -370,27 +490,39 @@ impl ModelWeights {
             )?,
             rms_norm_eps,
         )?;
-        let output_q = get_qtensor(
-            &ct,
-            reader,
-            device,
-            &[
-                "output.weight",
-                "lm_head.weight",
-                "model.output.weight",
-                "model.lm_head.weight",
-            ]
-            .iter()
-            .map(|s| s.to_string())
-            .collect::<Vec<_>>(),
-        )
-        .unwrap_or(tok_embeddings_q);
+        let output_q = if metadata.tied_output {
+            tok_embeddings_q
+        } else {
+            get_qtensor(
+                &ct,
+                reader,
+                device,
+                &[
+                    "output.weight",
+                    "lm_head.weight",
+                    "model.output.weight",
+                    "model.lm_head.weight",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>(),
+            )?
+        };
+        if output_q.shape().dims() != [vocab_size, embedding_length] {
+            bail!(
+                "quantized LFM2 output tensor shape {:?} does not match [{vocab_size}, {embedding_length}]",
+                output_q.shape().dims()
+            )
+        }
         tracing::debug!(
             output_shape = ?output_q.shape().dims(),
             "loaded lfm2 output weight (using tok_embd if missing)"
         );
 
-        let mut layers = Vec::with_capacity(block_count);
+        let mut layers = Vec::new();
+        layers
+            .try_reserve_exact(block_count)
+            .map_err(|_| candle::Error::Msg("quantized LFM2 layer allocation failed".into()))?;
         for layer_idx in 0..block_count {
             let prefix = format!("blk.{layer_idx}");
             let is_attention = head_count_kv.get(layer_idx).copied().unwrap_or(head_count) > 0;
@@ -580,6 +712,7 @@ impl ModelWeights {
             layers,
             norm,
             output: QMatMul::from_qtensor(output_q)?,
+            metadata,
             masks: HashMap::new(),
             span: tracing::span!(tracing::Level::TRACE, "model"),
             span_output: tracing::span!(tracing::Level::TRACE, "output"),
@@ -599,6 +732,22 @@ impl ModelWeights {
 
     pub fn embed_tokens(&self, input_ids: &Tensor) -> Result<Tensor> {
         self.tok_embeddings.forward(input_ids)
+    }
+
+    pub fn metadata(&self) -> &Lfm2GgufMetadata {
+        &self.metadata
+    }
+
+    pub fn hidden_size(&self) -> usize {
+        self.tok_embeddings.hidden_size()
+    }
+
+    pub fn vocab_size(&self) -> usize {
+        self.tok_embeddings.embeddings().dims()[0]
+    }
+
+    pub fn device(&self) -> &Device {
+        self.tok_embeddings.embeddings().device()
     }
 
     pub fn clear_cache(&mut self) {
@@ -655,6 +804,7 @@ impl ModelWeights {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::lfm2_vl::{merge_projected_embeddings, EncodedImages, ImageTokenSpan};
     use candle::quantized::{GgmlDType, QMatMul, QTensor};
     use candle::{DType, Device, Tensor};
     use std::collections::HashMap;
@@ -681,6 +831,18 @@ mod tests {
             layers: Vec::new(),
             norm,
             output,
+            metadata: Lfm2GgufMetadata {
+                architecture: "lfm2".to_string(),
+                embedding_length: 32,
+                context_length: 32,
+                block_count: 0,
+                head_count: 1,
+                head_count_kv: Vec::new(),
+                rms_norm_eps: 1e-5,
+                rope_freq_base: 10_000.0,
+                shortconv_l_cache: 1,
+                tied_output: false,
+            },
             masks: HashMap::new(),
             span: tracing::span!(tracing::Level::TRACE, "test-model"),
             span_output: tracing::span!(tracing::Level::TRACE, "test-output"),
@@ -695,6 +857,31 @@ mod tests {
         model.clear_cache();
         let reset_logits = model.forward_embeds(&input_embeds, 0)?;
         assert_close(&embed_logits, &reset_logits, 1e-5)?;
+
+        let image_input_ids = Tensor::from_slice(&[1u32, 3u32, 3u32, 2u32], (1, 4), &device)?;
+        let image_input_embeds = model.embed_tokens(&image_input_ids)?;
+        let encoded = EncodedImages {
+            embeddings: Tensor::ones((2, 32), DType::F32, &device)?,
+            per_image_ranges: std::iter::once(0..2).collect(),
+            per_crop_ranges: std::iter::once(0..2).collect(),
+        };
+        let merged = merge_projected_embeddings(
+            &image_input_ids,
+            &image_input_embeds,
+            3,
+            &[ImageTokenSpan::new(0, 1, 3)],
+            &encoded,
+        )?;
+        assert_close(&merged.i((0, 1..3, ..))?, &encoded.embeddings, 0.0)?;
+        model.clear_cache();
+        let image_logits = model.forward_embeds(&merged, 0)?;
+        assert_eq!(image_logits.dims(), [1, 32]);
+        assert!(image_logits
+            .to_dtype(DType::F32)?
+            .to_vec2::<f32>()?
+            .iter()
+            .flatten()
+            .all(|value| value.is_finite()));
         Ok(())
     }
 }

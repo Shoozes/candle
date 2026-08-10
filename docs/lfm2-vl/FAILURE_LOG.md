@@ -82,5 +82,18 @@ The assigned worker's read-only final audit identified fallible-allocation gaps,
 Resolution:
 Added checked fallible reservations, strict tensor/crop/grid/kind/order validation, checked tile-marker arithmetic, empty-batch consistency checks, exact image/crop range-union validation, and complete fixture metadata assertions for all required cases. The resize report was withdrawn after exact reproduction showed that its stated value and coordinate did not match the pinned source. The worker's second audit classified all five actionable findings as resolved and the resize finding as withdrawn.
 
+## F-0007: Phase 5 Loader Audit and Missing CUDA Toolkit
+
+Status: Implementation findings resolved; distinct-device execution is an owner-scoped environment gap.
+
+Context:
+The assigned worker's first Phase 5 audit found that the proof did not yet use the real GGUF constructor, both devices were CPU, the actual safetensors header/count was not bounded, the file path was reopened between hash/inspection/load, malformed present RoPE metadata silently defaulted, rotary allocation lacked a product bound, the exporter accepted incomplete inventories and mutable provenance, and one image-range allocation was infallible.
+
+Resolution:
+Replaced the synthetic text test with deterministic hash-pinned GGUF bytes loaded through `Content::read` and `ModelWeights::from_gguf`; added exact exporter inventory/provenance checks; added bounded single-buffer safetensors parsing and loading; hardened GGUF metadata and allocations; and added a feature-gated CUDA-vision/CPU-text test. The follow-up worker audit confirmed all nine findings and the later manifest-derived file-size bound resolved, with no code blocker remaining.
+
+Environment result:
+`nvidia-smi` exposes an RTX 4090 at compute capability 8.9, but `cargo test -p candle-transformers --features cuda split_vision_cuda_text_cpu_transfers_only_projected_features -- --nocapture` stops in the cached `cudarc 0.19.8` build script because `nvcc` is absent. No toolkit was installed. The exact attempt is retained in `artifacts/verification/hybrid-mmproj/cuda-distinct-device-skipped.log`; CPU hybrid evidence is green and executed CUDA parity remains unclaimed.
+
 ---
-AI-edited: 2026-08-10T04:32:06-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-4-docs | change=recorded processor oracle, resize, and final-audit resolutions
+AI-edited: 2026-08-10T06:04:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-5-docs | change=recorded hybrid audit resolutions and CUDA toolkit skip

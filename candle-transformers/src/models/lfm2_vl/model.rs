@@ -176,115 +176,13 @@ impl Lfm2VlModel {
         inputs: &ProcessedVisionBatch,
         vision_batch_size: usize,
     ) -> Result<EncodedImages> {
-        if vision_batch_size == 0 {
-            candle::bail!("LFM2-VL vision_batch_size must be greater than zero")
-        }
-        let (crop_count, max_patches, patch_dimension) = inputs.pixel_values.dims3()?;
-        if crop_count == 0 || max_patches == 0 {
-            candle::bail!("LFM2-VL packed vision input must contain at least one crop")
-        }
-        if inputs.pixel_attention_mask.dims() != [crop_count, max_patches] {
-            candle::bail!("LFM2-VL pixel_attention_mask shape does not match pixel_values")
-        }
-        if inputs.spatial_shapes.dims() != [crop_count, 2] {
-            candle::bail!("LFM2-VL spatial_shapes shape does not match pixel_values")
-        }
-        if patch_dimension != self.config.vision_config.patch_dimension_for_vl()? {
-            candle::bail!(
-                "LFM2-VL patch dimension {patch_dimension} does not match vision configuration"
-            )
-        }
-        if inputs.crops.len() != crop_count {
-            candle::bail!(
-                "LFM2-VL crop metadata count {} does not match crop tensor count {crop_count}",
-                inputs.crops.len()
-            )
-        }
-        validate_image_metadata(inputs, crop_count)?;
-        let shapes = read_spatial_shapes(&inputs.spatial_shapes)?;
-        let mask_values = read_attention_mask(&inputs.pixel_attention_mask, &shapes, max_patches)?;
-        for (crop_index, crop) in inputs.crops.iter().enumerate() {
-            let (rows, cols) = shapes[crop_index];
-            if crop.patch_rows != rows || crop.patch_cols != cols {
-                candle::bail!(
-                    "LFM2-VL crop {crop_index} metadata grid [{}, {}] does not match input [{rows}, {cols}]",
-                    crop.patch_rows,
-                    crop.patch_cols
-                )
-            }
-            let projected_tokens = self.config.projected_token_count(rows, cols)?;
-            if crop.projected_tokens != projected_tokens {
-                candle::bail!(
-                    "LFM2-VL crop {crop_index} metadata projects to {}, expected {projected_tokens}",
-                    crop.projected_tokens
-                )
-            }
-            let valid = rows
-                .checked_mul(cols)
-                .ok_or_else(|| candle::Error::Msg("LFM2-VL valid patch count overflow".into()))?;
-            let mask_valid = mask_values[crop_index]
-                .iter()
-                .filter(|&&value| value == 1.0)
-                .count();
-            if mask_valid != valid {
-                candle::bail!(
-                    "LFM2-VL crop {crop_index} mask has {mask_valid} valid patches, expected {valid}"
-                )
-            }
-        }
-
-        let mut projected_crops = Vec::with_capacity(crop_count);
-        let mut per_crop_ranges = Vec::with_capacity(crop_count);
-        let mut offset = 0usize;
-        let mut crop_start = 0usize;
-        while crop_start < crop_count {
-            let remaining = crop_count - crop_start;
-            let chunk_count = remaining.min(vision_batch_size);
-            let pixel_values = inputs.pixel_values.narrow(0, crop_start, chunk_count)?;
-            let pixel_attention_mask =
-                inputs
-                    .pixel_attention_mask
-                    .narrow(0, crop_start, chunk_count)?;
-            let spatial_shapes = inputs.spatial_shapes.narrow(0, crop_start, chunk_count)?;
-            let hidden = self.vision_tower.forward(&siglip2::PackedVisionInputs {
-                pixel_values: &pixel_values,
-                pixel_attention_mask: &pixel_attention_mask,
-                spatial_shapes: &spatial_shapes,
-            })?;
-            for local_index in 0..chunk_count {
-                let crop_index = crop_start + local_index;
-                let (rows, cols) = shapes[crop_index];
-                let valid = rows.checked_mul(cols).ok_or_else(|| {
-                    candle::Error::Msg("LFM2-VL valid patch count overflow".into())
-                })?;
-                let crop_hidden = hidden.i((local_index, 0..valid, ..))?.reshape((
-                    1,
-                    rows,
-                    cols,
-                    self.config.vision_config.hidden_size,
-                ))?;
-                let projected = self.projector.forward(&crop_hidden)?.reshape((
-                    self.config.projected_token_count(rows, cols)?,
-                    self.projector.output_size(),
-                ))?;
-                let token_count = projected.dim(0)?;
-                let end = offset.checked_add(token_count).ok_or_else(|| {
-                    candle::Error::Msg("LFM2-VL image feature range overflow".into())
-                })?;
-                per_crop_ranges.push(offset..end);
-                offset = end;
-                projected_crops.push(projected);
-            }
-            crop_start += chunk_count;
-        }
-        let projected_refs: Vec<&Tensor> = projected_crops.iter().collect();
-        let embeddings = Tensor::cat(&projected_refs, 0)?;
-        let per_image_ranges = image_ranges_from_crop_ranges(inputs, &per_crop_ranges)?;
-        Ok(EncodedImages {
-            embeddings,
-            per_image_ranges,
-            per_crop_ranges,
-        })
+        encode_images_with_parts(
+            &self.vision_tower,
+            &self.projector,
+            &self.config,
+            inputs,
+            vision_batch_size,
+        )
     }
 
     pub fn merge_image_embeddings(
@@ -294,121 +192,13 @@ impl Lfm2VlModel {
         image_spans: &[ImageTokenSpan],
         encoded_images: &EncodedImages,
     ) -> Result<Tensor> {
-        let (batch_size, sequence_length) = input_ids.dims2()?;
-        let (embed_batch, embed_sequence, hidden_size) = input_embeds.dims3()?;
-        if embed_batch != batch_size || embed_sequence != sequence_length {
-            candle::bail!("LFM2-VL input embeddings shape does not match input IDs")
-        }
-        validate_encoded_images(encoded_images)?;
-        let input_ids = input_ids.to_dtype(DType::U32)?.to_vec2::<u32>()?;
-        let mut covered = vec![vec![false; sequence_length]; batch_size];
-        let mut total_span_tokens = 0usize;
-        let mut previous: Option<(usize, usize)> = None;
-        if image_spans.len() != encoded_images.per_crop_ranges.len() {
-            candle::bail!(
-                "LFM2-VL image span count {} does not match encoded crop count {}",
-                image_spans.len(),
-                encoded_images.per_crop_ranges.len()
-            )
-        }
-        for (crop_index, span) in image_spans.iter().enumerate() {
-            if span.batch_index >= batch_size {
-                candle::bail!("LFM2-VL image span batch index is out of bounds")
-            }
-            if span.start >= span.end || span.end > sequence_length {
-                candle::bail!("LFM2-VL image span must be a non-empty in-bounds range")
-            }
-            if let Some((previous_batch, previous_end)) = previous {
-                if span.batch_index < previous_batch
-                    || (span.batch_index == previous_batch && span.start < previous_end)
-                {
-                    candle::bail!("LFM2-VL image spans must be ordered and non-overlapping")
-                }
-            }
-            for position in span.start..span.end {
-                if input_ids[span.batch_index][position] != self.image_token_id {
-                    candle::bail!(
-                        "LFM2-VL image span contains token {} at batch {}, position {}, expected image token {}",
-                        input_ids[span.batch_index][position],
-                        span.batch_index,
-                        position,
-                        self.image_token_id
-                    )
-                }
-                if covered[span.batch_index][position] {
-                    candle::bail!("LFM2-VL image spans overlap")
-                }
-                covered[span.batch_index][position] = true;
-            }
-            total_span_tokens = total_span_tokens
-                .checked_add(span.end - span.start)
-                .ok_or_else(|| candle::Error::Msg("LFM2-VL image span count overflow".into()))?;
-            let crop_range = &encoded_images.per_crop_ranges[crop_index];
-            let expected_feature_count =
-                crop_range
-                    .end
-                    .checked_sub(crop_range.start)
-                    .ok_or_else(|| {
-                        candle::Error::Msg("LFM2-VL encoded crop range is invalid".into())
-                    })?;
-            if span.end - span.start != expected_feature_count {
-                candle::bail!(
-                    "LFM2-VL crop span {crop_index} has {} placeholders, but its encoded crop range has {expected_feature_count} features",
-                    span.end - span.start
-                )
-            }
-            previous = Some((span.batch_index, span.end));
-        }
-
-        let mut total_image_tokens = 0usize;
-        for (batch_index, row) in input_ids.iter().enumerate() {
-            for (position, &token_id) in row.iter().enumerate() {
-                if token_id == self.image_token_id {
-                    total_image_tokens = total_image_tokens.checked_add(1).ok_or_else(|| {
-                        candle::Error::Msg("LFM2-VL image token count overflow".into())
-                    })?;
-                    if !covered[batch_index][position] {
-                        candle::bail!("LFM2-VL image token is not covered by a supplied span")
-                    }
-                }
-            }
-        }
-        if total_image_tokens != total_span_tokens {
-            candle::bail!(
-                "LFM2-VL image token count {total_image_tokens} does not match span count {total_span_tokens}"
-            )
-        }
-        let feature_count = encoded_images.embeddings.dim(0)?;
-        if feature_count != total_image_tokens {
-            candle::bail!(
-                "LFM2-VL image feature count {feature_count} does not match placeholder count {total_image_tokens}"
-            )
-        }
-        if input_embeds.dim(2)? != encoded_images.embeddings.dim(1)? {
-            candle::bail!("LFM2-VL image feature width does not match text embedding width")
-        }
-
-        let features = encoded_images
-            .embeddings
-            .to_device(input_embeds.device())?
-            .to_dtype(input_embeds.dtype())?;
-        let mut merged = input_embeds.clone();
-        for (crop_index, span) in image_spans.iter().enumerate() {
-            let span_len = span.end - span.start;
-            let feature_range = &encoded_images.per_crop_ranges[crop_index];
-            let chunk = features
-                .narrow(0, feature_range.start, span_len)?
-                .unsqueeze(0)?;
-            merged = merged.slice_assign(
-                &[
-                    span.batch_index..span.batch_index + 1,
-                    span.start..span.end,
-                    0..hidden_size,
-                ],
-                &chunk,
-            )?;
-        }
-        Ok(merged)
+        merge_projected_embeddings(
+            input_ids,
+            input_embeds,
+            self.image_token_id,
+            image_spans,
+            encoded_images,
+        )
     }
 
     pub fn prefill(
@@ -454,6 +244,272 @@ impl Lfm2VlModel {
         token_ids.dims2()?;
         self.language_model.forward(token_ids, index_pos, cache)
     }
+}
+
+pub(super) fn encode_images_with_parts(
+    vision_tower: &siglip2::Siglip2VisionModel,
+    projector: &Lfm2VlProjector,
+    config: &Lfm2VlConfig,
+    inputs: &ProcessedVisionBatch,
+    vision_batch_size: usize,
+) -> Result<EncodedImages> {
+    if vision_batch_size == 0 {
+        candle::bail!("LFM2-VL vision_batch_size must be greater than zero")
+    }
+    let (crop_count, max_patches, patch_dimension) = inputs.pixel_values.dims3()?;
+    if crop_count == 0 || max_patches == 0 {
+        candle::bail!("LFM2-VL packed vision input must contain at least one crop")
+    }
+    if inputs.pixel_attention_mask.dims() != [crop_count, max_patches] {
+        candle::bail!("LFM2-VL pixel_attention_mask shape does not match pixel_values")
+    }
+    if inputs.spatial_shapes.dims() != [crop_count, 2] {
+        candle::bail!("LFM2-VL spatial_shapes shape does not match pixel_values")
+    }
+    if patch_dimension != config.vision_config.patch_dimension_for_vl()? {
+        candle::bail!(
+            "LFM2-VL patch dimension {patch_dimension} does not match vision configuration"
+        )
+    }
+    if inputs.crops.len() != crop_count {
+        candle::bail!(
+            "LFM2-VL crop metadata count {} does not match crop tensor count {crop_count}",
+            inputs.crops.len()
+        )
+    }
+    validate_image_metadata(inputs, crop_count)?;
+    let shapes = read_spatial_shapes(&inputs.spatial_shapes)?;
+    let mask_values = read_attention_mask(&inputs.pixel_attention_mask, &shapes, max_patches)?;
+    for (crop_index, crop) in inputs.crops.iter().enumerate() {
+        let (rows, cols) = shapes[crop_index];
+        if crop.patch_rows != rows || crop.patch_cols != cols {
+            candle::bail!(
+                    "LFM2-VL crop {crop_index} metadata grid [{}, {}] does not match input [{rows}, {cols}]",
+                    crop.patch_rows,
+                    crop.patch_cols
+                )
+        }
+        let projected_tokens = config.projected_token_count(rows, cols)?;
+        if crop.projected_tokens != projected_tokens {
+            candle::bail!(
+                "LFM2-VL crop {crop_index} metadata projects to {}, expected {projected_tokens}",
+                crop.projected_tokens
+            )
+        }
+        let valid = rows
+            .checked_mul(cols)
+            .ok_or_else(|| candle::Error::Msg("LFM2-VL valid patch count overflow".into()))?;
+        let mask_valid = mask_values[crop_index]
+            .iter()
+            .filter(|&&value| value == 1.0)
+            .count();
+        if mask_valid != valid {
+            candle::bail!(
+                "LFM2-VL crop {crop_index} mask has {mask_valid} valid patches, expected {valid}"
+            )
+        }
+    }
+
+    let mut projected_crops = Vec::new();
+    projected_crops
+        .try_reserve_exact(crop_count)
+        .map_err(|_| candle::Error::Msg("LFM2-VL projected crop allocation failed".into()))?;
+    let mut per_crop_ranges = Vec::new();
+    per_crop_ranges
+        .try_reserve_exact(crop_count)
+        .map_err(|_| candle::Error::Msg("LFM2-VL crop-range allocation failed".into()))?;
+    let mut offset = 0usize;
+    let mut crop_start = 0usize;
+    while crop_start < crop_count {
+        let remaining = crop_count - crop_start;
+        let chunk_count = remaining.min(vision_batch_size);
+        let pixel_values = inputs.pixel_values.narrow(0, crop_start, chunk_count)?;
+        let pixel_attention_mask =
+            inputs
+                .pixel_attention_mask
+                .narrow(0, crop_start, chunk_count)?;
+        let spatial_shapes = inputs.spatial_shapes.narrow(0, crop_start, chunk_count)?;
+        let hidden = vision_tower.forward(&siglip2::PackedVisionInputs {
+            pixel_values: &pixel_values,
+            pixel_attention_mask: &pixel_attention_mask,
+            spatial_shapes: &spatial_shapes,
+        })?;
+        for local_index in 0..chunk_count {
+            let crop_index = crop_start + local_index;
+            let (rows, cols) = shapes[crop_index];
+            let valid = rows
+                .checked_mul(cols)
+                .ok_or_else(|| candle::Error::Msg("LFM2-VL valid patch count overflow".into()))?;
+            let crop_hidden = hidden.i((local_index, 0..valid, ..))?.reshape((
+                1,
+                rows,
+                cols,
+                config.vision_config.hidden_size,
+            ))?;
+            let projected = projector.forward(&crop_hidden)?.reshape((
+                config.projected_token_count(rows, cols)?,
+                projector.output_size(),
+            ))?;
+            let token_count = projected.dim(0)?;
+            let end = offset
+                .checked_add(token_count)
+                .ok_or_else(|| candle::Error::Msg("LFM2-VL image feature range overflow".into()))?;
+            per_crop_ranges.push(offset..end);
+            offset = end;
+            projected_crops.push(projected);
+        }
+        crop_start += chunk_count;
+    }
+    let mut projected_refs = Vec::new();
+    projected_refs
+        .try_reserve_exact(projected_crops.len())
+        .map_err(|_| {
+            candle::Error::Msg("LFM2-VL projected tensor-reference allocation failed".into())
+        })?;
+    projected_refs.extend(projected_crops.iter());
+    let embeddings = Tensor::cat(&projected_refs, 0)?;
+    let per_image_ranges = image_ranges_from_crop_ranges(inputs, &per_crop_ranges)?;
+    Ok(EncodedImages {
+        embeddings,
+        per_image_ranges,
+        per_crop_ranges,
+    })
+}
+
+/// Merge projected image features into explicit placeholder spans.
+///
+/// This is shared by dense native text and quantized GGUF text. The only
+/// cross-device value is `encoded_images.embeddings`, transferred here to the
+/// text embedding device and dtype immediately before the span replacement.
+pub fn merge_projected_embeddings(
+    input_ids: &Tensor,
+    input_embeds: &Tensor,
+    image_token_id: u32,
+    image_spans: &[ImageTokenSpan],
+    encoded_images: &EncodedImages,
+) -> Result<Tensor> {
+    let (batch_size, sequence_length) = input_ids.dims2()?;
+    let (embed_batch, embed_sequence, hidden_size) = input_embeds.dims3()?;
+    if embed_batch != batch_size || embed_sequence != sequence_length {
+        candle::bail!("LFM2-VL input embeddings shape does not match input IDs")
+    }
+    validate_encoded_images(encoded_images)?;
+    let input_ids = input_ids.to_dtype(DType::U32)?.to_vec2::<u32>()?;
+    let mut covered = Vec::new();
+    covered
+        .try_reserve_exact(batch_size)
+        .map_err(|_| candle::Error::Msg("LFM2-VL image-span coverage allocation failed".into()))?;
+    for _ in 0..batch_size {
+        let mut row = Vec::new();
+        row.try_reserve_exact(sequence_length)
+            .map_err(|_| candle::Error::Msg("LFM2-VL image-span row allocation failed".into()))?;
+        row.resize(sequence_length, false);
+        covered.push(row);
+    }
+    let mut total_span_tokens = 0usize;
+    let mut previous: Option<(usize, usize)> = None;
+    if image_spans.len() != encoded_images.per_crop_ranges.len() {
+        candle::bail!(
+            "LFM2-VL image span count {} does not match encoded crop count {}",
+            image_spans.len(),
+            encoded_images.per_crop_ranges.len()
+        )
+    }
+    for (crop_index, span) in image_spans.iter().enumerate() {
+        if span.batch_index >= batch_size {
+            candle::bail!("LFM2-VL image span batch index is out of bounds")
+        }
+        if span.start >= span.end || span.end > sequence_length {
+            candle::bail!("LFM2-VL image span must be a non-empty in-bounds range")
+        }
+        if let Some((previous_batch, previous_end)) = previous {
+            if span.batch_index < previous_batch
+                || (span.batch_index == previous_batch && span.start < previous_end)
+            {
+                candle::bail!("LFM2-VL image spans must be ordered and non-overlapping")
+            }
+        }
+        for position in span.start..span.end {
+            if input_ids[span.batch_index][position] != image_token_id {
+                candle::bail!(
+                        "LFM2-VL image span contains token {} at batch {}, position {}, expected image token {}",
+                        input_ids[span.batch_index][position],
+                        span.batch_index,
+                        position,
+                        image_token_id
+                    )
+            }
+            if covered[span.batch_index][position] {
+                candle::bail!("LFM2-VL image spans overlap")
+            }
+            covered[span.batch_index][position] = true;
+        }
+        total_span_tokens = total_span_tokens
+            .checked_add(span.end - span.start)
+            .ok_or_else(|| candle::Error::Msg("LFM2-VL image span count overflow".into()))?;
+        let crop_range = &encoded_images.per_crop_ranges[crop_index];
+        let expected_feature_count = crop_range
+            .end
+            .checked_sub(crop_range.start)
+            .ok_or_else(|| candle::Error::Msg("LFM2-VL encoded crop range is invalid".into()))?;
+        if span.end - span.start != expected_feature_count {
+            candle::bail!(
+                    "LFM2-VL crop span {crop_index} has {} placeholders, but its encoded crop range has {expected_feature_count} features",
+                    span.end - span.start
+                )
+        }
+        previous = Some((span.batch_index, span.end));
+    }
+
+    let mut total_image_tokens = 0usize;
+    for (batch_index, row) in input_ids.iter().enumerate() {
+        for (position, &token_id) in row.iter().enumerate() {
+            if token_id == image_token_id {
+                total_image_tokens = total_image_tokens.checked_add(1).ok_or_else(|| {
+                    candle::Error::Msg("LFM2-VL image token count overflow".into())
+                })?;
+                if !covered[batch_index][position] {
+                    candle::bail!("LFM2-VL image token is not covered by a supplied span")
+                }
+            }
+        }
+    }
+    if total_image_tokens != total_span_tokens {
+        candle::bail!(
+                "LFM2-VL image token count {total_image_tokens} does not match span count {total_span_tokens}"
+            )
+    }
+    let feature_count = encoded_images.embeddings.dim(0)?;
+    if feature_count != total_image_tokens {
+        candle::bail!(
+                "LFM2-VL image feature count {feature_count} does not match placeholder count {total_image_tokens}"
+            )
+    }
+    if input_embeds.dim(2)? != encoded_images.embeddings.dim(1)? {
+        candle::bail!("LFM2-VL image feature width does not match text embedding width")
+    }
+
+    let features = encoded_images
+        .embeddings
+        .to_device(input_embeds.device())?
+        .to_dtype(input_embeds.dtype())?;
+    let mut merged = input_embeds.clone();
+    for (crop_index, span) in image_spans.iter().enumerate() {
+        let span_len = span.end - span.start;
+        let feature_range = &encoded_images.per_crop_ranges[crop_index];
+        let chunk = features
+            .narrow(0, feature_range.start, span_len)?
+            .unsqueeze(0)?;
+        merged = merged.slice_assign(
+            &[
+                span.batch_index..span.batch_index + 1,
+                span.start..span.end,
+                0..hidden_size,
+            ],
+            &chunk,
+        )?;
+    }
+    Ok(merged)
 }
 
 fn validate_image_metadata(inputs: &ProcessedVisionBatch, crop_count: usize) -> Result<()> {
@@ -595,7 +651,10 @@ fn image_ranges_from_crop_ranges(
     inputs: &ProcessedVisionBatch,
     per_crop_ranges: &[Range<usize>],
 ) -> Result<Vec<Range<usize>>> {
-    let mut ranges = Vec::with_capacity(inputs.images.len());
+    let mut ranges = Vec::new();
+    ranges
+        .try_reserve_exact(inputs.images.len())
+        .map_err(|_| candle::Error::Msg("LFM2-VL image-range allocation failed".into()))?;
     for image in &inputs.images {
         let first = per_crop_ranges.get(image.crop_range.start).ok_or_else(|| {
             candle::Error::Msg("LFM2-VL image crop range is out of bounds".into())
@@ -672,7 +731,7 @@ fn validate_encoded_images(encoded_images: &EncodedImages) -> Result<()> {
 }
 
 impl siglip2::Siglip2VisionConfig {
-    fn patch_dimension_for_vl(&self) -> Result<usize> {
+    pub(super) fn patch_dimension_for_vl(&self) -> Result<usize> {
         self.num_channels
             .checked_mul(self.patch_size)
             .and_then(|value| value.checked_mul(self.patch_size))
@@ -1061,8 +1120,8 @@ mod tests {
             .is_err());
         let short = EncodedImages {
             embeddings: encoded.embeddings.narrow(0, 0, 1)?,
-            per_image_ranges: vec![0..1],
-            per_crop_ranges: vec![0..1],
+            per_image_ranges: std::iter::once(0..1).collect(),
+            per_crop_ranges: std::iter::once(0..1).collect(),
         };
         assert!(model
             .merge_image_embeddings(input_ids, &embeds, &spans, &short)

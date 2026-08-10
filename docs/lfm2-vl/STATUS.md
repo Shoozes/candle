@@ -10,15 +10,17 @@
 - Source-lock checkpoint: `f007daec10e5751e5899676a7c58098183ec1256`
 - Reference-harness checkpoint: `a9594101c97589f6deabe7a2dddaaffeb5471a94`
 - Phase 1 checkpoint: `f660b8e3f2b4560f133356864e012be83f29d9c0`
+- Phase 2 checkpoint: `74e109aec5f9801cfead3eeb27fe3f93ac646b84`
 - Phase 3 checkpoint: `37264b49cf74d0cf7697317eda0183f084db6ff8`
-- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`, `lfm2-vl-phase-1-text`, `lfm2-vl-phase-2-siglip2`, `lfm2-vl-phase-3-native-composite`
+- Phase 4 checkpoint: `8d1bbe471404848730685c98e7dd56b13a457eb4`
+- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`, `lfm2-vl-phase-1-text`, `lfm2-vl-phase-2-siglip2`, `lfm2-vl-phase-3-native-composite`, `lfm2-vl-phase-4-native-e2e`
 
 ## Current Phase
 
-- Phase: 4 — Rust Processor and Prompt Expander
-- Task: Remove the Python runtime preprocessing dependency by turning raw images and user-positioned image sentinels into the packed tensors, exact token IDs, and one placeholder span per crop consumed by the proven native composite model
-- Scope: the new `candle-vlm` workspace crate, dynamic processor config and precedence, RGB conversion, TorchVision-compatible antialiased resize, smart resize, tiling, thumbnails, normalization, patchification/padding, exact metadata, tokenizer-backed prompt expansion, multiple images, and controlled malformed-input failures; no GGUF loader, production model download, CUDA-specific optimization, or CLI
-- Status: The Rust processor/prompt suite is green at 24/24, all 12 official processor cases match, all 5 prompt cases match exact text/IDs/per-crop spans, all 10 real-dimension metadata oracles are consumed, the pinned Python oracle is green at 9/9, `candle-transformers` remains green at 37/37, and the final staged baseline is green. The Phase 4 checkpoint is pending.
+- Phase: 5 — Hybrid Quantized Text and Split Dense MMProj
+- Task: Pair quantized LFM2 GGUF text with a versioned, dense split-safetensors SigLIP2/projector bundle and prove image-feature, multimodal prefill, decode, cache-reset, pairing, and loader behavior
+- Scope: deterministic split exporter and fixture, strict manifest/inventory/provenance validation, bounded single-buffer safetensors loading, GGUF metadata hardening, quantized embedding-driven multimodal execution, typed processor metadata bridge, local-only example loading, and distinct-device test coverage; no direct GGUF mmproj parsing, quantized vision operators, production model download, generated-caption parity, or CUDA optimization
+- Status: The pinned Python suite is green at 19/19, `candle-transformers` is green at 42/42, `candle-vlm` is green at 25/25, the local example, scoped Clippy gates, and final staged baseline pass, and all nine worker-audit findings are resolved. The real CUDA distinct-device test is committed but locally skipped because this WSL environment exposes the RTX 4090 driver without a Linux `nvcc`/CUDA toolkit. The Phase 5 checkpoint is pending.
 
 ## Source-Lock Results
 
@@ -117,8 +119,27 @@
 - Independent worker re-audit: five actionable findings were resolved and the initially reported resize mismatch was withdrawn after exact reproduction showed it used no matching source/coordinate convention
 - Full locked/offline CPU baseline: passed `2026-08-10T08:35:14Z`–`2026-08-10T08:35:25Z` against pre-Phase-4-checkpoint HEAD `37264b49cf74d0cf7697317eda0183f084db6ff8` with exactly the Phase 4 candidate staged; retained log `artifacts/verification/processor-prompt/baseline-final.log`; SHA-256 `fb16481302c9bdf15f4b04df0250e45bf8c9a2126b92b09a787f5360cc3a3140`
 - Verifier-only Cargo.lock SHA-256 after adding `candle-vlm`: `a4f4379f73d38db1a148f96538e6b868d1ef148a8417069807bae451c9766fb4`
-- Phase 4 checkpoint: pending manager commit/tag
+- Phase 4 checkpoint/tag: complete at commit `8d1bbe471404848730685c98e7dd56b13a457eb4`, annotated tag `lfm2-vl-phase-4-native-e2e`
 - Not claimed: production-checkpoint numerical parity, GGUF/mmproj loading, CUDA, generated-caption parity, or CLI support
+
+## Phase 5 Verification
+
+- Phase 4 checkpoint/tag: complete at commit `8d1bbe471404848730685c98e7dd56b13a457eb4`, annotated tag `lfm2-vl-phase-4-native-e2e`
+- Split artifact contract: deterministic `mmproj.safetensors`, versioned `mmproj.json`, and canonical `processor_config.json`; exact config-derived inventory; immutable source model/revision; SHA-256 coverage; atomic per-file writes; overwrite refusal; no production weights
+- Loader contract: manifest, processor, architecture, text width/layer count, vision layer inventory, patch/factor, tokenizer image ID, tensor names/shapes/dtypes/byte counts, header size, tensor count, offsets, overlaps, gaps, and payload coverage are checked before tensor construction
+- File identity and allocation: the weights file is opened and buffered once; the same bytes are hashed, inspected, and consumed by `VarBuilder`; the maximum allocation is derived with checked arithmetic from the validated manifest payload plus the bounded header and prefix
+- Quantized path: deterministic real GGUF bytes are written from the committed tiny text tensors, hash-pinned as `8fbd510aeea4715547c57975a7adcb91c148a8bc5e8d869d9617b69af6a006b1`, parsed through `gguf_file::Content::read`, and loaded through `ModelWeights::from_gguf`; block-aligned matrices use Q8_0 and small unalignable tensors remain F32
+- Numerical evidence: split versus unified image features max abs `0`; quantized hybrid prefill logits max abs `4.457309842e-5`; cached decode steps `2.650916576e-5`, `2.175569534e-5`, and `1.309439540e-5`; cache reset max abs `0`
+- Python reference/exporter suite: 19/19 passed from `2026-08-10T10:01:59Z` to `2026-08-10T10:02:12Z`; retained log `artifacts/verification/hybrid-mmproj/python-final.log`; SHA-256 `96e17862334d3fc7877596cafb3daa743c58904dcca11a8b7e205138d40dab85`
+- `candle-transformers`: 42/42 library tests plus 5 generation and 8 NMS integration tests passed from `2026-08-10T10:02:23Z` to `2026-08-10T10:02:26Z`; retained log `artifacts/verification/hybrid-mmproj/candle-transformers-tests.log`; SHA-256 `aba483c8bc2c01b4fd6ecc6c511dfc93831280933596b0ffad9660a3bd22b529`
+- `candle-vlm` and example: 25/25 tests and `cargo check -p candle-examples --example lfm2-vl` passed from `2026-08-10T10:02:39Z` to `2026-08-10T10:02:48Z`; retained log `artifacts/verification/hybrid-mmproj/vlm-example-final.log`; SHA-256 `b431fa113f047ec0981f93e9a3ce581dc3ac9638b0185f4b57fa81aab0780eb7`
+- Clippy: transformer, VLM, and example gates passed with only the recorded pre-existing newer-Clippy allowances; retained log `artifacts/verification/hybrid-mmproj/clippy-final.log`; SHA-256 `d2e79ade9bab2e9115a4ce526c1ed16f72622f3230f98939132c5e82124752d6`
+- Distinct-device lane: source-complete CUDA-vision/CPU-text test verifies that raw packed inputs remain caller-owned, projected features stay on the vision device until merge, logits return on the text device, and prefill agrees within `1e-4`; local execution was skipped at the `cudarc` build because `nvcc` is absent despite an RTX 4090 driver at compute capability 8.9; retained log `artifacts/verification/hybrid-mmproj/cuda-distinct-device-skipped.log`; SHA-256 `6c16f84a925c9bb2d856b18919cc9fae45a69b38bcf7d4db65b44396f011eb97`
+- Independent worker re-audit: all nine implementation findings are resolved; the worker confirmed no code blocker remains and classified the CUDA result as an environment-owned evidence gap
+- Full locked/offline staged CPU baseline: passed `2026-08-10T10:07:11Z`–`2026-08-10T10:07:19Z` against pre-Phase-5-checkpoint HEAD `8d1bbe471404848730685c98e7dd56b13a457eb4` with exactly the Phase 5 candidate staged; retained log `artifacts/verification/hybrid-mmproj/baseline-final.log`; SHA-256 `594932158f4a99702cedd47ced1fe0ffd8e4aa18835346e65a0f9003963bc369`
+- Verifier-only Cargo.lock SHA-256: `acd9419056b786da820b5120db8e78be06902721689c39b55f29445abdddaffc`
+- Phase 5 checkpoint/tag: pending manager commit/tag
+- Not claimed: production-checkpoint numerical parity, production GGUF numerical parity, direct GGUF mmproj compatibility, executed CUDA parity, generated-caption parity, or quantized vision execution
 
 ## Bootstrap Proof
 
@@ -166,10 +187,11 @@
 - Numeric IDs for image wrapper, row/column, and thumbnail marker strings must be exported by the tokenizer harness; only image placeholder ID 396 is config-explicit.
 - llama.cpp PR #25524 for reading LFM2 tiling parameters from GGUF metadata is open and unmerged; official processor config remains authoritative.
 - Physical GGUF tensor orientation beyond the converter-defined patch reshape awaits header-only inspection of a pinned GGUF.
+- The local WSL verifier exposes an RTX 4090 through the driver but has no Linux CUDA toolkit or `nvcc`; the committed distinct-device test remains an owner-scoped execution gap.
 
 ## Blockers
 
-- None. The Phase 4 checkpoint remains pending manager commit/tag.
+- None. The Phase 5 checkpoint remains pending manager commit/tag.
 
 ## Active Files
 
@@ -178,6 +200,9 @@
 - `candle-transformers/src/models/siglip2.rs`
 - `candle-transformers/src/models/lfm2_vl/`
 - `candle-vlm/`
+- `candle-examples/examples/lfm2-vl/`
+- `tools/export_lfm2_vl_mmproj.py`
+- `tests/fixtures/lfm2_vl_mmproj_tiny/`
 - `candle-transformers/src/models/mod.rs`
 - `candle-examples/examples/lfm2/main.rs`
 - `tests/fixtures/lfm2_vl_processor_tiny/`
@@ -188,7 +213,7 @@
 
 ## Next Task
 
-Create the Phase 4 checkpoint/tag. Then begin Phase 5 hybrid loading without combining it with direct GGUF mmproj loading. Keep production-checkpoint, CUDA, generated-caption, and CLI claims separately labeled.
+Complete the Phase 5 staged baseline and checkpoint/tag, then begin Phase 6 direct llama.cpp-compatible GGUF mmproj loading. Keep direct GGUF, quantized-vision, CUDA, production-checkpoint, generated-caption, and CLI claims separately labeled.
 
 ---
-AI-edited: 2026-08-10T04:35:42-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-4-docs | change=recorded Rust processor, prompt, fixture, audit, and final baseline evidence
+AI-edited: 2026-08-10T06:08:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-5-docs | change=recorded hybrid split-MMProj implementation, final baseline, audit closure, and CUDA environment gap

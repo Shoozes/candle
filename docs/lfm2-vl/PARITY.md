@@ -2,13 +2,13 @@
 
 ## Current State
 
-The deterministic reference fixture, LFM2 text compatibility path, SigLIP2 NaFlex tensor path, Phase 3 native projector/composite path, and Phase 4 Rust-native raw-image/prompt path are established. No production-checkpoint, production GGUF, generated-text, CUDA, or CLI parity result is claimed.
+The deterministic reference fixture, LFM2 text compatibility path, SigLIP2 NaFlex tensor path, native projector/composite path, Rust-native raw-image/prompt path, and Phase 5 quantized-text plus split-dense-MMProj path are established. No production-checkpoint, production-GGUF, direct-GGUF-MMProj, generated-text, executed-CUDA, quantized-vision, or CLI parity result is claimed.
 
 ## Required Gates
 
 | Gate | Required evidence | Phase status |
 | --- | --- | --- |
-| Workspace baseline | Locked CPU-only Candle checks and diff check from Linux home | Phase 4 staged baseline green; log SHA-256 `fb16481302c9bdf15f4b04df0250e45bf8c9a2126b92b09a787f5360cc3a3140` |
+| Workspace baseline | Locked CPU-only Candle checks and diff check from Linux home | Phase 5 staged baseline green; log SHA-256 `594932158f4a99702cedd47ced1fe0ffd8e4aa18835346e65a0f9003963bc369` |
 | Reference fixture | Deterministic pinned-Python export with component and multimodal tensors | Green; 87 tensors, byte-identical independent exports; manifest SHA-256 `c5461dadb0edfd920b20f308650c59676977110a1cc2f199e317dea7d75bdd7b` |
 | LFM2 text configuration | 450M effective FFN width `4608`; 1.6B width `8192` | Green in config tests and header evidence |
 | Dense text forwarding | Token-ID and embedding-driven prefill plus incremental decode agree | Green on the committed fixture; maximum hidden-state error `2.38418579e-7`, maximum logit error `2.98023224e-8` |
@@ -20,6 +20,9 @@ The deterministic reference fixture, LFM2 text compatibility path, SigLIP2 NaFle
 | Composite model | Image-span replacement and prefill/decode parity | Phase 3 focused gate green; 11/11 total |
 | Phase 3 library gate | Locked/offline `candle-transformers` library tests | 37/37 passed |
 | Phase 4 fixture reproduction | Fresh pinned-oracle export matches checked-in bytes | Green; manifest, metadata, and safetensors hashes match exactly |
+| Split MMProj artifact | Exact versioned inventory, hashes, immutable provenance, and processor pairing | Green on the deterministic 43-tensor fixture; exporter/reference suite 19/19 |
+| Hybrid GGUF text + dense MMProj | Real GGUF parse/load, split/native image-feature equivalence, prefill/decode/cache comparison | Green on the committed deterministic fixture; image features exact, hybrid text-logit max abs `4.457309842e-5` |
+| Distinct devices | Vision and text may differ; only projected image features cross at merge | Source-complete CUDA-vision/CPU-text test committed; local execution skipped because Linux `nvcc`/toolkit is absent |
 | Production checkpoints and GGUF | Native versus production and GGUF numerical validation | Not run; no production weights or GGUF files downloaded |
 
 ## Phase 2 Focused Evidence
@@ -52,7 +55,17 @@ All 5 prompt oracles match exact expanded strings, tokenizer IDs, placeholder co
 
 All 10 real-dimension oracles assert smart dimensions, large-image classification, selected grid, tile canvas, and whole/tile/thumbnail order. A fresh pinned Python export reproduced the checked-in fixture byte-for-byte: manifest `2fb787e378f5fd1ddfa147913aadccd07add9a1045b8bb0f693ca2c2f564959c`, metadata `aca7f4d5e5e4ef0e4872adeb227b56cf3960d87b353c40162af97660783f2327`, and tensors `a25932fc57f3e78f48a1a8f558216521c7ae3e8659fcf0a389cd0a4ebe0ab3f6`.
 
-The pinned Python reference tests passed 9/9, the full `candle-transformers` library regression remained green at 37/37, and the final staged baseline passed formatting, all required package/example checks, and both diff gates. The Phase 4 checkpoint remains pending manager commit/tag. Production-checkpoint, GGUF/mmproj, CUDA, generated-caption, and CLI parity remain unclaimed.
+The pinned Python reference tests passed 9/9, the full `candle-transformers` library regression remained green at 37/37, and the final staged baseline passed formatting, all required package/example checks, and both diff gates. Phase 4 is checkpointed at `8d1bbe471404848730685c98e7dd56b13a457eb4`, tagged `lfm2-vl-phase-4-native-e2e`. Production-checkpoint, GGUF/mmproj, CUDA, generated-caption, and CLI parity remained unclaimed at that gate.
+
+## Phase 5 Hybrid MMProj Evidence
+
+The split exporter emits only the config-derived canonical SigLIP2/projector inventory into `mmproj.safetensors`, plus a versioned manifest and canonical processor JSON. It rejects missing, unexpected, shape-incompatible, non-dense, duplicate-normalized, or incomplete tensors before writing, requires an immutable source revision, and produces byte-identical output from the committed tiny unified fixture.
+
+The Rust loader validates the manifest and processor pair, exact tensor inventory, shape/dtype/byte counts, bounded safetensors header and tensor count, offsets, overlaps, gaps, payload coverage, and hashes. A single fallibly allocated buffer—bounded from the validated manifest payload and maximum header—is used for hash, inspection, and construction, removing path-replacement ambiguity. GGUF metadata also rejects malformed present RoPE values and bounds rotary-table allocation before construction.
+
+The deterministic hybrid proof writes real GGUF bytes from committed text tensors, pins SHA-256 `8fbd510aeea4715547c57975a7adcb91c148a8bc5e8d869d9617b69af6a006b1`, parses them with `gguf_file::Content::read`, and loads them through `ModelWeights::from_gguf`. Q8_0 is used where tiny matrix widths meet its block constraint; small unalignable tensors remain F32. Split and unified image features are exact. Relative to the native dense model, maximum absolute errors are prefill `4.457309842e-5`, cached decode `2.650916576e-5`, `2.175569534e-5`, and `1.309439540e-5`, with exact cache reset.
+
+Final retained evidence: Python 19/19, `candle-transformers` 42/42 plus its integration tests, `candle-vlm` 25/25, the `lfm2-vl` example check, scoped Clippy gates, and the staged locked/offline baseline all pass. The CUDA-vision/CPU-text test is source-complete and asserts device residency and `1e-4` prefill agreement, but local execution is truthfully skipped because WSL exposes the RTX 4090 driver without a Linux CUDA toolkit or `nvcc`. The assigned worker confirmed all nine audit findings resolved and no remaining code blocker. Production models and GGUF files were not downloaded.
 
 ## Evidence Rules
 
@@ -63,7 +76,7 @@ The pinned Python reference tests passed 9/9, the full `candle-transformers` lib
 
 ## Next Parity Task
 
-Create the Phase 4 checkpoint, then prove the Phase 5 hybrid quantized-text plus dense-mmproj loader before direct GGUF mmproj work.
+Complete the Phase 5 staged baseline and checkpoint, then prove Phase 6 direct llama.cpp-compatible GGUF mmproj loading through the dense compatibility path before adding quantized vision operators.
 
 ---
-AI-edited: 2026-08-10T04:35:42-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-4-docs | change=recorded exact Rust processor, prompt, metadata, fixture, and baseline parity
+AI-edited: 2026-08-10T06:08:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-5-docs | change=recorded split-MMProj artifact, real-GGUF hybrid numerics, final baseline, and CUDA skip boundary

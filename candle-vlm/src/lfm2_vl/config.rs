@@ -1,7 +1,7 @@
 //! Dynamic processor configuration and source-precedence resolution.
 
 use candle::Result;
-use candle_transformers::models::lfm2_vl::Lfm2VlConfig;
+use candle_transformers::models::lfm2_vl::{Lfm2VlConfig, MmprojMetadata};
 use serde::Deserialize;
 
 fn default_do_resize() -> bool {
@@ -111,10 +111,14 @@ impl ProcessorConfigPatch {
     pub fn from_json(json: &str) -> Result<Self> {
         let value: serde_json::Value = serde_json::from_str(json)
             .map_err(|err| candle::Error::Msg(format!("invalid processor config: {err}")))?;
+        Self::from_value(&value)
+    }
+
+    pub fn from_value(value: &serde_json::Value) -> Result<Self> {
         // Processor documents carry unrelated class metadata at the outer
         // level. The patch schema deliberately ignores unknown keys while
         // validating every known field during resolution.
-        let source = value.get("image_processor").unwrap_or(&value);
+        let source = value.get("image_processor").unwrap_or(value);
         serde_json::from_value(source.clone())
             .map_err(|err| candle::Error::Msg(format!("invalid processor config fields: {err}")))
     }
@@ -226,6 +230,18 @@ impl Lfm2VlProcessorConfig {
     pub fn with_model_config(config: &Lfm2VlConfig) -> Result<Self> {
         let model_patch = ProcessorConfigPatch::from_model_config(config);
         Self::resolve(None, None, None, Some(&model_patch))
+    }
+
+    /// Resolve the typed processor bundled with a split dense MMProj.
+    ///
+    /// The model crate deliberately stores the processor document as neutral
+    /// JSON to preserve the one-way `candle-vlm -> candle-transformers`
+    /// dependency. This conversion applies the bundled processor over the
+    /// embedded model hints and validates the resolved result.
+    pub fn from_mmproj_metadata(metadata: &MmprojMetadata) -> Result<Self> {
+        let processor_patch = ProcessorConfigPatch::from_value(&metadata.processor)?;
+        let model_patch = ProcessorConfigPatch::from_model_config(&metadata.manifest.model_config);
+        Self::resolve(None, Some(&processor_patch), None, Some(&model_patch))
     }
 
     fn apply(&mut self, patch: &ProcessorConfigPatch) {
@@ -399,6 +415,9 @@ impl Lfm2VlProcessorConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use candle::{DType, Device};
+    use candle_transformers::models::lfm2_vl::Mmproj;
+    use std::path::PathBuf;
 
     #[test]
     fn precedence_is_explicit_processor_gguf_model_defaults() -> Result<()> {
@@ -465,6 +484,19 @@ mod tests {
         assert_eq!(config.encoder_patch_size, 2);
         assert_eq!(config.max_num_patches, Some(32));
         assert_eq!(config.max_image_tokens, 8);
+        Ok(())
+    }
+
+    #[test]
+    fn resolves_typed_config_from_split_mmproj_metadata() -> Result<()> {
+        let bundle =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../tests/fixtures/lfm2_vl_mmproj_tiny");
+        let mmproj = Mmproj::load(bundle, DType::F32, &Device::Cpu)?;
+        let config = Lfm2VlProcessorConfig::from_mmproj_metadata(&mmproj.metadata)?;
+        assert_eq!(config.encoder_patch_size, 2);
+        assert_eq!(config.downsample_factor, 2);
+        assert_eq!(config.max_num_patches, Some(64));
+        assert_eq!(config.context_length, Some(128));
         Ok(())
     }
 }

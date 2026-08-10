@@ -63,9 +63,15 @@ python tools/lfm2_vl/reference/export_fixtures.py \
 
 The loader calls the pinned `Lfm2VlForConditionalGeneration.from_pretrained` path and never serializes the loaded tensors. Keep any user-fetched model artifacts outside Git and outside the tiny fixture directory.
 
+## Split dense MMProj export
+
+`tools/export_lfm2_vl_mmproj.py` is a separate stdlib-only development tool. It accepts a local safetensors file plus local model and processor JSON, streams only the canonical `model.vision_tower.*` and `model.multi_modal_projector.*` payloads, and emits `mmproj.safetensors`, `mmproj.json`, and `processor_config.json`. It validates source offsets and byte sizes, refuses non-dense MMProj tensors, writes atomically, and never downloads a model.
+
+The committed `tests/fixtures/lfm2_vl_mmproj_tiny/` bundle is derived byte-for-byte from the no-production-weight tiny fixture. `test_mmproj_exporter.py` proves deterministic regeneration, the exact 43-tensor namespace, hashes and version fields, overwrite refusal, processor/model mismatch diagnostics, and controlled failure when the requested source namespace is absent.
+
 ## Validation
 
 `requirements-reference.in` is the direct CPU-lane intent. `requirements-reference.txt` is the fully resolved Python 3.10.12 / Linux x86_64 CPU verification lock. `tensor_dump.validate_bundle()` checks stable JSON, safetensors SHA-256, tensor names, shapes, and dtypes. The focused tests cover config-only behavior, official tiny construction, deterministic regeneration, overwrite refusal, production opt-in, mocked production loading, and hash failure.
 
 ---
-AI-edited: 2026-08-09T23:21:10-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=reference-harness | change=added pinned official-class reference modes and deterministic bundle contract
+AI-edited: 2026-08-10T05:29:29-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-5 | change=documented the local streaming split-MMProj exporter and deterministic fixture proof

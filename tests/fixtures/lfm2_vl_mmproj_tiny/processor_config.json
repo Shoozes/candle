@@ -1,0 +1,29 @@
+{
+  "do_image_splitting": true,
+  "do_normalize": true,
+  "do_pad": true,
+  "do_rescale": true,
+  "do_resize": true,
+  "downsample_factor": 2,
+  "encoder_patch_size": 2,
+  "image_mean": [
+    0.5,
+    0.5,
+    0.5
+  ],
+  "image_std": [
+    0.5,
+    0.5,
+    0.5
+  ],
+  "max_context_length": 128,
+  "max_image_tokens": 16,
+  "max_num_patches": 64,
+  "max_pixels_tolerance": 2.0,
+  "max_tiles": 4,
+  "min_image_tokens": 1,
+  "min_tiles": 2,
+  "rescale_factor": 0.00392156862745098,
+  "tile_size": 8,
+  "use_thumbnail": true
+}

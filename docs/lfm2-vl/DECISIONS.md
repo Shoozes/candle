@@ -234,5 +234,31 @@ Generic image-library resize helpers and fixed-point approximations did not pres
 Consequences:
 All 12 full processor tensors pass with maximum normalized error `1.192092896e-7`, and the direct odd-size regression matches all 96 output RGB bytes exactly. The rule is pinned-oracle compatibility, not a claim that every future TorchVision version uses the same internal accumulation strategy.
 
+## D-0019: Versioned Split-MMProj Boundary and Single-Buffer Loading
+
+Status: Accepted
+
+Decision:
+Define Format B as a strict three-file bundle: dense canonical vision/projector tensors in `mmproj.safetensors`, a versioned `mmproj.json`, and canonical `processor_config.json`. Derive the only accepted tensor names and shapes from the embedded LFM2-VL config, require immutable source provenance and artifact hashes, and validate the complete inventory before export and load. Open the weights file once into a fallibly allocated buffer bounded by the validated payload plus the maximum safetensors header; hash, inspect, and construct the model from those same bytes. Keep processor metadata as neutral JSON in `candle-transformers`, with the typed conversion owned by downstream `candle-vlm`.
+
+Why:
+The split bundle must pair safely with independently sourced quantized text. Exact config-derived inventory prevents incomplete artifacts, immutable hashes make pairing diagnosable, and a single file identity removes replacement races between verification and construction. The crate boundary avoids reversing the existing `candle-vlm -> candle-transformers` dependency.
+
+Consequences:
+The loader rejects architecture, hidden-size, text-layer, patch/factor, image-token, tensor-count, name, shape, dtype, byte-count, offset, overlap, gap, payload, processor, provenance, and hash mismatches before inference. Buffered eager loading temporarily holds the dense MMProj file in host memory, but its allocation is checked and manifest-bounded. Direct GGUF MMProj remains a separate Phase 6 format.
+
+## D-0020: Deterministic Real-GGUF Hybrid Proof and CUDA Skip Boundary
+
+Status: Accepted
+
+Decision:
+Prove the Phase 5 text path with deterministic GGUF bytes written from the committed tiny language tensors and loaded through the public GGUF parser/constructor. Quantize every block-aligned tiny matrix to Q8_0 and retain F32 for small shapes that the format cannot represent as Q8_0. Require split/native image-feature equivalence, multimodal prefill, three cached decode steps, and cache-reset comparison. Keep a feature-gated CUDA-vision/CPU-text integration test in source, but record local execution as skipped when the owner machine lacks the Linux CUDA toolkit.
+
+Why:
+A synthetic in-memory quantized model would not prove file-format aliases, metadata, output tying, or the real GGUF constructor. The mixed tiny GGUF is deterministic and exercises Q8 while remaining format-valid. Local policy treats a missing optional toolchain as a truthful evidence gap, not permission to install dependencies or claim executed CUDA parity.
+
+Consequences:
+The pinned tiny GGUF SHA-256 is `8fbd510aeea4715547c57975a7adcb91c148a8bc5e8d869d9617b69af6a006b1`. CPU F32 split/native image features are exact; hybrid prefill and decode remain within `4.457309842e-5`. The source path transfers projected features only at merge. Executed CUDA parity and production-GGUF parity remain explicitly unclaimed.
+
 ---
-AI-edited: 2026-08-10T04:32:06-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-4-docs | change=recorded native processor boundary, resize semantics, and Phase 3 checkpoint
+AI-edited: 2026-08-10T06:04:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-5-docs | change=recorded split artifact/load boundary and deterministic hybrid evidence policy
