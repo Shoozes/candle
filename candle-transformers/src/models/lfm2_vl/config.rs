@@ -186,26 +186,38 @@ impl Lfm2VlConfig {
     }
 
     pub fn projected_token_count(&self, patch_rows: usize, patch_cols: usize) -> Result<usize> {
-        if patch_rows == 0 || patch_cols == 0 {
-            candle::bail!("LFM2-VL crop patch dimensions must be positive")
-        }
-        if self.downsample_factor == 0 {
-            candle::bail!("LFM2-VL downsample_factor must be greater than zero")
-        }
-        if patch_rows % self.downsample_factor != 0 || patch_cols % self.downsample_factor != 0 {
-            candle::bail!(
-                "LFM2-VL crop grid [{patch_rows}, {patch_cols}] is not divisible by projector factor {}",
-                self.downsample_factor
-            )
-        }
-        (patch_rows / self.downsample_factor)
-            .checked_mul(patch_cols / self.downsample_factor)
-            .ok_or_else(|| candle::Error::Msg("LFM2-VL projected token count overflow".into()))
+        projected_token_count(patch_rows, patch_cols, self.downsample_factor)
     }
 
     pub fn text_model_config(&self) -> Result<lfm2::Config> {
         self.text_config.clone().try_into_config(false)
     }
+}
+
+/// Return the number of projected tokens for one valid patch grid.
+///
+/// This is the canonical checked count shared by the native projector and the
+/// Rust image/prompt processor. A crop must be factor-aligned because the
+/// official pixel-unshuffle cannot represent a partial factor block.
+pub fn projected_token_count(
+    patch_rows: usize,
+    patch_cols: usize,
+    downsample_factor: usize,
+) -> Result<usize> {
+    if patch_rows == 0 || patch_cols == 0 {
+        candle::bail!("LFM2-VL crop patch dimensions must be positive")
+    }
+    if downsample_factor == 0 {
+        candle::bail!("LFM2-VL downsample_factor must be greater than zero")
+    }
+    if patch_rows % downsample_factor != 0 || patch_cols % downsample_factor != 0 {
+        candle::bail!(
+            "LFM2-VL crop grid [{patch_rows}, {patch_cols}] is not divisible by projector factor {downsample_factor}"
+        )
+    }
+    (patch_rows / downsample_factor)
+        .checked_mul(patch_cols / downsample_factor)
+        .ok_or_else(|| candle::Error::Msg("LFM2-VL projected token count overflow".into()))
 }
 
 #[cfg(test)]

@@ -74,13 +74,8 @@
         },
         {
           "path": "src/transformers/models/lfm2_vl/image_processing_lfm2_vl.py",
-          "purpose": "Slow image-processing oracle",
+          "purpose": "Checkpoint-selected unified TorchVision image-processing oracle; processor configs retain the legacy Fast class name",
           "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/image_processing_lfm2_vl.py"
-        },
-        {
-          "path": "src/transformers/models/lfm2_vl/image_processing_lfm2_vl_fast.py",
-          "purpose": "Checkpoint-selected fast image processor",
-          "url": "https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/image_processing_lfm2_vl_fast.py"
         },
         {
           "path": "src/transformers/models/siglip2/configuration_siglip2.py",

@@ -37,8 +37,7 @@ When authorities disagree, the pinned official checkpoint files and Transformers
 | LFM2-VL | [`modular_lfm2_vl.py`](https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/modular_lfm2_vl.py) | Projector, pixel-unshuffle, feature selection, and placeholder replacement |
 | LFM2-VL | [`modeling_lfm2_vl.py`](https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/modeling_lfm2_vl.py) | Generated runtime model |
 | LFM2-VL | [`processing_lfm2_vl.py`](https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/processing_lfm2_vl.py) | Prompt expansion and processor composition |
-| LFM2-VL | [`image_processing_lfm2_vl.py`](https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/image_processing_lfm2_vl.py) | Slow image-processing oracle |
-| LFM2-VL | [`image_processing_lfm2_vl_fast.py`](https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/image_processing_lfm2_vl_fast.py) | Checkpoint-selected fast image processor |
+| LFM2-VL | [`image_processing_lfm2_vl.py`](https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/lfm2_vl/image_processing_lfm2_vl.py) | Checkpoint-selected unified TorchVision processor; checkpoint configs retain the legacy `Lfm2VlImageProcessorFast` compatibility name |
 | SigLIP2 | [`configuration_siglip2.py`](https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/siglip2/configuration_siglip2.py) | Vision config |
 | SigLIP2 | [`modular_siglip2.py`](https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/siglip2/modular_siglip2.py) | Authored SigLIP2 implementation |
 | SigLIP2 | [`modeling_siglip2.py`](https://github.com/huggingface/transformers/blob/fd12552d770f745fdbe41031ff4daa688f5ed57e/src/transformers/models/siglip2/modeling_siglip2.py) | Packed patch embedding, positional interpolation, masks, encoder, and post-norm |
@@ -148,4 +147,4 @@ All are locked by the Candle baseline commit `31f35b147389700ed2a178ee66a91c3cc2
 - Exact physical GGUF matrix orientation remains a direct-GGUF fixture task. Only the converter-defined patch reshape and logical GGUF names are locked now; `TENSOR_MAP.md` marks this boundary explicitly.
 
 ---
-AI-edited: 2026-08-09T22:56:01-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=source-lock | change=locked immutable implementation, model, license, and parity authorities
+AI-edited: 2026-08-10T02:22:25-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-4-source-lock | change=corrected the pinned unified image-processor source and removed a nonexistent legacy fast-file link

@@ -42,6 +42,7 @@ pub struct ProcessedVisionBatch {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ImageTokenSpan {
+    /// Spans are ordered one-per-crop, including a thumbnail crop.
     pub batch_index: usize,
     pub start: usize,
     pub end: usize,
@@ -303,14 +304,14 @@ impl Lfm2VlModel {
         let mut covered = vec![vec![false; sequence_length]; batch_size];
         let mut total_span_tokens = 0usize;
         let mut previous: Option<(usize, usize)> = None;
-        if image_spans.len() != encoded_images.per_image_ranges.len() {
+        if image_spans.len() != encoded_images.per_crop_ranges.len() {
             candle::bail!(
-                "LFM2-VL image span count {} does not match encoded image count {}",
+                "LFM2-VL image span count {} does not match encoded crop count {}",
                 image_spans.len(),
-                encoded_images.per_image_ranges.len()
+                encoded_images.per_crop_ranges.len()
             )
         }
-        for (image_index, span) in image_spans.iter().enumerate() {
+        for (crop_index, span) in image_spans.iter().enumerate() {
             if span.batch_index >= batch_size {
                 candle::bail!("LFM2-VL image span batch index is out of bounds")
             }
@@ -342,16 +343,17 @@ impl Lfm2VlModel {
             total_span_tokens = total_span_tokens
                 .checked_add(span.end - span.start)
                 .ok_or_else(|| candle::Error::Msg("LFM2-VL image span count overflow".into()))?;
-            let image_range = &encoded_images.per_image_ranges[image_index];
-            let expected_feature_count = image_range
-                .end
-                .checked_sub(image_range.start)
-                .ok_or_else(|| {
-                    candle::Error::Msg("LFM2-VL encoded image range is invalid".into())
-                })?;
+            let crop_range = &encoded_images.per_crop_ranges[crop_index];
+            let expected_feature_count =
+                crop_range
+                    .end
+                    .checked_sub(crop_range.start)
+                    .ok_or_else(|| {
+                        candle::Error::Msg("LFM2-VL encoded crop range is invalid".into())
+                    })?;
             if span.end - span.start != expected_feature_count {
                 candle::bail!(
-                    "LFM2-VL image span {image_index} has {} placeholders, but its encoded image range has {expected_feature_count} features",
+                    "LFM2-VL crop span {crop_index} has {} placeholders, but its encoded crop range has {expected_feature_count} features",
                     span.end - span.start
                 )
             }
@@ -391,9 +393,9 @@ impl Lfm2VlModel {
             .to_device(input_embeds.device())?
             .to_dtype(input_embeds.dtype())?;
         let mut merged = input_embeds.clone();
-        for (image_index, span) in image_spans.iter().enumerate() {
+        for (crop_index, span) in image_spans.iter().enumerate() {
             let span_len = span.end - span.start;
-            let feature_range = &encoded_images.per_image_ranges[image_index];
+            let feature_range = &encoded_images.per_crop_ranges[crop_index];
             let chunk = features
                 .narrow(0, feature_range.start, span_len)?
                 .unsqueeze(0)?;
@@ -636,6 +638,35 @@ fn validate_encoded_images(encoded_images: &EncodedImages) -> Result<()> {
     }
     if next != feature_count {
         candle::bail!("LFM2-VL encoded image ranges do not cover all features")
+    }
+    let mut crop_index = 0usize;
+    for image_range in &encoded_images.per_image_ranges {
+        let first = encoded_images
+            .per_crop_ranges
+            .get(crop_index)
+            .ok_or_else(|| {
+                candle::Error::Msg("LFM2-VL encoded image range contains no crop ranges".into())
+            })?;
+        if first.start != image_range.start {
+            candle::bail!("LFM2-VL encoded image ranges do not start on crop boundaries")
+        }
+        let mut union_end = image_range.start;
+        while crop_index < encoded_images.per_crop_ranges.len()
+            && encoded_images.per_crop_ranges[crop_index].start < image_range.end
+        {
+            let crop_range = &encoded_images.per_crop_ranges[crop_index];
+            if crop_range.start != union_end || crop_range.end > image_range.end {
+                candle::bail!("LFM2-VL encoded image ranges split a crop range")
+            }
+            union_end = crop_range.end;
+            crop_index += 1;
+        }
+        if union_end != image_range.end {
+            candle::bail!("LFM2-VL encoded image range is not the union of its crop ranges")
+        }
+    }
+    if crop_index != encoded_images.per_crop_ranges.len() {
+        candle::bail!("LFM2-VL encoded crop ranges are not assigned to an image")
     }
     Ok(())
 }
@@ -1040,12 +1071,12 @@ mod tests {
     }
 
     #[test]
-    fn multiple_spans_pair_with_exact_per_image_feature_ranges() -> Result<()> {
+    fn multiple_spans_pair_with_exact_per_crop_feature_ranges() -> Result<()> {
         let device = Device::Cpu;
         let (model, tensors) = tiny_model(&device)?;
         let batch = fixture_batch(&tensors)?;
         let one_image = model.encode_images(&batch, 1)?;
-        let two_image_embeddings = Tensor::cat(
+        let three_crop_embeddings = Tensor::cat(
             &[
                 &one_image.embeddings,
                 &one_image.embeddings,
@@ -1054,40 +1085,64 @@ mod tests {
             0,
         )?;
         let encoded = EncodedImages {
-            embeddings: two_image_embeddings,
+            embeddings: three_crop_embeddings,
             per_image_ranges: vec![0..4, 4..6],
             per_crop_ranges: vec![0..2, 2..4, 4..6],
         };
-        let input_ids = Tensor::new(&[[3i64, 3, 3, 3, 5, 3, 3]], &device)?;
+        let input_ids = Tensor::new(&[[3i64, 3, 5, 3, 3, 5, 3, 3]], &device)?;
         let input_embeds = model.embed_tokens(&input_ids)?;
-        let spans = [ImageTokenSpan::new(0, 0, 4), ImageTokenSpan::new(0, 5, 7)];
+        let spans = [
+            ImageTokenSpan::new(0, 0, 2),
+            ImageTokenSpan::new(0, 3, 5),
+            ImageTokenSpan::new(0, 6, 8),
+        ];
         let merged = model.merge_image_embeddings(&input_ids, &input_embeds, &spans, &encoded)?;
         assert_close(
-            &merged.i((.., 0..4, ..))?,
-            &encoded.embeddings.i((0..4, ..))?.unsqueeze(0)?,
+            &merged.i((.., 0..2, ..))?,
+            &encoded.embeddings.i((0..2, ..))?.unsqueeze(0)?,
             0.0,
-            "first image span insertion",
+            "first crop span insertion",
         )?;
         assert_close(
-            &merged.i((.., 5..7, ..))?,
+            &merged.i((.., 3..5, ..))?,
+            &encoded.embeddings.i((2..4, ..))?.unsqueeze(0)?,
+            0.0,
+            "second crop span insertion",
+        )?;
+        assert_close(
+            &merged.i((.., 6..8, ..))?,
             &encoded.embeddings.i((4..6, ..))?.unsqueeze(0)?,
             0.0,
-            "second image span insertion",
+            "third crop span insertion",
         )?;
         assert_close(
-            &merged.i((0, 4, ..))?,
-            &input_embeds.i((0, 4, ..))?,
+            &merged.i((0, 2, ..))?,
+            &input_embeds.i((0, 2, ..))?,
             0.0,
-            "untouched ordinary token embedding",
+            "untouched tile marker embedding",
+        )?;
+        assert_close(
+            &merged.i((0, 5, ..))?,
+            &input_embeds.i((0, 5, ..))?,
+            0.0,
+            "untouched thumbnail marker embedding",
         )?;
 
-        let swapped_lengths = EncodedImages {
+        let mismatched_crop_lengths = EncodedImages {
             embeddings: encoded.embeddings.clone(),
             per_image_ranges: vec![0..2, 2..6],
+            per_crop_ranges: vec![0..2, 2..5, 5..6],
+        };
+        assert!(model
+            .merge_image_embeddings(&input_ids, &input_embeds, &spans, &mismatched_crop_lengths)
+            .is_err());
+        let image_range_splits_crop = EncodedImages {
+            embeddings: encoded.embeddings.clone(),
+            per_image_ranges: vec![0..3, 3..6],
             per_crop_ranges: vec![0..2, 2..4, 4..6],
         };
         assert!(model
-            .merge_image_embeddings(&input_ids, &input_embeds, &spans, &swapped_lengths)
+            .merge_image_embeddings(&input_ids, &input_embeds, &spans, &image_range_splits_crop)
             .is_err());
         Ok(())
     }

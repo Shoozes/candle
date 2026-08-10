@@ -210,9 +210,11 @@ def test_manifest_hash_failure_is_detected(tmp_path: Path):
 def test_requirements_and_lock_pins_are_explicit():
     requirements = (HERE / "requirements-reference.in").read_text(encoding="utf-8")
     assert "torch==2.8.0+cpu" in requirements
+    assert "torchvision==0.23.0+cpu" in requirements
     assert "fd12552d770f745fdbe41031ff4daa688f5ed57e" in requirements
     assert "safetensors==0.8.0" in requirements
     assert REFERENCE_PACKAGE_PINS["torch"] == "2.8.0+cpu"
+    assert REFERENCE_PACKAGE_PINS["torchvision"] == "0.23.0+cpu"
     assert REFERENCE_PACKAGE_PINS["python"] == "3.10.12"
     resolved = (HERE / "requirements-reference.txt").read_text(encoding="utf-8")
     assert "MANAGER-RESOLUTION-PENDING" not in resolved

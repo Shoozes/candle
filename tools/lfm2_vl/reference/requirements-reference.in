@@ -3,6 +3,7 @@
 --index-url https://download.pytorch.org/whl/cpu
 --extra-index-url https://pypi.org/simple
 torch==2.8.0+cpu
+torchvision==0.23.0+cpu
 safetensors==0.8.0
 transformers @ git+https://github.com/huggingface/transformers.git@fd12552d770f745fdbe41031ff4daa688f5ed57e
 huggingface-hub==1.5.0

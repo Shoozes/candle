@@ -193,7 +193,7 @@ Why:
 This isolates projector and multimodal embedding composition from the later raw-image processor, tokenizer/chat-template, GGUF, CUDA, and CLI phases while proving the full merged embedding and cache path against the committed official tiny fixture.
 
 Consequences:
-Phase 3 focused proof passed 11/11. Projector-stage maximum absolute error was `5.960464478e-8`; encoded and merged embeddings were `6.519258022e-9`; prefill was `4.470348358e-8`; cached decode was `2.980232239e-8`. The Phase 3 checkpoint remains pending manager review/commit. Production-checkpoint parity, raw-image preprocessing, tokenizer/chat-template behavior, CUDA, GGUF, and CLI support remain unclaimed.
+Phase 3 focused proof passed 11/11. Projector-stage maximum absolute error was `5.960464478e-8`; encoded and merged embeddings were `6.519258022e-9`; prefill was `4.470348358e-8`; cached decode was `2.980232239e-8`. The checkpoint is complete at `37264b49cf74d0cf7697317eda0183f084db6ff8`, tagged `lfm2-vl-phase-3-native-composite`. Production-checkpoint parity, raw-image preprocessing, tokenizer/chat-template behavior, CUDA, GGUF, and CLI support remain unclaimed.
 
 ## D-0016: Contiguous Batched SigLIP2 Attention Layout
 
@@ -208,5 +208,31 @@ The real multi-crop Phase 3 path exposed `MatMulUnexpectedStriding` when batched
 Consequences:
 The repeated-crop SigLIP2 regression passed 8/8, and the full `candle-transformers` library gate passed 37/37 in the manager's locked/offline CPU lane. The fix is a layout compatibility measure, not a CUDA optimization or a production-checkpoint parity claim.
 
+## D-0017: Rust-Native Processor Crate and Official Oracle Boundary
+
+Status: Accepted
+
+Decision:
+Place reusable image and prompt processing in the small `candle-vlm` workspace crate while keeping `candle-transformers` independent of image codecs and tokenizers. Resolve configuration as `explicit override > processor JSON > GGUF metadata > model config > architecture defaults`; use the one canonical projected-token function exported by the native model; resolve every marker ID through the tokenizer; and preserve one placeholder span per crop.
+
+Why:
+This removes the Python runtime dependency without mixing image decoding or chat-template concerns into model math. The boundary lets raw-image and tokenizer behavior be proved independently against the pinned Transformers/TorchVision oracle while the Phase 3 packed-tensor model remains reusable.
+
+Consequences:
+The Phase 4 Rust suite passes 24/24 across all required image modes, shapes, tiling cases, prompt placements, multiple images, and controlled failures. Packed integer metadata and prompt strings/IDs/spans are exact; normalized pixels differ by at most `1.192092896e-7`. Production checkpoint loading, GGUF/mmproj, CUDA, generated captions, and CLI integration remain separate gates.
+
+## D-0018: Captured TorchVision Byte Resize Semantics
+
+Status: Accepted
+
+Decision:
+Implement the pinned Torch `2.8.0+cpu` and TorchVision `0.23.0+cpu` bilinear-antialias path as separable F32 filtering followed by byte rounding. Use contracted accumulation for the short vertical support windows observed in the pinned CPU kernel, scalar accumulation for longer dynamic windows, and a bounded F64 shadow only to disambiguate exact half ties by a full F32 output ULP. Allocate internal resize and packed-processor buffers through checked, fallible reservation.
+
+Why:
+Generic image-library resize helpers and fixed-point approximations did not preserve the pinned uint8 processor's boundary behavior. The captured order matches the official fixture for normal, upscaled, tiled, and thumbnail paths while retaining deterministic debug/release bytes and controlled failure on impossible capacities.
+
+Consequences:
+All 12 full processor tensors pass with maximum normalized error `1.192092896e-7`, and the direct odd-size regression matches all 96 output RGB bytes exactly. The rule is pinned-oracle compatibility, not a claim that every future TorchVision version uses the same internal accumulation strategy.
+
 ---
-AI-edited: 2026-08-10T01:49:59-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-3-docs | change=recorded Phase 3 native composite decisions and verification state
+AI-edited: 2026-08-10T04:32:06-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-4-docs | change=recorded native processor boundary, resize semantics, and Phase 3 checkpoint

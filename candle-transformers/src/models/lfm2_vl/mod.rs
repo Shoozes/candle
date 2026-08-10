@@ -8,7 +8,7 @@ pub mod config;
 pub mod model;
 pub mod projector;
 
-pub use config::Lfm2VlConfig;
+pub use config::{projected_token_count, Lfm2VlConfig};
 pub use model::{
     CropKind, CropMeta, EncodedImages, ImageMeta, ImageTokenSpan, Lfm2VlModel, ProcessedVisionBatch,
 };

@@ -19,6 +19,7 @@ from typing import Any, Mapping
 REFERENCE_PACKAGE_PINS = {
     "python": "3.10.12",
     "torch": "2.8.0+cpu",
+    "torchvision": "0.23.0+cpu",
     "safetensors": "0.8.0",
     "transformers": "git+https://github.com/huggingface/transformers.git@fd12552d770f745fdbe41031ff4daa688f5ed57e",
     "huggingface-hub": "1.5.0",
@@ -127,6 +128,7 @@ def package_versions() -> dict[str, str]:
     versions: dict[str, str] = {"python": platform.python_version()}
     for label in (
         "torch",
+        "torchvision",
         "safetensors",
         "transformers",
         "huggingface-hub",

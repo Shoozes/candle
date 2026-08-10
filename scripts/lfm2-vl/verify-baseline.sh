@@ -37,6 +37,7 @@ run_step cargo fmt --all -- --check
 run_step cargo check --locked --offline -p candle-core
 run_step cargo check --locked --offline -p candle-nn
 run_step cargo check --locked --offline -p candle-transformers
+run_step cargo check --locked --offline -p candle-vlm
 run_step cargo check --locked --offline -p candle-examples --example lfm2
 run_step cargo check --locked --offline -p candle-examples --example quantized-lfm2
 run_step git diff --check

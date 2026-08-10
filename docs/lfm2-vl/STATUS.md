@@ -10,14 +10,15 @@
 - Source-lock checkpoint: `f007daec10e5751e5899676a7c58098183ec1256`
 - Reference-harness checkpoint: `a9594101c97589f6deabe7a2dddaaffeb5471a94`
 - Phase 1 checkpoint: `f660b8e3f2b4560f133356864e012be83f29d9c0`
-- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`, `lfm2-vl-phase-1-text`, `lfm2-vl-phase-2-siglip2`
+- Phase 3 checkpoint: `37264b49cf74d0cf7697317eda0183f084db6ff8`
+- Tags: `lfm2-vl-baseline-candle-0.11.0`, `lfm2-vl-phase-0-bootstrap`, `lfm2-vl-phase-0-reference`, `lfm2-vl-phase-1-text`, `lfm2-vl-phase-2-siglip2`, `lfm2-vl-phase-3-native-composite`
 
 ## Current Phase
 
-- Phase: 3 — Projector and Native Composite
-- Task: Compose proven packed SigLIP2 and dense LFM2 paths through the exact projector, image-span merge, multimodal prefill, and cached decode APIs
-- Scope: dynamic top-level config, factor-N pixel-unshuffle, projector, crop unpadding/ranges/order, `EncodedImages`, strict image-span replacement, and native tensor-level composite tests; no raw-image preprocessing, tokenizer/chat-template, GGUF, production downloads, CUDA-specific behavior, or CLI support
-- Status: Phase 3 focused proof is green at 11/11, the SigLIP2 repeated-crop regression is green at 8/8, and the `candle-transformers` library gate is green at 37/37. The Phase 3 checkpoint remains pending manager review/commit. The retained full baseline is explicitly pre-Phase-3-checkpoint evidence.
+- Phase: 4 — Rust Processor and Prompt Expander
+- Task: Remove the Python runtime preprocessing dependency by turning raw images and user-positioned image sentinels into the packed tensors, exact token IDs, and one placeholder span per crop consumed by the proven native composite model
+- Scope: the new `candle-vlm` workspace crate, dynamic processor config and precedence, RGB conversion, TorchVision-compatible antialiased resize, smart resize, tiling, thumbnails, normalization, patchification/padding, exact metadata, tokenizer-backed prompt expansion, multiple images, and controlled malformed-input failures; no GGUF loader, production model download, CUDA-specific optimization, or CLI
+- Status: The Rust processor/prompt suite is green at 24/24, all 12 official processor cases match, all 5 prompt cases match exact text/IDs/per-crop spans, all 10 real-dimension metadata oracles are consumed, the pinned Python oracle is green at 9/9, `candle-transformers` remains green at 37/37, and the final staged baseline is green. The Phase 4 checkpoint is pending.
 
 ## Source-Lock Results
 
@@ -98,8 +99,26 @@
 - `candle-transformers` library gate: 37/37 passed; retained log `artifacts/verification/native-composite/candle-transformers-lib.log`; SHA-256 `0f36d6a8d54f77abfe9c5031075b7174cff83859315d0997f60a1a399f475497`
 - Full locked/offline CPU baseline: passed `2026-08-10T05:48:07Z`–`2026-08-10T05:48:10Z` against pre-Phase-3-checkpoint HEAD `74e109aec5f9801cfead3eeb27fe3f93ac646b84`; retained log `artifacts/verification/native-composite/baseline-final.log`; SHA-256 `47d984dd3afe7b92b6a72bcdb93e7d9da99bd8673e5c1067b8f1fac7ed2b8b45`
 - Cargo.lock SHA-256: `4e059ffe6035520ca6553303932173eba562f4985f82931a90129eea9849ce54`
-- Phase 3 checkpoint: pending manager review/commit
+- Phase 3 checkpoint/tag: complete at commit `37264b49cf74d0cf7697317eda0183f084db6ff8`, annotated tag `lfm2-vl-phase-3-native-composite`
 - Not claimed: production-checkpoint parity, CUDA, GGUF, raw-image preprocessing, tokenizer/chat template, or CLI support
+
+## Phase 4 Verification
+
+- Phase 3 checkpoint/tag: complete at commit `37264b49cf74d0cf7697317eda0183f084db6ff8`, annotated tag `lfm2-vl-phase-3-native-composite`
+- Implementation proven in scope: parsed processor JSON, `explicit > processor JSON > GGUF metadata > model config > defaults` precedence, fixed padding including explicit `max_num_patches`, RGB/grayscale/RGBA conversion, checked smart resize and tile selection, row-major crops, optional thumbnail, TorchVision-compatible byte resize, normalization, patchification, masks/shapes, image/crop metadata, tokenizer-resolved special tokens, sentinel preservation, exact per-crop spans, multiple images, context checks, and controlled invalid-input errors
+- Rust processor/prompt gate: 24/24 passed; retained log `artifacts/verification/processor-prompt/candle-vlm-tests.log`; SHA-256 `ddf2b1b311ccd849a9491342bb1c5a82b5c528fac3bde826e6cebd6ffcc66702`
+- Processor fixture: all 12 required cases passed; integer masks, spatial shapes, image grids/sizes, crop ranges/order/kinds, and prompt IDs/spans were exact; worst pixel-value maximum absolute error `1.192092896e-7`, cosine similarity `1.0`
+- Direct resize regression: the complete 7×5 RGB to 8×4 byte output matches pinned TorchVision in all 96 channel values; boundary cases and unrepresentable allocation requests are also covered
+- Real-dimension gate: all 10 pinned cases assert smart dimensions, large-image decision, selected grid, tile canvas, and whole/tile/thumbnail order
+- Fixture reproduction: a fresh pinned-oracle export is byte-identical to the checked-in fixture. Manifest SHA-256 `2fb787e378f5fd1ddfa147913aadccd07add9a1045b8bb0f693ca2c2f564959c`; metadata `aca7f4d5e5e4ef0e4872adeb227b56cf3960d87b353c40162af97660783f2327`; tensors `a25932fc57f3e78f48a1a8f558216521c7ae3e8659fcf0a389cd0a4ebe0ab3f6`
+- Fixture logs: regeneration SHA-256 `fbb7a0bbb247d29f8bd8725d8b48cd971ed1a3768a2dacb75300b19f3696b955`; checked-in/regenerated hash comparison `84aa570f6da7995977e424ae8d61491ec07cdfbdad0af7847d77604d74a492eb`
+- Pinned Python reference tests: 9/9 passed in 11.83 seconds; retained log SHA-256 `00f0fac4bd730862e95945ef357d402ee88473b61fce0fff6b6614930eb615ee`
+- `candle-transformers` regression: 37/37 passed, including exact encoded image/crop range-union validation; retained log SHA-256 `78fa7ede014c72ca5d7defd6833c8152be2e3b0455d635ad79b122788452b560`
+- Independent worker re-audit: five actionable findings were resolved and the initially reported resize mismatch was withdrawn after exact reproduction showed it used no matching source/coordinate convention
+- Full locked/offline CPU baseline: passed `2026-08-10T08:35:14Z`–`2026-08-10T08:35:25Z` against pre-Phase-4-checkpoint HEAD `37264b49cf74d0cf7697317eda0183f084db6ff8` with exactly the Phase 4 candidate staged; retained log `artifacts/verification/processor-prompt/baseline-final.log`; SHA-256 `fb16481302c9bdf15f4b04df0250e45bf8c9a2126b92b09a787f5360cc3a3140`
+- Verifier-only Cargo.lock SHA-256 after adding `candle-vlm`: `a4f4379f73d38db1a148f96538e6b868d1ef148a8417069807bae451c9766fb4`
+- Phase 4 checkpoint: pending manager commit/tag
+- Not claimed: production-checkpoint numerical parity, GGUF/mmproj loading, CUDA, generated-caption parity, or CLI support
 
 ## Bootstrap Proof
 
@@ -137,7 +156,8 @@
 - The complete Phase 1 text gate passes in the Linux-home CPU/offline lane: all 5 focused LFM2 tests, all 18 `candle-transformers` library tests, both existing LFM2 examples, and the full locked/offline baseline are green.
 - Phase 1 is checkpointed at `f660b8e3f2b4560f133356864e012be83f29d9c0` and tagged `lfm2-vl-phase-1-text`.
 - The focused Phase 2 SigLIP2 gate is green: all 7 tests pass with the exact stage errors recorded above; the Phase 2 checkpoint/tag is complete at `74e109aec5f9801cfead3eeb27fe3f93ac646b84` / `lfm2-vl-phase-2-siglip2`.
-- The Phase 3 focused gate is green at 11/11, the SigLIP2 repeated-crop regression is green at 8/8, and the `candle-transformers` library gate is green at 37/37. These prove the packed projector/native composite scope only; production-checkpoint, CUDA, GGUF, raw-image, tokenizer/chat-template, and CLI behavior remain unclaimed.
+- The Phase 3 focused gate is green at 11/11, the SigLIP2 repeated-crop regression is green at 8/8, and the `candle-transformers` library gate is green at 37/37. Phase 3 is checkpointed at `37264b49cf74d0cf7697317eda0183f084db6ff8` and tagged `lfm2-vl-phase-3-native-composite`.
+- The Phase 4 Rust-native raw-image and prompt path is green at 24/24 against all required pinned fixtures. Packed integer metadata, exact prompt strings/IDs/spans, crop ordering, and fixture regeneration are exact; normalized pixel values differ by at most `1.192092896e-7`.
 - Tiny-fixture dense parity is within `2.38418579e-7` for hidden states and `2.98023224e-8` for logits; production-checkpoint and GGUF numerical parity remain unclaimed.
 
 ## Known Conflicts
@@ -149,7 +169,7 @@
 
 ## Blockers
 
-- None. The Phase 3 checkpoint remains pending manager review/commit.
+- None. The Phase 4 checkpoint remains pending manager commit/tag.
 
 ## Active Files
 
@@ -157,15 +177,18 @@
 - `candle-transformers/src/models/quantized_lfm2.rs`
 - `candle-transformers/src/models/siglip2.rs`
 - `candle-transformers/src/models/lfm2_vl/`
+- `candle-vlm/`
 - `candle-transformers/src/models/mod.rs`
 - `candle-examples/examples/lfm2/main.rs`
+- `tests/fixtures/lfm2_vl_processor_tiny/`
+- `tools/lfm2_vl/reference/export_processor_fixture.py`
 - `docs/lfm2-vl/DECISIONS.md`
 - `docs/lfm2-vl/PARITY.md`
 - `docs/lfm2-vl/STATUS.md`
 
 ## Next Task
 
-Create the Phase 3 checkpoint/commit after manager review. Keep production-checkpoint, raw-image processor, tokenizer/chat-template, CUDA, GGUF, and CLI parity separately labeled and unclaimed.
+Create the Phase 4 checkpoint/tag. Then begin Phase 5 hybrid loading without combining it with direct GGUF mmproj loading. Keep production-checkpoint, CUDA, generated-caption, and CLI claims separately labeled.
 
 ---
-AI-edited: 2026-08-10T01:49:59-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-3-docs | change=recorded Phase 3 native composite proof, regression, and checkpoint state
+AI-edited: 2026-08-10T04:35:42-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-4-docs | change=recorded Rust processor, prompt, fixture, audit, and final baseline evidence

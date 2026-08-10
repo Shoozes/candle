@@ -39,6 +39,7 @@ sympy==1.14.0
 tokenizers==0.22.2
 tomli==2.4.1
 torch==2.8.0+cpu
+torchvision==0.23.0+cpu
 tqdm==4.70.0
 transformers @ git+https://github.com/huggingface/transformers.git@fd12552d770f745fdbe41031ff4daa688f5ed57e
 typer==0.27.1
