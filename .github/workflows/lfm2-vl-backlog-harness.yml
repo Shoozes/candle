@@ -12,41 +12,112 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-source-fix:
-    name: Apply validated source fix
-    if: ${{ github.event_name == 'pull_request' }}
+  export-workspace:
+    name: Export exact tracked workspace
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.head_ref }}
           fetch-depth: 0
-      - name: Apply source fix when staged
+      - name: Package tracked checkout
         shell: bash
         run: |
           set -euo pipefail
-          script=.github/apply-source-fix.py
-          if [[ ! -f "$script" ]]; then
-            echo "No source fix is staged."
-            exit 0
-          fi
+          git archive --format=tar.gz --output="$RUNNER_TEMP/candle-workspace.tar.gz" HEAD
+          sha256sum "$RUNNER_TEMP/candle-workspace.tar.gz" > "$RUNNER_TEMP/candle-workspace.tar.gz.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candle-workspace-${{ github.event.pull_request.head.sha }}
+          path: |
+            ${{ runner.temp }}/candle-workspace.tar.gz
+            ${{ runner.temp }}/candle-workspace.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 1
 
-          python3 "$script"
-          rm -f "$script"
-
-          cargo fmt --all
-          python3 scripts/lfm2-vl/verify-module-layout.py
-          python3 -m json.tool summary_bank.json >/dev/null
+  linux-exclusive-publication:
+    name: Linux native-trace exclusive publication
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install native dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y lld pkg-config libssl-dev
+      - name: Prove exact regression exists
+        shell: bash
+        env:
+          RUSTFLAGS: -C link-arg=-fuse-ld=lld
+        run: |
+          set -euo pipefail
+          cargo test --locked -j 2 -p candle-examples --example lfm2-vl -- --list \
+            | tee "$RUNNER_TEMP/lfm2-vl-tests.txt"
+          grep -F "trace::tests::trace_publication_does_not_replace_a_racing_directory: test" \
+            "$RUNNER_TEMP/lfm2-vl-tests.txt"
+      - name: Run exact Linux no-replace regression
+        shell: bash
+        env:
+          RUSTFLAGS: -C link-arg=-fuse-ld=lld
+        run: |
+          set -euo pipefail
+          cargo test --locked -j 2 -p candle-examples --example lfm2-vl \
+            trace::tests::trace_publication_does_not_replace_a_racing_directory \
+            -- --exact --nocapture
+      - name: Check tracked source integrity
+        shell: bash
+        run: |
+          set -euo pipefail
           git diff --check
+          test -z "$(git status --short)"
 
-          git add -A
-          git status --short
-          GIT_AUTHOR_NAME='github-actions[bot]' \
-          GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
-          GIT_COMMITTER_NAME='github-actions[bot]' \
-          GIT_COMMITTER_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
-            git commit -m "fix(lfm2-vl): keep split attributes with their items"
-          git push origin "HEAD:${GITHUB_HEAD_REF}"
+  clippy-diagnostics:
+    name: Focused Clippy diagnostics
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Run Clippy with bounded failure output
+        shell: bash
+        run: |
+          set +e
+          cargo clippy --workspace --tests --examples --benches --message-format=short \
+            -- -D warnings > "$RUNNER_TEMP/clippy.log" 2>&1
+          status=$?
+          set -e
+          if [[ $status -ne 0 ]]; then
+            grep -E '(^error:|: error:|clippy::|warning:| --> )' "$RUNNER_TEMP/clippy.log" \
+              | tail -n 300 || true
+            exit "$status"
+          fi
+          echo "Clippy passed."
+
+  windows-test-diagnostics:
+    name: Windows test diagnostics
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run workspace tests with bounded failure output
+        shell: pwsh
+        run: |
+          $log = Join-Path $env:RUNNER_TEMP 'windows-tests.log'
+          cmd /c "cargo test --workspace --no-fail-fast > `"$log`" 2>&1"
+          $status = $LASTEXITCODE
+          if ($status -ne 0) {
+            Get-Content -LiteralPath $log |
+              Select-String -Pattern 'FAILED|failures:|panicked at|error:|test result:' |
+              Select-Object -Last 400 |
+              ForEach-Object { $_.Line }
+            exit $status
+          }
+          Write-Host 'Windows workspace tests passed.'
