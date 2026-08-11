@@ -41,6 +41,7 @@ run_step cargo check --locked --offline -p candle-vlm
 run_step cargo check --locked --offline -p candle-examples --example lfm2
 run_step cargo check --locked --offline -p candle-examples --example quantized-lfm2
 run_step cargo check --locked --offline -p candle-examples --example lfm2-vl
+run_step python3 scripts/lfm2-vl/verify-module-layout.py
 run_step git diff --check
 run_step git diff --cached --check
 run_step bash scripts/lfm2-vl/verify-mod-manifest.sh
