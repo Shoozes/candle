@@ -1,4 +1,4 @@
-# Temporary connector-triggered validation; removed before publication.
+# Temporary connector-triggered validation revision 2; removed before publication.
 name: LFM2-VL backlog harness
 
 on:
@@ -12,70 +12,12 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-clippy-fixes:
-    name: Apply exact Clippy compatibility annotations
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
-      - name: Add narrow module-level compatibility annotations
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          updates = {
-              "candle-transformers/src/models/lfm2.rs": "#![allow(clippy::manual_is_multiple_of)]",
-              "candle-transformers/src/models/lfm2_vl/config.rs": "#![allow(clippy::manual_is_multiple_of)]",
-              "candle-transformers/src/models/lfm2_vl/gguf.rs": "#![allow(clippy::manual_is_multiple_of)]",
-              "candle-transformers/src/models/lfm2_vl/model.rs": "#![allow(clippy::needless_range_loop)]",
-              "candle-transformers/src/models/siglip2.rs": "#![allow(clippy::manual_is_multiple_of, clippy::needless_range_loop)]",
-          }
-
-          for path_text, attribute in updates.items():
-              path = Path(path_text)
-              text = path.read_text(encoding="utf-8")
-              if attribute in text:
-                  continue
-              lines = text.splitlines(keepends=True)
-              if text.startswith("//!"):
-                  index = 0
-                  while index < len(lines) and (lines[index].startswith("//!") or not lines[index].strip()):
-                      index += 1
-                  lines[index:index] = [attribute + "\n", "\n"]
-                  text = "".join(lines)
-              else:
-                  text = attribute + "\n\n" + text
-              path.write_text(text, encoding="utf-8")
-          PY
-          git diff --check
-          git add \
-            candle-transformers/src/models/lfm2.rs \
-            candle-transformers/src/models/lfm2_vl/config.rs \
-            candle-transformers/src/models/lfm2_vl/gguf.rs \
-            candle-transformers/src/models/lfm2_vl/model.rs \
-            candle-transformers/src/models/siglip2.rs
-          if git diff --cached --quiet; then
-            echo "Compatibility annotations already present."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: document Clippy compatibility exceptions"
-          git push origin "HEAD:${{ github.head_ref }}"
-
   export-workspace:
     name: Export exact tracked workspace
     runs-on: ubuntu-latest
-    needs: apply-clippy-fixes
-    if: always() && needs.apply-clippy-fixes.result == 'success'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -98,8 +40,6 @@ jobs:
   linux-exclusive-publication:
     name: Linux native-trace exclusive publication
     runs-on: ubuntu-latest
-    needs: apply-clippy-fixes
-    if: always() && needs.apply-clippy-fixes.result == 'success'
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
@@ -138,8 +78,6 @@ jobs:
   clippy-diagnostics:
     name: Focused Clippy diagnostics
     runs-on: ubuntu-latest
-    needs: apply-clippy-fixes
-    if: always() && needs.apply-clippy-fixes.result == 'success'
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
@@ -172,8 +110,6 @@ jobs:
   windows-test-diagnostics:
     name: Windows test diagnostics
     runs-on: windows-latest
-    needs: apply-clippy-fixes
-    if: always() && needs.apply-clippy-fixes.result == 'success'
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
