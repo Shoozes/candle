@@ -1,0 +1,70 @@
+name: LFM2-VL backlog harness
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/lfm2-vl-backlog-harness.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export-workspace:
+    name: Export exact tracked workspace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Package tracked checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          git archive --format=tar.gz --output="$RUNNER_TEMP/candle-workspace.tar.gz" HEAD
+          sha256sum "$RUNNER_TEMP/candle-workspace.tar.gz" > "$RUNNER_TEMP/candle-workspace.tar.gz.sha256"
+      - name: Upload workspace
+        uses: actions/upload-artifact@v4
+        with:
+          name: candle-workspace-${{ github.event.pull_request.head.sha }}
+          path: |
+            ${{ runner.temp }}/candle-workspace.tar.gz
+            ${{ runner.temp }}/candle-workspace.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 1
+
+  linux-exclusive-publication:
+    name: Linux native-trace exclusive publication
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install native dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libssl-dev
+      - name: Prove exact regression exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked -j 2 -p candle-examples --example lfm2-vl -- --list \
+            | tee "$RUNNER_TEMP/lfm2-vl-tests.txt"
+          grep -F "trace::tests::trace_publication_does_not_replace_a_racing_directory: test" \
+            "$RUNNER_TEMP/lfm2-vl-tests.txt"
+      - name: Run Linux no-replace regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked -j 2 -p candle-examples --example lfm2-vl \
+            trace::tests::trace_publication_does_not_replace_a_racing_directory \
+            -- --exact --nocapture
+      - name: Check tracked source integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test -z "$(git status --short)"
