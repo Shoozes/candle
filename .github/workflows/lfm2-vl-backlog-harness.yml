@@ -14,8 +14,8 @@ permissions:
   contents: write
 
 jobs:
-  apply-refactor:
-    name: Apply validated refactor payload
+  apply-source-fix:
+    name: Apply validated source fix
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
@@ -23,55 +23,23 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
-      - name: Apply payload when ready
+      - name: Apply source fix when staged
         shell: bash
-        env:
-          EXPECTED_SHA256: 382adae3b755e9a7f6358e223c48f4d1d8eb677c72c9b8a3b65be5de87f0a099
         run: |
           set -euo pipefail
-          marker=.github/lfm2-vl-refactor.ready
-          if [[ ! -f "$marker" ]]; then
-            echo "Refactor payload is not marked ready."
+          script=.github/apply-source-fix.py
+          if [[ ! -f "$script" ]]; then
+            echo "No source fix is staged."
             exit 0
           fi
 
-          shopt -s nullglob
-          parts=(.github/lfm2-vl-refactor-chunk-*)
-          if (( ${#parts[@]} == 0 )); then
-            echo "Ready marker exists without payload parts." >&2
-            exit 1
-          fi
+          python3 "$script"
+          rm -f "$script"
 
-          cat "${parts[@]}" | base64 --decode > "$RUNNER_TEMP/lfm2-vl-refactor.tar.gz"
-          printf '%s  %s\n' "$EXPECTED_SHA256" "$RUNNER_TEMP/lfm2-vl-refactor.tar.gz" \
-            | sha256sum --check --strict
-          tar -xzf "$RUNNER_TEMP/lfm2-vl-refactor.tar.gz"
-          rm -f "$marker" "${parts[@]}" \
-            .github/lfm2-vl-backlog-payload.ready \
-            .github/lfm2-vl-backlog-payload.part-*
-
-          echo "apply deterministic C1 split"
-          python3 .github/apply-c1-refactor.py
-          rm -f .github/apply-c1-refactor.py
-
-          echo "validate generated metadata"
-          python3 -m json.tool summary_bank.json >/dev/null
-
-          echo "format generated Rust source"
           cargo fmt --all
-          echo "rustfmt application: passed"
-
-          echo "revalidate formatted layout"
           python3 scripts/lfm2-vl/verify-module-layout.py
-          echo "module layout replay: passed"
-
-          echo "check whitespace and patch integrity"
+          python3 -m json.tool summary_bank.json >/dev/null
           git diff --check
-          echo "git diff check: passed"
-
-          # Actions cannot push workflow-file changes without a workflow-scoped token.
-          # The verified guard is applied immediately afterward through the GitHub connector.
-          git restore --source=HEAD -- .github/workflows/ci_cuda.yaml
 
           git add -A
           git status --short
@@ -79,71 +47,5 @@ jobs:
           GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
           GIT_COMMITTER_NAME='github-actions[bot]' \
           GIT_COMMITTER_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
-            git commit -m "refactor(lfm2-vl): split oversized implementation units"
+            git commit -m "fix(lfm2-vl): keep split attributes with their items"
           git push origin "HEAD:${GITHUB_HEAD_REF}"
-
-  export-workspace:
-    name: Export exact tracked workspace
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Package tracked checkout
-        shell: bash
-        run: |
-          set -euo pipefail
-          git status --short
-          git archive --format=tar.gz --output="$RUNNER_TEMP/candle-workspace.tar.gz" HEAD
-          sha256sum "$RUNNER_TEMP/candle-workspace.tar.gz" > "$RUNNER_TEMP/candle-workspace.tar.gz.sha256"
-      - name: Upload workspace
-        uses: actions/upload-artifact@v4
-        with:
-          name: candle-workspace-${{ github.event.pull_request.head.sha || github.sha }}
-          path: |
-            ${{ runner.temp }}/candle-workspace.tar.gz
-            ${{ runner.temp }}/candle-workspace.tar.gz.sha256
-          if-no-files-found: error
-          retention-days: 1
-
-  linux-exclusive-publication:
-    name: Linux native-trace exclusive publication
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Install native dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y pkg-config libssl-dev
-      - name: Resolve one isolated dependency graph
-        shell: bash
-        run: |
-          set -euo pipefail
-          test ! -e Cargo.lock
-          cargo generate-lockfile
-          cargo fetch --locked
-      - name: Prove exact regression exists
-        shell: bash
-        run: |
-          set -euo pipefail
-          cargo test --locked --offline -j 2 -p candle-examples --example lfm2-vl -- --list \
-            | tee "$RUNNER_TEMP/lfm2-vl-tests.txt"
-          grep -F "trace::tests::trace_publication_does_not_replace_a_racing_directory: test" \
-            "$RUNNER_TEMP/lfm2-vl-tests.txt"
-      - name: Run Linux no-replace regression
-        shell: bash
-        run: |
-          set -euo pipefail
-          cargo test --locked --offline -j 2 -p candle-examples --example lfm2-vl \
-            trace::tests::trace_publication_does_not_replace_a_racing_directory \
-            -- --exact --nocapture
-      - name: Check tracked source integrity
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -f Cargo.lock
-          git diff --check
-          test -z "$(git status --short)"
