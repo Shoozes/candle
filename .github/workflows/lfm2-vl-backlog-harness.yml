@@ -4,8 +4,7 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - ".github/workflows/lfm2-vl-backlog-harness.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -28,7 +27,7 @@ jobs:
       - name: Upload workspace
         uses: actions/upload-artifact@v4
         with:
-          name: candle-workspace-${{ github.event.pull_request.head.sha }}
+          name: candle-workspace-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             ${{ runner.temp }}/candle-workspace.tar.gz
             ${{ runner.temp }}/candle-workspace.tar.gz.sha256
