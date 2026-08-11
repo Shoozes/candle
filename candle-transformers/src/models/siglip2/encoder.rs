@@ -1,3 +1,4 @@
+#[derive(Clone, Debug)]
 struct Attention {
     q_proj: LinearOp,
     k_proj: LinearOp,
@@ -245,6 +246,3 @@ pub(crate) struct ForwardStages {
     pub(crate) encoder_layers: Vec<Tensor>,
     pub(crate) post_layernorm: Tensor,
 }
-
-/// Candle SigLIP2 NaFlex vision encoder for packed patch tensors.
-#[derive(Debug)]

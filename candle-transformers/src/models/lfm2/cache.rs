@@ -1,3 +1,5 @@
+/// Cache for LFM2 model supporting both attention KV cache and convolution state cache.
+#[derive(Debug, Clone)]
 pub struct Cache {
     masks: HashMap<(usize, usize), Tensor>,
     pub use_kv_cache: bool,

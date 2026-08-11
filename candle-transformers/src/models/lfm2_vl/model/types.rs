@@ -109,5 +109,3 @@ pub struct Lfm2VlDecodeTrace {
     pub hidden_states: Tensor,
     pub logits: Tensor,
 }
-
-#[derive(Debug)]

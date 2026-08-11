@@ -132,5 +132,3 @@ pub struct PackedVisionInputs<'a> {
     /// `[crop_count, 2]`, containing `(patch_rows, patch_cols)`.
     pub spatial_shapes: &'a Tensor,
 }
-
-#[derive(Debug)]

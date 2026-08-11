@@ -1,3 +1,8 @@
+/// Merge projected image features into explicit placeholder spans.
+///
+/// This is shared by dense native text and quantized GGUF text. The only
+/// cross-device value is `encoded_images.embeddings`, transferred here to the
+/// text embedding device and dtype immediately before the span replacement.
 pub fn merge_projected_embeddings(
     input_ids: &Tensor,
     input_embeds: &Tensor,

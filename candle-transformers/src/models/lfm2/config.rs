@@ -400,6 +400,3 @@ impl Config {
         self.hidden_size / self.num_attention_heads
     }
 }
-
-/// Cache for LFM2 model supporting both attention KV cache and convolution state cache.
-#[derive(Debug, Clone)]

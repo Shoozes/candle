@@ -1,3 +1,5 @@
+/// Candle SigLIP2 NaFlex vision encoder for packed patch tensors.
+#[derive(Debug)]
 pub struct Siglip2VisionModel {
     config: Siglip2VisionConfig,
     embeddings: VisionEmbeddings,

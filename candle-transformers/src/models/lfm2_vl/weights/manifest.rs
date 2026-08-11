@@ -383,5 +383,3 @@ fn validate_pairing_facts(
         only_projected_features_cross_devices: true,
     })
 }
-
-#[derive(Debug)]

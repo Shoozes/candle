@@ -1,3 +1,4 @@
+#[derive(Debug)]
 struct VisionEmbeddings {
     patch_embedding: Linear,
     position_embedding: Tensor,
@@ -148,5 +149,3 @@ fn mixed_linear(
         None => Ok(LinearOp::Dense(linear(in_dim, out_dim, vb)?)),
     }
 }
-
-#[derive(Clone, Debug)]

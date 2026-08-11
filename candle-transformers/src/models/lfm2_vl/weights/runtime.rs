@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Mmproj {
     pub vision_tower: siglip2::Siglip2VisionModel,
     pub projector: Lfm2VlProjector,

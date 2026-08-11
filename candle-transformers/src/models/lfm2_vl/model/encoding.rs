@@ -174,9 +174,3 @@ fn encode_images_with_parts_internal(
         trace,
     ))
 }
-
-/// Merge projected image features into explicit placeholder spans.
-///
-/// This is shared by dense native text and quantized GGUF text. The only
-/// cross-device value is `encoded_images.embeddings`, transferred here to the
-/// text embedding device and dtype immediately before the span replacement.

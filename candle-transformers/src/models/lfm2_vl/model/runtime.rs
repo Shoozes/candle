@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Lfm2VlModel {
     vision_tower: siglip2::Siglip2VisionModel,
     projector: Lfm2VlProjector,
