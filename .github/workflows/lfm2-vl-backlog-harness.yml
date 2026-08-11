@@ -1,3 +1,4 @@
+# Temporary connector-triggered validation; removed before publication.
 name: LFM2-VL backlog harness
 
 on:
