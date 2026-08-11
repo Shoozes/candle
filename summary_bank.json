@@ -1,10 +1,21 @@
 {
   "schema": "gknome_summary_bank_v2",
   "defaults": {
-    "groups": ["project_start"],
+    "groups": [
+      "project_start"
+    ],
     "tree": true,
     "max_kb": 256,
-    "skip_dirs": [".git", ".tools/.secrets", ".venv", "artifacts", "downloads", "models", "target", "__pycache__"]
+    "skip_dirs": [
+      ".git",
+      ".tools/.secrets",
+      ".venv",
+      "artifacts",
+      "downloads",
+      "models",
+      "target",
+      "__pycache__"
+    ]
   },
   "groups": {
     "project_start": {
@@ -30,7 +41,11 @@
         "candle-transformers/src/models/lfm2_vl/config.rs",
         "tests/fixtures/lfm2_vl_tiny/README.md",
         "tests/fixtures/lfm2_vl_tiny/manifest.json",
-        "tests/fixtures/lfm2_vl_tiny/metadata.json"
+        "tests/fixtures/lfm2_vl_tiny/metadata.json",
+        "candle-transformers/src/models/lfm2/config.rs",
+        "candle-transformers/src/models/lfm2/cache.rs",
+        "candle-transformers/src/models/lfm2/layers.rs",
+        "candle-transformers/src/models/lfm2/model.rs"
       ]
     },
     "feature__siglip2_naflex": {
@@ -42,7 +57,12 @@
         "candle-transformers/src/models/lfm2_vl/model.rs",
         "tests/fixtures/lfm2_vl_tiny/README.md",
         "tests/fixtures/lfm2_vl_tiny/manifest.json",
-        "docs/lfm2-vl/TENSOR_MAP.md"
+        "docs/lfm2-vl/TENSOR_MAP.md",
+        "candle-transformers/src/models/siglip2/config.rs",
+        "candle-transformers/src/models/siglip2/embeddings.rs",
+        "candle-transformers/src/models/siglip2/encoder.rs",
+        "candle-transformers/src/models/siglip2/model.rs",
+        "candle-transformers/src/models/siglip2/interpolation.rs"
       ]
     },
     "feature__native_composite": {
@@ -54,7 +74,15 @@
         "candle-transformers/src/models/lfm2_vl/projector.rs",
         "candle-transformers/src/models/lfm2_vl/weights.rs",
         "tests/fixtures/lfm2_vl_mmproj_tiny/source_model_config.json",
-        "docs/lfm2-vl/TENSOR_MAP.md"
+        "docs/lfm2-vl/TENSOR_MAP.md",
+        "candle-transformers/src/models/lfm2_vl/model/types.rs",
+        "candle-transformers/src/models/lfm2_vl/model/runtime.rs",
+        "candle-transformers/src/models/lfm2_vl/model/encoding.rs",
+        "candle-transformers/src/models/lfm2_vl/model/merge.rs",
+        "candle-transformers/src/models/lfm2_vl/model/config_ext.rs",
+        "candle-transformers/src/models/lfm2_vl/weights/manifest.rs",
+        "candle-transformers/src/models/lfm2_vl/weights/runtime.rs",
+        "candle-transformers/src/models/lfm2_vl/weights/safetensors.rs"
       ]
     },
     "workflow__native_checkpoint_loading": {
@@ -66,7 +94,13 @@
         "candle-examples/examples/lfm2-vl/native_checkpoint.rs",
         "candle-examples/examples/lfm2-vl/native_loading.rs",
         "candle-examples/examples/lfm2-vl/trace.rs",
-        "tests/fixtures/lfm2_vl_mmproj_tiny/source_model_config.json"
+        "tests/fixtures/lfm2_vl_mmproj_tiny/source_model_config.json",
+        "candle-transformers/src/models/lfm2_vl/weights/manifest.rs",
+        "candle-transformers/src/models/lfm2_vl/weights/runtime.rs",
+        "candle-transformers/src/models/lfm2_vl/weights/safetensors.rs",
+        "candle-examples/examples/lfm2-vl/native_loading/types.rs",
+        "candle-examples/examples/lfm2-vl/native_loading/load.rs",
+        "candle-examples/examples/lfm2-vl/native_loading/inventory.rs"
       ]
     },
     "feature__image_processing_and_prompt": {
@@ -83,7 +117,18 @@
         "tests/fixtures/lfm2_vl_processor_tiny/README.md",
         "tests/fixtures/lfm2_vl_processor_tiny/manifest.json",
         "tests/fixtures/lfm2_vl_processor_tiny/metadata.json",
-        "tests/fixtures/lfm2_vl_mmproj_tiny/processor_config.json"
+        "tests/fixtures/lfm2_vl_mmproj_tiny/processor_config.json",
+        "candle-vlm/src/lfm2_vl/processor/types.rs",
+        "candle-vlm/src/lfm2_vl/processor/entry.rs",
+        "candle-vlm/src/lfm2_vl/processor/budget.rs",
+        "candle-vlm/src/lfm2_vl/processor/crops.rs",
+        "candle-vlm/src/lfm2_vl/processor/helpers.rs",
+        "candle-vlm/src/lfm2_vl/prompt/types.rs",
+        "candle-vlm/src/lfm2_vl/prompt/tokens.rs",
+        "candle-vlm/src/lfm2_vl/prompt/expand.rs",
+        "candle-vlm/src/lfm2_vl/prompt/validation.rs",
+        "candle-vlm/src/lfm2_vl/prompt/image_block.rs",
+        "candle-vlm/src/lfm2_vl/prompt/helpers.rs"
       ]
     },
     "feature__gguf_mmproj": {
@@ -98,7 +143,15 @@
         "tests/fixtures/lfm2_vl_mmproj_tiny/mmproj.json",
         "tests/fixtures/lfm2_vl_mmproj_tiny/processor_config.json",
         "tests/fixtures/lfm2_vl_mmproj_tiny/source_model_config.json",
-        "docs/lfm2-vl/TENSOR_MAP.md"
+        "docs/lfm2-vl/TENSOR_MAP.md",
+        "candle-transformers/src/models/lfm2_vl/gguf/types.rs",
+        "candle-transformers/src/models/lfm2_vl/gguf/loading.rs",
+        "candle-transformers/src/models/lfm2_vl/gguf/metadata.rs",
+        "candle-transformers/src/models/lfm2_vl/gguf/inventory.rs",
+        "candle-transformers/src/models/lfm2_vl/gguf/metadata_values.rs",
+        "candle-transformers/src/models/lfm2_vl/weights/manifest.rs",
+        "candle-transformers/src/models/lfm2_vl/weights/runtime.rs",
+        "candle-transformers/src/models/lfm2_vl/weights/safetensors.rs"
       ]
     },
     "workflow__reference_fixtures": {
@@ -172,7 +225,12 @@
         "tools/lfm2_vl/reference/tensor_dump.py",
         "candle-examples/examples/lfm2-vl/README.md",
         "candle-examples/examples/lfm2-vl/trace.rs",
-        "docs/lfm2-vl/PARITY.md"
+        "docs/lfm2-vl/PARITY.md",
+        "candle-examples/examples/lfm2-vl/runner/types.rs",
+        "candle-examples/examples/lfm2-vl/runner/runtime.rs",
+        "candle-examples/examples/lfm2-vl/runner/run.rs",
+        "candle-examples/examples/lfm2-vl/runner/generation.rs",
+        "candle-examples/examples/lfm2-vl/runner/evidence.rs"
       ]
     },
     "workflow__local_verification": {
@@ -189,7 +247,9 @@
         "scripts/lfm2-vl/verify-summary-bank.ps1",
         "docs/lfm2-vl/PARITY.md",
         "docs/lfm2-vl/FAILURE_LOG.md",
-        "docs/lfm2-vl/STATUS.md"
+        "docs/lfm2-vl/STATUS.md",
+        "scripts/lfm2-vl/verify-module-layout.py",
+        "docs/lfm2-vl/MODULE_LAYOUT.md"
       ]
     },
     "issue__oracle_memory_containment": {
@@ -214,7 +274,10 @@
         "candle-examples/examples/lfm2-vl/runner.rs",
         "tools/lfm2_vl/reference/compare_traces.py",
         "tools/lfm2_vl/reference/test_reference_tools.py",
-        "docs/lfm2-vl/PARITY.md"
+        "docs/lfm2-vl/PARITY.md",
+        "candle-examples/examples/lfm2-vl/runner/run.rs",
+        "candle-examples/examples/lfm2-vl/runner/generation.rs",
+        "candle-examples/examples/lfm2-vl/runner/evidence.rs"
       ]
     },
     "issue__exclusive_evidence_publication": {
@@ -268,17 +331,33 @@
         "docs/lfm2-vl/START_HERE.md",
         "docs/lfm2-vl/STATUS.md",
         "docs/lfm2-vl/TODO.md",
-        "docs/lfm2-vl/MOD_MANIFEST.md"
+        "docs/lfm2-vl/MOD_MANIFEST.md",
+        "scripts/lfm2-vl/verify-module-layout.py",
+        "docs/lfm2-vl/MODULE_LAYOUT.md"
       ]
     }
   },
   "exclusions": {
-    ".git": { "note": "Repository internals, including this checkout's WSL linked-worktree pointer; inspect with the owning Git backend, never load as context." },
-    ".tools/.secrets": { "note": "Operator-owned credentials; never read, route, stage, or publish." },
-    "artifacts": { "note": "Ignored runtime evidence and logs; authoritative only when a durable doc records exact path and hash." },
-    "downloads": { "note": "Untracked acquisition area; never context or publication input." },
-    "models": { "note": "Production weights are local runtime inputs and must never enter normal context or publication." },
-    "target": { "note": "Generated Cargo output." },
-    "docs/lfm2-vl/history": { "note": "Completed bootstrap and phase instructions; opt in only for historical reconstruction." }
+    ".git": {
+      "note": "Repository internals, including this checkout's WSL linked-worktree pointer; inspect with the owning Git backend, never load as context."
+    },
+    ".tools/.secrets": {
+      "note": "Operator-owned credentials; never read, route, stage, or publish."
+    },
+    "artifacts": {
+      "note": "Ignored runtime evidence and logs; authoritative only when a durable doc records exact path and hash."
+    },
+    "downloads": {
+      "note": "Untracked acquisition area; never context or publication input."
+    },
+    "models": {
+      "note": "Production weights are local runtime inputs and must never enter normal context or publication."
+    },
+    "target": {
+      "note": "Generated Cargo output."
+    },
+    "docs/lfm2-vl/history": {
+      "note": "Completed bootstrap and phase instructions; opt in only for historical reconstruction."
+    }
   }
 }
