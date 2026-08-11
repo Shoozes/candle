@@ -55,7 +55,7 @@ jobs:
           RUSTFLAGS: -C link-arg=-fuse-ld=lld
         run: |
           set -euo pipefail
-          cargo test --locked -j 2 -p candle-examples --example lfm2-vl -- --list \
+          cargo test -j 2 -p candle-examples --example lfm2-vl -- --list \
             | tee "$RUNNER_TEMP/lfm2-vl-tests.txt"
           grep -F "trace::tests::trace_publication_does_not_replace_a_racing_directory: test" \
             "$RUNNER_TEMP/lfm2-vl-tests.txt"
@@ -65,7 +65,7 @@ jobs:
           RUSTFLAGS: -C link-arg=-fuse-ld=lld
         run: |
           set -euo pipefail
-          cargo test --locked -j 2 -p candle-examples --example lfm2-vl \
+          cargo test -j 2 -p candle-examples --example lfm2-vl \
             trace::tests::trace_publication_does_not_replace_a_racing_directory \
             -- --exact --nocapture
       - name: Check tracked source integrity
@@ -83,7 +83,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      - name: Run Clippy with bounded failure output
+      - name: Run Clippy
         shell: bash
         run: |
           set +e
@@ -91,12 +91,21 @@ jobs:
             -- -D warnings > "$RUNNER_TEMP/clippy.log" 2>&1
           status=$?
           set -e
+          echo "$status" > "$RUNNER_TEMP/clippy.status"
           if [[ $status -ne 0 ]]; then
-            grep -E '(^error:|: error:|clippy::|warning:| --> )' "$RUNNER_TEMP/clippy.log" \
-              | tail -n 300 || true
+            tail -n 120 "$RUNNER_TEMP/clippy.log" || true
             exit "$status"
           fi
-          echo "Clippy passed."
+      - name: Upload Clippy log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clippy-diagnostics-${{ github.event.pull_request.head.sha }}
+          path: |
+            ${{ runner.temp }}/clippy.log
+            ${{ runner.temp }}/clippy.status
+          if-no-files-found: error
+          retention-days: 1
 
   windows-test-diagnostics:
     name: Windows test diagnostics
@@ -107,17 +116,24 @@ jobs:
         with:
           python-version: "3.13"
       - uses: dtolnay/rust-toolchain@stable
-      - name: Run workspace tests with bounded failure output
+      - name: Run workspace tests
         shell: pwsh
         run: |
           $log = Join-Path $env:RUNNER_TEMP 'windows-tests.log'
           cmd /c "cargo test --workspace --no-fail-fast > `"$log`" 2>&1"
           $status = $LASTEXITCODE
+          Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'windows-tests.status') -Value $status -NoNewline
           if ($status -ne 0) {
-            Get-Content -LiteralPath $log |
-              Select-String -Pattern 'FAILED|failures:|panicked at|error:|test result:' |
-              Select-Object -Last 400 |
-              ForEach-Object { $_.Line }
+            Get-Content -LiteralPath $log -Tail 160
             exit $status
           }
-          Write-Host 'Windows workspace tests passed.'
+      - name: Upload Windows test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-test-diagnostics-${{ github.event.pull_request.head.sha }}
+          path: |
+            ${{ runner.temp }}/windows-tests.log
+            ${{ runner.temp }}/windows-tests.status
+          if-no-files-found: error
+          retention-days: 1
