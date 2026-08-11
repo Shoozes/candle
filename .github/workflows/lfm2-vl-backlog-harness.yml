@@ -19,24 +19,30 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
-      - name: Apply payload when present
+      - name: Apply payload when ready
         shell: bash
         env:
           EXPECTED_SHA256: 7398e553640d5c2db5a5d6643de81b4e3e6058c69e8031775b4308d520a6532a
         run: |
           set -euo pipefail
+          marker=.github/lfm2-vl-backlog-payload.ready
+          if [[ ! -f "$marker" ]]; then
+            echo "Refactor payload is not marked ready."
+            exit 0
+          fi
+
           shopt -s nullglob
           parts=(.github/lfm2-vl-backlog-payload.part-*)
           if (( ${#parts[@]} == 0 )); then
-            echo "No refactor payload is present."
-            exit 0
+            echo "Ready marker exists without payload parts." >&2
+            exit 1
           fi
 
           cat "${parts[@]}" | base64 --decode > "$RUNNER_TEMP/lfm2-vl-refactor.tar.gz"
           printf '%s  %s\n' "$EXPECTED_SHA256" "$RUNNER_TEMP/lfm2-vl-refactor.tar.gz" \
             | sha256sum --check --strict
           tar -xzf "$RUNNER_TEMP/lfm2-vl-refactor.tar.gz"
-          rm -f "${parts[@]}"
+          rm -f "$marker" "${parts[@]}"
 
           python3 scripts/lfm2-vl/verify-module-layout.py
           python3 -m json.tool summary_bank.json >/dev/null
