@@ -25,17 +25,18 @@ jobs:
           EXPECTED_SHA256: 7398e553640d5c2db5a5d6643de81b4e3e6058c69e8031775b4308d520a6532a
         run: |
           set -euo pipefail
-          payload=.github/lfm2-vl-backlog-payload.tar.gz.b64
-          if [[ ! -f "$payload" ]]; then
+          shopt -s nullglob
+          parts=(.github/lfm2-vl-backlog-payload.part-*)
+          if (( ${#parts[@]} == 0 )); then
             echo "No refactor payload is present."
             exit 0
           fi
 
-          base64 --decode "$payload" > "$RUNNER_TEMP/lfm2-vl-refactor.tar.gz"
+          cat "${parts[@]}" | base64 --decode > "$RUNNER_TEMP/lfm2-vl-refactor.tar.gz"
           printf '%s  %s\n' "$EXPECTED_SHA256" "$RUNNER_TEMP/lfm2-vl-refactor.tar.gz" \
             | sha256sum --check --strict
           tar -xzf "$RUNNER_TEMP/lfm2-vl-refactor.tar.gz"
-          rm -f "$payload"
+          rm -f "${parts[@]}"
 
           python3 scripts/lfm2-vl/verify-module-layout.py
           python3 -m json.tool summary_bank.json >/dev/null
