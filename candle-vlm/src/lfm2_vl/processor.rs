@@ -1,5 +1,7 @@
 //! RGB image processing, NaFlex tiling, and packed patch construction.
 
+#![allow(clippy::manual_is_multiple_of)]
+
 use super::config::Lfm2VlProcessorConfig;
 use super::types::{CropKind, CropMeta, ImageMeta, ProcessedVisionBatch};
 use crate::image::{resize_bilinear_antialias, to_rgb8};
