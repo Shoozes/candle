@@ -4,8 +4,8 @@ use anyhow::{bail, Context, Result};
 use candle::{DType, Device, IndexOp, Tensor};
 use candle_transformers::models::lfm2;
 use candle_transformers::models::lfm2_vl::{
-    CropKind, EncodedImages, ImageTokenSpan, Lfm2VlModel, ProcessedVisionBatch,
-    QuantizedLfm2VlModel, VisionLimits,
+    CropKind, EncodedImages, ImageTokenSpan, Lfm2VlDecodeTrace, Lfm2VlImageTrace, Lfm2VlModel,
+    Lfm2VlPrefillTrace, ProcessedVisionBatch, QuantizedLfm2VlModel, VisionLimits,
 };
 use candle_vlm::lfm2_vl::{ExpandedPrompt, Lfm2VlProcessor, Lfm2VlPrompt};
 use image::{DynamicImage, GenericImageView, ImageReader};
@@ -16,6 +16,8 @@ use std::fs::File;
 use std::io::{Cursor, Read};
 use std::path::{Path, PathBuf};
 use tokenizers::Tokenizer;
+
+use super::trace::{self, NativeTraceCapture};
 
 const CONTRACT: &str = "candle-lfm2-vl-inference-v1";
 const MAX_COMPRESSED_IMAGE_BYTES: u64 = 256 * 1024 * 1024;
@@ -38,6 +40,7 @@ pub struct InferenceRequest<'a> {
     pub max_new_tokens: usize,
     pub vision_batch_size: usize,
     pub eos_token_id: Option<u32>,
+    pub trace_output: Option<&'a Path>,
 }
 
 #[derive(Debug, Serialize)]
@@ -61,7 +64,7 @@ pub struct InferenceReport {
     pub cache_reset_exact: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, PartialEq, Eq)]
 pub struct InputPathEvidence {
     pub path: String,
     pub kind: String,
@@ -184,13 +187,38 @@ trait Runtime {
         vision_batch_size: usize,
         limits: &VisionLimits,
     ) -> Result<EncodedImages>;
+    fn encode_images_with_trace(
+        &mut self,
+        inputs: &ProcessedVisionBatch,
+        vision_batch_size: usize,
+        limits: &VisionLimits,
+    ) -> Result<(EncodedImages, Option<Lfm2VlImageTrace>)> {
+        Ok((self.encode_images(inputs, vision_batch_size, limits)?, None))
+    }
     fn prefill(
         &mut self,
         input_ids: &Tensor,
         image_spans: &[ImageTokenSpan],
         encoded_images: Option<&EncodedImages>,
     ) -> Result<Tensor>;
+    fn prefill_with_trace(
+        &mut self,
+        input_ids: &Tensor,
+        image_spans: &[ImageTokenSpan],
+        encoded_images: Option<&EncodedImages>,
+    ) -> Result<Option<Lfm2VlPrefillTrace>> {
+        let _ = (input_ids, image_spans, encoded_images);
+        Ok(None)
+    }
     fn decode(&mut self, token_ids: &Tensor, index_pos: usize) -> Result<Tensor>;
+    fn decode_with_trace(
+        &mut self,
+        token_ids: &Tensor,
+        index_pos: usize,
+    ) -> Result<Option<Lfm2VlDecodeTrace>> {
+        let _ = (token_ids, index_pos);
+        Ok(None)
+    }
 }
 
 struct NativeRuntime<'a> {
@@ -253,6 +281,19 @@ impl Runtime for NativeRuntime<'_> {
             .map_err(anyhow::Error::from)
     }
 
+    fn encode_images_with_trace(
+        &mut self,
+        inputs: &ProcessedVisionBatch,
+        vision_batch_size: usize,
+        limits: &VisionLimits,
+    ) -> Result<(EncodedImages, Option<Lfm2VlImageTrace>)> {
+        let (encoded, trace) = self
+            .model
+            .encode_images_with_trace(inputs, vision_batch_size, limits)
+            .map_err(anyhow::Error::from)?;
+        Ok((encoded, Some(trace)))
+    }
+
     fn prefill(
         &mut self,
         input_ids: &Tensor,
@@ -264,9 +305,32 @@ impl Runtime for NativeRuntime<'_> {
             .map_err(anyhow::Error::from)
     }
 
+    fn prefill_with_trace(
+        &mut self,
+        input_ids: &Tensor,
+        image_spans: &[ImageTokenSpan],
+        encoded_images: Option<&EncodedImages>,
+    ) -> Result<Option<Lfm2VlPrefillTrace>> {
+        self.model
+            .prefill_with_trace(input_ids, image_spans, encoded_images, &mut self.cache)
+            .map(Some)
+            .map_err(anyhow::Error::from)
+    }
+
     fn decode(&mut self, token_ids: &Tensor, index_pos: usize) -> Result<Tensor> {
         self.model
             .decode(token_ids, index_pos, &mut self.cache)
+            .map_err(anyhow::Error::from)
+    }
+
+    fn decode_with_trace(
+        &mut self,
+        token_ids: &Tensor,
+        index_pos: usize,
+    ) -> Result<Option<Lfm2VlDecodeTrace>> {
+        self.model
+            .decode_with_trace(token_ids, index_pos, &mut self.cache)
+            .map(Some)
             .map_err(anyhow::Error::from)
     }
 }
@@ -360,6 +424,9 @@ fn run(
         bail!("vision batch size must be greater than zero")
     }
     let model_inputs = inspect_input_paths(request.model_inputs)?;
+    if request.trace_output.is_some() && request.image_paths.len() != 1 {
+        bail!("LFM2-VL native trace requires exactly one image input")
+    }
     let limits = &processor.config().vision_limits;
     let (images, image_files) = load_images(request.image_paths, limits)?;
     let processed = if images.is_empty() {
@@ -395,10 +462,25 @@ fn run(
         runtime.default_eos_source(),
         prompt.tokenizer(),
     );
-    let encoded = if images.is_empty() {
-        None
+    let (encoded, image_trace) = if images.is_empty() {
+        if request.trace_output.is_some() {
+            bail!("LFM2-VL native trace requires one decoded image")
+        }
+        (None, None)
+    } else if request.trace_output.is_some() {
+        let (encoded, trace) =
+            runtime.encode_images_with_trace(&processed, request.vision_batch_size, limits)?;
+        (Some(encoded), trace)
     } else {
-        Some(runtime.encode_images(&processed, request.vision_batch_size, limits)?)
+        (
+            Some(runtime.encode_images(&processed, request.vision_batch_size, limits)?),
+            None,
+        )
+    };
+    let mut trace_capture = match (request.trace_output, image_trace) {
+        (Some(_), Some(image)) => Some(NativeTraceCapture::new(image)),
+        (Some(_), None) => bail!("LFM2-VL native trace is unavailable for the selected runtime"),
+        (None, _) => None,
     };
     let input_ids =
         Tensor::new(expanded.input_ids.as_slice(), runtime.text_device())?.unsqueeze(0)?;
@@ -412,6 +494,9 @@ fn run(
         eos_token_id: eos.token_id,
     };
     let first = generate_once(runtime, &generation_inputs)?;
+    if let Some(capture) = trace_capture.as_mut() {
+        capture_trace(runtime, &generation_inputs, capture)?;
+    }
     let second = generate_once(runtime, &generation_inputs)?;
     if first != second {
         bail!(
@@ -420,8 +505,11 @@ fn run(
             second.generated_ids
         )
     }
+    if request.trace_output.is_some() {
+        verify_input_paths_unchanged(request.model_inputs, &model_inputs)?;
+    }
 
-    Ok(InferenceReport {
+    let report = InferenceReport {
         contract: CONTRACT,
         backend: request.backend.to_owned(),
         model_inputs,
@@ -439,7 +527,20 @@ fn run(
         eos,
         generation: first,
         cache_reset_exact: true,
-    })
+    };
+    if let Some(output) = request.trace_output {
+        let capture = trace_capture
+            .ok_or_else(|| anyhow::anyhow!("LFM2-VL native trace capture was not initialized"))?;
+        trace::write_native_trace(
+            output,
+            &report,
+            &processed,
+            &input_ids,
+            images.first(),
+            capture,
+        )?;
+    }
+    Ok(report)
 }
 
 fn generate_once(
@@ -529,6 +630,43 @@ fn generate_once(
         decoded_with_special_tokens,
         stop_reason,
     })
+}
+
+fn capture_trace(
+    runtime: &mut impl Runtime,
+    inputs: &GenerationInputs<'_>,
+    capture: &mut NativeTraceCapture,
+) -> Result<()> {
+    runtime.reset()?;
+    let prefill = runtime
+        .prefill_with_trace(inputs.input_ids, inputs.image_spans, inputs.encoded_images)?
+        .ok_or_else(|| anyhow::anyhow!("selected runtime did not return prefill trace"))?;
+    let mut next = last_logits(&prefill.logits)?
+        .argmax(0)?
+        .to_scalar::<u32>()?;
+    capture.prefill = Some(prefill);
+    capture
+        .decode_input_ids
+        .try_reserve_exact(inputs.max_new_tokens)
+        .map_err(|_| anyhow::anyhow!("allocating native trace decode input IDs"))?;
+    capture
+        .decode
+        .try_reserve_exact(inputs.max_new_tokens)
+        .map_err(|_| anyhow::anyhow!("allocating native trace decode tensors"))?;
+    for step in 0..inputs.max_new_tokens {
+        let input_position = inputs
+            .prompt_len
+            .checked_add(step)
+            .ok_or_else(|| anyhow::anyhow!("LFM2-VL trace decode position overflow"))?;
+        let decode_ids = Tensor::new(&[next], runtime.text_device())?.unsqueeze(0)?;
+        let decode = runtime
+            .decode_with_trace(&decode_ids, input_position)?
+            .ok_or_else(|| anyhow::anyhow!("selected runtime did not return decode trace"))?;
+        next = last_logits(&decode.logits)?.argmax(0)?.to_scalar::<u32>()?;
+        capture.decode_input_ids.push(decode_ids);
+        capture.decode.push(decode);
+    }
+    Ok(())
 }
 
 fn last_logits(logits: &Tensor) -> Result<Tensor> {
@@ -694,6 +832,14 @@ fn inspect_input_paths(paths: &[PathBuf]) -> Result<Vec<InputPathEvidence>> {
         });
     }
     Ok(evidence)
+}
+
+fn verify_input_paths_unchanged(paths: &[PathBuf], expected: &[InputPathEvidence]) -> Result<()> {
+    let current = inspect_input_paths(paths)?;
+    if current != expected {
+        bail!("LFM2-VL model inputs changed during traced inference")
+    }
+    Ok(())
 }
 
 fn load_images(
@@ -1219,6 +1365,7 @@ mod tests {
             Rgb([(x * 17) as u8, (y * 41) as u8, ((x + y) * 13) as u8])
         });
         DynamicImage::ImageRgb8(pixels).save_with_format(&image_path, ImageFormat::Png)?;
+        let trace_output = dir.path().join("trace");
         let model_inputs = vec![PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../tests/fixtures/lfm2_vl_tiny/tensors.safetensors")];
         let image_paths = vec![image_path];
@@ -1234,6 +1381,7 @@ mod tests {
                 max_new_tokens: 3,
                 vision_batch_size: 1,
                 eos_token_id: None,
+                trace_output: Some(trace_output.as_path()),
             },
         )?;
 
@@ -1257,6 +1405,60 @@ mod tests {
         assert!(report.generation.generated_ids.len() <= 3);
         let json = serde_json::to_value(&report)?;
         assert_eq!(json["cache_reset_exact"], true);
+        let manifest: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
+            trace_output.join("manifest.json"),
+        )?)?;
+        assert_eq!(manifest["mode"], "native-trace");
+        assert_eq!(manifest["weights_serialized"], false);
+        assert_eq!(manifest["model_inputs_reverified"], true);
+        assert!(manifest["tensor_inventory"]["stage.language.prefill_logits"].is_object());
+        let trace_metadata: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
+            trace_output.join("metadata.json"),
+        )?)?;
+        assert_eq!(
+            trace_metadata["model_inputs"].as_array().map(Vec::len),
+            Some(1)
+        );
+        assert_eq!(trace_metadata["model_inputs"][0]["kind"], "file");
+        assert_eq!(
+            trace_metadata["model_inputs"][0]["sha256"]
+                .as_str()
+                .map(str::len),
+            Some(64)
+        );
+        assert_eq!(
+            manifest["tensor_inventory"]["input.pixel_values"]["dtype"],
+            "float32"
+        );
+        assert_eq!(
+            manifest["tensor_inventory"]["input.pixel_attention_mask"]["dtype"],
+            "int32"
+        );
+        assert_eq!(
+            manifest["tensor_inventory"]["input.attention_mask"]["dtype"],
+            "int64"
+        );
+        assert_eq!(
+            manifest["tensor_inventory"]["input.image_rgb_u8"]["dtype"],
+            "uint8"
+        );
+        let trace_tensors =
+            candle::safetensors::load(trace_output.join("tensors.safetensors"), &Device::Cpu)?;
+        assert!(trace_tensors.contains_key("stage.projector.output"));
+        assert!(trace_tensors.contains_key("stage.vision.encoder_layer.0"));
+        assert_eq!(
+            trace_tensors["input.attention_mask"].dims(),
+            trace_tensors["input.input_ids"].dims()
+        );
+        assert_eq!(
+            trace_tensors["input.projector_crop_ranges"].to_vec2::<i64>()?,
+            vec![vec![0, 8]]
+        );
+        assert_eq!(trace_tensors["input.decode_token_ids"].dims(), [1, 3]);
+        assert_eq!(
+            trace_tensors["stage.language.decode_logits"].dims(),
+            [1, 3, 32]
+        );
         Ok(())
     }
 
@@ -1302,6 +1504,7 @@ mod tests {
                 max_new_tokens: 3,
                 vision_batch_size: 1,
                 eos_token_id: None,
+                trace_output: None,
             },
         )?;
 
@@ -1330,6 +1533,23 @@ mod tests {
         let error = inspect_input_paths(&[dir.path().to_path_buf()])
             .expect_err("directory evidence unexpectedly accepted");
         assert!(error.to_string().contains("not a regular file"));
+        Ok(())
+    }
+
+    #[test]
+    fn traced_model_input_evidence_detects_content_changes() -> Result<()> {
+        let dir = TestDir::new()?;
+        let path = dir.path().join("model.safetensors");
+        std::fs::write(&path, b"before")?;
+        let paths = vec![path.clone()];
+        let expected = inspect_input_paths(&paths)?;
+        verify_input_paths_unchanged(&paths, &expected)?;
+        std::fs::write(path, b"after")?;
+        let error = verify_input_paths_unchanged(&paths, &expected)
+            .expect_err("changed trace input unexpectedly passed revalidation");
+        assert!(error
+            .to_string()
+            .contains("changed during traced inference"));
         Ok(())
     }
 }

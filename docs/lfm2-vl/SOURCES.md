@@ -55,7 +55,7 @@ Both model repositories identify their artifacts as LFM Open License v1.0. They 
 
 There is no separate tokenizer model or vocabulary file in either pinned tree. Direct immutable URLs for every present file are in `reference-lock.json`.
 
-The official direct-MMProj authority is `LiquidAI/LFM2.5-VL-450M-GGUF` at immutable revision [`166cd80bbe157dc86d65f964eb8cc6a2cede62ca`](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF/tree/166cd80bbe157dc86d65f964eb8cc6a2cede62ca). Exactly bytes `0-12735` were retained temporarily for each MMProj header; the parsed tensor-data offset is byte `12736`, so the retained evidence contains zero tensor payload bytes.
+The official text-GGUF and direct-MMProj authority is `LiquidAI/LFM2.5-VL-450M-GGUF` at immutable revision [`166cd80bbe157dc86d65f964eb8cc6a2cede62ca`](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF/tree/166cd80bbe157dc86d65f964eb8cc6a2cede62ca). Exactly bytes `0-12735` were retained temporarily for each MMProj header; the parsed tensor-data offset is byte `12736`, so the retained evidence contains zero tensor payload bytes.
 
 | File | Declared bytes | Header-prefix SHA-256 | Dtype counts |
 | --- | ---: | --- | --- |
@@ -63,6 +63,8 @@ The official direct-MMProj authority is `LiquidAI/LFM2.5-VL-450M-GGUF` at immuta
 | `mmproj-LFM2.5-VL-450m-Q8_0.gguf` | 102,815,168 | `7a4f0f1e168d52b70a03f2773f0f20b9f65d1692f8e973aa0cf9ecee25e43d1c` | Q8_0 74; F32 127 |
 
 Both headers are GGUF v3 with 32 metadata records, 201 tensor records, tensor-name-set SHA-256 `45e3f6cf0b51dc9f5e458b8af3375d368cc59daff70b79e2938c7490a94df828`, and 32-byte alignment. Exact metadata, absent preprocessing keys, shapes, and URLs are machine-locked in `reference-lock.json`.
+
+The same immutable revision contains the official `LFM2.5-VL-450M-Q4_0.gguf` text artifact. The pre-existing local regular blob is 219,311,264 bytes with full-file SHA-256 `6d2757dd0f0b98aea7dc90477bb5b3a0df1089be85ef92943f8cecb05121ccbf`. Its bounded inspection hashes exactly bytes `0-2388127`: header-prefix SHA-256 `bdb33b992b136a77b4d807b84319a7daa43ebac15144e6336c0d9b9ef1e8ed2e`, 39 metadata records, 148 tensors, and zero tensor payload bytes read by the inspector. Sequential full-file hashing decoded no tensor and confirmed that physical size equals the declared tensor extent. Exact architecture, tokenizer, chat-template, tensor-name, and dtype facts are machine-locked in `reference-lock.json`.
 
 ## mistral.rs
 
@@ -157,4 +159,4 @@ All are locked by the Candle baseline commit `31f35b147389700ed2a178ee66a91c3cc2
 - The official headers omit `clip.vision.preproc_min_tiles`, `clip.vision.preproc_max_tiles`, and `clip.vision.preproc_image_size`; pinned official `processor_config.json` values and architecture defaults remain authoritative unless an explicit processor document overrides them.
 
 ---
-AI-edited: 2026-08-10T07:31:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-6 | change=locked official F16 and Q8_0 MMProj headers with a zero-payload evidence boundary
+AI-edited: 2026-08-11T04:51:41-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=p2-gguf-parity | change=locked the official Q4_0 text GGUF alongside the existing MMProj zero-payload authorities

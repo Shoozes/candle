@@ -15,10 +15,20 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from .manifest import REFERENCE_PACKAGE_PINS, package_versions, repo_root
+    from .manifest import (
+        REFERENCE_PACKAGE_PINS,
+        package_versions,
+        repo_root,
+        require_reference_environment,
+    )
     from .tensor_dump import write_tensor_bundle
 except ImportError:  # pragma: no cover - direct script execution
-    from manifest import REFERENCE_PACKAGE_PINS, package_versions, repo_root  # type: ignore
+    from manifest import (  # type: ignore
+        REFERENCE_PACKAGE_PINS,
+        package_versions,
+        repo_root,
+        require_reference_environment,
+    )
     from tensor_dump import write_tensor_bundle  # type: ignore
 
 
@@ -60,6 +70,7 @@ CASES = {
 
 
 def _official_processor():
+    require_reference_environment()
     try:
         from transformers.models.lfm2_vl.image_processing_lfm2_vl import (
             Lfm2VlImageProcessor,
@@ -80,6 +91,7 @@ def _torch():
 
 
 def _prompt_oracle():
+    require_reference_environment()
     try:
         from tokenizers import AddedToken, Tokenizer
         from tokenizers.models import WordLevel

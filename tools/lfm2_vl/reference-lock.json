@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "locked_at_utc": "2026-08-10T15:39:44Z",
+  "locked_at_utc": "2026-08-11T09:48:21Z",
   "candle_baseline": {
     "repository": "https://github.com/huggingface/candle",
     "revision": "31f35b147389700ed2a178ee66a91c3cc25cc80d",
@@ -10,6 +10,8 @@
   "lock_policy": {
     "moving_refs_resolved_to_immutable_revisions": true,
     "production_weight_payloads_downloaded": false,
+    "production_weight_payloads_hashed_without_tensor_decode": true,
+    "production_weight_payloads_loaded_for_gguf_discovery": false,
     "safetensors_header_metadata_only": true,
     "gguf_header_metadata_only": true,
     "authority_order": [
@@ -523,6 +525,80 @@
         "tensor_inventory_canonicalization": "UTF-8 lines sorted by tensor name: name\\tdtype\\tcomma-separated-shape\\n",
         "tensor_inventory_sha256": "24728d0ed10229e788c5b9baf25e0cc6c92c93b9cdb12ebb252a3c140a861703"
       },
+      "acquisition": {
+        "schema_version": 1,
+        "source": "pinned-resolve-head",
+        "observed_at_utc": "2026-08-11T09:30:23Z",
+        "token_policy": "public-no-token",
+        "snapshot_bytes": 3198084631,
+        "minimum_free_bytes": 12884901888,
+        "files": [
+          {
+            "path": "config.json",
+            "bytes": 2376,
+            "identity": {
+              "kind": "git-blob-sha1",
+              "value": "37c2fe5d67001f42a5a9d1a3bbefdb8dc18867b2"
+            }
+          },
+          {
+            "path": "processor_config.json",
+            "bytes": 828,
+            "identity": {
+              "kind": "git-blob-sha1",
+              "value": "d2dfab54984ecbf3214bd80070283bc2a61085d6"
+            }
+          },
+          {
+            "path": "tokenizer_config.json",
+            "bytes": 843,
+            "identity": {
+              "kind": "git-blob-sha1",
+              "value": "775e6a521b27a8f4239170fff7c8f400cd9d0889"
+            }
+          },
+          {
+            "path": "tokenizer.json",
+            "bytes": 4733040,
+            "identity": {
+              "kind": "git-blob-sha1",
+              "value": "1102635fc822bb07f176c9166d176d9df417a457"
+            }
+          },
+          {
+            "path": "chat_template.jinja",
+            "bytes": 2596,
+            "identity": {
+              "kind": "git-blob-sha1",
+              "value": "4b06e45628e05ba104f52586d715adbc6b367bec"
+            }
+          },
+          {
+            "path": "generation_config.json",
+            "bytes": 136,
+            "identity": {
+              "kind": "git-blob-sha1",
+              "value": "4a66cb1b2090ffc94cd32e8667afd97051cb58f1"
+            }
+          },
+          {
+            "path": "LICENSE",
+            "bytes": 10596,
+            "identity": {
+              "kind": "git-blob-sha1",
+              "value": "d24c9208b10e63d317589bc8d6fc34967c3068d3"
+            }
+          },
+          {
+            "path": "model.safetensors",
+            "bytes": 3193334216,
+            "identity": {
+              "kind": "sha256",
+              "value": "7fc7458e4382fc6e558cfdda45857fbf9ab5b40a8bf199c9cd073003b14ac26d"
+            }
+          }
+        ]
+      },
       "source_confirmed_config": {
         "architecture": "Lfm2VlForConditionalGeneration",
         "model_type": "lfm2_vl",
@@ -603,7 +679,7 @@
       "observed_ref": "main",
       "revision": "166cd80bbe157dc86d65f964eb8cc6a2cede62ca",
       "revision_url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF/tree/166cd80bbe157dc86d65f964eb8cc6a2cede62ca",
-      "authority_level": "official-gguf-mmproj-header",
+      "authority_level": "official-gguf-text-and-mmproj-header",
       "license": {
         "model_card_tag": "other",
         "identifier": "LFM Open License v1.0",
@@ -613,7 +689,8 @@
       "adaptation": {
         "mode": "header-evidence-only",
         "production_artifacts_may_be_committed": false,
-        "tensor_payload_bytes_read_for_retained_evidence": 0
+        "tensor_payload_bytes_read_for_retained_evidence": 0,
+        "full_file_payload_hashed_without_tensor_decode": true
       },
       "gguf_header_contract": {
         "version": 3,
@@ -713,6 +790,68 @@
           }
         }
       },
+      "text_gguf_header_contract": {
+        "version": 3,
+        "metadata_records": 39,
+        "tensor_records": 148,
+        "tensor_names_sha256": "47c3c894cac143df2d2fa361279e760bca31f564e15b3c92a841482256e2e543",
+        "header_end": 2388097,
+        "alignment": 32,
+        "tensor_data_offset": 2388128,
+        "ranges_read": [
+          "bytes=0-2388127"
+        ],
+        "header_bytes": 2388128,
+        "header_prefix_sha256": "bdb33b992b136a77b4d807b84319a7daa43ebac15144e6336c0d9b9ef1e8ed2e",
+        "tensor_payload_bytes_read": 0,
+        "declared_file_bytes": 219311264,
+        "physical_file_bytes": 219311264,
+        "physical_size_matches_declared_extent": true,
+        "metadata": {
+          "general.architecture": "lfm2",
+          "general.name": "LFM2.5-VL-450M-new-chat-template-3",
+          "general.type": "model",
+          "general.file_type": 2,
+          "general.quantization_version": 2,
+          "lfm2.block_count": 16,
+          "lfm2.context_length": 128000,
+          "lfm2.embedding_length": 1024,
+          "lfm2.feed_forward_length": 4608,
+          "lfm2.attention.head_count": 16,
+          "lfm2.attention.head_count_kv": [
+            0,
+            0,
+            8,
+            0,
+            0,
+            8,
+            0,
+            0,
+            8,
+            0,
+            8,
+            0,
+            8,
+            0,
+            8,
+            0
+          ],
+          "lfm2.shortconv.l_cache": 3,
+          "lfm2.vocab_size": 65536,
+          "tokenizer.ggml.model": "gpt2",
+          "tokenizer.ggml.tokens.count": 65536,
+          "tokenizer.ggml.bos_token_id": 1,
+          "tokenizer.ggml.eos_token_id": 7,
+          "tokenizer.ggml.padding_token_id": 0,
+          "tokenizer.chat_template.utf8_bytes": 3837,
+          "tokenizer.chat_template.sha256": "59075059e29d537792fb9a113675af647ca76133349fcf902a84a6a60cb774fa"
+        },
+        "dtype_counts": {
+          "F32": 55,
+          "Q4_0": 92,
+          "Q6_K": 1
+        }
+      },
       "files": [
         {
           "path": "mmproj-LFM2.5-VL-450m-F16.gguf",
@@ -734,6 +873,19 @@
           "dtype_counts": {
             "F32": 127,
             "Q8_0": 74
+          }
+        },
+        {
+          "path": "LFM2.5-VL-450M-Q4_0.gguf",
+          "purpose": "Official-checkpoint Q4_0 text GGUF identity, tokenizer, architecture, and quantization authority",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF/resolve/166cd80bbe157dc86d65f964eb8cc6a2cede62ca/LFM2.5-VL-450M-Q4_0.gguf",
+          "sha256": "6d2757dd0f0b98aea7dc90477bb5b3a0df1089be85ef92943f8cecb05121ccbf",
+          "header_prefix_sha256": "bdb33b992b136a77b4d807b84319a7daa43ebac15144e6336c0d9b9ef1e8ed2e",
+          "declared_file_bytes": 219311264,
+          "dtype_counts": {
+            "F32": 55,
+            "Q4_0": 92,
+            "Q6_K": 1
           }
         }
       ]

@@ -64,6 +64,20 @@ def _header(path: Path) -> dict:
         return json.loads(handle.read(size))
 
 
+def test_atomic_writer_preserves_a_racing_owner_file(tmp_path: Path, monkeypatch):
+    output = tmp_path / "report.json"
+    real_link = _EXPORTER_MODULE.os.link
+
+    def racing_link(source, destination):
+        Path(destination).write_bytes(b"owner")
+        return real_link(source, destination)
+
+    monkeypatch.setattr(_EXPORTER_MODULE.os, "link", racing_link)
+    with pytest.raises(FileExistsError, match="appeared during publication"):
+        _EXPORTER_MODULE._write_atomic(output, b"incoming", overwrite=False)
+    assert output.read_bytes() == b"owner"
+
+
 def test_export_is_byte_identical_and_contains_only_canonical_mmproj(tmp_path: Path):
     first = tmp_path / "first"
     second = tmp_path / "second"

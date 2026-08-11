@@ -97,7 +97,7 @@ Environment result:
 
 ## F-0008: Unbounded llama.cpp Oracle Residency Can Exhaust Host Memory
 
-Status: Host recovered only after an operator restart; bounded prevention is locally proven with harmless child processes. Exact root cause and first real-model reuse remain unproven. No Candle test failure was observed.
+Status: Host recovered only after an operator restart; bounded prevention is locally proven with harmless child processes and the exact pinned bundle's no-model identity probe. Exact root cause and first real-model reuse remain unproven. No Candle test failure was observed.
 
 ### Q: What pitfall are we preventing?
 
@@ -124,15 +124,1318 @@ Status: Host recovered only after an operator restart; bounded prevention is loc
 5. `75/100` — Operator restart; restored the host but is disruptive and does not prevent recurrence.
 6. `94/100` — `scripts/lfm2-vl/run-bounded-oracle.ps1`; creates the child suspended, assigns it to a kill-on-close memory-limited Job Object before resume, defaults CUDA graphs off, serializes matching names, enforces timeout, records atomic JSON evidence, and requires exact PID absence. The harmless smoke suite proves normal exit, timeout with descendant cleanup, owner-exit cleanup, concurrent-name refusal, and pre-resume assignment.
 
-**Current solution:** The restart recovered the host. The bounded wrapper and its harmless smoke suite are green, and all expensive owner builds now use the same Job Object containment. The wrapper defaults to a 24 GiB job ceiling, refuses any ceiling above 75% of physical RAM, uses a 900-second default timeout, and sets `GGML_CUDA_DISABLE_GRAPHS=1` unless explicitly overridden. No new model has been loaded through it yet.
+**Current solution:** The restart recovered the host. The bounded wrapper and its harmless smoke suite are green, and all expensive owner builds now use the same Job Object containment. The wrapper defaults to a 24 GiB job ceiling, refuses any ceiling above 75% of physical RAM, uses a 900-second default timeout, and sets `GGML_CUDA_DISABLE_GRAPHS=1` unless explicitly overridden. The exact pinned b10335 owner bundle now passes a 512 MiB/30-second bounded no-model identity probe, peaks at `291,172,352` Job bytes, and leaves no residual PID. No new model has been loaded through it yet.
 
 **Decision rationale:** Exact process identity protects unrelated user work, serialization prevents compounding host pressure, and suspended creation closes the allocation/spawn race before Job Object assignment. Broad process-name termination, in-place bundle deletion, a second concurrent oracle, or an unverified assumption that PID absence restored memory were rejected. CUDA graphs are disabled by default as a reversible precaution, not a root-cause claim.
 
-**Effectiveness:** `94/100`, very good for containment. Harmless process-tree behavior is proven. The score remains below complete until the pinned bundle passes a no-model identity probe and the first smallest-checkpoint run proves peak-memory evidence, cleanup, and post-run host recovery.
+**Effectiveness:** `94/100`, very good for containment. Harmless process-tree behavior and the exact pinned bundle's no-model lifecycle are proven. The score remains below complete until the first smallest-checkpoint run proves peak-memory evidence, cleanup, and post-run host recovery.
 
 **Relevance check:** Current. Official 450M, 1.6B, GGUF, and CUDA parity work still requires local model execution on this host.
 
-**Next prevention step:** Finish and manifest the exact pinned llama.cpp owner build, run only a bounded no-model identity probe, then admit the smallest official 450M CPU-F32 task with explicit context/batch settings and before/after host/GPU census evidence. Do not run another model if any cleanup or recovery postcondition fails.
+**Next prevention step:** Admit only the smallest official 450M CPU-F32 task with explicit context/batch settings, exact artifact identity, and before/after host/GPU census evidence. Do not run another model if any cleanup or recovery postcondition fails.
+
+## F-0009: WSL-Owned Linked Worktree Can Look Like a Broken or Detached Windows Repository
+
+Status: Current workflow pitfall; source state is intact. Gknome's `.git`-file recognition and WSL-pointer refusal are fixture-proven, while Git mutation remains intentionally fail-closed. Mature-repository adoption is blocked separately in F-0010.
+
+### Q: What pitfall are we preventing?
+
+**What:** Do not treat `C:\DevStuff\candle-mods` as an ordinary Windows Git checkout, and do not commit or force-checkout the feature branch from its detached linked worktree.
+
+**Context and constraints:** The current Git metadata owner lives at `/home/workbench/code/candle-lfm2-vl` in WSL2 `NVIDIA-Workbench`. The Windows folder is a linked worktree whose `.git` file contains a Linux absolute gitdir. The intended review checkpoint is `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`. Native Windows remains the product and release-proof platform. Review, local source edits, and native Windows Cargo checks are allowed; secret inspection, implicit Git mutation, broad staging, and publication are not.
+
+**Why it happened:** A linked worktree stores Git metadata in a `.git` file rather than a `.git` directory. Windows Git cannot resolve the Linux absolute target, and Git permits a named branch to be checked out by only one worktree. The owning WSL worktree already holds `feat/lfm2-vl-mmproj`, so the Windows-mounted worktree is correctly detached at the same commit. Tools that equate “repository” with a `.git` directory can misreport it; tools that assume a normal Windows Git backend can offer unsafe actions.
+
+**Where:** `C:\DevStuff\candle-mods\.git`, `/mnt/c/DevStuff/candle-mods`, `/home/workbench/code/candle-lfm2-vl`, Gknome existing-repository adoption, and every Git status/commit/push instruction for this project.
+
+**Evidence:** WSL `git status --short --branch` in the Windows worktree reported `## HEAD (no branch)`. `git rev-parse HEAD` returned the expected published SHA `c9b60f0b906fa8fe70423295e2e1164648a8fa53`. `git worktree list --porcelain` showed `/home/workbench/code/candle-lfm2-vl` on `refs/heads/feat/lfm2-vl-mmproj` and `/mnt/c/DevStuff/candle-mods` detached at the same SHA. `git branch --all --contains HEAD` showed the local feature branch and `origin/feat/lfm2-vl-mmproj`. Remotes remained `Shoozes/candle` for `origin` and `huggingface/candle` for `upstream`. No source loss or branch divergence was observed.
+
+**Developer story:** A repository-integrity check initially expected the Windows worktree to report the feature branch. The read-only WSL status instead reported detached HEAD, which looked like branch drift. Exact HEAD, worktree ownership, containing branches, and remotes separated content identity from attachment state: the source was still at the published commit, while the branch was already and correctly owned by the Linux-home worktree. The safe response was to stop Git-affecting setup, preserve local edits, and make linked-worktree recognition plus fail-closed Git capability an explicit Gknome gate.
+
+**How to catch it:** Read the `.git` entry type without following secret paths, run `wsl.exe -d NVIDIA-Workbench --cd /mnt/c/DevStuff/candle-mods git rev-parse HEAD`, then inspect `git worktree list --porcelain` and `git branch --all --contains HEAD`. Treat a same-SHA detached linked worktree as valid edit state, not branch ownership. Refuse commit/push helpers unless the backend can resolve the gitdir and an intentional landing branch/worktree is named.
+
+**Solutions tried:**
+
+1. `25/100` — Use Windows Git directly; it cannot resolve the Linux absolute gitdir and provides no reliable repository state.
+2. `10/100` — Force-checkout the existing feature branch in the Windows worktree; rejected because it would defeat Git's one-branch/one-worktree safety and risk divergent worktree state.
+3. `90/100` — Use WSL Git for read-only inspection and land through the owning WSL repository or a dedicated WSL branch/worktree; accurately preserves branch ownership and source identity.
+4. `90/100` — Teach Gknome adoption that `.git` may be a file and make unsupported Windows Git operations fail closed; the 45-assertion adoption fixture and Candle dry run both identify the existing repository without attempting Windows Git mutation.
+
+**Current solution:** Continue source review, edits, and native Windows build/test work in the detached Windows-linked worktree; use WSL only for this checkout's Git status/diff verification, and make no commit or push here. After review, transfer the patch to an intentionally named WSL branch/worktree or apply it in the owning worktree. Run Gknome adoption only after its normal native-Windows and linked-worktree tests are green and only in dry-run mode first.
+
+**Decision rationale:** Exact source identity and Git's existing worktree ownership are preserved without force, metadata rewriting, or secret access. Moving all Git inspection through WSL is simpler and more truthful than trying to translate Linux gitdir paths for Windows Git during this product task.
+
+**Effectiveness:** `95/100`, durable for current repository operations. Read-only detection, source identity, and the safe landing route are evidence-backed. The remaining Gknome blockers are project-authority/context/inventory integration issues, not `.git` recognition.
+
+**Relevance check:** Current for this checkout's Git operations only. It is not a runtime, build, or product requirement for the Candle fork.
+
+**Next prevention step:** Keep WSL Git ownership explicit, resolve F-0010 without weakening this refusal, and record the intentional landing branch before any commit.
+
+## F-0010: Do Not Force Gknome Through Mature-Repository Authority Conflicts
+
+Status: Current integration blocker; fail-closed behavior worked and no Gknome files were applied to Candle.
+
+### Q: What pitfall are we preventing?
+
+**What:** Do not overwrite Candle's established `.gitignore`, `AGENTS.md`, `README.md`, or `summary_bank.json`, and do not let ignored runtime/cache trees become adoption inventory merely to make Gknome setup appear complete.
+
+**Context and constraints:** Candle already has project policy, upstream documentation, a validated focused context bank, ignored build/model evidence, and operator-owned secrets. Gknome adoption must be additive, dry-run first, reversible, secret-blind, and compatible with the WSL-owned Git marker. Neither a repair shortcut nor manual template copying is equivalent to reviewed adoption provenance.
+
+**Why it happened:** Gknome 0.0.004 treats existing template-owned root files as hard conflicts unless their bytes match. Its preserved-bank contract additionally requires the generated route-group names and a 128 KiB budget, while Candle's purpose-built bank uses different feature/issue groups and a 256 KiB ceiling. The inventory pruner excluded many dependencies but did not prune Candle's ignored `artifacts/` or `.pytest_cache/` trees before hashing.
+
+**Where:** Gknome experimental adoption planning for `C:\DevStuff\candle-mods`; root authorities, `summary_bank.json`, ignored runtime evidence, and the generated route/provenance contract.
+
+**Evidence:** A clean disposable Gknome snapshot passed `tests/Test-Adoption.ps1 -AsJson` with 45 assertions, including WSL-pointer refusal, linked-bank preservation, secret pruning, transaction rollback, and corrupt-backup refusal before mutation. Candle dry run `20260810T212607Z-62457514` returned `status=blocked`, `applied_files=0`, `existing_repository=true`, and exactly four conflicts: `.gitignore`, `AGENTS.md`, `README.md`, and `summary_bank.json`. The bank remained byte-identical at SHA-256 `67594972afc2bfdde4279b7708aa0a25bba94f7a258ff21d9b6cc20fe27f1e9e`; 15 secret entries were excluded without values being exposed. The 13,837-file inventory included 4,609 files, including 3,384 paths under ignored `artifacts/` and five under `.pytest_cache/`.
+
+**How to catch it:** Require a machine-readable dry run before apply. Assert zero conflicts, zero applied files during planning, bank before/after hash equality, no included path under runtime/cache/secret exclusions, truthful existing-repository/WSL diagnostics, and a complete explicit disposition for every generated path.
+
+**Solutions tried:**
+
+1. `0/100` — Overwrite the four root authorities with template bytes; rejected because it destroys project and upstream contracts.
+2. `25/100` — Use additive `-Here -Repair`; rejected for now because Gknome documents it as preservation-only repair, not the reviewed bank/provenance adoption contract.
+3. `40/100` — Manually copy non-conflicting generated files; rejected because it bypasses the plan, rollback journal, ownership record, and route compatibility proof.
+4. `95/100` — Fix inventory pruning, add an explicit project-owned authority merge/preserve contract, and map generated skill routes to the existing bank or a reviewed staged bank migration; then rerun dry-run/apply/generated tests.
+
+**Current solution:** Keep Candle unchanged by Gknome. The fixed source and refreshed Candle dry run `20260811T032224Z-4a87c2b8` are green for the inventory boundary: 0 included `artifacts/`/`.pytest_cache/` paths, 0 applied files, and exactly four explicit authority conflicts. Accept no generated file until those conflicts have reviewed dispositions and the bank/authority contract is compatible.
+
+**Decision rationale:** A blocked dry run is a successful safety result, not a setup failure to bypass. Correct integration requires Gknome to adapt to a mature repository's authorities and context routes rather than replacing them with a blank-project template.
+
+**Effectiveness:** `100/100` for preventing unintended mutation in this run; `0/100` for completed setup because adoption remains unapplied.
+
+**Relevance check:** Current until a conflict-free plan, exact reviewed apply, generated context/project tests, and Candle manifest verification are green.
+
+**Next prevention step:** Resolve the four mature-repository authority conflicts through an explicit preserve/merge contract, then rerun the same dry-run and require zero conflicts before any apply action.
+
+## F-0011: Validate LFM2 Dimensions Before Derived Shapes or Positions
+
+Status: Resolved in the current source slice; retain as a regression hazard for future config changes.
+
+### Q: What pitfall are we preventing?
+
+**What:** A malformed external LFM2 config could divide by zero or use incompatible attention heads, allocate invalid derived shapes, silently truncate `max_position_embeddings` to `u32`, or overflow `index_pos + seq_len` before attention/cache work.
+
+**Why:** `Lfm2Config` is deserialized from model metadata, while `Config` is also public and can be constructed directly. Derived dimensions and position arithmetic therefore cannot rely on a prior loader invariant, especially when a malformed or adversarial file could trigger a panic or an avoidable allocation.
+
+**Where:** `candle-transformers/src/models/lfm2.rs`, during `try_into_config`, `Model::new_from_parts`, `Cache::new`, `Cache::mask`, and `Model::forward_hidden`.
+
+**How to catch it:** Exercise zero and incompatible head counts, odd head dimensions, invalid norm/rope values, zero convolution cache, out-of-range full-attention indices, unrepresentable maximum positions, and `usize` position overflow before any model tensor is constructed.
+
+**Solution:** `Config::validate` now checks structural relationships, finite positive scalars, checked shape products, and the supported position range. Constructors call it before derived shapes; cache position creation uses the validated `u32` range; sequence-position addition uses `checked_add`; and forwarding rejects ranges beyond the rotary cache.
+
+**Evidence:** Native Windows focused LFM2 tests passed 7/7 after the change, including `malformed_dimensions_are_rejected_before_model_construction` and `cache_rejects_unrepresentable_positions_and_index_overflow`. The full native Windows affected suite passed from `2026-08-10T21:00:24-04:00` to `2026-08-10T21:01:04-04:00` with no `llama*` process resident.
+
+**Relevance check:** Current for all future LFM2 configuration and cache changes; do not remove validation to preserve an unproven permissive path.
+
+## F-0012: Hugging Face Snapshot Symlinks Must Not Bypass Immutable Inventory
+
+Status: Resolved for the current proof; the loader correctly failed closed and a disposable regular-file copy was used only for a bounded load-only run.
+
+### Q: What pitfall are we preventing?
+
+**What:** Windows Hugging Face snapshots commonly expose files as symlinks into a shared `blobs` directory. Passing that snapshot directly to Candle makes the consumed file resolve outside the declared model directory, which must be rejected rather than silently widening the input boundary.
+
+**Why:** The native loader hashes and validates every consumed regular file before mapping weights. Following external links would make the reported model directory incomplete and could allow an unrelated or mutable target to be substituted after path validation.
+
+**Where:** `candle-examples/examples/lfm2-vl/native_loading.rs`, during native unified checkpoint preflight on the pinned 450M Windows snapshot.
+
+**How to catch it:** Run the exact snapshot path first and require the actionable `weights resolves outside the native model directory` error. If a load-only proof is needed, copy the pinned files to a disposable regular-file directory, rehash every file, and remove the copy after the run.
+
+**Evidence:** The direct snapshot attempt failed before tensor loading. A regular-file copy with the exact file hashes in `PARITY.md` loaded 349 tensors on CPU F32 from `2026-08-10T21:06:37-04:00` to `21:06:42-04:00`; the temporary copy was removed and no `llama*` process remained.
+
+**Relevance check:** Current for production acquisition and parity evidence. Do not weaken the loader's symlink boundary; make the copy/manifest step explicit in the guarded production workflow instead.
+
+## F-0013: Unpinned Python Packages Cannot Be an Oracle
+
+Status: Current production-parity blocker; config-only and comparator paths remain available.
+
+### Q: What pitfall are we preventing?
+
+**What:** Do not treat any installed Torch/Transformers stack as equivalent to the pinned reference implementation, and do not install or upgrade packages implicitly just to make the production trace start.
+
+**Why:** The Windows host currently reports Python 3.13.3, CUDA Torch `2.10.0.dev20250910+cu130`, TorchVision `0.25.0.dev20250915+cu130`, released Transformers `5.5.4`, and newer regex instead of the locked Python 3.10.12 CPU lane and pinned Transformers commit. A successful import or plausible caption would not prove that preprocessing, model configuration, or projector math matches the authority implementation.
+
+**Where:** `tools/lfm2_vl/reference/requirements-reference.in`, `requirements-reference.txt`, `manifest.py`, and the production/tiny exporter entry points. The guard applies before official model or processor imports; it does not affect Candle's Rust build or stdlib-only config/header tools.
+
+**How to catch it:** Run `manifest.reference_environment_mismatches()` or a guarded production metadata probe. Require exact package/Python values and the Transformers VCS commit, report every mismatch without reading secrets, and verify that no output directory or model import was created on refusal.
+
+**Solution:** Keep the CPU-only requirements and resolved lock as the owner-managed environment contract, exclude pytest from the runtime guard because it is test-only, and make official fixture/production loaders fail closed while allowing config-only and trace-bundle validation to proceed. After the environment is supplied by the owner, run the oracle only through the bounded Job Object wrapper and retain the command, environment, hashes, exit code, and cleanup evidence.
+
+**Evidence:** The live Windows production-metadata probe exited 2 with the complete mismatch list and `output_exists=False`; no model or processor import occurred. The focused reference harness passed 10 tests and skipped 4 official-fixture tests for the same guard, with no network installation or production payload load.
+
+**Next prevention step:** Supply or activate the owner-managed pinned CPU environment, rerun the guard, and stop before inference if any package, artifact, PID, or memory precondition fails.
+
+## F-0014: Treat Resident Python Workers as Owned PIDs, Not Model PIDs
+
+Status: Historical observation during the documentation verification slice;
+the latest native preflight found no matching worker. Ownership and root cause
+remain external to this repository.
+
+### Q: What pitfall are we preventing?
+
+**What:** A short stdlib-only command can leave a Python worker resident under
+the app's execution stack. The process name alone is not evidence that it is a
+model oracle, and it is not safe to terminate it merely because memory is
+high.
+
+**Why:** The latest host census found a bundled Python process under a
+PowerShell → microdialogue CPU-venv parent chain, with approximately 1 GiB
+working set and 1.9 GiB private memory. Its command line was unavailable to
+the managed inspection surface. Treating that PID as a stale model or killing
+the parent tree could interrupt the app or another worker while leaving the
+actual memory cause unproven.
+
+**Where:** Host/process preflight around `tools/lfm2_vl/reference/` checks and
+the Windows command runner; this is not a Candle runtime dependency or a
+llama.cpp process.
+
+**How to catch it:** Record PID, executable path, parent PID/path, start time,
+working/private set, and whether a `llama*` process exists. Refuse a large
+model run while an unexplained high-memory worker remains; do not use a bare
+process name or Task Manager's denied termination result as identity proof.
+
+**Solution:** Keep the worker owner-scoped and untouched until its owning app
+or an elevated, identity-verified operator explains or releases it. Use the
+bounded Job Object wrapper for any future Python/native inference, and repeat
+the post-run census. No process termination or model launch was attempted in
+this observation.
+
+**Evidence:** At `2026-08-11T00:24:00-04:00`, the bundled Python path was
+`C:\Users\jc816\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe`,
+parented by the microdialogue venv Python and PowerShell; no `llama*` process
+was present. The exact worker command was not exposed, so root cause is not
+claimed. The read-only native preflight at `2026-08-11T01:04:16-04:00`
+reported no matching Python or `llama*` process; that clears the current
+residency observation but does not explain the earlier worker.
+
+**Relevance check:** Current for memory-safe production preflight and any
+future Python oracle run. Do not promote this observation to a model-leak
+diagnosis without owner-level process evidence.
+
+## F-0015: External Gknome Proof Needs an Owner-Writable Checkout
+
+Status: Environment boundary observed; no Gknome source defect is claimed.
+
+### Q: What pitfall are we preventing?
+
+**What:** Do not interpret a Gknome test's inability to publish its ignored
+`.artifacts/proof/adoption.json` as an adoption assertion failure or bypass the
+report path by writing into the source tree manually.
+
+**Why:** The managed Codex workspace grants writes to
+`C:\DevStuff\candle-mods`, while Gknome lives in the separate OneDrive
+checkout. Its report directory and existing proof file are readable but not
+writable from this task boundary, so the test stops before exercising its
+assertions.
+
+**Where:** `C:\Users\jc816\OneDrive\Desktop\Gen-App\gknome\tests\Test-Adoption.ps1`,
+which defaults to `.artifacts\proof\adoption.json`.
+
+**How to catch it:** Before treating a cross-repository proof as current,
+verify that its declared report path is writable by the test owner. Preserve
+the exact child exit and error; do not delete or replace the existing proof
+artifact to make the test appear green.
+
+**Solution:** Run Gknome's write-producing matrix from its owner-writable
+checkout or an approved disposable copy, then retain the report and source
+identity together. In the managed workspace, keep the last recorded clean
+proof (`c93be64` source identity) and label any attempted rerun as blocked by
+the external write boundary.
+
+**Evidence:** On `2026-08-11`, `Test-Adoption.ps1 -AsJson` exited before its
+assertion report with `Access to the path ...\\.artifacts\\proof\\adoption.json
+is denied`; a separate explicit probe also could not create a new file in that
+ignored proof directory. No Gknome file was modified.
+
+**Relevance check:** Current for Gknome adoption/context verification only;
+it does not affect Candle source builds or native runtime behavior.
+
+## F-0016: Do Not Make Bounded Memory Safety Depend on CIM Permissions
+
+Status: Resolved in the bounded wrapper; retain as a Windows portability
+regression.
+
+### Q: What pitfall are we preventing?
+
+**What:** A restricted Windows session can deny `Get-CimInstance
+Win32_ComputerSystem`, causing the bounded oracle to fail before it can enforce
+its memory ceiling.
+
+**Why:** The earlier wrapper used CIM as its only physical-memory probe. That
+made a safe containment check depend on an administrative/provider permission
+that is unrelated to the child process being bounded.
+
+**Where:** `scripts/lfm2-vl/run-bounded-oracle.ps1`, host-memory ceiling
+preflight and evidence emission.
+
+**How to catch it:** Run the harmless bounded smoke under a managed/non-elevated
+PowerShell session and require `physical_memory_source` to be either
+`Win32_ComputerSystem` or `GlobalMemoryStatusEx`; never substitute a guessed
+RAM value.
+
+**Solution:** Try CIM first, then call the Windows `GlobalMemoryStatusEx` API.
+Record the source and total bytes in evidence, and fail closed if both probes
+fail. The process/job memory ceiling and PID cleanup rules are unchanged.
+
+**Evidence:** The updated smoke passed. A copied `cmd.exe` bounded probe used
+the `GlobalMemoryStatusEx` fallback, recorded 68,438,708,224 total physical
+bytes, exited normally, and proved `pid_absent_after_cleanup=true`.
+
+**Relevance check:** Current for every future Python/native oracle launch on
+Windows, including restricted managed hosts.
+
+## F-0017: Keep the Bounded Harness Compatible with Windows PowerShell 5.1
+
+Status: Resolved in the wrapper and smoke harness.
+
+### Q: What pitfall are we preventing?
+
+**What:** Modern .NET conveniences can make a PowerShell 7-only containment
+test look green while Windows PowerShell 5.1 fails before it launches a child.
+
+**Why:** The supported Windows shell matrix includes PS5.1. Its .NET
+Framework lacks C# `nameof` in the default `Add-Type` compiler, static
+`SHA256.HashData`, `Convert.ToHexString`, `ProcessStartInfo.ArgumentList`, and
+the `Process.Kill(bool)` overload used by the first harness version.
+
+**Where:** `scripts/lfm2-vl/run-bounded-oracle.ps1` and its harmless
+`test-bounded-oracle.ps1` owner-exit/cleanup fixture.
+
+**How to catch it:** Run the complete smoke under both `powershell.exe` (5.1)
+and `pwsh.exe` (7), not only a parser check. Require normal exit, timeout and
+descendant cleanup, owner-exit cleanup, concurrent-name refusal, memory-source
+evidence, and exact PID absence in both lanes.
+
+**Solution:** Use framework-compatible SHA-256 conversion and C# syntax in the
+wrapper; use the legacy `Arguments` string for the encoded owner command and a
+PS5.1 cleanup fallback while retaining the modern path on PS7.
+
+**Evidence:** After the compatibility fixes, PS5.1 and PS7
+`test-bounded-oracle.ps1` runs both returned `bounded-oracle-smoke: passed` with
+exit 0. No model process was launched.
+
+**Relevance check:** Current for all Windows bounded inference work; do not
+claim PS5.1 support from PS7-only evidence.
+
+## F-0018: Capture Native Stderr Without Breaking PowerShell 5.1 Preflight
+
+Status: Resolved in `preflight.ps1`; retain as a shell-compatibility
+regression.
+
+### Q: What pitfall are we preventing?
+
+**What:** Windows PowerShell 5.1 can promote stderr from a native command to a
+terminating error when `$ErrorActionPreference` is `Stop`, even when the
+command's failure is an expected diagnostic such as the linked-worktree Git
+pointer being unavailable.
+
+**Why:** A resource census must still report memory and PID safety when Git
+identity is unavailable. Treating the diagnostic as a script crash would hide
+the admission evidence needed before an expensive run.
+
+**Where:** `scripts/lfm2-vl/preflight.ps1`, Git and optional `nvidia-smi`
+identity probes.
+
+**How to catch it:** Run `scripts/lfm2-vl/test-preflight.ps1` under both
+`powershell.exe` 5.1 and `pwsh.exe` 7 from this linked checkout. Require a
+valid JSON schema, a retained Git error/data field, redaction fields, and
+atomic-output/overwrite refusal behavior.
+
+**Solution:** Route non-mutating native probes through a small compatibility
+helper that temporarily captures stderr while restoring the caller's error
+preference. Preserve the exit code and diagnostic in the report; never hide a
+failed required memory probe or treat `review` as approval.
+
+**Evidence:** Both PowerShell generations returned `preflight-smoke: passed`
+after the fix. The current report returned `review` with no `llama*` process;
+no model was launched.
+
+**Relevance check:** Current for every Windows resource census and optional
+GPU probe; do not claim PS5.1 support from a parser-only check.
+
+## F-0019: Preserve 64-Bit Commit Counters During Resource Preflight
+
+Status: Resolved in `preflight.ps1`; retain as a numeric-range regression.
+
+### Q: What pitfall are we preventing?
+
+**What:** PowerShell's two-argument `[Math]::Max(0, value)` overload selects
+`Int32` for the zero literal and overflows when a Windows commit counter is
+larger than 2 GiB.
+
+**Why:** A large host can have valid commit values that exceed the default
+integer range. Turning a valid counter into a probe error would weaken the
+admission report exactly when memory pressure matters most.
+
+**Where:** `scripts/lfm2-vl/preflight.ps1`, `Get-CounterValue`.
+
+**How to catch it:** Run the cross-version preflight smoke on a host with more
+than 2 GiB of committed memory and require numeric `committed_bytes`,
+`limit_bytes`, and `commit_probe_complete` fields rather than only checking
+that the script exits.
+
+**Solution:** Round the counter as a `Double`, clamp negative values explicitly,
+then cast the result to `UInt64`; do not rely on an `Int32` overload.
+
+**Evidence:** The current report records `20,603,334,656` committed bytes and
+`72,733,675,520` commit-limit bytes with `commit_probe_complete=true` under
+both PowerShell smoke lanes. No model was launched.
+
+**Relevance check:** Current for every host-memory admission report; a missing
+counter is now a fail-closed `blocked` condition and must not be replaced by a
+guess.
+
+## F-0020: Treat a Transient llama-server PID as a Fresh Admission Failure
+
+Status: Observed and unresolved as an external ownership event; no source
+defect or root cause is claimed.
+
+### Q: What pitfall are we preventing?
+
+**What:** A model-server process can appear between an apparently clean local
+verification gate and the next admission check, then disappear before a
+read-only census captures its path or ancestry.
+
+**Why:** PID absence after the fact does not prove that cleanup succeeded, that
+the process was ours, or that the host is safe for another large model. The
+previous llama.cpp incident showed that disappearance and host recovery are
+separate facts.
+
+**Where:** Host state around the native release build, bounded `--help` proof,
+and the next production preflight; this is outside Candle source behavior.
+
+**How to catch it:** Run `preflight.ps1` immediately before owner approval and
+again after every build or inference. Record only safe identity/resource fields;
+do not inspect command lines or kill an unverified owner tree.
+
+**Solution:** Refuse the model gate whenever `llama*` is present, even if the
+process later vanishes. Require a new clear census, owner confirmation, and
+post-run memory/PID evidence before admission. Keep all large model work
+serialized.
+
+**Evidence:** During the `2026-08-11` post-gate observation, PID `33496`
+(`llama-server`) was seen at approximately 559,685,632 private bytes while
+Rust compiler processes were also present. It disappeared before
+`preflight.ps1` could capture path/ancestry; no termination or model launch was
+attempted by this task. A fresh census at `2026-08-11T01:17:17.3756396-04:00`
+found no llama but did find three `rustc` workers (approximately 1.45 GiB,
+1.03 GiB, and 432 MiB private), Cargo, and a bundled Python worker; those are
+also un-attributed and remain an admission hold until the owner clears them.
+
+**Relevance check:** Current and directly relevant to the next NR-5B admission;
+do not infer a DLL, Defender, Codex, or llama.cpp root cause from this transient
+observation.
+
+## F-0021: Keep Preflight Collection Fields as Arrays With One Item
+
+Status: Resolved in the preflight smoke contract.
+
+### Q: What pitfall are we preventing?
+
+**What:** PowerShell JSON conversion can collapse a one-item collection into a
+single object unless the producer and consumer contract explicitly preserve an
+array shape.
+
+**Why:** A report with zero, one, or many matching processes must be consumed
+the same way. Shape drift can make a safety tool silently skip a lone
+`llama-server` or probe error.
+
+**Where:** `scripts/lfm2-vl/preflight.ps1` and `test-preflight.ps1`, for tracked
+processes, llama processes, probe errors, and GPU inventories.
+
+**How to catch it:** Parse the emitted JSON under both PowerShell 5.1 and 7 and
+assert every collection field is an array, including empty and one-item cases.
+
+**Solution:** Keep the producer's collection values explicitly array-backed and
+require the stable shape in the cross-version smoke contract.
+
+**Evidence:** Both PowerShell generations returned `preflight-smoke: passed`
+after the array-shape assertions were added.
+
+**Relevance check:** Current for any automated admission/report consumer; this
+does not change process containment or infer ownership.
+
+## F-0022: Do Not Admit a Run Without Commit-Memory Evidence
+
+Status: Resolved in `preflight.ps1` and its smoke contract.
+
+### Q: What pitfall are we preventing?
+
+**What:** A failed Windows committed-memory counter could previously leave the
+preflight in `review`, which looked like a complete measurement awaiting human
+approval.
+
+**Why:** Physical RAM alone does not prove virtual-memory commit headroom. The
+OOM incident involved extreme private allocation, so a missing commit limit
+must fail closed rather than be treated as a review-only caveat.
+
+**Where:** `scripts/lfm2-vl/preflight.ps1` admission status and
+`test-preflight.ps1` schema assertions.
+
+**How to catch it:** Require `blocked` whenever a llama process, physical-memory
+probe, or committed-memory probe is unavailable; allow `review` only when both
+memory probes are complete.
+
+**Solution:** The admission status now returns `blocked` for incomplete commit
+measurement while preserving the raw probe error and redaction contract.
+
+**Evidence:** PowerShell 5.1 and 7 preflight smoke tests pass after the change;
+the current host has complete commit evidence and therefore reports `review`.
+
+**Relevance check:** Current for every future Python/native/llama admission;
+never substitute a guessed commit limit.
+
+## F-0023: Do Not Truncate the llama Inventory With the General Process List
+
+Status: Resolved in `preflight.ps1`.
+
+### Q: What pitfall are we preventing?
+
+**What:** A compact top-64 process report could omit a low-memory llama
+process when many Rust/Python/build workers had larger private allocations.
+
+**Why:** Model admission is a safety predicate, not a ranking report. Missing
+one matching server would incorrectly make `llama_processes_absent` true.
+
+**Where:** `scripts/lfm2-vl/preflight.ps1`, process census and admission fields.
+
+**How to catch it:** Build the complete matching process object set first,
+derive `llama_processes` from that set, and only cap the general
+`tracked_processes` evidence. Assert every emitted llama record has a llama
+name under both PowerShell versions.
+
+**Solution:** The llama collection now precedes the 64-record general cap; all
+matching llama processes are retained while other process evidence stays
+bounded.
+
+**Evidence:** PowerShell 5.1 and 7 `preflight-smoke` runs pass after the
+change. No model process was launched.
+
+**Relevance check:** Current for every host with compiler/Python fan-out; do
+not infer safety from a truncated ranking list.
+
+## F-0024: Keep the Summary-Bank Verifier Entry Point Cross-Version
+
+Status: Resolved in `scripts/lfm2-vl/verify-summary-bank.ps1`.
+
+### Q: What pitfall are we preventing?
+
+**What:** The documented no-argument verifier failed before reading
+`summary_bank.json` when invoked through `powershell.exe`, first because
+`$PSScriptRoot` was empty in a parameter default and then because
+`ConvertFrom-Json -AsHashtable` is unavailable in Windows PowerShell 5.1.
+
+**Why:** A green PS7-only context check can hide broken operator entry points
+on the Windows PowerShell version used by existing scripts and owner tooling.
+
+**Where:** `scripts/lfm2-vl/verify-summary-bank.ps1`, parameter initialization
+and JSON normalization.
+
+**How to catch it:** Invoke the script with no arguments under both
+`pwsh.exe` and `powershell.exe`; require exit code 0 and the final
+`summary-bank: passed` line.
+
+**Solution:** Resolve the script root after parameter binding, default the path
+there, and recursively normalize `ConvertFrom-Json` output into plain
+hashtables/arrays without relying on the PS7-only switch.
+
+**Evidence:** Native PowerShell 7.6.4 and Windows PowerShell 5.1 both pass the
+verifier with every route under the 256 KiB ceiling.
+
+**Relevance check:** Current for all Windows operator and CI-local invocations;
+keep cross-version script entry points tested when PowerShell syntax changes.
+
+## F-0025: Do Not Treat Zeroed PS5.1 Disk Counters as Real Space
+
+Status: Resolved in `scripts/lfm2-vl/preflight.ps1` and
+`scripts/lfm2-vl/test-preflight.ps1`.
+
+### Q: What pitfall are we preventing?
+
+**What:** Windows PowerShell 5.1 returned a `PSDriveInfo` object whose `Free`
+and `Used` values were both zero for the repository drive, while PowerShell 7
+reported the real counters.
+
+**Why:** Disk headroom is part of the production admission evidence. A zero
+value can be mistaken for a full drive or can silently erase the distinction
+between a valid measurement and a provider compatibility failure.
+
+**Where:** `scripts/lfm2-vl/preflight.ps1`, disk snapshot construction.
+
+**How to catch it:** Run `test-preflight.ps1` under both PowerShell versions;
+require a recognized source and positive `disk.free_bytes`.
+
+**Solution:** Use `Get-PSDrive` when it returns nonzero counters and fall back
+to `System.IO.DriveInfo` when the provider is unavailable or zeroed. Record the
+selected source in the report.
+
+**Evidence:** Both shells pass the smoke test; current C: evidence reports
+260,639,014,912 free bytes, with `Get-PSDrive` under PS7 and
+`System.IO.DriveInfo` under PS5.1.
+
+**Relevance check:** Current for all Windows resource preflight and any future
+disk-based admission threshold.
+
+## F-0026: Do Not Require a Source-Only Python Release as the Native Windows Oracle
+
+Status: Resolved in the environment-selection and checked-in Windows lock.
+
+### Q: What pitfall are we preventing?
+
+**What:** A nominally exact oracle guard required Python 3.10.12 on native
+Windows even though Python.org never published a Windows installer for that
+release.
+
+**Context and constraints:** Native Windows is the primary Candle product and
+verification lane. The Python stack is an isolated reference oracle only;
+global installs, unofficial interpreters, implicit downloads, CUDA wheels, and
+unbounded model processes are prohibited.
+
+**Why it happened:** The guard copied the exact interpreter from the proven
+Linux x86_64 lock into a later Windows-first policy without checking binary
+availability per platform.
+
+**Where:** `manifest.py`, both reference requirements files, reference setup
+documentation, P1-C, and the host interpreter discovery path.
+
+**Evidence:** `py -0p` reported no registered interpreter, while the normal
+per-user path contained Python 3.10.10. Direct execution reported 3.10.10 and
+all oracle packages missing. Python.org identifies 3.10.12 as source-only and
+3.10.11 as the last Python 3.10 release with Windows installers.
+
+**Developer story:** Initial setup guidance appeared to require only installing
+the listed packages. A direct host probe exposed an unregistered 3.10.10
+interpreter, but the existing guard still rejected it. Checking the official
+release records showed that installing the documented 3.10.12 through the
+official Windows binary channel was impossible. The contract was split at the
+interpreter boundary while every numerical package/source pin stayed fixed.
+
+**How to catch it:** Run `verify_environment.py --require-tests` with the exact
+candidate interpreter. Require `platform.system`, expected Python patch,
+installed versions, Transformers VCS revision, and separate runtime/test
+mismatch maps before any Torch or model import.
+
+**Solutions tried:**
+
+1. `20/100` Keep Python 3.10.12 everywhere: exact but unachievable through an official Windows binary.
+2. `48/100` Accept the discovered Python 3.10.10 silently: expedient but changes the authority to fit one host and leaves no durable platform rule.
+3. `91/100` Use exact platform pins—3.10.11 Windows, 3.10.12 Linux—with shared exact package/source pins and explicit environment evidence.
+
+**Current solution:** `reference_package_pins()` selects the exact supported
+platform interpreter; the import-light verifier exposes both runtime and
+test-only mismatches. Windows resolves the shared direct requirements in an
+isolated environment and must retain its first accepted freeze separately.
+
+**Decision rationale:** Python 3.10.11 is the last official Windows binary in
+the required minor series, while the Linux fixture lane keeps its proven
+3.10.12 identity. This preserves reproducibility without compiling Python from
+source, trusting an unofficial binary, or weakening model/package pins.
+
+**Effectiveness:** `96/100`, durable. The contract is executable, guarded,
+discoverable, and proven by the exact Windows resolution plus 43 focused tests
+and the completed 450M production trace.
+
+**Relevance check:** Current. It controls every future Windows oracle gate and
+prevents setup instructions from conflating a Linux lock with a Windows
+installer contract.
+
+**Next prevention step:** Keep the Windows lock synchronized with direct-pin
+changes and require the focused suite before accepting any regenerated freeze.
+
+## F-0027: Do Not Serialize Every Same-Name Interpreter or Discard Child Errors
+
+Status: Resolved in the bounded owner and cross-version smoke.
+
+### Q: What pitfall are we preventing?
+
+**What:** Name-wide concurrency correctly refused a pinned Python oracle while
+an unrelated Codex Python worker existed. The first production-trace failure
+then left no child output because the wrapper did not retain stdout/stderr.
+
+**Context and constraints:** Large-model inference must remain serialized and
+Job-contained. Generic interpreter names are not unique model identities, and
+model arguments or credentials must not leak into logs or evidence.
+
+**Why it happened:** The original owner was designed around uniquely named
+llama.cpp executables and treated process name as the only admission identity.
+Its evidence focused on containment rather than diagnostic output.
+
+**Where:** `run-bounded-oracle.ps1`, Python/native production calls, and
+`test-bounded-oracle.ps1`.
+
+**Evidence:** A same-name bundled Python worker caused a safe refusal even
+though its executable differed from the official 3.10.11 oracle. The next
+trace exited 1, but the original wrapper evidence could not show the Python
+`NameError` that caused it.
+
+**Developer story:** The refusal prevented unsafe overlap but also blocked an
+otherwise admissible interpreter. After an exact-executable mode allowed the
+pinned path, the unlogged failure required a second diagnostic mechanism. A
+combined inheritable Win32 log handle exposed the real child traceback without
+weakening Job assignment or PID cleanup.
+
+**How to catch it:** Run the harmless smoke with one same-name/same-path child
+and one same-name/different-path child. Require exact-path refusal for the
+first, allowance for the second, fail-closed behavior when a path is
+unavailable, and a nonempty combined log containing both stdout and stderr.
+
+**Solutions tried:**
+
+1. `34/100` Keep name-wide refusal for all executables: safest superficially,
+   but generic interpreter workers create false conflicts.
+2. `28/100` Disable concurrency checks for Python: operationally convenient
+   but permits two large oracle instances.
+3. `94/100` Preserve name-wide default and add explicit canonical executable
+   scope plus retained combined logs.
+
+**Current solution:** `-ConcurrencyScope Name|Executable` is explicit and
+recorded. Exact mode compares resolved paths and refuses unreadable identities.
+`-LogPath` uses inherited Win32 handles and records bytes/SHA-256; replacement
+requires `-ForceLog`.
+
+**Decision rationale:** Unique model tools benefit from broad serialization;
+generic hosts require narrower identity. Both still share the same mutex, Job
+limits, timeout, cleanup, and argument-redaction contracts.
+
+**Effectiveness:** `95/100`. PowerShell 5.1 and 7 smokes cover both scopes,
+combined output, hashes, refusal, and exact cleanup; the final Python and
+native production runs both retained bounded logs and exited cleanly.
+
+**Relevance check:** Current for every Python/native/llama.cpp production run.
+
+**Next prevention step:** Keep scope selection in operator examples and add a
+new smoke case whenever another generic executable host is introduced.
+
+## F-0028: Keep Live Process Memory Counters 64-Bit
+
+Status: Resolved in the bounded owner and smoke regression.
+
+### Q: What pitfall are we preventing?
+
+**What:** Wrapper sampling crashed when the native model working set crossed
+2,147,483,647 bytes even though the configured Job ceiling was 8 GiB.
+
+**Context and constraints:** Production processes are expected to exceed 2
+GiB. Sampling failures must still terminate the complete Job and retain exact
+failure evidence; no large allocation should be required merely to test the
+conversion.
+
+**Why it happened:** `[Math]::Max(0, $process.WorkingSet64)` selected the
+`Int32` overload because the literal zero was 32-bit, then tried to coerce the
+64-bit process counter into `Int32`.
+
+**Where:** `run-bounded-oracle.ps1`, live private/working-set polling.
+
+**Evidence:** The first native trace stopped at working-set value
+`2,177,044,480` with an overload conversion error. Job cleanup returned child
+exit 125, PID 10012 was absent, and no trace directory was published.
+
+**Developer story:** The containment layer behaved correctly after its own
+diagnostic failed, but the accounting expression made every legitimate
+greater-than-2-GiB workload look like a wrapper defect. Direct nonnegative
+`Int64` to `UInt64` conversion removed overload selection entirely.
+
+**How to catch it:** Extract the conversion helper from the parsed wrapper AST
+and pass `2,177,044,480` without allocating that memory. Require the exact
+`UInt64` result and clamp a negative/unavailable counter to zero. Replay the
+ordinary Job smoke under both PowerShell versions.
+
+**Solutions tried:**
+
+1. `22/100` Raise the Job ceiling: unrelated to the failing conversion.
+2. `63/100` Force both `Math.Max` operands to `Int64`: correct but leaves
+   overload-sensitive code in a safety boundary.
+3. `97/100` Use one explicit nonnegative 64-bit conversion helper and test it
+   above `Int32::MAX`.
+
+**Current solution:** `ConvertTo-ProcessCounterBytes` accepts `Int64`, clamps
+nonpositive values, and returns `UInt64`; both sampled counters use it.
+
+**Decision rationale:** The helper states the counter contract directly,
+avoids arithmetic overloads, and can be tested without memory pressure.
+
+**Effectiveness:** `98/100`. Both shell smokes pass, and the final native trace
+sampled a 2,320,310,272-byte peak working set without error.
+
+**Relevance check:** Current for all bounded Windows processes and any future
+resource counter added to admission or evidence.
+
+**Next prevention step:** Require explicit 64-bit types at every Windows
+memory/commit boundary and include above-2-GiB synthetic values in tests.
+
+## F-0029: A Successful Comparator Process Is Not a Green Parity Report
+
+Status: Resolved in the trace writer, comparator, and focused tests.
+
+### Q: What pitfall are we preventing?
+
+**What:** The first valid production comparison contained one failed exact
+tensor but returned process exit 0. Earlier attempts also failed before math
+because native evidence used implementation dtype abbreviations, omitted
+consumed-file records, and assigned post-projector ranges to a pre-projector
+tensor name.
+
+**Context and constraints:** Captions are not component parity. Trace bundles
+must be independently valid, identical names must denote identical stages, and
+automation must fail whenever any compared tensor fails.
+
+**Why it happened:** The writer and validator were built independently, the
+native range reused `EncodedImages.per_crop_ranges` because it was convenient,
+and CLI `main()` returned 0 after successfully writing any report rather than
+after checking the report's `passed` field.
+
+**Where:** `trace.rs`, `runner.rs`, `compare_traces.py`, and
+`test_reference_tools.py`.
+
+**Evidence:** Sequential production attempts exposed `i64` versus canonical
+`int64`, missing `model_inputs`, and oracle/native projector ranges `[0,256]`
+versus `[0,64]`. After validation passed, `comparison-256-v3.json` recorded
+`passed=false`, `failure_count=1`, yet the command exited 0.
+
+**Developer story:** Each fail-closed layer revealed the next ambiguity. The
+native projector trace already held the authoritative 256-row input, so the
+range could be derived at the correct stage. Once the bundle was semantically
+aligned, the completion audit—not the shell status—caught the false-green exit
+contract before NR-5B was closed.
+
+**How to catch it:** Validate both bundles before comparison; assert canonical
+manifest dtypes, exact model-input hashes, and a tiny 8-patch/2-projected-token
+fixture whose recorded projector range must be `[0,8]`. Run a deliberately
+different valid trace through CLI `main`, require a written `passed=false`
+report and exit 1, then require the production report itself to say
+`passed=true` with zero failures.
+
+**Solutions tried:**
+
+1. `12/100` Trust process exit only: directly produced a false green.
+2. `41/100` Accept dtype aliases and compare the 64-token range: hides schema
+   and stage disagreement instead of resolving it.
+3. `98/100` Canonicalize evidence, serialize consumed files, derive the exact
+   pre-projector range, and bind exit status to report status.
+
+**Current solution:** Native inventories use `float32`/`int32`/`int64`/`uint8`,
+metadata carries exact `model_inputs`, projector ranges describe valid input
+patches, and CLI exits 0/1/2 for pass/failed-comparison/invalid-input.
+
+**Decision rationale:** Cross-runtime evidence must be semantic rather than
+implementation-labeled, and machine-readable status must be the sole success
+authority.
+
+**Effectiveness:** `99/100`. The final report compares 36 tensors, records
+zero failures and `passed=true`, and returns 0; 28 Rust and 43 Python tests
+cover the regressions.
+
+**Relevance check:** Current for every future 1.6B, CUDA, and GGUF comparison.
+
+**Next prevention step:** Require both exit code and parsed `passed=true` in
+all operator scripts and retained verification records.
+
+## F-0030: Full GGUF Metadata Must Not Depend on the Windows Console Code Page
+
+Status: Resolved in the GGUF inspector and focused tests.
+
+### Q: What pitfall are we preventing?
+
+**What:** A successful payload-free inspection of the official text GGUF failed
+at CLI output because tokenizer metadata contained Unicode that the Windows
+CP1252 console encoder could not represent. The output file was never written,
+and an unrestricted successful retry would have duplicated a multi-megabyte
+tokenizer inventory into the operator log.
+
+**Context and constraints:** GGUF headers legitimately embed arbitrary UTF-8
+token strings and chat templates. Evidence must remain lossless, while console
+transport and bounded-wrapper logs must remain portable and reasonably small.
+
+**Why it happened:** The CLI serialized stdout with `ensure_ascii=false` and
+printed before writing the requested UTF-8 report. Python inherited the host's
+CP1252 stdout encoding, so character U+010A raised `UnicodeEncodeError`.
+
+**Where:** `tools/lfm2_vl/reference/inspect_gguf_header.py`, complete metadata
+output for the official Q4_0 text GGUF.
+
+**Evidence:** Header parsing completed, but `print(compact)` failed on U+010A
+before `--output` executed. The corrected quiet replay wrote a 3,600,343-byte
+UTF-8 report with SHA-256
+`4639cf0376941805fe892cec6dccb10d9fa92d1cc86ca40373a44a35e6c6b7de`
+and emitted no stdout.
+
+**Developer story:** The tensor/tokenizer metadata was valid; only its terminal
+representation was not. Separating the lossless file from the portable console
+representation removed an environmental encoding dependency and kept the
+bounded process log focused on execution evidence.
+
+**How to catch it:** Build a tiny GGUF header whose metadata contains U+010A.
+Require ordinary stdout JSON to contain the ASCII escape `\\u010a`; then run
+`--output ... --quiet`, require empty stdout, parse the UTF-8 file, and recover
+the original character exactly.
+
+**Solutions tried:**
+
+1. `18/100` Change the host console code page: mutable machine state and still
+   leaves logs unbounded.
+2. `61/100` Print UTF-8 bytes directly: preserves text but can still flood the
+   wrapper log with the tokenizer inventory.
+3. `98/100` ASCII-escape console JSON, retain full UTF-8 JSON in a requested
+   file, and add an explicit quiet-output mode.
+
+**Current solution:** Console JSON uses `ensure_ascii=true`; report files keep
+`ensure_ascii=false` with UTF-8 encoding; `--quiet` requires `--output` and
+suppresses duplicate stdout.
+
+**Decision rationale:** JSON escapes are lossless and portable across Windows
+code pages, while the UTF-8 artifact remains human/tool readable and the quiet
+mode makes evidence logging proportional.
+
+**Effectiveness:** `99/100`. Eight focused inspector tests pass, and the exact
+official full-header replay exits 0 with quiet retained output.
+
+**Relevance check:** Current for any GGUF with embedded Unicode tokenizer or
+chat-template metadata, regardless of model family.
+
+**Next prevention step:** Use ASCII-safe structured stdout plus explicit UTF-8
+artifacts for every CLI that may emit unbounded model-owned metadata.
+
+## F-0031: Do Not Forward a Runner Argument Array Through an Extra PowerShell Process
+
+Status: Resolved in the P2 operator invocation; prevention is documented.
+
+### Q: What pitfall are we preventing?
+
+**What:** The first official-base Candle replay command launched another
+`pwsh -File` process around `run-bounded-oracle.ps1`. PowerShell expanded the
+runner argument array before the wrapper could bind it to its `-Arguments`
+parameter, so binding failed before any Candle process was created.
+
+**Context and constraints:** The bounded owner needs each model CLI token as one
+array element. Prompt strings contain newlines and artifact paths may contain
+spaces. A second shell adds a separate parsing boundary and can silently change
+argument cardinality before containment begins.
+
+**Why it happened:** An array constructed in the current PowerShell process was
+forwarded through the command line of a newly launched PowerShell process. That
+boundary serializes tokens rather than preserving the original in-memory array.
+
+**Where:** Operator invocation of `scripts/lfm2-vl/run-bounded-oracle.ps1` for
+the P2 Candle replay. The wrapper and runner implementations were not defective.
+
+**Evidence:** Parameter binding failed before child creation. No wrapper evidence
+or inference PID existed, the subsequent census was clear, and direct invocation
+of the same wrapper with the same in-memory argument array exited 0 and retained
+complete evidence.
+
+**Developer story:** The failure looked like a model launch problem but occurred
+one process boundary earlier. Keeping wrapper invocation in the current shell
+preserved exact array elements and ensured the Job Object owned the first model
+process that actually started.
+
+**How to catch it:** Require a harmless wrapper smoke whose arguments include a
+space and newline, invoke the wrapper directly, and assert the child receives the
+exact element count and values. Treat a missing wrapper report plus absent child
+PID as an invocation failure, not an inference failure.
+
+**Solutions tried:**
+
+1. `15/100` Requote individual values for the nested shell: fragile across
+   spaces, newlines, and literal quote characters.
+2. `52/100` Encode the full argument vector into one command-line string: loses
+   native array semantics and duplicates parsing logic.
+3. `98/100` Invoke the wrapper script directly in the current PowerShell process
+   with named parameters and an in-memory `-Arguments` array.
+
+**Current solution:** Production runs call `run-bounded-oracle.ps1` directly
+from the current PowerShell process. An outer shell may orchestrate separate
+commands, but it must not transport the model argument array across `pwsh -File`.
+
+**Decision rationale:** One parser boundary is easier to audit, preserves exact
+argument identity, and uses the already-tested wrapper binding contract.
+
+**Effectiveness:** `96/100`. Both P2 model owners completed with exact arguments,
+exit 0, retained evidence, and absent PIDs; the failed nested call loaded no model.
+
+**Relevance check:** Current for every future Python, Candle, or llama.cpp run
+whose prompt or file paths are supplied as an argument array.
+
+**Next prevention step:** Add an explicit nested-shell refusal/example to the
+operator README if a future task introduces a reusable launch command template.
+
+## F-0032: A Serial Hub File Loop Can Still Hide Parallel Xet Transfers
+
+Status: Resolved before the first 1.6B acquisition; prevention is enforced and
+tested.
+
+### Q: What pitfall are we preventing?
+
+**What:** Calling `hf_hub_download` for one file at a time does not by itself
+make a large checkpoint acquisition serial. On supported machines the pinned
+Hub package installs and automatically selects `hf-xet`, whose chunk downloader
+uses parallel transfers inside a single file.
+
+**Context and constraints:** The pending 1.6B snapshot contains a
+3,193,334,216-byte safetensors file. Acquisition must be resumable, public and
+token-free, must not load a model, and must avoid hidden concurrency because
+this host previously required a restart after extreme model-process residency.
+
+**Why it happened:** The initial acquisition owner serialized its eight
+`hf_hub_download` calls but treated the Hub call as one bounded transfer unit.
+`huggingface-hub==1.5.0` declares `hf-xet` on AMD64, and the installed runtime
+automatically uses that backend unless `HF_HUB_DISABLE_XET` was true when Hub
+constants were imported.
+
+**Where:** `tools/lfm2_vl/reference/acquire_snapshot.py`, the pinned
+`huggingface-hub==1.5.0` / `hf-xet==1.6.0` environment, and the future P3
+external snapshot acquisition.
+
+**Evidence:** Offline inspection of the installed Hub metadata showed the
+platform dependency on `hf-xet`. Its installed `file_download.py` describes
+`hf_xet.download_files` as downloading chunks in parallel, while
+`utils._runtime.is_xet_available()` confirms automatic use unless the disable
+constant is set. A fresh-process probe of the corrected loader reported
+`xet_disabled=True` and confirmed every supplied `hf_hub_download` keyword is
+present. No production payload was downloaded during this investigation.
+
+**Developer story:** The outer file loop looked serial, but dependency review
+showed a second concurrency layer beneath it. Removing Xet from the existing
+oracle environment would have changed the resolved lock and still allowed a
+future install to restore it. The transfer owner now selects Hub's resumable
+HTTP fallback before import and refuses ambiguous pre-imported state.
+
+**How to catch it:** Run
+`pytest -q tools/lfm2_vl/reference/test_acquire_snapshot.py`; require the
+site-packages-free plan, Xet-enabled pre-import refusal, explicit
+`transfer_policy=serial-files-resumable-http-xet-disabled`, and a fresh-process
+pinned-Hub probe with `HF_HUB_DISABLE_XET=True` before any network action.
+
+**Solutions tried:**
+
+1. `32/100` Rely only on the serial Python file loop: does not control the
+   backend's per-file chunk concurrency.
+2. `56/100` Uninstall `hf-xet`: mutates the proven environment, conflicts with
+   Hub's platform dependency, and is not durable across reinstalls.
+3. `77/100` Require operators to set the environment variable manually:
+   effective when remembered, but easy to omit and too late after Hub import.
+4. `96/100` Set the disable variable in the acquisition owner before import,
+   verify Hub observed it, fail closed on pre-imported enabled state, and record
+   the transfer policy in plan/result evidence.
+
+**Current solution:** `_load_default_downloader()` pins the Hub distribution,
+sets `HF_HUB_DISABLE_XET=1`, imports Hub afterward, verifies the resulting
+constant, and refuses otherwise. The file loop remains serial and Hub's regular
+HTTP path retains partial-file resume behavior in the caller-owned cache.
+
+**Decision rationale:** Source-owned selection is deterministic, preserves the
+exact installed environment, avoids a hidden parallel backend, and leaves
+accepted bytes protected by independent size and Git/LFS identity checks.
+
+**Effectiveness:** `92/100`, durable. Twenty-seven focused offline tests and the real
+pinned-Hub import probe enforce the boundary; the first authorized full transfer
+remains the final operational confirmation.
+
+**Relevance check:** Current. It directly governs the next P3 action and any
+future large Hugging Face acquisition on this memory-sensitive Windows host.
+
+**Next prevention step:** On the first authorized acquisition, retain the
+reported transfer policy, bounded-owner evidence, exact file hashes, and final
+process/memory census before admitting model load.
+
+## F-0033: Test Injection Seams Must Not Bypass Production Acquisition Evidence
+
+Status: Resolved before the first 1.6B acquisition; the public signature is
+locked by regression test.
+
+### Q: What pitfall are we preventing?
+
+**What:** The first acquisition implementation exposed optional `downloader`
+and `artifact_builder` callbacks on its production function. A programmatic
+caller could therefore substitute both safety-critical operations while still
+receiving the same production-shaped transfer policy and acquisition manifest.
+
+**Context and constraints:** Offline tests need local byte sources and a tiny
+artifact verifier, but the shipped path must always use the pinned Hub loader,
+Xet refusal, and complete snapshot verifier. Evidence must describe the path
+that actually ran, not the default path that could have run.
+
+**Why it happened:** Dependency injection made the first tests concise, but the
+test seam was placed on an exported runtime function instead of at a private
+module boundary.
+
+**Where:** `acquire_snapshot.acquire_snapshot()` and its focused offline tests.
+
+**Evidence:** Complete focused-diff inspection found both optional parameters
+after the Xet transfer policy had been added. The corrected function signature
+contains only model, output, cache, manifest, and explicit production opt-in;
+27/27 focused tests pass with private monkeypatches, including an exact
+signature regression.
+
+**Developer story:** Transfer behavior was hardened first, then the evidence
+path was reviewed from the public call inward. That review showed the manifest
+claim remained stronger than the callable contract. Moving test doubles behind
+private module symbols preserved deterministic offline coverage without
+shipping a verifier bypass.
+
+**How to catch it:** Inspect `inspect.signature(acquire_snapshot)` and require
+exactly five parameters. Reject any production callback that can replace the
+downloader, identity copier, artifact builder, manifest writer, or atomic
+publisher without producing a separately typed non-production result.
+
+**Solutions tried:**
+
+1. `48/100` Keep callbacks undocumented: does not reduce programmatic access or
+   make resulting evidence truthful.
+2. `72/100` Label callback-backed results as test evidence: adds schema branches
+   and leaves a production API capable of bypassing its own guard.
+3. `97/100` Remove callbacks from the runtime signature and patch private module
+   boundaries only inside offline tests.
+
+**Current solution:** The production function unconditionally calls
+`_load_default_downloader()` and `build_artifact_manifest()`. The regression
+locks the exact public signature and the existing behavior tests patch those
+private names only for their duration.
+
+**Decision rationale:** The CLI owns one production behavior, so a single
+unbypassable path is simpler and more truthful than supporting pluggable
+components that the artifact schema cannot distinguish.
+
+**Effectiveness:** `94/100`, durable. The bypass is absent from source and
+signature, focused tests cover the real call chain shape, and no production
+payload was needed to prove the contract.
+
+**Relevance check:** Current. The acquisition manifest is the admission record
+for the next P3 model load and must remain stronger than caller-controlled test
+doubles.
+
+**Next prevention step:** Keep future test seams private or give alternate
+execution paths an explicitly non-production schema that cannot satisfy parity
+admission.
+
+## F-0034: Network Permission Is Not Observed Network Use
+
+Status: Resolved before the first acquisition manifest was published; evidence
+schema 2 carries the distinction.
+
+### Q: What pitfall are we preventing?
+
+**What:** The first execution result wrote `network_used=true` whenever Hub was
+called with `local_files_only=False`. That overclaimed observation: a pinned
+commit already present in Hub's cache can return locally without a request.
+
+**Context and constraints:** Acquisition must support interrupted-download
+resume and complete cache reuse. Its manifest is durable parity-admission
+evidence, so mode, permission, and observed activity cannot be conflated.
+
+**Why it happened:** The field described intended execution mode rather than a
+measured transport event. The downloader call itself exposes no stable byte or
+request counter to this wrapper.
+
+**Where:** Acquisition evidence fields in
+`tools/lfm2_vl/reference/acquire_snapshot.py`.
+
+**Evidence:** The installed Hub source short-circuits an immutable 40-character
+commit to an existing snapshot pointer before its metadata request path. The
+offline acquisition tests also use local sources, making the old unconditional
+`true` observably wrong even though those results were never published.
+
+**Developer story:** Cache preservation was added for safe retries, which made
+network-free success a first-class valid case. Reviewing the resulting manifest
+then exposed that its Boolean encoded permission, not observation. The evidence
+was versioned before the first real acquisition rather than preserving an
+ambiguous field for compatibility that did not yet exist.
+
+**How to catch it:** Require schema 2 plans to report
+`network_policy=disabled` and `network_used=false`; require execution to report
+`network_policy=permitted-cache-aware` and `network_used=null` unless a future
+transport hook measures requests directly.
+
+**Solutions tried:**
+
+1. `18/100` Keep `true` as shorthand for network-enabled mode: produces a false
+   factual claim on complete cache hits.
+2. `61/100` Infer use from cache files or timestamps: races with resume state
+   and cannot account reliably for metadata requests.
+3. `78/100` Replace Hub's client with an instrumented transport: measurable but
+   adds a fragile dependency on internal request plumbing before it is needed.
+4. `97/100` Version the evidence and represent policy separately from nullable
+   observed use.
+
+**Current solution:** Schema 2 keeps the proven plan Boolean, adds explicit
+network policy, and records actual-run use as unknown under cache-aware Hub
+semantics. Artifact byte identity remains independently exact.
+
+**Decision rationale:** An explicit unknown is more truthful and stable than an
+unmeasured Boolean. Transport instrumentation can be added later without
+retroactively changing what earlier manifests claimed.
+
+**Effectiveness:** `96/100`, durable. Source and tests enforce the distinction
+before any external acquisition evidence exists.
+
+**Relevance check:** Current for every resumed or cache-satisfied production
+artifact acquisition.
+
+**Next prevention step:** If request or byte accounting becomes a product
+requirement, add measured transport fields in a new evidence schema rather than
+deriving them from cache state.
+
+## F-0035: Process Cleanup Does Not Prove Filesystem Cleanup After a Hard Kill
+
+Status: Resolved for acquisition admission; first live termination remains an
+operational watch item.
+
+### Q: What pitfall are we preventing?
+
+**What:** A Job Object can prove the Python process tree is gone while a hard
+timeout or memory termination prevents Python `finally` cleanup, leaving a
+large staging directory, final snapshot without its manifest, or unmatched
+manifest on disk.
+
+**Context and constraints:** The 1.6B transfer uses a resumable cache and copies
+3.2 GB into a clean snapshot before two-path snapshot/manifest publication.
+Automatic deletion after a crash could destroy recoverable bytes or remove a
+path still owned by another process.
+
+**Why it happened:** Process containment and filesystem transactionality are
+different contracts. Directory rename is atomic, but snapshot and external
+manifest publication cannot be one atomic operation across two paths, and a
+forceful owner termination does not run language-level cleanup.
+
+**Where:** Acquisition staging/output/manifest paths and the bounded Windows
+owner used for the real transfer.
+
+**Evidence:** Offline tests simulate stale PID-bearing snapshot and manifest
+staging, caught transfer failure, staging-cleanup failure, manifest rollback,
+and rollback failure. The plan now refuses every stale stage or pre-existing
+final output/manifest rather than silently reusing or deleting it; 27/27
+focused tests pass.
+
+**Developer story:** The bounded command initially appeared to guarantee a
+clean retry because it guarantees child exit. Reviewing the kill boundary
+showed that this guarantee ends at the process table. The acquisition owner was
+therefore made cache-resumable but filesystem fail-closed, with leftovers kept
+visible for exact operator inspection.
+
+**How to catch it:** After any nonzero or terminated owner result, require the
+exact PID to be absent and inspect the cache, `.<snapshot>.partial-<pid>-*`,
+`.<manifest>.tmp-<pid>`, final snapshot, and manifest paths. A new `--plan`
+must refuse any unmatched state before disk or network work.
+
+**Solutions tried:**
+
+1. `24/100` Assume `finally` runs because the wrapper waits for exit: false for
+   hard termination.
+2. `58/100` Delete matching partial paths automatically on startup: risks data
+   loss, races an owner, and hides forensic evidence.
+3. `81/100` Keep only process cleanup evidence: necessary but incomplete for a
+   multi-gigabyte filesystem workflow.
+4. `96/100` Use PID-bearing staging, preserve resumable cache, fail closed on
+   every leftover, and require explicit inspection before retry.
+
+**Current solution:** Caught failures remove staging and retain cache. Cleanup
+or rollback failures identify the exact path and prohibit loading. Hard-kill
+leftovers are detected by the next plan and never auto-trusted or auto-deleted.
+
+**Decision rationale:** Fail-closed inspection preserves recoverable data and
+makes ambiguous state visible without weakening exact artifact admission.
+
+**Effectiveness:** `94/100`, durable with watch. The expanded offline failure
+matrix is green; no deliberate kill was applied to a live multi-gigabyte
+transfer.
+
+**Relevance check:** Current for P3 acquisition and any future bounded artifact
+workflow that publishes data plus separate evidence.
+
+**Next prevention step:** If the first authorized run terminates, retain the
+owner report and exact leftover inventory before any manual removal or retry.
+
+## F-0036: Atomic Replacement Is Not Atomic Exclusive Publication
+
+Status: Resolved across the audited source surface before the first 1.6B
+download. Python, PowerShell, and native Windows regressions are green; the
+Linux native-trace replay is retained as TODO C3 because this WSL installation
+has no Rust toolchain.
+
+### Q: What pitfall are we preventing?
+
+**What:** Checking that an output is absent and later calling a replacement
+primitive does not guarantee exclusive publication. A report, manifest, or
+directory created during that window can be overwritten even though the final
+operation itself is atomic.
+
+**Context and constraints:** The acquisition owner verifies a 3.2 GB snapshot
+before publishing it beside separately owned evidence. Existing external paths
+belong to the operator and must never be silently replaced, even when the
+incoming data is valid and each individual rename is atomic.
+
+**Why it happened:** Atomicity and exclusivity were treated as the same
+property. The initial implementation had an absence check followed by a
+replacement primitive, leaving a time-of-check/time-of-use window whose final
+operation explicitly permitted replacement.
+
+**Where:** Snapshot and manifest publication, config/GGUF/comparison reports,
+split-MMProj export, native trace directories, and PowerShell bounded-owner and
+preflight evidence. The shared Python boundary is
+`tools/lfm2_vl/reference/manifest.py`; specialized publication remains in
+`acquire_snapshot.py`, `tools/export_lfm2_vl_mmproj.py`, and
+`candle-examples/examples/lfm2-vl/trace.rs`.
+
+**Evidence:** The first source inspection found `os.replace(stage, output)`
+and check-then-`os.replace(temporary, path)` in acquisition. A follow-up writer
+inventory found the same semantic gap in comparison/config/GGUF reports,
+split-MMProj export, native trace publication, and two PowerShell writers. A
+controlled WSL temporary-directory probe confirmed that Linux replacement can
+remove an empty destination directory. The corrected current tree passes the
+81-test pinned Python suite, 29 native example tests, and PowerShell 7/5.1
+bounded-owner and preflight smokes; race tests preserve competing owner files
+and directories. The current WSL Rust replay stopped before compilation with
+`cargo: command not found`; an offline Windows-hosted Linux-target check then
+stopped at `openssl-sys` because no Linux OpenSSL sysroot is configured. No
+Linux native-trace compile or execution result is claimed.
+
+**Developer story:** Crash-safety review first established that unmatched
+snapshot and manifest paths must block retry. Inspecting the successful
+publication path then showed that an external writer could enter after the
+plan and before replacement. The turning point was separating “one atomic
+rename” from “an atomic rename that refuses an existing target.” Applying that
+lesson as a writer inventory, rather than a one-file patch, exposed every
+remaining durable evidence path before any 1.6B bytes were acquired.
+
+**How to catch it:** Inject a competing destination after the writer has
+completed its sibling temporary but before publication. Require the owner path
+to remain byte-identical, the incoming temporary/stage to clean up, and every
+CLI to require an explicit overwrite option for intentional replacement.
+Exercise platform-specific directory publication on Windows and Linux.
+
+**Solutions tried:**
+
+1. `31/100` Keep the absence check plus `os.replace`: simple and atomic, but
+   explicitly permits the race outcome we must refuse.
+2. `59/100` Add a cooperative sibling lock file: coordinates this tool but
+   cannot protect against an external writer that does not honor the lock.
+3. `68/100` Create the final directory exclusively and copy into it: refuses a
+   collision but exposes an incomplete snapshot under its final name.
+4. `97/100` Use OS-native no-replace directory rename and publish a fully
+   flushed manifest through a same-filesystem no-clobber hard link.
+
+**Current solution:** Shared Python JSON/report bytes are written exclusively,
+flushed and fsynced in a sibling temporary file, then hard-linked to an absent
+final path; the split-MMProj exporter uses the same pattern. PowerShell uses
+`System.IO.File.Move` unless force is explicit. Windows directory rename
+refuses an existing target; Linux uses `renameat2(RENAME_NOREPLACE)` and
+unsupported platforms fail closed. Acquisition rollback uses the same
+exclusive directory primitive, and stale manifest staging blocks the next
+plan.
+
+**Decision rationale:** These primitives keep final evidence invisible until
+complete, make collision refusal part of the committing operation, add no
+dependency, and preserve every competing owner path. Replacement remains
+available only through an output's explicitly documented overwrite/force mode.
+
+**Effectiveness:** `94/100`, durable on the proven Windows/Python/PowerShell
+lanes. The missing six points are the unexecuted Linux native-trace Rust
+regression and the first authorized multi-gigabyte operational use.
+
+**Relevance check:** Current. The next P3 action is the first real acquisition
+use, while routine report and trace paths now share the same default.
+
+**Next prevention step:** Retain the first authorized acquisition's exact
+output/manifest inventory, then run TODO C3's exact Linux native-trace collision
+test when a local WSL Rust toolchain is available.
 
 ---
-AI-edited: 2026-08-10T15:34:55-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=resource-pitfall | change=corrected restart-required recovery, ranked incident evidence, and recorded the smoke-proven suspended Job Object wrapper
+AI-edited: 2026-08-11T09:33:07-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=review | change=broadened exclusive-publication evidence and remaining Linux replay

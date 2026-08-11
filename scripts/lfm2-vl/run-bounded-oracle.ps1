@@ -21,6 +21,10 @@ param(
     [int]$PollMilliseconds = 250,
 
     [Parameter()]
+    [ValidateSet("Name", "Executable")]
+    [string]$ConcurrencyScope = "Name",
+
+    [Parameter()]
     [ValidateNotNullOrEmpty()]
     [string]$WorkingDirectory = (Get-Location).Path,
 
@@ -29,7 +33,14 @@ param(
     [string]$EvidencePath,
 
     [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [string]$LogPath,
+
+    [Parameter()]
     [switch]$ForceEvidence,
+
+    [Parameter()]
+    [switch]$ForceLog,
 
     [Parameter()]
     [switch]$RedactArguments,
@@ -41,6 +52,15 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+function ConvertTo-ProcessCounterBytes {
+    param([Parameter(Mandatory)][Int64]$Value)
+
+    if ($Value -le 0) {
+        return [UInt64]0
+    }
+    return [UInt64]$Value
+}
+
 $contract = "candle-lfm2-vl-bounded-oracle-v1"
 $killOnJobClose = [UInt32]0x00002000
 $processMemoryLimit = [UInt32]0x00000100
@@ -48,6 +68,15 @@ $jobMemoryLimit = [UInt32]0x00000200
 $createSuspended = [UInt32]0x00000004
 $createUnicodeEnvironment = [UInt32]0x00000400
 $createNoWindow = [UInt32]0x08000000
+$startfUseStdHandles = [UInt32]0x00000100
+$genericRead = [UInt32]2147483648
+$genericWrite = [UInt32]0x40000000
+$fileShareRead = [UInt32]0x00000001
+$fileShareWrite = [UInt32]0x00000002
+$createNew = [UInt32]0x00000001
+$createAlways = [UInt32]0x00000002
+$openExisting = [UInt32]0x00000003
+$fileAttributeNormal = [UInt32]0x00000080
 $invalidSuspendCount = [UInt32]::MaxValue
 
 if (-not ("CandleLfm2VlOracleJobNative" -as [type])) {
@@ -124,6 +153,15 @@ public struct CandleLfm2VlProcessInformation
     public uint ThreadId;
 }
 
+[StructLayout(LayoutKind.Sequential)]
+public struct CandleLfm2VlSecurityAttributes
+{
+    public int Length;
+    public IntPtr SecurityDescriptor;
+    [MarshalAs(UnmanagedType.Bool)]
+    public bool InheritHandle;
+}
+
 public static class CandleLfm2VlOracleJobNative
 {
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
@@ -176,6 +214,16 @@ public static class CandleLfm2VlOracleJobNative
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool GetExitCodeProcess(IntPtr process, out uint exitCode);
 
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern IntPtr CreateFileW(
+        string fileName,
+        uint desiredAccess,
+        uint shareMode,
+        ref CandleLfm2VlSecurityAttributes securityAttributes,
+        uint creationDisposition,
+        uint flagsAndAttributes,
+        IntPtr templateFile);
+
     [DllImport("kernel32.dll", SetLastError = true)]
     public static extern uint ResumeThread(IntPtr thread);
 
@@ -187,7 +235,7 @@ public static class CandleLfm2VlOracleJobNative
     {
         if (argument == null)
         {
-            throw new ArgumentNullException(nameof(argument));
+            throw new ArgumentNullException("argument");
         }
         if (argument.Length > 0 && argument.IndexOfAny(new[] { ' ', '\t', '\n', '\v', '"' }) < 0)
         {
@@ -221,6 +269,77 @@ public static class CandleLfm2VlOracleJobNative
     }
 }
 '@ -ErrorAction Stop
+}
+
+if (-not ("CandleLfm2VlMemoryNative" -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+
+public static class CandleLfm2VlMemoryNative
+{
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MemoryStatusEx
+    {
+        public uint Length;
+        public uint MemoryLoad;
+        public ulong TotalPhysical;
+        public ulong AvailablePhysical;
+        public ulong TotalPageFile;
+        public ulong AvailablePageFile;
+        public ulong TotalVirtual;
+        public ulong AvailableVirtual;
+        public ulong AvailableExtendedVirtual;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GlobalMemoryStatusEx(ref MemoryStatusEx status);
+
+    public static ulong GetTotalPhysicalMemoryBytes()
+    {
+        var status = new MemoryStatusEx
+        {
+            Length = (uint)Marshal.SizeOf<MemoryStatusEx>()
+        };
+        if (!GlobalMemoryStatusEx(ref status) || status.TotalPhysical == 0)
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(),
+                "GlobalMemoryStatusEx did not return physical memory");
+        }
+        return status.TotalPhysical;
+    }
+}
+'@ -ErrorAction Stop
+}
+
+function Get-TotalPhysicalMemory {
+    try {
+        $computer = Get-CimInstance Win32_ComputerSystem -ErrorAction Stop
+        $bytes = [UInt64]$computer.TotalPhysicalMemory
+        if ($bytes -gt 0) {
+            return [pscustomobject]@{
+                Bytes = $bytes
+                Source = "Win32_ComputerSystem"
+            }
+        }
+        $cimError = "Win32_ComputerSystem returned zero physical memory"
+    }
+    catch {
+        $cimError = $_.Exception.Message
+    }
+
+    try {
+        $bytes = [CandleLfm2VlMemoryNative]::GetTotalPhysicalMemoryBytes()
+        return [pscustomobject]@{
+            Bytes = [UInt64]$bytes
+            Source = "GlobalMemoryStatusEx"
+        }
+    }
+    catch {
+        throw "unable to determine host physical memory; CIM=$cimError; GlobalMemoryStatusEx=$($_.Exception.Message)"
+    }
 }
 
 function Get-ResolvedLeafPath {
@@ -384,7 +503,9 @@ function New-SuspendedProcess {
         [Parameter(Mandatory)][string]$Executable,
         [Parameter(Mandatory)][string[]]$Arguments,
         [Parameter(Mandatory)][string]$Directory,
-        [Parameter(Mandatory)][bool]$DisableCudaGraphs
+        [Parameter(Mandatory)][bool]$DisableCudaGraphs,
+        [Parameter()][string]$CombinedLogPath,
+        [Parameter(Mandatory)][bool]$OverwriteLog
     )
 
     $tokens = @(
@@ -398,16 +519,66 @@ function New-SuspendedProcess {
     $startup.Size = [UInt32][Runtime.InteropServices.Marshal]::SizeOf($startup)
     $information = [CandleLfm2VlProcessInformation]::new()
     $environment = New-UnicodeEnvironmentBlock -DisableCudaGraphs $DisableCudaGraphs
+    $logHandle = [IntPtr]::Zero
+    $inputHandle = [IntPtr]::Zero
     try {
-        $creationFlags = $script:createSuspended -bor
-            $script:createUnicodeEnvironment -bor
-            $script:createNoWindow
+        $inheritHandles = $false
+        if (-not [string]::IsNullOrWhiteSpace($CombinedLogPath)) {
+            $disposition = if ($OverwriteLog) {
+                $script:createAlways
+            }
+            else {
+                $script:createNew
+            }
+            $security = [CandleLfm2VlSecurityAttributes]::new()
+            $security.Length = [Runtime.InteropServices.Marshal]::SizeOf($security)
+            $security.InheritHandle = $true
+            $logHandle = [CandleLfm2VlOracleJobNative]::CreateFileW(
+                $CombinedLogPath,
+                $script:genericWrite,
+                ($script:fileShareRead -bor $script:fileShareWrite),
+                [ref]$security,
+                $disposition,
+                $script:fileAttributeNormal,
+                [IntPtr]::Zero
+            )
+            if ($logHandle -eq [IntPtr]::new(-1)) {
+                throw [ComponentModel.Win32Exception]::new(
+                    [Runtime.InteropServices.Marshal]::GetLastWin32Error(),
+                    "creating bounded-oracle combined log $CombinedLogPath"
+                )
+            }
+            $inputHandle = [CandleLfm2VlOracleJobNative]::CreateFileW(
+                "NUL",
+                $script:genericRead,
+                ($script:fileShareRead -bor $script:fileShareWrite),
+                [ref]$security,
+                $script:openExisting,
+                $script:fileAttributeNormal,
+                [IntPtr]::Zero
+            )
+            if ($inputHandle -eq [IntPtr]::new(-1)) {
+                throw [ComponentModel.Win32Exception]::new(
+                    [Runtime.InteropServices.Marshal]::GetLastWin32Error(),
+                    "opening NUL for bounded-oracle standard input"
+                )
+            }
+            $startup.Flags = $script:startfUseStdHandles
+            $startup.StandardInput = $inputHandle
+            $startup.StandardOutput = $logHandle
+            $startup.StandardError = $logHandle
+            $inheritHandles = $true
+        }
+        $creationFlags = $script:createSuspended -bor $script:createUnicodeEnvironment
+        if ([string]::IsNullOrWhiteSpace($CombinedLogPath)) {
+            $creationFlags = $creationFlags -bor $script:createNoWindow
+        }
         if (-not [CandleLfm2VlOracleJobNative]::CreateProcessW(
                 $Executable,
                 $commandLine,
                 [IntPtr]::Zero,
                 [IntPtr]::Zero,
-                $false,
+                $inheritHandles,
                 $creationFlags,
                 $environment,
                 $Directory,
@@ -422,6 +593,12 @@ function New-SuspendedProcess {
     }
     finally {
         [Runtime.InteropServices.Marshal]::FreeHGlobal($environment)
+        if ($inputHandle -ne [IntPtr]::Zero -and $inputHandle -ne [IntPtr]::new(-1)) {
+            [void][CandleLfm2VlOracleJobNative]::CloseHandle($inputHandle)
+        }
+        if ($logHandle -ne [IntPtr]::Zero -and $logHandle -ne [IntPtr]::new(-1)) {
+            [void][CandleLfm2VlOracleJobNative]::CloseHandle($logHandle)
+        }
     }
     return [pscustomobject]@{
         ProcessId = [int]$information.ProcessId
@@ -489,7 +666,12 @@ function Write-OracleEvidence {
             $json + [Environment]::NewLine,
             [Text.UTF8Encoding]::new($false)
         )
-        Move-Item -LiteralPath $temporary -Destination $Path -Force:$Overwrite
+        if ($Overwrite) {
+            Move-Item -LiteralPath $temporary -Destination $Path -Force
+        }
+        else {
+            [IO.File]::Move($temporary, $Path)
+        }
     }
     finally {
         if (Test-Path -LiteralPath $temporary) {
@@ -501,8 +683,22 @@ function Write-OracleEvidence {
 $resolvedExecutable = Get-ResolvedLeafPath -Path $FilePath -Label "oracle executable"
 $resolvedWorkingDirectory = Get-ResolvedDirectoryPath -Path $WorkingDirectory -Label "working directory"
 $resolvedEvidencePath = Get-EvidenceFullPath -Path $EvidencePath
+$resolvedLogPath = if ([string]::IsNullOrWhiteSpace($LogPath)) {
+    $null
+}
+else {
+    Get-EvidenceFullPath -Path $LogPath
+}
 if ((Test-Path -LiteralPath $resolvedEvidencePath) -and -not $ForceEvidence) {
     throw "evidence path already exists; use -ForceEvidence to replace it: $resolvedEvidencePath"
+}
+if ($null -ne $resolvedLogPath) {
+    if ($resolvedLogPath.Equals($resolvedEvidencePath, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "log path and evidence path must be different"
+    }
+    if ((Test-Path -LiteralPath $resolvedLogPath) -and -not $ForceLog) {
+        throw "log path already exists; use -ForceLog to replace it: $resolvedLogPath"
+    }
 }
 foreach ($argument in $ArgumentList) {
     if ($null -eq $argument -or $argument.Contains([char]0)) {
@@ -510,15 +706,22 @@ foreach ($argument in $ArgumentList) {
     }
 }
 
-$computer = Get-CimInstance Win32_ComputerSystem
-$totalPhysicalBytes = [UInt64]$computer.TotalPhysicalMemory
+$physicalMemory = Get-TotalPhysicalMemory
+$totalPhysicalBytes = [UInt64]$physicalMemory.Bytes
+$physicalMemorySource = [string]$physicalMemory.Source
 $maximumSafeLimit = $totalPhysicalBytes - [UInt64]($totalPhysicalBytes / 4)
 if ($MaxJobMemoryBytes -gt $maximumSafeLimit) {
     throw "requested job memory ceiling $MaxJobMemoryBytes exceeds 75% of host physical memory $totalPhysicalBytes"
 }
 
 $pathBytes = [Text.Encoding]::UTF8.GetBytes($resolvedExecutable.ToUpperInvariant())
-$pathHash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($pathBytes))
+$pathHasher = [Security.Cryptography.SHA256]::Create()
+try {
+    $pathHash = ([BitConverter]::ToString($pathHasher.ComputeHash($pathBytes))).Replace("-", "")
+}
+finally {
+    $pathHasher.Dispose()
+}
 $mutexName = "Local\CandleLfm2VlOracle-$($pathHash.Substring(0, 24))"
 $mutex = [Threading.Mutex]::new($false, $mutexName)
 $mutexAcquired = $false
@@ -534,10 +737,38 @@ try {
     }
 
     $processName = [IO.Path]::GetFileNameWithoutExtension($resolvedExecutable)
-    $existing = @(Get-Process -Name $processName -ErrorAction SilentlyContinue)
-    if ($existing.Count -ne 0) {
-        $existingIds = ($existing.Id | Sort-Object) -join ", "
+    $sameNameProcesses = @(Get-Process -Name $processName -ErrorAction SilentlyContinue)
+    if ($ConcurrencyScope -eq "Name" -and $sameNameProcesses.Count -ne 0) {
+        $existingIds = ($sameNameProcesses.Id | Sort-Object) -join ", "
         throw "refusing concurrent launch: process name $processName is already running as PID(s) $existingIds"
+    }
+    if ($ConcurrencyScope -eq "Executable" -and $sameNameProcesses.Count -ne 0) {
+        $matchingIds = [Collections.Generic.List[int]]::new()
+        $unresolvedIds = [Collections.Generic.List[int]]::new()
+        foreach ($candidate in $sameNameProcesses) {
+            try {
+                $candidatePath = $candidate.Path
+                if ([string]::IsNullOrWhiteSpace($candidatePath)) {
+                    $unresolvedIds.Add($candidate.Id)
+                    continue
+                }
+                $candidateFullPath = [IO.Path]::GetFullPath($candidatePath)
+                if ($candidateFullPath.Equals($resolvedExecutable, [StringComparison]::OrdinalIgnoreCase)) {
+                    $matchingIds.Add($candidate.Id)
+                }
+            }
+            catch {
+                $unresolvedIds.Add($candidate.Id)
+            }
+        }
+        if ($unresolvedIds.Count -ne 0) {
+            $ids = ($unresolvedIds | Sort-Object) -join ", "
+            throw "refusing concurrent launch: executable identity is unavailable for same-name PID(s) $ids"
+        }
+        if ($matchingIds.Count -ne 0) {
+            $ids = ($matchingIds | Sort-Object) -join ", "
+            throw "refusing concurrent launch: executable $resolvedExecutable is already running as PID(s) $ids"
+        }
     }
 
     $executableInfo = Get-Item -LiteralPath $resolvedExecutable
@@ -568,7 +799,9 @@ try {
             -Executable $resolvedExecutable `
             -Arguments $ArgumentList `
             -Directory $resolvedWorkingDirectory `
-            -DisableCudaGraphs (-not [bool]$AllowCudaGraphs)
+            -DisableCudaGraphs (-not [bool]$AllowCudaGraphs) `
+            -CombinedLogPath $resolvedLogPath `
+            -OverwriteLog ([bool]$ForceLog)
         $nativeProcessHandle = $nativeProcess.ProcessHandle
         $nativeThreadHandle = $nativeProcess.ThreadHandle
         $processId = $nativeProcess.ProcessId
@@ -603,8 +836,8 @@ try {
 
         while (-not $process.WaitForExit($PollMilliseconds)) {
             $process.Refresh()
-            $privateBytes = [UInt64][Math]::Max(0, $process.PrivateMemorySize64)
-            $workingSetBytes = [UInt64][Math]::Max(0, $process.WorkingSet64)
+            $privateBytes = ConvertTo-ProcessCounterBytes -Value $process.PrivateMemorySize64
+            $workingSetBytes = ConvertTo-ProcessCounterBytes -Value $process.WorkingSet64
             if ($privateBytes -gt $peakPrivateBytes) {
                 $peakPrivateBytes = $privateBytes
             }
@@ -708,6 +941,16 @@ try {
         else {
             @($ArgumentList)
         }
+        $logInfo = if ($null -ne $resolvedLogPath -and (Test-Path -LiteralPath $resolvedLogPath -PathType Leaf)) {
+            $item = Get-Item -LiteralPath $resolvedLogPath
+            [pscustomobject]@{
+                Bytes = [UInt64]$item.Length
+                Sha256 = (Get-FileHash -LiteralPath $resolvedLogPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            }
+        }
+        else {
+            $null
+        }
         $evidence = [ordered]@{
             contract = $contract
             executable_path = $resolvedExecutable
@@ -715,6 +958,9 @@ try {
             executable_sha256 = $executableHash
             arguments = $reportedArguments
             arguments_redacted = [bool]$RedactArguments
+            combined_log_path = $resolvedLogPath
+            combined_log_bytes = if ($null -ne $logInfo) { $logInfo.Bytes } else { $null }
+            combined_log_sha256 = if ($null -ne $logInfo) { $logInfo.Sha256 } else { $null }
             cuda_graphs_disabled = -not [bool]$AllowCudaGraphs
             working_directory = $resolvedWorkingDirectory
             pid = $processId
@@ -724,7 +970,9 @@ try {
             timeout_seconds = $TimeoutSeconds
             max_job_memory_bytes = $MaxJobMemoryBytes
             total_physical_memory_bytes = $totalPhysicalBytes
+            physical_memory_source = $physicalMemorySource
             poll_milliseconds = $PollMilliseconds
+            concurrency_scope = $ConcurrencyScope
             job_assigned = $jobAssigned
             started_suspended = $startedSuspended
             assigned_before_resume = $assignedBeforeResume

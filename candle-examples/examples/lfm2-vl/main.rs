@@ -9,6 +9,7 @@ mod loading;
 mod native_checkpoint;
 mod native_loading;
 mod runner;
+mod trace;
 
 use anyhow::Result;
 use args::{Args, InferenceArgs, MmprojArg, ModelSource, ParseOutcome};
@@ -219,6 +220,7 @@ fn inference_request<'a>(
         max_new_tokens: inference.max_new_tokens,
         vision_batch_size: inference.vision_batch_size,
         eos_token_id: inference.eos_token_id,
+        trace_output: inference.trace_output.as_deref(),
     }
 }
 

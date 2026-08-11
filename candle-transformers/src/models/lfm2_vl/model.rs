@@ -74,6 +74,49 @@ pub struct EncodedImages {
     pub per_crop_ranges: Vec<Range<usize>>,
 }
 
+/// Vision and projector tensors captured by the bounded native parity trace.
+///
+/// The trace API is deliberately separate from ordinary inference so callers
+/// cannot accidentally retain all intermediate activations during production
+/// generation. The example trace lane currently accepts one crop at a time;
+/// this keeps its peak memory bounded while matching the first production
+/// parity checkpoint's deterministic single-image input contract.
+#[derive(Debug)]
+pub struct Lfm2VlImageTrace {
+    pub vision_patch_embedding: Tensor,
+    pub vision_resized_position_embedding: Tensor,
+    pub vision_embeddings_with_position: Tensor,
+    pub vision_encoder_layers: Vec<Tensor>,
+    pub vision_last_hidden_state: Tensor,
+    pub projector: Lfm2VlProjectorTrace,
+}
+
+#[derive(Debug)]
+pub struct Lfm2VlProjectorTrace {
+    pub input: Tensor,
+    pub pixel_unshuffle: Tensor,
+    pub layer_norm: Option<Tensor>,
+    pub linear_1: Tensor,
+    pub activation: Tensor,
+    pub linear_2: Tensor,
+    pub output: Tensor,
+}
+
+#[derive(Debug)]
+pub struct Lfm2VlPrefillTrace {
+    pub input_embeddings: Tensor,
+    pub merged_embeddings: Tensor,
+    pub hidden_states: Tensor,
+    pub logits: Tensor,
+}
+
+#[derive(Debug)]
+pub struct Lfm2VlDecodeTrace {
+    pub input_embeddings: Tensor,
+    pub hidden_states: Tensor,
+    pub logits: Tensor,
+}
+
 #[derive(Debug)]
 pub struct Lfm2VlModel {
     vision_tower: siglip2::Siglip2VisionModel,
@@ -216,6 +259,28 @@ impl Lfm2VlModel {
         )
     }
 
+    /// Encode one crop while retaining the selected vision/projector stages.
+    ///
+    /// This is an explicit parity/debugging API. It is not used by ordinary
+    /// inference and rejects multi-crop batches to keep activation retention
+    /// bounded and deterministic.
+    pub fn encode_images_with_trace(
+        &self,
+        inputs: &ProcessedVisionBatch,
+        vision_batch_size: usize,
+        limits: &VisionLimits,
+    ) -> Result<(EncodedImages, Lfm2VlImageTrace)> {
+        encode_images_with_parts_trace(
+            &self.vision_tower,
+            &self.projector,
+            &self.config.vision_config,
+            self.config.downsample_factor,
+            inputs,
+            vision_batch_size,
+            limits,
+        )
+    }
+
     pub fn merge_image_embeddings(
         &self,
         input_ids: &Tensor,
@@ -239,18 +304,30 @@ impl Lfm2VlModel {
         encoded_images: Option<&EncodedImages>,
         cache: &mut lfm2::Cache,
     ) -> Result<Tensor> {
+        Ok(self
+            .prefill_with_trace(input_ids, image_spans, encoded_images, cache)?
+            .logits)
+    }
+
+    pub fn prefill_with_trace(
+        &self,
+        input_ids: &Tensor,
+        image_spans: &[ImageTokenSpan],
+        encoded_images: Option<&EncodedImages>,
+        cache: &mut lfm2::Cache,
+    ) -> Result<Lfm2VlPrefillTrace> {
         let input_ids_values = input_ids.to_dtype(DType::U32)?.to_vec2::<u32>()?;
         let image_token_count = input_ids_values
             .iter()
             .flat_map(|row| row.iter())
             .filter(|&&token_id| token_id == self.image_token_id)
             .count();
-        let input_embeds = self.language_model.embed_tokens(input_ids)?;
-        let input_embeds = if image_token_count == 0 {
+        let input_embeddings = self.language_model.embed_tokens(input_ids)?;
+        let merged_embeddings = if image_token_count == 0 {
             if !image_spans.is_empty() || encoded_images.is_some() {
                 candle::bail!("LFM2-VL image spans/features were supplied without image tokens")
             }
-            input_embeds
+            input_embeddings.clone()
         } else {
             let encoded_images = encoded_images.ok_or_else(|| {
                 candle::Error::Msg("LFM2-VL image tokens require encoded image features".into())
@@ -258,12 +335,18 @@ impl Lfm2VlModel {
             if image_spans.is_empty() {
                 candle::bail!("LFM2-VL image tokens require explicit image spans")
             }
-            self.merge_image_embeddings(input_ids, &input_embeds, image_spans, encoded_images)?
+            self.merge_image_embeddings(input_ids, &input_embeddings, image_spans, encoded_images)?
         };
         let hidden = self
             .language_model
-            .forward_hidden(&input_embeds, 0, cache)?;
-        self.language_model.project_logits(&hidden, 0)
+            .forward_hidden(&merged_embeddings, 0, cache)?;
+        let logits = self.language_model.project_logits(&hidden, 0)?;
+        Ok(Lfm2VlPrefillTrace {
+            input_embeddings,
+            merged_embeddings,
+            hidden_states: hidden,
+            logits,
+        })
     }
 
     pub fn decode(
@@ -274,6 +357,25 @@ impl Lfm2VlModel {
     ) -> Result<Tensor> {
         token_ids.dims2()?;
         self.language_model.forward(token_ids, index_pos, cache)
+    }
+
+    pub fn decode_with_trace(
+        &self,
+        token_ids: &Tensor,
+        index_pos: usize,
+        cache: &mut lfm2::Cache,
+    ) -> Result<Lfm2VlDecodeTrace> {
+        token_ids.dims2()?;
+        let input_embeddings = self.language_model.embed_tokens(token_ids)?;
+        let hidden_states =
+            self.language_model
+                .forward_hidden(&input_embeddings, index_pos, cache)?;
+        let logits = self.language_model.project_logits(&hidden_states, 1)?;
+        Ok(Lfm2VlDecodeTrace {
+            input_embeddings,
+            hidden_states,
+            logits,
+        })
     }
 }
 
@@ -367,6 +469,70 @@ pub(super) fn encode_images_with_parts(
     vision_batch_size: usize,
     limits: &VisionLimits,
 ) -> Result<EncodedImages> {
+    let (encoded, _) = encode_images_with_parts_internal(ImageEncodeRequest {
+        vision_tower,
+        projector,
+        vision_config,
+        downsample_factor,
+        inputs,
+        vision_batch_size,
+        limits,
+        capture_trace: false,
+    })?;
+    Ok(encoded)
+}
+
+struct ImageEncodeRequest<'a> {
+    vision_tower: &'a siglip2::Siglip2VisionModel,
+    projector: &'a Lfm2VlProjector,
+    vision_config: &'a siglip2::Siglip2VisionConfig,
+    downsample_factor: usize,
+    inputs: &'a ProcessedVisionBatch,
+    vision_batch_size: usize,
+    limits: &'a VisionLimits,
+    capture_trace: bool,
+}
+
+fn encode_images_with_parts_trace(
+    vision_tower: &siglip2::Siglip2VisionModel,
+    projector: &Lfm2VlProjector,
+    vision_config: &siglip2::Siglip2VisionConfig,
+    downsample_factor: usize,
+    inputs: &ProcessedVisionBatch,
+    vision_batch_size: usize,
+    limits: &VisionLimits,
+) -> Result<(EncodedImages, Lfm2VlImageTrace)> {
+    let (encoded, trace) = encode_images_with_parts_internal(ImageEncodeRequest {
+        vision_tower,
+        projector,
+        vision_config,
+        downsample_factor,
+        inputs,
+        vision_batch_size,
+        limits,
+        capture_trace: true,
+    })?;
+    Ok((
+        encoded,
+        trace.ok_or_else(|| {
+            candle::Error::Msg("LFM2-VL trace capture unexpectedly returned no stages".into())
+        })?,
+    ))
+}
+
+fn encode_images_with_parts_internal(
+    request: ImageEncodeRequest<'_>,
+) -> Result<(EncodedImages, Option<Lfm2VlImageTrace>)> {
+    let ImageEncodeRequest {
+        vision_tower,
+        projector,
+        vision_config,
+        downsample_factor,
+        inputs,
+        vision_batch_size,
+        limits,
+        capture_trace,
+    } = request;
     let expected_patch_dimension = vision_config.patch_dimension_for_vl()?;
     let shapes = preflight_packed_vision_limits(
         inputs,
@@ -376,6 +542,9 @@ pub(super) fn encode_images_with_parts(
         limits,
     )?;
     let (crop_count, _, _) = inputs.pixel_values.dims3()?;
+    if capture_trace && crop_count != 1 {
+        candle::bail!("LFM2-VL native trace requires exactly one image crop; received {crop_count}")
+    }
 
     let mut projected_crops = Vec::new();
     projected_crops
@@ -387,6 +556,7 @@ pub(super) fn encode_images_with_parts(
         .map_err(|_| candle::Error::Msg("LFM2-VL crop-range allocation failed".into()))?;
     let mut offset = 0usize;
     let mut crop_start = 0usize;
+    let mut trace: Option<Lfm2VlImageTrace> = None;
     while crop_start < crop_count {
         let remaining = crop_count - crop_start;
         let chunk_count = remaining.min(vision_batch_size);
@@ -396,11 +566,17 @@ pub(super) fn encode_images_with_parts(
                 .pixel_attention_mask
                 .narrow(0, crop_start, chunk_count)?;
         let spatial_shapes = inputs.spatial_shapes.narrow(0, crop_start, chunk_count)?;
-        let hidden = vision_tower.forward(&siglip2::PackedVisionInputs {
+        let vision_inputs = siglip2::PackedVisionInputs {
             pixel_values: &pixel_values,
             pixel_attention_mask: &pixel_attention_mask,
             spatial_shapes: &spatial_shapes,
-        })?;
+        };
+        let (hidden, vision_stages) = if capture_trace {
+            let stages = vision_tower.forward_stages(&vision_inputs)?;
+            (stages.post_layernorm.clone(), Some(stages))
+        } else {
+            (vision_tower.forward(&vision_inputs)?, None)
+        };
         for local_index in 0..chunk_count {
             let crop_index = crop_start + local_index;
             let (rows, cols) = shapes[crop_index];
@@ -413,16 +589,53 @@ pub(super) fn encode_images_with_parts(
                 cols,
                 vision_config.hidden_size,
             ))?;
-            let projected = projector.forward(&crop_hidden)?.reshape((
-                super::projected_token_count(rows, cols, downsample_factor)?,
-                projector.output_size(),
-            ))?;
+            let (projected, projector_stages) = if capture_trace {
+                let stages = projector.forward_stages(&crop_hidden)?;
+                let projected = stages.output.reshape((
+                    super::projected_token_count(rows, cols, downsample_factor)?,
+                    projector.output_size(),
+                ))?;
+                (projected, Some(stages))
+            } else {
+                let projected = projector.forward(&crop_hidden)?.reshape((
+                    super::projected_token_count(rows, cols, downsample_factor)?,
+                    projector.output_size(),
+                ))?;
+                (projected, None)
+            };
             let token_count = projected.dim(0)?;
             let end = offset
                 .checked_add(token_count)
                 .ok_or_else(|| candle::Error::Msg("LFM2-VL image feature range overflow".into()))?;
             per_crop_ranges.push(offset..end);
             offset = end;
+            if let (Some(vision_stages), Some(projector_stages)) =
+                (vision_stages.as_ref(), projector_stages.as_ref())
+            {
+                let input = crop_hidden.reshape((valid, vision_config.hidden_size))?;
+                trace = Some(Lfm2VlImageTrace {
+                    vision_patch_embedding: vision_stages.embeddings.patch_embedding.clone(),
+                    vision_resized_position_embedding: vision_stages
+                        .embeddings
+                        .resized_position_embedding
+                        .clone(),
+                    vision_embeddings_with_position: vision_stages
+                        .embeddings
+                        .embeddings_with_position
+                        .clone(),
+                    vision_encoder_layers: vision_stages.encoder_layers.clone(),
+                    vision_last_hidden_state: vision_stages.post_layernorm.clone(),
+                    projector: Lfm2VlProjectorTrace {
+                        input,
+                        pixel_unshuffle: projector_stages.pixel_unshuffle.clone(),
+                        layer_norm: projector_stages.layer_norm.clone(),
+                        linear_1: projector_stages.linear_1.clone(),
+                        activation: projector_stages.activation.clone(),
+                        linear_2: projector_stages.linear_2.clone(),
+                        output: projected.clone(),
+                    },
+                });
+            }
             projected_crops.push(projected);
         }
         crop_start += chunk_count;
@@ -436,11 +649,14 @@ pub(super) fn encode_images_with_parts(
     projected_refs.extend(projected_crops.iter());
     let embeddings = Tensor::cat(&projected_refs, 0)?;
     let per_image_ranges = image_ranges_from_crop_ranges(inputs, &per_crop_ranges)?;
-    Ok(EncodedImages {
-        embeddings,
-        per_image_ranges,
-        per_crop_ranges,
-    })
+    Ok((
+        EncodedImages {
+            embeddings,
+            per_image_ranges,
+            per_crop_ranges,
+        },
+        trace,
+    ))
 }
 
 /// Merge projected image features into explicit placeholder spans.

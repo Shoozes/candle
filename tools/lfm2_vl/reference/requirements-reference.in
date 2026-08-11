@@ -1,4 +1,7 @@
-# Python 3.10-3.14; the manager verification lane currently uses Python 3.10.12.
+# Shared direct package pins for the independent CPU oracle. The interpreter
+# guard requires Python 3.10.11 on Windows or Python 3.10.12 on Linux. The
+# resolved requirements-reference.txt lock is Linux x86_64 evidence; resolve
+# this direct file in an isolated owner-managed environment on Windows.
 # The CPU index and local-version suffix prevent an accidental CUDA Torch install.
 --index-url https://download.pytorch.org/whl/cpu
 --extra-index-url https://pypi.org/simple

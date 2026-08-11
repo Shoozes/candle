@@ -7,9 +7,15 @@ from collections import Counter
 import hashlib
 import json
 import math
+import mmap
 import struct
 from pathlib import Path
 from typing import Any
+
+try:
+    from .manifest import write_bytes_atomic
+except ImportError:  # pragma: no cover - direct script execution
+    from manifest import write_bytes_atomic  # type: ignore
 
 
 MAX_PREFIX_BYTES = 4 * 1024 * 1024
@@ -60,15 +66,16 @@ class GgufHeaderError(ValueError):
 
 
 class _Reader:
-    def __init__(self, data: bytes):
+    def __init__(self, data: bytes | mmap.mmap, *, limit: int | None = None):
         self.data = data
+        self.limit = len(data) if limit is None else min(len(data), limit)
         self.offset = 0
 
     def read(self, size: int) -> bytes:
         end = self.offset + size
-        if size < 0 or end > len(self.data):
+        if size < 0 or end > self.limit:
             raise GgufHeaderError(
-                f"GGUF header prefix ended at byte {len(self.data)} while reading "
+                f"GGUF header prefix ended at byte {self.limit} while reading "
                 f"{size} bytes at offset {self.offset}"
             )
         value = self.data[self.offset : end]
@@ -197,23 +204,18 @@ def _tensor_nbytes(shape: list[int], dtype_code: int) -> int | None:
     return element_count // block_size * type_size
 
 
-def inspect_gguf_header(
-    path: Path,
+def _inspect_gguf_data(
+    data: bytes | mmap.mmap,
     *,
     source_url: str | None = None,
     source_revision: str | None = None,
     byte_range: str | None = None,
+    full_file_bytes: int | None = None,
 ) -> dict[str, Any]:
-    """Return stable JSON-compatible metadata from a bounded GGUF prefix."""
-
-    path = path.resolve()
-    size = path.stat().st_size
-    if size == 0 or size > MAX_PREFIX_BYTES:
-        raise GgufHeaderError(
-            f"GGUF header prefix size {size} is outside 1..{MAX_PREFIX_BYTES} bytes"
-        )
-    data = path.read_bytes()
-    reader = _Reader(data)
+    reader = _Reader(
+        data,
+        limit=MAX_PREFIX_BYTES if full_file_bytes is not None else None,
+    )
     if reader.read(4) != b"GGUF":
         raise GgufHeaderError("invalid GGUF magic")
     version = reader.u32()
@@ -265,7 +267,13 @@ def inspect_gguf_header(
     header_end = reader.offset
     alignment = _alignment(metadata)
     tensor_data_offset = ((header_end + alignment - 1) // alignment) * alignment
+    if tensor_data_offset > reader.limit:
+        raise GgufHeaderError(
+            f"GGUF tensor data offset {tensor_data_offset} exceeds bounded header "
+            f"prefix {reader.limit}"
+        )
     maximum_payload_end = tensor_data_offset
+    all_tensor_sizes_known = True
     for tensor in tensors.values():
         nbytes = tensor["nbytes"]
         if nbytes is not None:
@@ -275,8 +283,10 @@ def inspect_gguf_header(
             )
         else:
             tensor["absolute_offset"] = None
+            all_tensor_sizes_known = False
 
-    return {
+    prefix_bytes = tensor_data_offset if full_file_bytes is not None else len(data)
+    result = {
         "format": "gguf-header-prefix",
         "source": {
             "url": source_url,
@@ -284,10 +294,10 @@ def inspect_gguf_header(
             "byte_range": byte_range,
         },
         "prefix": {
-            "bytes": len(data),
-            "sha256": hashlib.sha256(data).hexdigest(),
-            "contains_tensor_payload": len(data) > tensor_data_offset,
-            "contains_complete_file": len(data) >= maximum_payload_end,
+            "bytes": prefix_bytes,
+            "sha256": hashlib.sha256(data[:prefix_bytes]).hexdigest(),
+            "contains_tensor_payload": prefix_bytes > tensor_data_offset,
+            "contains_complete_file": prefix_bytes >= maximum_payload_end,
         },
         "gguf": {
             "version": version,
@@ -301,6 +311,53 @@ def inspect_gguf_header(
             "tensors": dict(sorted(tensors.items())),
         },
     }
+    if full_file_bytes is not None:
+        result["file"] = {
+            "bytes": full_file_bytes,
+            "all_tensor_sizes_known": all_tensor_sizes_known,
+            "matches_declared_file_size": (
+                full_file_bytes == maximum_payload_end
+                if all_tensor_sizes_known
+                else None
+            ),
+        }
+    return result
+
+
+def inspect_gguf_header(
+    path: Path,
+    *,
+    source_url: str | None = None,
+    source_revision: str | None = None,
+    byte_range: str | None = None,
+    full_file: bool = False,
+) -> dict[str, Any]:
+    """Return stable metadata from a bounded prefix or local full GGUF file."""
+
+    path = path.resolve()
+    size = path.stat().st_size
+    if size == 0 or (not full_file and size > MAX_PREFIX_BYTES):
+        noun = "GGUF file" if full_file else "GGUF header prefix"
+        maximum = "unbounded" if full_file else str(MAX_PREFIX_BYTES)
+        raise GgufHeaderError(f"{noun} size {size} is outside 1..{maximum} bytes")
+    if not full_file:
+        return _inspect_gguf_data(
+            path.read_bytes(),
+            source_url=source_url,
+            source_revision=source_revision,
+            byte_range=byte_range,
+        )
+
+    with path.open("rb") as handle, mmap.mmap(
+        handle.fileno(), length=0, access=mmap.ACCESS_READ
+    ) as data:
+        return _inspect_gguf_data(
+            data,
+            source_url=source_url,
+            source_revision=source_revision,
+            byte_range=byte_range,
+            full_file_bytes=size,
+        )
 
 
 def summarize_gguf_header(result: dict[str, Any]) -> dict[str, Any]:
@@ -309,7 +366,7 @@ def summarize_gguf_header(result: dict[str, Any]) -> dict[str, Any]:
     gguf = result["gguf"]
     tensors = gguf["tensors"]
     names = sorted(tensors)
-    return {
+    summary = {
         "format": result["format"],
         "source": result["source"],
         "prefix": result["prefix"],
@@ -327,6 +384,9 @@ def summarize_gguf_header(result: dict[str, Any]) -> dict[str, Any]:
             ).hexdigest(),
         },
     }
+    if "file" in result:
+        summary["file"] = result["file"]
+    return summary
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -336,31 +396,61 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--source-revision")
     parser.add_argument("--byte-range")
     parser.add_argument(
+        "--full-file",
+        action="store_true",
+        help=(
+            "inspect a complete local GGUF while reading and hashing only its "
+            "bounded header prefix"
+        ),
+    )
+    parser.add_argument(
         "--summary-only",
         action="store_true",
         help="emit counts and hashes without the full metadata/tensor table",
     )
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="replace an existing --output file explicitly",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="suppress stdout when --output retains the JSON report",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.quiet and args.output is None:
+        parser.error("--quiet requires --output")
     result = inspect_gguf_header(
         args.path,
         source_url=args.source_url,
         source_revision=args.source_revision,
         byte_range=args.byte_range,
+        full_file=args.full_file,
     )
     if args.summary_only:
         result = summarize_gguf_header(result)
-    compact = json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-    print(compact)
     if args.output:
-        args.output.resolve().write_text(
-            json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
+        write_bytes_atomic(
+            args.output,
+            (
+                json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True)
+                + "\n"
+            ).encode("utf-8"),
+            overwrite=args.overwrite,
+            label="GGUF report output",
         )
+    if not args.quiet:
+        compact = json.dumps(
+            result, ensure_ascii=True, sort_keys=True, separators=(",", ":")
+        )
+        print(compact)
     return 0
 
 

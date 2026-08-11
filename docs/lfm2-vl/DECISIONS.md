@@ -15,7 +15,7 @@ The repository retains upstream Candle history and should keep unrelated diffs m
 
 ## D-0002: WSL2-First Development
 
-Status: Accepted
+Status: Superseded by D-0029
 
 Decision:
 Use a Linux-home WSL2 checkout as the authoritative development and verification environment.
@@ -80,7 +80,7 @@ Only reviewed deterministic tiny fixtures may be committed under `tests/fixtures
 
 ## D-0007: Linked Edit and Linux Verification Worktrees
 
-Status: Accepted
+Status: Superseded by D-0029
 
 Decision:
 Use `C:\DevStuff\candle-mods` only as the linked Windows edit worktree for Codex-authored changes. Keep the authoritative checkout and all verification work in Linux-home WSL2 worktrees. Builds and baseline checks never run from `/mnt/c` or `/mnt/d`.
@@ -96,13 +96,13 @@ Only Linux-home verification worktree evidence may be recorded as green. Cargo c
 Status: Accepted
 
 Decision:
-Keep `Cargo.lock` ignored and local to each Linux verification lane. Require it for every `--locked` check and record its SHA-256 with the retained proof.
+Keep `Cargo.lock` ignored and local to each verification lane. Require it for every `--locked` check and record its SHA-256 with the retained proof.
 
 Why:
 Upstream Candle 0.11 intentionally ignores `Cargo.lock`, but the sprint requires locked local verification. Committing a workspace lockfile would change upstream repository policy before implementation evidence justifies it.
 
 Consequences:
-A fresh verification lane must resolve the lockfile deliberately, hydrate only the required local dependencies, and then run the phase verifier offline. Different lock hashes are different proof environments and must not be compared as identical baselines.
+A fresh Windows or Linux verification lane must resolve the lockfile deliberately, hydrate only the required local dependencies, and then run the phase verifier offline. Different lock hashes or target caches are different proof environments and must not be compared as identical baselines.
 
 ## D-0009: Immutable Authority Order
 
@@ -386,5 +386,389 @@ The completed b9981 parity run left approximately 131.5 GB of private allocation
 Consequences:
 The harmless smoke suite proves normal exit, timeout plus descendant cleanup, owner-exit cleanup, concurrent-name refusal, suspended creation, assignment before resume, and exact PID absence. The legacy bundle remains evidence, b10344 is a comparison lane rather than the pinned parity authority, and the pinned source build is the preferred oracle. No real-model safety or numerical claim follows from the smoke test; the first bounded model run remains a separate gate.
 
+## D-0029: Native Windows Is the Primary Product and Verification Lane
+
+Status: Accepted
+
+Decision:
+Target native Windows first for user-facing execution, CPU-F32 production parity, and later CUDA proof, using the MSVC Rust toolchain and PowerShell process containment. Keep Candle's implementation OS-agnostic and replay relevant gates in WSL2/Linux as a secondary portability check when practical. Treat this folder's WSL-owned `.git` pointer and detached worktree state as local Git topology only; they do not make WSL a runtime or product requirement.
+
+Why:
+The fork will be used on Windows, and the independent llama.cpp oracle plus host-memory controls are Windows-native. A WSL-only green result cannot expose Windows toolchain, DLL, path, process-lifecycle, or accelerator integration defects. Retaining a Linux replay still protects portability without making it the release authority.
+
+Consequences:
+The next production checkpoint runs CPU F32 on native Windows first and may then be replayed in WSL2. Windows Cargo checks must be recorded independently; missing locked cache entries are a truthful blocked lane, not permission for an implicit network fetch. CUDA follows the same Windows-first order after CPU parity. D-0002 and D-0007 remain historical descriptions of the bootstrap topology and are superseded by this decision; D-0008 now applies per platform lane.
+
+## D-0030: Pin the Python Oracle and Contain Every Inference Process
+
+Status: Accepted
+
+Decision:
+Keep Python packages out of the Candle runtime and use them only in the separately managed reference/oracle lane. Require the exact Python, CPU Torch/TorchVision, safetensors, pinned Transformers commit, Hub, tokenizer, regex, and Pillow versions before importing an official model or processor; keep pytest test-only. Run every production Python or native inference command through `scripts/lfm2-vl/run-bounded-oracle.ps1` after building native binaries, never around `cargo run`.
+
+Why:
+The reference lane exists to reproduce the pinned official implementation and generate component tensors for parity; unpinned package drift can change preprocessing or model math while still producing plausible text. The previous Windows llama.cpp incident demonstrated that a long-lived model process can retain extreme private memory and survive ordinary cleanup paths, so inference must have owner-scoped memory, timeout, and descendant cleanup before it is allowed to run.
+
+Consequences:
+Config-only inspection and source-only Rust verification remain usable without the Python ML stack. Official tiny/production exports fail closed or skip when the oracle environment is wrong, and trace comparison remains a no-weights operation. The first real 450M trace still requires an owner-managed pinned CPU environment, a healthy resource preflight, exact artifact hashes, and post-run PID and memory evidence; no package installation or model inference is implicit.
+
+## D-0031: Make Physical-Memory Preflight Independent of CIM Permissions
+
+Status: Accepted
+
+Decision:
+Have the bounded Windows oracle wrapper try `Win32_ComputerSystem` first and
+fall back to the kernel `GlobalMemoryStatusEx` API when CIM access is denied.
+Record the selected probe as `physical_memory_source` alongside total physical
+bytes, and fail closed if neither source returns a positive value.
+
+Why:
+Managed Windows sessions can deny CIM queries even when the process-containment
+APIs and Job Object limits are available. A safe memory ceiling must not depend
+on an unrelated administrative/provider permission, and it must never be
+guessed from a partial or unavailable value.
+
+Consequences:
+The same 75%-of-physical-RAM ceiling and per-process/per-job Job Object limits
+remain in force. The harmless wrapper suite covers the evidence field under
+both Windows PowerShell 5.1 and PowerShell 7, and a restricted-host probe can
+prove the native fallback without launching a model. This changes only host
+preflight and evidence schema; it does not relax PID, timeout, child-tree, or
+model-run containment.
+
+## D-0032: Separate Host Census From Inference Containment
+
+Status: Accepted
+
+Decision:
+Use `scripts/lfm2-vl/preflight.ps1` as a read-only admission report before any
+large Python, native Candle, or llama.cpp process. Keep it independent from the
+bounded launcher: the census records Git/worktree identity, physical and commit
+memory, disk, optional NVIDIA state, and matching process/PID ancestry, while
+`run-bounded-oracle.ps1` remains responsible for creating, limiting, and
+cleaning up a child process tree. Omit command lines and never inspect secrets.
+
+Why:
+A bounded child can still be unsafe to start when another model or unexplained
+worker already owns host memory. Conversely, a host census cannot prove that a
+future child will be contained. Keeping the responsibilities separate makes
+the admission evidence reusable for native Windows and WSL replay without
+weakening Job Object, timeout, or exact-PID cleanup requirements.
+
+Consequences:
+`preflight.ps1` returns `blocked` when a llama process or required physical or
+committed-memory probe prevents safe admission and returns `review` when both
+memory measurements are complete but owner approval is still required. Its smoke contract runs under
+PowerShell 5.1 and 7, writes only an explicitly requested atomic report, and
+reports linked-worktree Git failures as data rather than terminating on native
+stderr. The general process evidence is capped, but the llama collection is
+complete before that cap. It is resource evidence, not model or numerical
+parity evidence.
+
+## D-0033: Make Pinned Artifact Identity a Separate, Hash-Only Admission Record
+
+Status: Accepted
+
+Decision:
+Use the stdlib-only `tools/lfm2_vl/reference/inspect_artifact.py` command to
+record the locked repository, revision, required filename, byte size, purpose,
+and SHA-256 for a local regular-file model snapshot before NR-5B. Require an
+explicit production opt-in, reject repository-local paths, symlinks, ambiguous
+single/indexed safetensors layouts, changing files, and oversized inputs, and
+write the small manifest outside the repository. Keep trace-bundle validation
+equally strict: manifest, metadata, and tensor entries must be direct regular
+files in the bundle root and JSON values must be objects.
+
+Why:
+The native runner already reports hashes after loading, but the oracle's
+`from_pretrained` call otherwise hides which local cache files supplied the
+model. A separate pre-run identity record lets both lanes be pointed at the
+same immutable regular files without loading tensors into Python or embedding
+production payloads in evidence. Path escape or symlink resolution would make
+the recorded name different from the bytes actually consumed.
+
+Consequences:
+P1-B now has a bounded, testable tool and a clear admission contract, while the
+official 450M manifest remains unclaimed until an owner-approved snapshot and
+resource preflight are available. Tiny disposable snapshots prove the schema
+and atomic write; no network, Torch, model load, or production bytes were used
+by the implementation test.
+
+## D-0034: Preserve Disk Evidence Across Windows PowerShell Versions
+
+Status: Accepted
+
+Decision:
+Have `preflight.ps1` use `Get-PSDrive` only when it returns nonzero counters;
+otherwise read the repository drive through `System.IO.DriveInfo`. Record the
+source and require a positive free-space value in the cross-version smoke test.
+
+Why:
+The Windows resource contract supports both PowerShell 7 and the inbox
+PowerShell 5.1. The latter can expose a valid-looking `PSDriveInfo` with zero
+`Free`/`Used` values, which is not a trustworthy disk measurement and would
+make later admission decisions ambiguous.
+
+Consequences:
+The report remains read-only and schema-compatible apart from the additive
+`disk.source` field. Both shell lanes now retain real disk evidence without
+weakening the fail-closed physical/commit-memory or PID rules.
+
+## D-0035: Pin the Oracle Interpreter Per Supported Platform
+
+Status: Accepted
+
+Decision:
+Require Python 3.10.11 for the native Windows oracle and retain Python 3.10.12
+for the resolved Linux x86_64 oracle lock. Keep every shared package version
+and the exact Transformers VCS commit identical. Record the selected platform,
+full interpreter patch, installed versions, and mismatches before importing an
+official model. Treat `requirements-reference.in` as the shared direct intent,
+the existing `requirements-reference.txt` as Linux-only resolution evidence,
+and require a separately proven Windows resolution before checking one in.
+
+Why:
+Python 3.10.12 is a source-only security release and Python.org provides no
+Windows installer for it; Python 3.10.11 was the last Python 3.10 release with
+an official Windows binary. A single exact 3.10.12 guard therefore contradicted
+the Windows-first product and verification policy. Selecting the last official
+Windows binary preserves an exact, supported interpreter identity without
+weakening Torch, Transformers, processor, artifact, or tensor parity.
+
+Consequences:
+The committed Linux fixtures retain their original Python 3.10.12 provenance.
+Native Windows production traces must use Python 3.10.11 and will record that
+identity explicitly. Python 3.10.10, moving 3.10 ranges, unofficial 3.10.12
+Windows builds, and global-package installation remain inadmissible. The first
+Windows environment now has a checked-in resolved lock, a green import-light
+pin verifier, and a 43/43 focused suite. Environment conformance alone does not
+authorize a production run; the completed NR-5B gate separately records fresh
+resource admission, bounded execution, exact cleanup, and numerical evidence.
+
+## D-0036: Separate Model-Tool Name Concurrency From Exact Executable Concurrency
+
+Status: Accepted
+
+Decision:
+Keep name-wide concurrency as the bounded owner's default for uniquely named
+model tools such as `llama-mtmd-cli`. Add an explicit exact-executable mode for
+generic hosts such as Python, comparing canonical executable paths and failing
+closed when a same-name process path cannot be inspected. Retain optional
+combined stdout/stderr in a caller-selected external log and record its byte
+count and SHA-256 in wrapper evidence.
+
+Why:
+An unrelated bundled Python worker made name-wide refusal correct but too broad
+for the pinned oracle interpreter. The first failed production trace also had
+no actionable child error because output was not retained. Weakening all
+concurrency to path matching would make unique model tools easier to overlap;
+discarding logs would make safe bounded failure needlessly opaque.
+
+Consequences:
+Callers must select `Executable` explicitly for the pinned Python or native
+Candle executable and retain `Name` for llama.cpp unless a reviewed reason says
+otherwise. The mutex remains keyed by exact executable, path-inspection denial
+is a refusal, and the evidence schema gains additive concurrency/log fields.
+PowerShell 5.1 and 7 smoke tests cover same-name refusal, same-executable
+refusal, unrelated same-name allowance, combined output, hashes, and cleanup.
+
+## D-0037: Make Trace Evidence Semantics Cross-Runtime and Exit-Code Enforced
+
+Status: Accepted
+
+Decision:
+Use framework-neutral canonical dtype labels in both trace manifests, serialize
+the native loader's exact consumed-file evidence, and define
+`input.projector_crop_ranges` as ranges over valid pre-projector vision patches.
+The comparison CLI returns 0 only when its report has `passed=true`, 1 for a
+valid comparison with failed tensors, and 2 for invalid input or invocation.
+
+Why:
+The first official comparison reached production bytes but failed validation
+because the native manifest used Candle abbreviations, omitted already-computed
+model input evidence, and reported post-projector token ranges under a
+pre-projector range name. After those fixes, the report still exposed one
+failed exact range while the CLI returned 0. A process exit alone therefore
+could have produced a false green gate.
+
+Consequences:
+Native bundles are independently validatable by the Python safetensors reader,
+artifact identity is checked before tensor math, exact-input names have one
+stage meaning, and automation cannot treat `passed=false` as success. The tiny
+native trace test asserts canonical dtypes, model-input hashes, and an 8-patch
+rather than 2-projected-token range; the Python suite asserts failed reports
+are written but return exit 1.
+
+## D-0038: Inspect Local Full GGUFs Through a Payload-Free Bounded View
+
+Status: Accepted
+
+Decision:
+Permit `inspect_gguf_header.py --full-file` only for an already-local complete
+regular GGUF. Memory-map the file, cap parser access at 4 MiB, and hash exactly
+through the computed aligned tensor-data offset. Report physical file bytes and
+whether they equal the declared tensor extent separately. Full-file SHA-256 may
+read every byte for artifact identity, but it must not decode or construct any
+tensor. Retained full reports use UTF-8 files and quiet stdout.
+
+Why:
+P2's official Q4_0 text artifact was already present as a regular Hugging Face
+cache blob, while the existing tool accepted only separately copied/downloaded
+header prefixes. Creating an ad hoc prefix would weaken path identity and add a
+temporary-copy step. Printing the complete tokenizer inventory also exposed a
+CP1252 failure and produced an unnecessarily large wrapper log.
+
+Consequences:
+The official text GGUF is locked to the same immutable LiquidAI revision as the
+MMProj, with an exact payload-free 2,388,128-byte header and separately verified
+219,311,264-byte full-file hash. The inspector preserves prefix mode, escapes
+console JSON for Windows code pages, and offers `--output ... --quiet` for full
+UTF-8 evidence. This closes artifact discovery only; model loading and runtime
+parity still require the bounded P2 execution gates.
+
+## D-0039: Compare Only Stable Cross-Runtime Fields and Bound Context-Cap Differences
+
+Status: Accepted
+
+Decision:
+For the official-base GGUF gate, require exact artifact, image, prompt-semantics,
+deterministic decoded-output, and cleanup agreement. Record generated IDs,
+preprocessing dimensions, projected-token counts, logits, intermediate tensors,
+and reset replay as unavailable when the pinned llama.cpp CLI does not expose
+them. Permit a smaller llama.cpp KV context ceiling only when the complete
+observed sequence is strictly below both ceilings and the difference is retained
+as a bounded operational fact.
+
+Why:
+The experimental `llama-mtmd-cli` provides a decoded stream and limited MTMD
+progress logging, not a stable machine-readable tensor or token trace. Candle
+reports the GGUF capacity of 128,000 tokens, while allocating that full KV range
+in a cross-runtime smoke would add avoidable memory risk. Treating missing fields
+as matches or claiming identical configured context would overstate parity;
+requiring the same ceiling despite an 83-position sequence would add risk without
+changing the exercised positions.
+
+Consequences:
+P2 is green at the fields both runtimes actually expose: identical official
+artifacts, identical source image, equivalent official template framing, exact
+three-token decoded output, bounded execution, and exact process cleanup. The
+4,096-token llama.cpp ceiling is explicitly different from Candle's 128,000-token
+capacity but contains all 83 used positions. Component-tensor parity remains
+owned by the pinned Transformers oracle, and any future llama.cpp trace support
+must be added as new evidence rather than retroactively inferred.
+
+## D-0040: Admit the 1.6B Gate With Stage-Specific Ceilings Before Acquisition
+
+Status: Accepted
+
+Decision:
+Forecast 1.6B memory from the exact official safetensors byte ratio and measured
+450M Job peaks, then apply a 1.35 safety factor. Use separate first-attempt Job
+ceilings of 16 GiB for Python dry load, 24 GiB for Python trace, and 12 GiB for
+native trace. Require at least 32 GiB available physical and commit headroom for
+the largest stage, zero model/build competitors, and a fresh preflight before
+each process. Do not raise a ceiling automatically. Treat checkpoint acquisition
+as a separate external action and locally hash every regular file before load.
+
+Why:
+The 1.6B model file is 3.558093732 times the 450M model file, while its selected
+trace grows only 2.206735 times because processor and vocabulary shapes stay
+fixed. One shared high ceiling would give the smaller native stage unnecessary
+room and weaken OOM containment. Downloading first and planning later would also
+commit disk/network resources before proving that sequential CPU-F32 execution
+fits the host.
+
+Consequences:
+The no-model forecast admits a 3,198,084,631-byte regular snapshot and projects
+about 182.53 MB per trace. The conservative cache/copy/two-trace workspace is
+7.30 GiB, so acquisition requires 12 GiB free. A limit termination is a safe
+failed measurement to investigate, not permission to increase memory. No
+inference starts until the expected 3,193,334,216-byte model file is locally
+rehashed to `7fc7458e4382fc6e558cfdda45857fbf9ab5b40a8bf199c9cd073003b14ac26d`.
+
+## D-0041: Separate Resumable Acquisition From Clean Snapshot and Model Load
+
+Status: Accepted
+
+Decision:
+Acquire only the exact direct files and immutable model revision recorded in
+`reference-lock.json`. Keep resumable provider state in an external
+caller-owned Hugging Face cache, stream verified bytes into a separate clean
+staging directory, and publish the regular-file snapshot plus manifest through
+atomic no-clobber operations. Use Windows no-replace rename or Linux
+`renameat2(RENAME_NOREPLACE)` for the snapshot and a flushed sibling temporary
+file plus hard-link publication for the manifest. Planning is stdlib-only;
+downloading checks only the exact Hub
+package, sets `HF_HUB_DISABLE_XET=1` before Hub import, refuses a process that
+already imported Hub with Xet enabled, and always uses `token=False`. Model
+loading remains a later, independently bounded action guarded by the complete
+CPU oracle environment.
+
+Why:
+Transformers' cache can expose links and provider bookkeeping that are
+unsuitable as the shared artifact identity. A direct local copy without a
+pinned acquisition owner can mix revisions or leave a partial snapshot.
+Conversely, requiring Torch, TorchVision, Transformers, Pillow, and every
+oracle dependency merely to transfer bytes adds install weight without
+improving download integrity. The pinned Hub installation also includes
+`hf-xet`, whose own installed source documents parallel chunk downloads and
+automatic activation when available; an outer serial file loop alone would not
+bound transfer concurrency.
+
+Consequences:
+Interrupted transfers can resume without making a partial snapshot admissible;
+every published file has a locked size and Git-blob/LFS identity; failed
+identity or manifest checks roll publication back. A destination that appears
+after planning is preserved rather than replaced, duplicate verifier paths are
+rejected, and stale snapshot or manifest staging blocks retry. Every
+Hub-returned source
+must resolve inside the named caller-owned cache, and provider failure causes
+are suppressed after retaining only filename and exception class. The
+multi-gigabyte network
+and disk action still requires separate owner approval. The retained
+`transfer_policy` states `serial-files-resumable-http-xet-disabled`. Passing
+acquisition does not claim that the model was imported, allocated, or
+numerically correct. The production function exposes no alternate downloader
+or artifact-builder parameter; test doubles are installed only by patching
+private module boundaries during offline tests. The authorized transfer runs
+through the existing Windows Job Object owner with a 2 GiB ceiling, two-hour
+timeout, executable-scoped concurrency, retained log/evidence, and exact PID
+cleanup; a terminated attempt may resume its cache but cannot make unmatched
+staging/output/manifest state admissible.
+Evidence schema 2 separately records network policy and observed use: planning
+is disabled/false, while execution is permitted-cache-aware/unknown because an
+immutable-revision cache pointer may satisfy the call without network traffic.
+
+## D-0042: Make Durable Evidence Publication Exclusive by Default
+
+Status: Accepted
+
+Decision:
+Publish standalone reports, JSON summaries, split-MMProj files, owner evidence,
+and native trace directories without replacing an existing or racing target.
+Python byte writers use a flushed sibling temporary plus a no-clobber hard
+link; PowerShell uses `System.IO.File.Move` when force is absent; native trace
+directories use Windows rename refusal or Linux
+`renameat2(RENAME_NOREPLACE)`. Platforms without a proven exclusive directory
+primitive fail closed. Replacement is available only through an explicit
+`--overwrite`, `overwrite=True`, or force option on outputs whose contract
+allows it; acquisition snapshots never gain an implicit replacement path.
+
+Why:
+The acquisition race review exposed a repository-wide assumption that an
+absence check followed by an atomic replacement was exclusive. The same
+check-then-publish shape existed in the trace comparator, config/GGUF reports,
+split-MMProj exporter, native trace directory, and PowerShell evidence writers.
+Leaving those paths inconsistent would preserve the original owner-data risk
+outside the first code path that happened to reveal it.
+
+Consequences:
+Reusing an output path now returns a controlled failure unless the operator
+explicitly authorizes replacement. Shared publication helpers remove repeated
+temporary-file code and race behavior is covered at the helper, CLI, exporter,
+PowerShell, and native Windows boundaries. Linux source uses the same
+no-replace primitive as guarded acquisition; its exact Rust regression remains
+a secondary TODO until a local WSL Rust toolchain is available.
+
 ---
-AI-edited: 2026-08-10T15:34:55-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=bounded-llamacpp | change=made immutable bundles and suspended Job Object containment the Windows oracle contract
+AI-edited: 2026-08-11T09:15:59-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=design | change=made durable evidence publication exclusive by default

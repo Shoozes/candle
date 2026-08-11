@@ -22,7 +22,7 @@ The execution sequence is:
 
 `docs/lfm2-vl/START_HERE.md`
 
-Read both before planning or editing.
+Read both before planning or editing, then read `docs/lfm2-vl/STATUS.md` and `docs/lfm2-vl/TODO.md`. Use `summary_bank.json` to load only the focused implementation/test group needed by the task.
 
 ## Authority Order
 
@@ -46,6 +46,8 @@ Document every material conflict in `docs/lfm2-vl/DECISIONS.md`.
 - First checkpoint: `LiquidAI/LFM2.5-VL-450M`.
 - Second checkpoint: `LiquidAI/LFM2.5-VL-1.6B`.
 - First backend: CPU F32.
+- Product/runtime priority: native Windows with the MSVC Rust toolchain.
+- Portability lane: WSL2/Linux is a secondary replay and OS-agnostic compatibility check, not a product requirement.
 - CUDA is optional until CPU parity passes.
 - Native safetensors precede all GGUF work.
 - Text-only LFM2 compatibility must remain intact.
@@ -65,7 +67,7 @@ Work only in this sequence:
 9. Quantized mmproj execution.
 10. CUDA optimization and broader stabilization.
 
-Do not implement later phases early.
+Required execution items 1 through 9 are checkpointed (the repository's named implementation tags run through Phase 7). The active stabilization and production-parity boundary is recorded in `STATUS.md`; do not start a later production checkpoint or CUDA run before its stated predecessor is green.
 
 ## Engineering Rules
 
@@ -104,11 +106,12 @@ Before every task:
 
 1. Read `AGENTS.md`.
 2. Read `docs/lfm2-vl/SPEC.md`.
-3. Read `docs/lfm2-vl/STATUS.md`.
-4. Inspect the relevant current Candle code.
-5. State the task boundary and expected files.
-6. Run the narrowest existing verification command that establishes the starting state.
-7. Identify the exact acceptance gate.
+3. Read `docs/lfm2-vl/START_HERE.md`.
+4. Read `docs/lfm2-vl/STATUS.md` and the first applicable item in `docs/lfm2-vl/TODO.md`.
+5. Select the narrowest relevant `summary_bank.json` group and inspect that code.
+6. State the task boundary and expected files.
+7. Run the narrowest existing verification command that establishes the starting state.
+8. Identify the exact acceptance gate.
 
 When a safe ambiguity exists, choose the simplest path consistent with the specification and record the decision. Do not stop for cosmetic or naming ambiguity.
 
@@ -123,13 +126,17 @@ After every task:
 5. Inspect the complete diff.
 6. Update `docs/lfm2-vl/STATUS.md`.
 7. Update `docs/lfm2-vl/DECISIONS.md` when architecture or compatibility decisions changed.
-8. Report exact commands, pass/fail status, blockers, and remaining work.
+8. Update `docs/lfm2-vl/TODO.md`, `HISTORY.md`, `MOD_MANIFEST.md`, and `summary_bank.json` only when their owned state changed.
+9. Run the summary-bank and mod-manifest verifiers when routes or publication paths changed.
+10. Report exact commands, pass/fail status, blockers, and remaining work.
 
 Do not report a test as passing unless it was executed in the current task.
 
 ## Verification Policy
 
 Use focused verification during development and broader verification at phase gates.
+
+For this fork, native Windows PowerShell/MSVC is the primary runtime and verification lane. Replay the relevant CPU gate in WSL2/Linux when practical to preserve portability, but do not use a WSL-only result as a substitute for Windows proof. The current folder's WSL-owned Git metadata is a local checkout topology; it does not change the product platform. Missing native dependencies are a truthful blocked/skipped result and are not permission for an implicit network fetch.
 
 Minimum Rust checks:
 
@@ -138,6 +145,7 @@ cargo fmt --all -- --check
 cargo check --locked -p candle-core
 cargo check --locked -p candle-nn
 cargo check --locked -p candle-transformers
+cargo check --locked -p candle-vlm
 git diff --check
 ```
 
@@ -146,6 +154,7 @@ At relevant gates also check:
 ```bash
 cargo check --locked -p candle-examples --example lfm2
 cargo check --locked -p candle-examples --example quantized-lfm2
+cargo check --locked -p candle-examples --example lfm2-vl
 ```
 
 Do not hide pre-existing failures. Record them separately from failures caused by the current change.
@@ -169,6 +178,8 @@ Do not hide pre-existing failures. Record them separately from failures caused b
 - Do not open a pull request during early implementation phases.
 - Create a checkpoint commit after every green phase gate.
 - Review staged files before committing.
+- This Windows edit folder is currently a detached WSL-owned linked worktree. Use WSL Git for this checkout's inspection; do not commit from detached HEAD or force the feature branch into two worktrees. This is a local Git constraint, not a runtime/platform requirement. See `START_HERE.md` and `FAILURE_LOG.md` F-0009.
+- Never read, stage, or publish `.tools/.secrets/`; never use broad staging for this mod.
 
 ## Codex Task Scope
 
@@ -198,3 +209,8 @@ Subagents may perform read-only source comparison or test planning. Do not allow
 - Exact next task.
 
 The next Codex session must be able to continue from this file without reconstructing project history from chat logs.
+
+Keep active tasks and their What/Why/When/Where/How/Done-when/Verification contract in `TODO.md`. Move completed details to `HISTORY.md`, recurring hazards to `FAILURE_LOG.md`, and never duplicate either into the summary bank.
+
+---
+AI-edited: 2026-08-10T16:42:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=repo-integrity | change=made native Windows the primary runtime/proof lane while retaining WSL as secondary portability and current-checkout Git support

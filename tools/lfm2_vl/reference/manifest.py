@@ -11,13 +11,22 @@ import hashlib
 import importlib.metadata
 import json
 import math
+import os
 import platform
+import tempfile
 from pathlib import Path
 from typing import Any, Mapping
 
 
-REFERENCE_PACKAGE_PINS = {
-    "python": "3.10.12",
+REFERENCE_PYTHON_PINS = {
+    "Linux": "3.10.12",
+    "Windows": "3.10.11",
+}
+REFERENCE_REQUIREMENTS_LOCKS = {
+    "Linux": "requirements-reference.txt",
+    "Windows": "requirements-reference-windows.txt",
+}
+REFERENCE_SHARED_PACKAGE_PINS = {
     "torch": "2.8.0+cpu",
     "torchvision": "0.23.0+cpu",
     "safetensors": "0.8.0",
@@ -28,6 +37,26 @@ REFERENCE_PACKAGE_PINS = {
     "pytest": "8.4.1",
     "Pillow": "11.3.0",
 }
+
+
+def reference_package_pins(system_name: str | None = None) -> dict[str, str]:
+    """Return the exact oracle pins for one supported host platform."""
+
+    system_name = system_name or platform.system()
+    try:
+        python_version = REFERENCE_PYTHON_PINS[system_name]
+    except KeyError as exc:
+        supported = ", ".join(sorted(REFERENCE_PYTHON_PINS))
+        raise ValueError(
+            f"unsupported reference platform {system_name!r}; choose {supported}"
+        ) from exc
+    return {"python": python_version, **REFERENCE_SHARED_PACKAGE_PINS}
+
+
+REFERENCE_PACKAGE_PINS = reference_package_pins()
+REFERENCE_RUNTIME_PACKAGE_NAMES = tuple(
+    name for name in REFERENCE_PACKAGE_PINS if name != "pytest"
+)
 
 _MODEL_ALIASES = {
     "450m": "LiquidAI/LFM2.5-VL-450M",
@@ -58,10 +87,70 @@ def canonical_json_bytes(value: Any) -> bytes:
     )
 
 
-def write_json(path: Path, value: Any) -> None:
-    """Write stable JSON without exposing environment state."""
+def write_bytes_atomic(
+    path: Path,
+    payload: bytes,
+    *,
+    overwrite: bool,
+    label: str = "output",
+) -> Path:
+    """Publish bytes atomically without clobbering an unapproved destination."""
 
-    path.write_bytes(canonical_json_bytes(value))
+    expanded = path.expanduser()
+    if not expanded.is_absolute():
+        expanded = Path.cwd() / expanded
+    absolute = Path(os.path.abspath(expanded))
+    absolute.parent.mkdir(parents=True, exist_ok=True)
+    parent = absolute.parent.resolve(strict=True)
+    destination = parent / absolute.name
+    if destination.is_symlink():
+        raise ValueError(f"{label} must not be a symlink: {destination}")
+    if destination.exists():
+        if not destination.is_file():
+            raise ValueError(f"{label} is not a regular file: {destination}")
+        if not overwrite:
+            raise FileExistsError(f"{label} already exists: {destination}")
+
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="xb",
+            prefix=f".{destination.name}.tmp-",
+            dir=parent,
+            delete=False,
+        ) as handle:
+            temporary = Path(handle.name)
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        if overwrite:
+            os.replace(temporary, destination)
+        else:
+            try:
+                os.link(temporary, destination)
+            except FileExistsError as exc:
+                raise FileExistsError(
+                    f"{label} appeared during publication and was not replaced: "
+                    f"{destination}"
+                ) from exc
+        return destination
+    finally:
+        if temporary is not None and (temporary.exists() or temporary.is_symlink()):
+            try:
+                temporary.unlink()
+            except OSError:
+                pass
+
+
+def write_json(path: Path, value: Any, *, overwrite: bool) -> Path:
+    """Write stable JSON atomically without exposing environment state."""
+
+    return write_bytes_atomic(
+        path,
+        canonical_json_bytes(value),
+        overwrite=overwrite,
+        label="JSON output",
+    )
 
 
 def sha256_bytes(value: bytes) -> str:
@@ -76,6 +165,37 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def resolve_regular_file(root: Path, name: str, label: str) -> Path:
+    """Resolve one direct, regular file named by a bundle manifest.
+
+    Bundle manifests are portable metadata, not trusted path specifications.
+    Only a simple filename in the bundle root is accepted; traversal, absolute
+    paths, nested paths, directories, and links are rejected before the caller
+    reads or hashes the file.
+    """
+
+    root = root.resolve()
+    if not root.is_dir():
+        raise ValueError(f"bundle root is not a directory: {root}")
+    if not isinstance(name, str) or not name or name in {".", ".."}:
+        raise ValueError(f"{label} must be a non-empty filename")
+    if Path(name).is_absolute() or "/" in name or "\\" in name:
+        raise ValueError(f"{label} must be a direct filename in {root}")
+
+    candidate = root / name
+    if candidate.is_symlink():
+        raise ValueError(f"{label} must be a regular file, not a symlink: {candidate}")
+    try:
+        resolved = candidate.resolve(strict=True)
+    except OSError as exc:
+        raise ValueError(f"{label} is not a readable file: {candidate}") from exc
+    if resolved.parent != root:
+        raise ValueError(f"{label} resolves outside the bundle root: {candidate}")
+    if not resolved.is_file():
+        raise ValueError(f"{label} is not a regular file: {resolved}")
+    return resolved
+
+
 def repo_root(start: Path | None = None) -> Path:
     """Find the checkout containing the checked-in reference lock."""
 
@@ -86,6 +206,34 @@ def repo_root(start: Path | None = None) -> Path:
         if (parent / "tools" / "lfm2_vl" / "reference-lock.json").is_file():
             return parent
     raise FileNotFoundError("could not locate tools/lfm2_vl/reference-lock.json")
+
+
+def reference_requirements_path(system_name: str | None = None) -> Path:
+    """Return the checked-in resolved lock for one supported platform."""
+
+    system_name = system_name or platform.system()
+    try:
+        filename = REFERENCE_REQUIREMENTS_LOCKS[system_name]
+    except KeyError as exc:
+        supported = ", ".join(sorted(REFERENCE_REQUIREMENTS_LOCKS))
+        raise ValueError(
+            f"unsupported reference platform {system_name!r}; choose {supported}"
+        ) from exc
+    return Path(__file__).resolve().parent / filename
+
+
+def reference_environment_lock(system_name: str | None = None) -> dict[str, str]:
+    """Identify the resolved environment lock without reading installed packages."""
+
+    system_name = system_name or platform.system()
+    path = reference_requirements_path(system_name)
+    if not path.is_file():
+        raise FileNotFoundError(f"reference environment lock is missing: {path}")
+    return {
+        "platform": system_name,
+        "filename": path.name,
+        "sha256": sha256_file(path),
+    }
 
 
 def load_reference_lock(path: Path | None = None) -> dict[str, Any]:
@@ -142,6 +290,70 @@ def package_versions() -> dict[str, str]:
         except importlib.metadata.PackageNotFoundError:
             versions[label] = "missing"
     return versions
+
+
+def _installed_vcs_revision(distribution_name: str) -> str | None:
+    """Return a VCS commit recorded by pip's direct_url metadata, if present."""
+
+    try:
+        distribution = importlib.metadata.distribution(distribution_name)
+    except importlib.metadata.PackageNotFoundError:
+        return None
+    raw = distribution.read_text("direct_url.json")
+    if not raw:
+        return None
+    try:
+        direct_url = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    vcs_info = direct_url.get("vcs_info")
+    if isinstance(vcs_info, Mapping):
+        commit_id = vcs_info.get("commit_id")
+        if isinstance(commit_id, str):
+            return commit_id
+    return None
+
+
+def reference_environment_mismatches(
+    system_name: str | None = None,
+) -> dict[str, dict[str, str]]:
+    """Return installed-package differences from the locked oracle environment."""
+
+    expected_pins = reference_package_pins(system_name)
+    installed = package_versions()
+    mismatches: dict[str, dict[str, str]] = {}
+    for name in REFERENCE_RUNTIME_PACKAGE_NAMES:
+        expected = expected_pins[name]
+        if name == "transformers":
+            expected_revision = expected.rsplit("@", 1)[-1]
+            actual_revision = _installed_vcs_revision(name)
+            if actual_revision != expected_revision:
+                mismatches[name] = {
+                    "expected": expected_revision,
+                    "installed": actual_revision or installed.get(name, "missing"),
+                }
+            continue
+        actual = installed.get(name, "missing")
+        if actual != expected:
+            mismatches[name] = {"expected": expected, "installed": actual}
+    return mismatches
+
+
+def require_reference_environment(system_name: str | None = None) -> None:
+    """Refuse production loading unless every locked runtime pin is installed."""
+
+    selected_system = system_name or platform.system()
+    mismatches = reference_environment_mismatches(selected_system)
+    if mismatches:
+        details = "; ".join(
+            f"{name}: expected {values['expected']!r}, installed {values['installed']!r}"
+            for name, values in sorted(mismatches.items())
+        )
+        requirements_name = REFERENCE_REQUIREMENTS_LOCKS[selected_system]
+        raise RuntimeError(
+            "pinned reference environment mismatch; use the owner-managed "
+            f"{selected_system} environment from {requirements_name} ({details})"
+        )
 
 
 def prepare_output_dir(path: Path, *, overwrite: bool) -> Path:

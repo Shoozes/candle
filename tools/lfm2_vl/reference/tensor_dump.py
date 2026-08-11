@@ -15,6 +15,7 @@ try:
     from .manifest import (
         assert_secret_safe,
         prepare_output_dir,
+        resolve_regular_file,
         sha256_file,
         write_json,
     )
@@ -22,6 +23,7 @@ except ImportError:  # pragma: no cover - direct script execution
     from manifest import (  # type: ignore
         assert_secret_safe,
         prepare_output_dir,
+        resolve_regular_file,
         sha256_file,
         write_json,
     )
@@ -35,13 +37,13 @@ MANIFEST_FILE = "manifest.json"
 def _torch_and_safetensors():
     try:
         import torch
-        from safetensors.torch import save
+        from safetensors.torch import save_file
     except ImportError as exc:  # pragma: no cover - exercised in manager environment
         raise RuntimeError(
             "tiny-random export requires the pinned torch and safetensors packages; "
             "config-only does not"
         ) from exc
-    return torch, save
+    return torch, save_file
 
 
 def tensor_inventory(tensors: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
@@ -85,13 +87,12 @@ def write_tensor_bundle(
     assert_secret_safe(metadata)
     assert_secret_safe(manifest)
     ordered = _ordered_cpu_tensors(tensors)
-    _, save = _torch_and_safetensors()
-    tensor_bytes = save(ordered)
+    _, save_file = _torch_and_safetensors()
     tensor_path = output_dir / TENSOR_FILE
     metadata_path = output_dir / METADATA_FILE
     manifest_path = output_dir / MANIFEST_FILE
-    tensor_path.write_bytes(tensor_bytes)
-    write_json(metadata_path, metadata)
+    save_file(ordered, str(tensor_path))
+    write_json(metadata_path, metadata, overwrite=overwrite)
 
     final_manifest = dict(manifest)
     final_manifest.update(
@@ -106,7 +107,7 @@ def write_tensor_bundle(
         }
     )
     assert_secret_safe(final_manifest)
-    write_json(manifest_path, final_manifest)
+    write_json(manifest_path, final_manifest, overwrite=overwrite)
     return output_dir
 
 
@@ -123,7 +124,7 @@ def write_metadata_bundle(
     assert_secret_safe(metadata)
     assert_secret_safe(manifest)
     metadata_path = output_dir / METADATA_FILE
-    write_json(metadata_path, metadata)
+    write_json(metadata_path, metadata, overwrite=overwrite)
     final_manifest = dict(manifest)
     final_manifest.update(
         {
@@ -136,7 +137,7 @@ def write_metadata_bundle(
         }
     )
     assert_secret_safe(final_manifest)
-    write_json(output_dir / MANIFEST_FILE, final_manifest)
+    write_json(output_dir / MANIFEST_FILE, final_manifest, overwrite=overwrite)
     return output_dir
 
 
@@ -146,30 +147,29 @@ def validate_bundle(output_dir: Path, *, require_tensors: bool = True) -> dict[s
     import json
 
     output_dir = output_dir.resolve()
-    manifest_path = output_dir / MANIFEST_FILE
-    if not manifest_path.is_file():
-        raise ValueError(f"missing {MANIFEST_FILE} in {output_dir}")
+    manifest_path = resolve_regular_file(output_dir, MANIFEST_FILE, "bundle manifest")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict):
+        raise ValueError(f"bundle manifest must be a JSON object: {manifest_path}")
+    assert_secret_safe(manifest)
     if require_tensors and manifest.get("format") != "lfm2-vl-reference-bundle":
         raise ValueError("manifest is not a tensor bundle")
     metadata_file = manifest.get("metadata_file")
     if not metadata_file:
         raise ValueError("manifest does not name metadata_file")
-    metadata_path = output_dir / metadata_file
-    if not metadata_path.is_file():
-        raise ValueError(f"missing metadata file: {metadata_path}")
+    metadata_path = resolve_regular_file(output_dir, metadata_file, "metadata file")
     if sha256_file(metadata_path) != manifest.get("metadata_sha256"):
         raise ValueError("metadata SHA-256 does not match manifest")
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    if not isinstance(metadata, dict):
+        raise ValueError(f"bundle metadata must be a JSON object: {metadata_path}")
     assert_secret_safe(metadata)
 
     tensor_file = manifest.get("tensor_file")
     if require_tensors:
         if not tensor_file:
             raise ValueError("tensor bundle has no tensor_file")
-        tensor_path = output_dir / tensor_file
-        if not tensor_path.is_file():
-            raise ValueError(f"missing tensor file: {tensor_path}")
+        tensor_path = resolve_regular_file(output_dir, tensor_file, "tensor file")
         if sha256_file(tensor_path) != manifest.get("tensor_sha256"):
             raise ValueError("tensor SHA-256 does not match manifest")
         try:

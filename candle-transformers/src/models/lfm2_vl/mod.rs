@@ -21,7 +21,8 @@ pub use gguf::{GgufMmprojExecution, GgufMmprojMetadata};
 pub use linear::LinearOp;
 pub use model::{
     merge_projected_embeddings, CropKind, CropMeta, EncodedImages, ImageMeta, ImageTokenSpan,
-    Lfm2VlModel, ProcessedVisionBatch,
+    Lfm2VlDecodeTrace, Lfm2VlImageTrace, Lfm2VlModel, Lfm2VlPrefillTrace, Lfm2VlProjectorTrace,
+    ProcessedVisionBatch,
 };
 pub use projector::Lfm2VlProjector;
 pub use weights::{

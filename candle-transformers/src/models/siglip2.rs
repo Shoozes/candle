@@ -276,10 +276,10 @@ impl VisionEmbeddings {
 
 #[cfg_attr(not(test), allow(dead_code))]
 #[derive(Debug)]
-struct EmbeddingStages {
-    patch_embedding: Tensor,
-    resized_position_embedding: Tensor,
-    embeddings_with_position: Tensor,
+pub(crate) struct EmbeddingStages {
+    pub(crate) patch_embedding: Tensor,
+    pub(crate) resized_position_embedding: Tensor,
+    pub(crate) embeddings_with_position: Tensor,
 }
 
 fn mixed_linear(
@@ -541,10 +541,10 @@ impl EncoderLayer {
 
 #[cfg_attr(not(test), allow(dead_code))]
 #[derive(Debug)]
-struct ForwardStages {
-    embeddings: EmbeddingStages,
-    encoder_layers: Vec<Tensor>,
-    post_layernorm: Tensor,
+pub(crate) struct ForwardStages {
+    pub(crate) embeddings: EmbeddingStages,
+    pub(crate) encoder_layers: Vec<Tensor>,
+    pub(crate) post_layernorm: Tensor,
 }
 
 /// Candle SigLIP2 NaFlex vision encoder for packed patch tensors.
@@ -635,7 +635,7 @@ impl Siglip2VisionModel {
         Ok(self.forward_stages(inputs)?.post_layernorm)
     }
 
-    fn forward_stages(&self, inputs: &PackedVisionInputs<'_>) -> Result<ForwardStages> {
+    pub(crate) fn forward_stages(&self, inputs: &PackedVisionInputs<'_>) -> Result<ForwardStages> {
         let (crop_count, max_patches, patch_dimension) = inputs.pixel_values.dims3()?;
         if crop_count == 0 || max_patches == 0 {
             candle::bail!("SigLIP2 packed inputs must contain at least one crop and patch slot")

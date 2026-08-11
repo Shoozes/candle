@@ -2,17 +2,18 @@
 
 ## Current State
 
-The deterministic reference fixture, LFM2 text compatibility path, SigLIP2 NaFlex tensor path, native projector/composite path, Rust-native raw-image/prompt path, Phase 5 quantized-text plus split-dense-MMProj path, Phase 6 direct-GGUF-MMProj dense compatibility path, Phase 7 CPU-F32 native-Q8 vision/projector path, bounded unmodified native-checkpoint loader, deterministic native/hybrid inference runner, and local same-artifact Candle/llama.cpp decoded-sequence comparison are established. No official production-checkpoint numerical parity, official-base text-GGUF execution, llama.cpp component/logit equality, or executed native-Q8 CUDA parity is claimed.
+The deterministic fixture phases and the official 450M native Windows CPU-F32 component gate are green. Candle and pinned llama.cpp also executed the same official Q4_0 text GGUF plus Q8_0 MMProj and produced the exact decoded text `The image features` under bounded CPU runs. The production component comparison uses one pinned regular-file snapshot, one deterministic image, the official rendered prompt, 36 processor/vision/projector/merge/language tensors, three cached decode steps, exact reset replay, and before/after resource evidence. The 1.6B checkpoint, llama.cpp component/logit equality, CUDA, lower-bit MMProj execution, and the optional WSL portability replay remain unclaimed.
 
 ## Required Gates
 
 | Gate | Required evidence | Phase status |
 | --- | --- | --- |
-| Workspace baseline | Locked CPU-only Candle checks and diff check from Linux home | Phase 7 staged baseline green; log SHA-256 `ff46cc0b23a28050ffe856be2cb81ef7144667977587021f1d3cd221e00ed330` |
+| Native Windows workspace baseline | Locked CPU-only Candle checks under MSVC plus diff/manifest gates | Green for the current source tree: bounded offline core/transformer/VLM and example tests/checks passed; read-only WSL Git replay now passes `git diff --check` and the 91-path mod-manifest gate. |
+| WSL portability baseline | Locked CPU-only Candle checks and diff/manifest gates from Linux home | Secondary replay green; Phase 7 staged log SHA-256 `ff46cc0b23a28050ffe856be2cb81ef7144667977587021f1d3cd221e00ed330` and current consolidated baseline green |
 | Reference fixture | Deterministic pinned-Python export with component and multimodal tensors | Green; 87 tensors, byte-identical independent exports; manifest SHA-256 `c5461dadb0edfd920b20f308650c59676977110a1cc2f199e317dea7d75bdd7b` |
 | LFM2 text configuration | 450M effective FFN width `4608`; 1.6B width `8192` | Green in config tests and header evidence |
 | Dense text forwarding | Token-ID and embedding-driven prefill plus incremental decode agree | Green on the committed fixture; maximum hidden-state error `2.38418579e-7`, maximum logit error `2.98023224e-8` |
-| Quantized text forwarding | Token-ID and embedding-driven paths agree and cache can be reset | API/equivalence gate green; production GGUF numerical parity pending |
+| Quantized text forwarding | Token-ID and embedding-driven paths agree and cache can be reset | API/equivalence gate green; official-base GGUF decoded output is green at stable cross-runtime fields, while llama.cpp component/logit equality remains unavailable and unclaimed |
 | SigLIP2 | Component tensor comparisons against pinned fixtures | Phase 2 checkpoint complete; Phase 3 repeated-crop regression 8/8 green |
 | Projector | Exact pixel-unshuffle and stage-level comparisons | Phase 3 focused gate green; 11/11 total |
 | Processor | Exact resize, crop, patch, mask, shape, and token metadata | Green on all 12 pinned cases; 24/24 crate tests; worst pixel max abs `1.192092896e-7`; integer/crop metadata exact |
@@ -25,11 +26,38 @@ The deterministic reference fixture, LFM2 text compatibility path, SigLIP2 NaFle
 | Direct GGUF MMProj dense compatibility | Strict metadata/inventory/range load, patch inverse, dequantization, image-feature and hybrid execution comparison | Green on deterministic GGUF fixtures; dense image features exact, Q8_0 dequantized max abs `8.463021368e-5`, direct hybrid errors equal Phase 5 |
 | Native Q8_0 GGUF MMProj | Eligible weights remain QTensor, all vision/projector linear roles execute through QMatMul, dense fallback remains intact, and hybrid prefill/decode/cache stay within documented drift | Green on CPU F32 deterministic fixtures; 14/14 two-layer linear roles quantized, feature cosine `0.999923348`, prefill max abs `1.650899649e-4`, cache reset exact |
 | Unified native checkpoint loading | Unmodified single/indexed Hugging Face directory, exact official inventories, tied output, config/processor/tokenizer pairing, and pre-map diagnostics | Green on real tiny safetensors; 19/19 focused tests; pinned 450M/1.6B name/BF16/shape digests and counts 349/589 exact |
-| Deterministic inference evidence | Bounded prompt/image/generation inputs, exact consumed-file hashes, native and hybrid prefill/decode, full-logit hashes, greedy top-k/token trace, and exact reset replay | Green; 26/26 focused example tests, including real split-MMProj hybrid execution, exact direct/split/override source lists, and one-line JSON |
+| Deterministic inference evidence | Bounded prompt/image/generation inputs, exact consumed-file hashes, native and hybrid prefill/decode, full-logit hashes, greedy top-k/token trace, and exact reset replay | Green; 29/29 focused example tests, including real split-MMProj hybrid execution, exact direct/split/override source lists, one-line JSON, and native trace no-clobber publication |
 | Local same-artifact oracle | Identical text GGUF, MMProj, tokenizer, processor policy, image, prompt framing, context, and deterministic decode settings in Candle and llama.cpp | Green for the local fine-tuned text GGUF plus byte-identical official Q8_0 MMProj: 608x416, 247 image tokens, 268 prompt tokens, and exact eight-token output agreement |
 | Official MMProj header contract | Pinned F16/Q8_0 metadata, names, physical shapes, dtype placement, and zero-payload evidence | Green; 32 metadata records, 201 tensors, tensor-data offset 12,736, no retained payload bytes |
-| Distinct devices | Vision and text may differ; only projected image features cross at merge | Source-complete CUDA-vision/CPU-text test committed; local execution skipped because Linux `nvcc`/toolkit is absent |
-| Production checkpoints and GGUF | Native versus production and GGUF numerical validation | Not run; no production weights or GGUF files downloaded |
+| Official text GGUF identity | Immutable official source, full-file size/SHA-256, payload-free bounded header, text/tokenizer metadata, quantization placement, and separation from the local derivative | Green; 219,311,264 bytes, SHA-256 `6d2757dd0f0b98aea7dc90477bb5b3a0df1089be85ef92943f8cecb05121ccbf`, 39 metadata records, 148 tensors, exact physical/declared extent |
+| Distinct devices | Vision and text may differ; only projected image features cross at merge | Source-complete CUDA-vision/CPU-text test committed; native Windows execution pending after CPU parity, optional WSL replay blocked by absent Linux `nvcc`/toolkit |
+| Official 450M production checkpoint | Pinned Transformers versus native Candle processor, vision, projector, merge, prefill, cached-decode, artifact, replay, and cleanup evidence | Green on native Windows CPU F32; 36/36 tensors, zero failures, exact input tensors and reset, comparison SHA-256 `caaae9ad159ec8370007169bd7c486ccff96f8b547ea6a113685f0c8703bbbac` |
+| Remaining production checkpoints and GGUF | Same-artifact official-base GGUF, 1.6B, CUDA, and lower-bit numerical validation | Official-base GGUF identity and both bounded runtime replays are green at every shared stable field; 1.6B CPU-F32 parity is current, followed by CUDA and lower-bit work |
+
+## Native Windows 450M Load-Only Evidence
+
+The pinned local Hugging Face snapshot `LiquidAI/LFM2.5-VL-450M@fc6221ca597f3315e4f82fc2df606783267b34ba` was inspected without downloading. Its `model.safetensors` blob is 897,484,568 bytes; the snapshot also contains the exact processor, tokenizer, generation, template, license, and model configuration files listed below. The snapshot uses external Windows symlinks, which the native loader correctly rejects because its immutable inventory contract requires regular files inside the supplied model directory. A disposable regular-file copy outside the repository was therefore used for the proof and removed afterward.
+
+| File | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `.gitattributes` | 1,519 | `11ad7efa24975ee4b0c3c3a38ed18737f0658a5f75a0a96787b576a78a023361` |
+| `chat_template.jinja` | 3,836 | `309e586e2ed3d7f2db1e2a045bfb07f4c83798b23f7ac587954426302d508e9` |
+| `config.json` | 2,373 | `ab0de32d57b83b8b0cbb4526e096cf1e8adc1d8b6a09cb55df38597866eae53f` |
+| `generation_config.json` | 136 | `40d17f9ec64c97e8fd5400540960b6a9761ed6d6acc0b1ab6a6656055e4755b3` |
+| `LICENSE` | 10,574 | `4d28ca14dedc0b3d0fcc2b3339f0e79931faa33874f3d24f522183a8fc70068c` |
+| `model.safetensors` | 897,484,568 | `2f6deb5dd43707de5cfe3c59470d3bccf4c3112a810a74570499f4728d412eea` |
+| `processor_config.json` | 828 | `622b75b531b3f49b1cdf4f90626c34e5ffb4f8bba2b8637807af0462398ae718` |
+| `README.md` | 13,444 | `666cc6b49fcdec9ddd378081c47df5aa11679c12a4a05cbbb436a3107f04ee3b` |
+| `tokenizer_config.json` | 829 | `aed83606e95db808fc4d5312bf117605360e770bfe5a6028c348c3981ce143a` |
+| `tokenizer.json` | 4,733,040 | `f3910942aa907c48b0cc20ec426ee38bfa8dcda8feecf035ced981918cb30f14` |
+
+Native Windows load-only command: `CARGO_NET_OFFLINE=true CARGO_BUILD_JOBS=2 cargo run --locked --offline -p candle-examples --example lfm2-vl -- --model-dir <regular-file-copy> --cpu`. It passed from `2026-08-10T21:06:37-04:00` through `2026-08-10T21:06:42-04:00` with text `16x1024`, 12 vision layers, patch 16, factor 2, image token 396, processor max patches 1024, tied output embeddings, 349 tensors, one shard, and F32 CPU placement for both towers. No prompt or image was supplied, so no generated caption or production tensor comparison is claimed; the disposable copy was removed and no `llama*` process remained.
+
+## Native Windows 450M Component Evidence
+
+NR-5B used the external regular-file snapshot identified by artifact-manifest SHA-256 `659c8421530586b6cc28c094cfcdc69719ea8626f2abc0efd9eec4ac2a68a984` and the 256x256 input image SHA-256 `f902f8d2e47e53eafac86831cfc692001dc15870eb81d57abc3128f048d2efca`. The Python oracle manifest is `41f97daf914bd2c3eea81065ca87f1b002e869dd0dcedf010bba229646529d06`; the final native manifest is `286bc3c453188de38ac12a9553e60515a17aad61a57d03086c350b0f2d013345`.
+
+The comparison report SHA-256 `caaae9ad159ec8370007169bd7c486ccff96f8b547ea6a113685f0c8703bbbac` records `passed=true`, 36 compared tensors, and zero failures. Input IDs, attention masks, image bytes, pixel masks, spatial shapes, projector patch ranges, and decode IDs are exact. Every vision encoder layer plus projector, merged-embedding, prefill, hidden-state, and cached-decode tensor passes its stage-specific CPU-F32 allclose contract; cache reset is exact. The largest maximum absolute delta is `0.0189208984375` at vision encoder layer 11. Native peak Job memory was 2,120,413,184 bytes under an 8 GiB ceiling, its PID was absent after exit, and the post-run census recovered to 46,049,075,200 available physical bytes and 23,420 MiB GPU memory free with no model or build process present.
 
 ## Phase 2 Focused Evidence
 
@@ -81,7 +109,7 @@ Official header-only evidence at `LiquidAI/LFM2.5-VL-450M-GGUF@166cd80bbe157dc86
 
 The deterministic dense GGUF has SHA-256 `7361b57e6d9dbf2d7809d4f446944fdc7325b368e4444fee2bc3497376695256` and matches native image features exactly. The Q8_0 compatibility fixture dequantizes with maximum image-feature error `8.463021368e-5`. Paired with the deterministic quantized text GGUF, direct-MMProj prefill max abs is `4.457309842e-5`; cached decode is `2.650916576e-5`, `2.175569534e-5`, and `1.309439540e-5`; cache reset is exact. These are deterministic fixture results, not production-payload or llama.cpp runtime parity.
 
-Final local evidence is green: pinned Python 23/23; the complete offline core/transformer/VLM test command, including all integrations and doc tests; strict scoped Clippy with five documented pre-existing Rust 1.97 allowances; and the exact staged locked/offline baseline. Retained hashes are recorded in `STATUS.md`. The assigned worker's final static re-audit found no remaining P0/P1 defect. No production model or MMProj payload was downloaded.
+Final local evidence is green: pinned Python 23/23; the complete offline core/transformer/VLM test command, including all integrations and doc tests; strict scoped Clippy with five documented pre-existing Rust 1.97 allowances; and the exact staged locked/offline baseline. Retained historical hashes are recorded in `HISTORY.md`; `STATUS.md` carries only the latest gate. The assigned worker's final static re-audit found no remaining P0/P1 defect. No production model or MMProj payload was downloaded.
 
 ## Phase 7 Native Q8 MMProj Evidence
 
@@ -98,6 +126,12 @@ The example automatically selects native Q8 for valid F32 Q8 artifacts and repor
 The local native loader accepts the official unified namespace without file renaming and supports one safetensors file or an indexed shard set. It bounds and validates the complete header/index inventory before memory mapping, resolves tied versus explicit output weights, pairs processor and tokenizer semantics with model configuration, and reports roots, shards, bytes, dtypes, devices, and all inventory defects. Its 19 focused tests construct real tiny checkpoint files and compare the generated official 450M/1.6B inventories against canonical sorted name/BF16/shape digests from zero-payload pinned header reads. This is loader proof, not production numerical parity. The feature-gated native CUDA test is construction-only; native CUDA inference remains unclaimed.
 
 ## Local llama.cpp Oracle Boundary
+
+The official P2 text artifact is locked separately from the earlier local comparison: `LiquidAI/LFM2.5-VL-450M-GGUF@166cd80bbe157dc86d65f964eb8cc6a2cede62ca/LFM2.5-VL-450M-Q4_0.gguf`, 219,311,264 bytes, SHA-256 `6d2757dd0f0b98aea7dc90477bb5b3a0df1089be85ef92943f8cecb05121ccbf`. Its exact payload-free 2,388,128-byte header has SHA-256 `bdb33b992b136a77b4d807b84319a7daa43ebac15144e6336c0d9b9ef1e8ed2e`, 39 metadata records, and 148 tensors. The physical extent matches the header declaration. Its paired Q8_0 MMProj is the byte-identical official file already present under `C:\llamacpp`, SHA-256 `ebfc428baa37efad8bae93864f914b2634a09009f91ad59f974fe1a1565d8561`.
+
+P2 runtime execution is green. Candle and pinned llama.cpp build 10335 consumed those exact files plus the same deterministic 256x256 image and equivalent official chat framing, then decoded exactly `The image features` for three greedy steps. Candle retained generated IDs `[1098, 4646, 5251]`, 64 projected image tokens, prefill-logit SHA-256 `aa2e0aa2132cb67fc33cb57523e73dee1c0cabac9362d7adbb22ea1a871d5280`, and exact cache reset. llama.cpp does not expose stable forms of those fields, so the cross-runtime claim is exact artifact/prompt/decoded-output/cleanup agreement rather than token-ID, preprocessing, or component-tensor parity. The machine report is 7,026 bytes with SHA-256 `2c54cd790aef5ddcf8b053923a7ebb18ef055e9b06b6b580abd2a1eb9b92f6fd` and records `passed=true` with a bounded 128,000-versus-4,096 context-ceiling difference; the actual sequence uses only 83 positions.
+
+P3 admission is planning evidence only. The pinned official 1.6B header remains payload-free at 82,400 bytes/589 tensors, while official HEAD metadata fixes the absent `model.safetensors` at 3,193,334,216 bytes and the complete expected regular snapshot at 3,198,084,631 bytes. The projected 51-tensor trace is about 182.53 MB. Stage-specific 16/24/12 GiB Job ceilings derive from measured 450M peaks, the exact 3.558093732 model-byte ratio, and a 1.35 safety factor. No 1.6B payload, model load, tensor trace, or numerical result is claimed.
 
 The read-only local runtime at `C:\llamacpp` reports build b9981 / `(34558825a)` and executable SHA-256 `01e191f9dd389b6e3b091eeaa8b6142784bd0e1b0e19ed7c67039afc6626ae1d`. That build is not proven identical to the pinned implementation-reference commit `74ce15741b420b8d6f12e720398458b576c51c2c`.
 
@@ -116,11 +150,11 @@ Three bundles remain deliberately separate: legacy b9981 incident evidence; user
 - Plausible captions are not parity evidence.
 - Component tensors and exact metadata must be compared at the applicable phase gate.
 - Fixture evidence must not be described as production-checkpoint or production-GGUF parity.
-- No result may be marked green until the exact command and result are recorded in `STATUS.md`.
+- No result may be marked green until the exact command and result are recorded in `STATUS.md`; move it to `HISTORY.md` when a newer gate supersedes it.
 
 ## Next Parity Task
 
-Download the pinned official 450M native checkpoint only through the guarded production path, record every file identity, and compare selected production processor/vision/projector/merge/prefill/decode tensors on CPU F32 against the pinned Transformers oracle. Re-measure host commit, physical memory, GPU memory, and exact process absence afterward. Obtain the pinned official base text GGUF only after native CPU parity, and repeat the same-artifact Candle/pinned-llama.cpp decoded-sequence comparison without using the fine-tuned local text model as a substitute.
+NR-5B, the official-base GGUF same-artifact comparison, the 1.6B no-model forecast, and the read-only guarded acquisition plan are green. Next, acquire and locally hash the absent official 1.6B regular snapshot as a separately approved external action, then stop before the independently bounded dry load. CUDA and the optional WSL replay remain later lanes.
 
 ---
-AI-edited: 2026-08-10T15:41:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-nr5a | change=recorded restart-required recovery, pinned bundle identity, and the green bounded-oracle gate
+AI-edited: 2026-08-11T09:15:59-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=docs | change=aligned completed P2 proof and current P3 boundary

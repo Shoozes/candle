@@ -230,6 +230,16 @@ impl Lfm2Config {
     }
 
     pub fn try_into_config(self, use_flash_attn: bool) -> Result<Config> {
+        if let Some(full_attention_layers) = &self.full_attention_layers {
+            for &layer_idx in full_attention_layers {
+                if layer_idx >= self.num_hidden_layers {
+                    candle::bail!(
+                        "LFM2 full_attention_layers index {layer_idx} is outside num_hidden_layers {}",
+                        self.num_hidden_layers
+                    )
+                }
+            }
+        }
         let intermediate_size = self.effective_ffn_dim()?;
         let layer_types = if !self.layer_types.is_empty() {
             if self.layer_types.len() != self.num_hidden_layers {
@@ -253,7 +263,7 @@ impl Lfm2Config {
         } else {
             vec![LayerType::FullAttention; self.num_hidden_layers]
         };
-        Ok(Config {
+        let config = Config {
             vocab_size: self.vocab_size,
             hidden_size: self.hidden_size,
             intermediate_size,
@@ -270,7 +280,9 @@ impl Lfm2Config {
             bos_token_id: self.bos_token_id,
             eos_token_id: self.eos_token_id,
             use_flash_attn,
-        })
+        };
+        config.validate()?;
+        Ok(config)
     }
 
     /// Convert a validated configuration using the legacy infallible API.
@@ -308,6 +320,95 @@ pub struct Config {
 }
 
 impl Config {
+    /// Validate dimensions and limits before constructing tensors or layers.
+    ///
+    /// `Config` is public for existing integrations, so callers can construct
+    /// it without going through [`Lfm2Config::try_into_config`]. Constructors
+    /// and caches call this method before using any dimension-derived shape.
+    pub fn validate(&self) -> Result<()> {
+        if self.vocab_size == 0 {
+            candle::bail!("LFM2 vocab_size must be greater than zero")
+        }
+        if self.hidden_size == 0 {
+            candle::bail!("LFM2 hidden_size must be greater than zero")
+        }
+        if self.num_hidden_layers == 0 {
+            candle::bail!("LFM2 num_hidden_layers must be greater than zero")
+        }
+        if self.num_attention_heads == 0 {
+            candle::bail!("LFM2 num_attention_heads must be greater than zero")
+        }
+        if self.hidden_size % self.num_attention_heads != 0 {
+            candle::bail!(
+                "LFM2 hidden_size {} must be divisible by num_attention_heads {}",
+                self.hidden_size,
+                self.num_attention_heads
+            )
+        }
+        let head_dim = self.hidden_size / self.num_attention_heads;
+        if head_dim == 0 || head_dim % 2 != 0 {
+            candle::bail!("LFM2 attention head dimension {head_dim} must be a positive even number")
+        }
+        if self.num_key_value_heads == 0 {
+            candle::bail!("LFM2 num_key_value_heads must be greater than zero")
+        }
+        if self.num_key_value_heads > self.num_attention_heads {
+            candle::bail!(
+                "LFM2 num_key_value_heads {} cannot exceed num_attention_heads {}",
+                self.num_key_value_heads,
+                self.num_attention_heads
+            )
+        }
+        if self.num_attention_heads % self.num_key_value_heads != 0 {
+            candle::bail!(
+                "LFM2 num_attention_heads {} must be divisible by num_key_value_heads {}",
+                self.num_attention_heads,
+                self.num_key_value_heads
+            )
+        }
+        if self.layer_types.len() != self.num_hidden_layers {
+            candle::bail!(
+                "LFM2 layer_types length {} does not match num_hidden_layers {}",
+                self.layer_types.len(),
+                self.num_hidden_layers
+            )
+        }
+        if self.intermediate_size == 0 {
+            candle::bail!("LFM2 intermediate_size must be greater than zero")
+        }
+        if self.conv_l_cache == 0 {
+            candle::bail!("LFM2 conv_l_cache must be greater than zero")
+        }
+        if self.max_position_embeddings == 0 {
+            candle::bail!("LFM2 max_position_embeddings must be greater than zero")
+        }
+        if self.max_position_embeddings > u32::MAX as usize {
+            candle::bail!(
+                "LFM2 max_position_embeddings {} exceeds the supported u32 position range",
+                self.max_position_embeddings
+            )
+        }
+        if !self.norm_eps.is_finite() || self.norm_eps <= 0.0 {
+            candle::bail!("LFM2 norm_eps must be finite and greater than zero")
+        }
+        if !self.rope_theta.is_finite() || self.rope_theta <= 0.0 {
+            candle::bail!("LFM2 rope_theta must be finite and greater than zero")
+        }
+        self.hidden_size
+            .checked_mul(3)
+            .ok_or_else(|| candle::Error::Msg("LFM2 projection width overflow".into()))?;
+        self.vocab_size
+            .checked_mul(self.hidden_size)
+            .ok_or_else(|| candle::Error::Msg("LFM2 embedding shape overflow".into()))?;
+        self.hidden_size
+            .checked_mul(self.intermediate_size)
+            .ok_or_else(|| candle::Error::Msg("LFM2 FFN shape overflow".into()))?;
+        self.max_position_embeddings
+            .checked_mul(head_dim.div_ceil(2))
+            .ok_or_else(|| candle::Error::Msg("LFM2 rotary cache shape overflow".into()))?;
+        Ok(())
+    }
+
     pub fn head_dim(&self) -> usize {
         self.hidden_size / self.num_attention_heads
     }
@@ -337,10 +438,12 @@ fn calculate_default_inv_freq(cfg: &Config) -> Vec<f32> {
 
 impl Cache {
     pub fn new(use_kv_cache: bool, dtype: DType, config: &Config, device: &Device) -> Result<Self> {
+        config.validate()?;
         let theta = calculate_default_inv_freq(config);
         let theta = Tensor::new(theta, device)?;
 
-        let idx_theta = Tensor::arange(0, config.max_position_embeddings as u32, device)?
+        let max_position_embeddings = config.max_position_embeddings as u32;
+        let idx_theta = Tensor::arange(0u32, max_position_embeddings, device)?
             .to_dtype(DType::F32)?
             .reshape((config.max_position_embeddings, 1))?
             .matmul(&theta.reshape((1, theta.elem_count()))?)?;
@@ -360,7 +463,9 @@ impl Cache {
     }
 
     fn mask(&mut self, seq_len: usize, index_pos: usize) -> Result<Tensor> {
-        let kv_len = index_pos + seq_len;
+        let kv_len = index_pos
+            .checked_add(seq_len)
+            .ok_or_else(|| candle::Error::Msg("LFM2 sequence position overflow".into()))?;
         if let Some(mask) = self.masks.get(&(seq_len, kv_len)) {
             Ok(mask.clone())
         } else {
@@ -397,7 +502,9 @@ fn flash_attn(
 
 #[cfg(not(feature = "flash-attn"))]
 fn flash_attn(_: &Tensor, _: &Tensor, _: &Tensor, _: f32, _: bool) -> Result<Tensor> {
-    unimplemented!("compile with '--features flash-attn'")
+    candle::bail!(
+        "LFM2 flash attention was requested, but candle-transformers was built without the 'flash-attn' feature"
+    )
 }
 
 /// MLP layer with SwiGLU activation.
@@ -793,6 +900,7 @@ impl Model {
         vb_m: VarBuilder,
         lm_head_vb: Option<VarBuilder>,
     ) -> Result<Self> {
+        cfg.validate()?;
         let embed_tokens =
             Embedding::new(cfg.vocab_size, cfg.hidden_size, vb_m.pp("embed_tokens"))?;
 
@@ -842,6 +950,15 @@ impl Model {
         let (_, seq_len, _) = input_embeds.dims3()?;
         if seq_len == 0 {
             candle::bail!("LFM2 cannot forward an empty sequence")
+        }
+        let end_pos = index_pos
+            .checked_add(seq_len)
+            .ok_or_else(|| candle::Error::Msg("LFM2 sequence position overflow".into()))?;
+        let max_position_embeddings = cache.cos.dim(0)?;
+        if end_pos > max_position_embeddings {
+            candle::bail!(
+                "LFM2 sequence positions [{index_pos}, {end_pos}) exceed max_position_embeddings {max_position_embeddings}"
+            )
         }
 
         let mut hidden_states = input_embeds.clone();
@@ -923,6 +1040,19 @@ mod tests {
             eos_token_id: Some(2),
             use_flash_attn: false,
         }
+    }
+
+    #[cfg(not(feature = "flash-attn"))]
+    #[test]
+    fn flash_attention_without_feature_returns_an_error() -> Result<()> {
+        let tensor = Tensor::zeros((1, 1, 1, 1), DType::F32, &Device::Cpu)?;
+        let err = flash_attn(&tensor, &tensor, &tensor, 1.0, false).unwrap_err();
+        assert!(
+            err.to_string()
+                .contains("built without the 'flash-attn' feature"),
+            "unexpected error: {err}"
+        );
+        Ok(())
     }
 
     fn assert_close(actual: &Tensor, expected: &Tensor, tolerance: f32, label: &str) -> Result<()> {
@@ -1169,6 +1299,91 @@ mod tests {
         assert_eq!(config.intermediate_size, None);
         assert_eq!(config.effective_ffn_dim()?, 48);
         assert!(config.tie_embedding);
+        Ok(())
+    }
+
+    #[test]
+    fn malformed_dimensions_are_rejected_before_model_construction() -> Result<()> {
+        let base = serde_json::json!({
+            "vocab_size": 32,
+            "hidden_size": 12,
+            "num_hidden_layers": 2,
+            "num_attention_heads": 3,
+            "num_key_value_heads": 1,
+            "layer_types": ["conv", "full_attention"],
+            "block_ff_dim": 32,
+            "block_auto_adjust_ff_dim": false,
+            "conv_l_cache": 3
+        });
+        let cases = [
+            (
+                "num_attention_heads",
+                serde_json::json!(0),
+                "num_attention_heads must be greater than zero",
+            ),
+            (
+                "num_key_value_heads",
+                serde_json::json!(2),
+                "must be divisible by num_key_value_heads",
+            ),
+            (
+                "hidden_size",
+                serde_json::json!(15),
+                "attention head dimension 5 must be a positive even number",
+            ),
+            (
+                "conv_l_cache",
+                serde_json::json!(0),
+                "conv_l_cache must be greater than zero",
+            ),
+            (
+                "max_position_embeddings",
+                serde_json::json!(0),
+                "max_position_embeddings must be greater than zero",
+            ),
+            (
+                "norm_eps",
+                serde_json::json!(0.0),
+                "norm_eps must be finite and greater than zero",
+            ),
+            (
+                "rope_theta",
+                serde_json::json!(0.0),
+                "rope_theta must be finite and greater than zero",
+            ),
+        ];
+        for (field, value, expected) in cases {
+            let mut raw = base.clone();
+            raw[field] = value;
+            let config = parse_config(raw)?;
+            let error = config.try_into_config(false).unwrap_err().to_string();
+            assert!(
+                error.contains(expected),
+                "{field}: expected error containing {expected:?}, got {error}"
+            );
+        }
+
+        let mut out_of_range = base;
+        out_of_range["full_attn_idxs"] = serde_json::json!([2]);
+        let config = parse_config(out_of_range)?;
+        let error = config.try_into_config(false).unwrap_err().to_string();
+        assert!(error.contains("full_attention_layers index 2"));
+        Ok(())
+    }
+
+    #[test]
+    fn cache_rejects_unrepresentable_positions_and_index_overflow() -> Result<()> {
+        let device = Device::Cpu;
+        let mut invalid = tiny_config(true);
+        invalid.max_position_embeddings = (u32::MAX as usize).saturating_add(1);
+        let error = Cache::new(true, DType::F32, &invalid, &device)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("supported u32 position range"), "{error}");
+
+        let mut cache = Cache::new(true, DType::F32, &tiny_config(true), &device)?;
+        let error = cache.mask(1, usize::MAX).unwrap_err().to_string();
+        assert!(error.contains("sequence position overflow"), "{error}");
         Ok(())
     }
 

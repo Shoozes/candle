@@ -52,6 +52,25 @@ def _json_bytes(value: Any) -> bytes:
     return (json.dumps(value, indent=2, sort_keys=True) + "\n").encode("utf-8")
 
 
+def _publish_temporary(
+    temporary: Path, destination: Path, *, overwrite: bool
+) -> None:
+    """Publish one flushed temporary file without an unapproved replacement."""
+
+    try:
+        if overwrite:
+            os.replace(temporary, destination)
+        else:
+            try:
+                os.link(temporary, destination)
+            except FileExistsError as exc:
+                raise FileExistsError(
+                    f"output appeared during publication and was not replaced: {destination}"
+                ) from exc
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def _write_atomic(path: Path, payload: bytes, *, overwrite: bool) -> None:
     if path.exists() and not overwrite:
         raise FileExistsError(f"refusing to overwrite {path}")
@@ -61,11 +80,7 @@ def _write_atomic(path: Path, payload: bytes, *, overwrite: bool) -> None:
         handle.write(payload)
         handle.flush()
         os.fsync(handle.fileno())
-    try:
-        os.replace(temporary, path)
-    except BaseException:
-        temporary.unlink(missing_ok=True)
-        raise
+    _publish_temporary(temporary, path, overwrite=overwrite)
 
 
 def _read_json(path: Path) -> tuple[dict[str, Any], bytes]:
@@ -389,11 +404,7 @@ def _export_safetensors(
                 _copy_exact(source, target, source_end - source_start)
         target.flush()
         os.fsync(target.fileno())
-    try:
-        os.replace(temporary, output_path)
-    except BaseException:
-        temporary.unlink(missing_ok=True)
-        raise
+    _publish_temporary(temporary, output_path, overwrite=overwrite)
     return inventory
 
 

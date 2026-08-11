@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd -P)"
 cd -- "$REPO_ROOT"
 
-# The verifier is intentionally offline, CPU-only, and locked. It never runs an example.
+# The Linux/WSL portability verifier is intentionally offline, CPU-only, and locked. It never runs an example.
 export CARGO_NET_OFFLINE=true
 export HF_HUB_OFFLINE=1
 export HF_HUB_DISABLE_TELEMETRY=1
@@ -14,7 +14,7 @@ export CUDA_VISIBLE_DEVICES=""
 if [[ ! -f Cargo.lock ]]; then
     printf '%s\n' \
         'error: Cargo.lock is required for locked verification.' \
-        'Create the local-only lockfile in the Linux verification worktree, then record its SHA-256.' \
+        'Create the local-only lockfile in the Linux/WSL portability worktree, then record its SHA-256.' \
         >&2
     exit 2
 fi
@@ -43,6 +43,7 @@ run_step cargo check --locked --offline -p candle-examples --example quantized-l
 run_step cargo check --locked --offline -p candle-examples --example lfm2-vl
 run_step git diff --check
 run_step git diff --cached --check
+run_step bash scripts/lfm2-vl/verify-mod-manifest.sh
 
 printf 'timestamp-end-utc: %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 printf 'baseline: passed\n'

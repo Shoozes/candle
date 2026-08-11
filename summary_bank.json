@@ -1,0 +1,281 @@
+{
+  "schema": "gknome_summary_bank_v2",
+  "defaults": {
+    "groups": ["project_start"],
+    "tree": true,
+    "max_kb": 256,
+    "skip_dirs": [".git", ".tools/.secrets", ".venv", "artifacts", "downloads", "models", "target", "__pycache__"]
+  },
+  "groups": {
+    "project_start": {
+      "description": "Small first load for project policy, product contract, current execution, status, backlog, provenance, and context routing.",
+      "status": "active",
+      "paths": [
+        "AGENTS.md",
+        "docs/lfm2-vl/SPEC.md",
+        "docs/lfm2-vl/START_HERE.md",
+        "docs/lfm2-vl/STATUS.md",
+        "docs/lfm2-vl/TODO.md",
+        "docs/lfm2-vl/MOD_MANIFEST.md",
+        "summary_bank.json"
+      ]
+    },
+    "feature__lfm2_text": {
+      "description": "Dense and quantized LFM2 configuration, embedding-driven forwarding, cache behavior, text examples, and deterministic text fixtures.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/lfm2.rs",
+        "candle-transformers/src/models/quantized_lfm2.rs",
+        "candle-examples/examples/lfm2/main.rs",
+        "candle-transformers/src/models/lfm2_vl/config.rs",
+        "tests/fixtures/lfm2_vl_tiny/README.md",
+        "tests/fixtures/lfm2_vl_tiny/manifest.json",
+        "tests/fixtures/lfm2_vl_tiny/metadata.json"
+      ]
+    },
+    "feature__siglip2_naflex": {
+      "description": "Packed-patch SigLIP2 NaFlex encoding, limits, shape contracts, tensor mapping, and focused fixture evidence.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/siglip2.rs",
+        "candle-transformers/src/models/lfm2_vl/config.rs",
+        "candle-transformers/src/models/lfm2_vl/model.rs",
+        "tests/fixtures/lfm2_vl_tiny/README.md",
+        "tests/fixtures/lfm2_vl_tiny/manifest.json",
+        "docs/lfm2-vl/TENSOR_MAP.md"
+      ]
+    },
+    "feature__native_composite": {
+      "description": "Native LFM2-VL configuration, projector/composite construction, weight binding, and tensor-stage contracts without example-loader context.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/lfm2_vl/config.rs",
+        "candle-transformers/src/models/lfm2_vl/model.rs",
+        "candle-transformers/src/models/lfm2_vl/projector.rs",
+        "candle-transformers/src/models/lfm2_vl/weights.rs",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/source_model_config.json",
+        "docs/lfm2-vl/TENSOR_MAP.md"
+      ]
+    },
+    "workflow__native_checkpoint_loading": {
+      "description": "Unified safetensors inventory validation, example loader wiring, native trace publication, and operator-facing checkpoint behavior.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/lfm2_vl/weights.rs",
+        "candle-examples/examples/lfm2-vl/README.md",
+        "candle-examples/examples/lfm2-vl/native_checkpoint.rs",
+        "candle-examples/examples/lfm2-vl/native_loading.rs",
+        "candle-examples/examples/lfm2-vl/trace.rs",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/source_model_config.json"
+      ]
+    },
+    "feature__image_processing_and_prompt": {
+      "description": "Rust image preprocessing, processor configuration, prompt expansion, image-span validation, and their committed fixtures.",
+      "status": "active",
+      "paths": [
+        "candle-vlm/src/image.rs",
+        "candle-vlm/src/lfm2_vl/config.rs",
+        "candle-vlm/src/lfm2_vl/processor.rs",
+        "candle-vlm/src/lfm2_vl/prompt.rs",
+        "candle-vlm/src/lfm2_vl/types.rs",
+        "candle-examples/examples/lfm2-vl/args.rs",
+        "candle-examples/examples/lfm2-vl/loading.rs",
+        "tests/fixtures/lfm2_vl_processor_tiny/README.md",
+        "tests/fixtures/lfm2_vl_processor_tiny/manifest.json",
+        "tests/fixtures/lfm2_vl_processor_tiny/metadata.json",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/processor_config.json"
+      ]
+    },
+    "feature__gguf_mmproj": {
+      "description": "Bounded GGUF parsing, direct dense/Q8 MMProj loading, canonical tensor mapping, and tiny runtime fixtures.",
+      "status": "active",
+      "paths": [
+        "candle-core/src/quantized/gguf_file.rs",
+        "candle-transformers/src/models/lfm2_vl/gguf.rs",
+        "candle-transformers/src/models/lfm2_vl/linear.rs",
+        "candle-transformers/src/models/lfm2_vl/weights.rs",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/README.md",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/mmproj.json",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/processor_config.json",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/source_model_config.json",
+        "docs/lfm2-vl/TENSOR_MAP.md"
+      ]
+    },
+    "workflow__reference_fixtures": {
+      "description": "Pinned source identities, config inspection, deterministic fixture exporters, bundle helpers, and focused fixture tests.",
+      "status": "active",
+      "paths": [
+        "tools/lfm2_vl/reference-lock.json",
+        "tools/lfm2_vl/reference/README.md",
+        "tools/lfm2_vl/reference/export_fixtures.py",
+        "tools/lfm2_vl/reference/export_processor_fixture.py",
+        "tools/lfm2_vl/reference/inspect_config.py",
+        "tools/lfm2_vl/reference/manifest.py",
+        "tools/lfm2_vl/reference/tensor_dump.py",
+        "tools/lfm2_vl/reference/test_mmproj_exporter.py",
+        "tools/lfm2_vl/reference/test_reference_tools.py",
+        "docs/lfm2-vl/SOURCES.md",
+        "docs/lfm2-vl/LICENSE_NOTES.md"
+      ]
+    },
+    "workflow__reference_environment": {
+      "description": "Platform-specific Python oracle pins, resolved locks, import-light environment verification, and their owning documentation/tests.",
+      "status": "active",
+      "paths": [
+        "tools/lfm2_vl/README.md",
+        "tools/lfm2_vl/reference-lock.json",
+        "tools/lfm2_vl/reference/README.md",
+        "tools/lfm2_vl/reference/verify_environment.py",
+        "tools/lfm2_vl/reference/requirements-reference.in",
+        "tools/lfm2_vl/reference/requirements-reference.txt",
+        "tools/lfm2_vl/reference/requirements-reference-windows.txt"
+      ]
+    },
+    "workflow__gguf_artifact_inspection": {
+      "description": "Pinned GGUF header/full-file inspection, split-MMProj export publication, source provenance, and narrow malformed/output regressions.",
+      "status": "active",
+      "paths": [
+        "tools/lfm2_vl/reference-lock.json",
+        "tools/lfm2_vl/reference/README.md",
+        "tools/lfm2_vl/reference/inspect_gguf_header.py",
+        "tools/lfm2_vl/reference/test_gguf_header.py",
+        "tools/export_lfm2_vl_mmproj.py",
+        "tools/lfm2_vl/reference/test_mmproj_exporter.py",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/README.md",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/mmproj.json",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/source_model_config.json",
+        "docs/lfm2-vl/SOURCES.md",
+        "docs/lfm2-vl/TENSOR_MAP.md"
+      ]
+    },
+    "workflow__artifact_acquisition": {
+      "description": "Pinned external snapshot planning, Xet-disabled resumable HTTP acquisition, source-identity verification, atomic no-clobber publication, and the active P3 approval boundary.",
+      "status": "active",
+      "paths": [
+        "tools/lfm2_vl/reference-lock.json",
+        "tools/lfm2_vl/reference/acquire_snapshot.py",
+        "tools/lfm2_vl/reference/inspect_artifact.py",
+        "tools/lfm2_vl/reference/manifest.py",
+        "tools/lfm2_vl/reference/test_acquire_snapshot.py",
+        "tools/lfm2_vl/reference/README.md",
+        "docs/lfm2-vl/DECISIONS.md"
+      ]
+    },
+    "workflow__production_parity": {
+      "description": "Pinned environment, hash-only artifact admission, production trace export, native comparison, and exact parity evidence contracts.",
+      "status": "active",
+      "paths": [
+        "tools/lfm2_vl/reference/production_trace.py",
+        "tools/lfm2_vl/reference/compare_traces.py",
+        "tools/lfm2_vl/reference/inspect_artifact.py",
+        "tools/lfm2_vl/reference/manifest.py",
+        "tools/lfm2_vl/reference/tensor_dump.py",
+        "candle-examples/examples/lfm2-vl/README.md",
+        "candle-examples/examples/lfm2-vl/trace.rs",
+        "docs/lfm2-vl/PARITY.md"
+      ]
+    },
+    "workflow__local_verification": {
+      "description": "Native Windows-first verification, secondary WSL portability replay, baseline/environment scripts, bounded-process proof, parity claims, failures, and current handoff.",
+      "status": "active",
+      "paths": [
+        "scripts/lfm2-vl/env-report.sh",
+        "scripts/lfm2-vl/verify-baseline.sh",
+        "scripts/lfm2-vl/preflight.ps1",
+        "scripts/lfm2-vl/run-bounded-oracle.ps1",
+        "scripts/lfm2-vl/test-bounded-oracle.ps1",
+        "scripts/lfm2-vl/test-preflight.ps1",
+        "scripts/lfm2-vl/verify-mod-manifest.sh",
+        "scripts/lfm2-vl/verify-summary-bank.ps1",
+        "docs/lfm2-vl/PARITY.md",
+        "docs/lfm2-vl/FAILURE_LOG.md",
+        "docs/lfm2-vl/STATUS.md"
+      ]
+    },
+    "issue__oracle_memory_containment": {
+      "description": "The Windows llama.cpp residency incident, mandatory Job Object owner, smoke proof, and guarded future oracle workflow.",
+      "status": "active",
+      "paths": [
+        "scripts/lfm2-vl/preflight.ps1",
+        "scripts/lfm2-vl/run-bounded-oracle.ps1",
+        "scripts/lfm2-vl/test-bounded-oracle.ps1",
+        "scripts/lfm2-vl/test-preflight.ps1",
+        "tools/lfm2_vl/README.md",
+        "docs/lfm2-vl/FAILURE_LOG.md",
+        "docs/lfm2-vl/PARITY.md",
+        "docs/lfm2-vl/TODO.md"
+      ]
+    },
+    "issue__production_trace_integrity": {
+      "description": "Cross-runtime trace dtype, artifact, stage-range, and comparison-exit contracts exposed by the official 450M parity gate.",
+      "status": "active",
+      "paths": [
+        "candle-examples/examples/lfm2-vl/trace.rs",
+        "candle-examples/examples/lfm2-vl/runner.rs",
+        "tools/lfm2_vl/reference/compare_traces.py",
+        "tools/lfm2_vl/reference/test_reference_tools.py",
+        "docs/lfm2-vl/PARITY.md"
+      ]
+    },
+    "issue__exclusive_evidence_publication": {
+      "description": "Recurring check-then-replace races in snapshot, report, split-bundle, and native-trace publication; routes the shared no-clobber primitives, affected writers, narrow tests, and F-0036 guidance.",
+      "status": "active",
+      "paths": [
+        "tools/lfm2_vl/reference/manifest.py",
+        "tools/lfm2_vl/reference/acquire_snapshot.py",
+        "tools/lfm2_vl/reference/inspect_artifact.py",
+        "tools/lfm2_vl/reference/compare_traces.py",
+        "tools/lfm2_vl/reference/inspect_gguf_header.py",
+        "tools/export_lfm2_vl_mmproj.py",
+        "candle-examples/examples/lfm2-vl/trace.rs",
+        "tools/lfm2_vl/reference/test_gguf_header.py",
+        "tools/lfm2_vl/reference/test_mmproj_exporter.py",
+        "docs/lfm2-vl/FAILURE_LOG.md"
+      ]
+    },
+    "issue__gknome_adoption_and_linked_git": {
+      "description": "Current checkout's WSL-owned Git topology plus Gknome's blocked mature-repository authority, context-bank, runtime-inventory, and safe-landing integration; neither is a product-platform requirement.",
+      "status": "active",
+      "paths": [
+        "AGENTS.md",
+        "docs/lfm2-vl/START_HERE.md",
+        "docs/lfm2-vl/STATUS.md",
+        "docs/lfm2-vl/TODO.md",
+        "docs/lfm2-vl/FAILURE_LOG.md",
+        "docs/lfm2-vl/MOD_MANIFEST.md"
+      ]
+    },
+    "workflow__publication_provenance": {
+      "description": "Fork-versus-mod file ownership, external source/license provenance, publication exclusions, and current checkpoint truth.",
+      "status": "active",
+      "paths": [
+        ".gitignore",
+        "docs/lfm2-vl/MOD_MANIFEST.md",
+        "docs/lfm2-vl/SOURCES.md",
+        "docs/lfm2-vl/LICENSE_NOTES.md",
+        "docs/lfm2-vl/DECISIONS.md"
+      ]
+    },
+    "workflow__context_integrity": {
+      "description": "Focused routing contract, verifier, compact current docs, active backlog, and publication inventory for future integrity passes.",
+      "status": "active",
+      "paths": [
+        "summary_bank.json",
+        "scripts/lfm2-vl/verify-summary-bank.ps1",
+        "docs/lfm2-vl/START_HERE.md",
+        "docs/lfm2-vl/STATUS.md",
+        "docs/lfm2-vl/TODO.md",
+        "docs/lfm2-vl/MOD_MANIFEST.md"
+      ]
+    }
+  },
+  "exclusions": {
+    ".git": { "note": "Repository internals, including this checkout's WSL linked-worktree pointer; inspect with the owning Git backend, never load as context." },
+    ".tools/.secrets": { "note": "Operator-owned credentials; never read, route, stage, or publish." },
+    "artifacts": { "note": "Ignored runtime evidence and logs; authoritative only when a durable doc records exact path and hash." },
+    "downloads": { "note": "Untracked acquisition area; never context or publication input." },
+    "models": { "note": "Production weights are local runtime inputs and must never enter normal context or publication." },
+    "target": { "note": "Generated Cargo output." },
+    "docs/lfm2-vl/history": { "note": "Completed bootstrap and phase instructions; opt in only for historical reconstruction." }
+  }
+}

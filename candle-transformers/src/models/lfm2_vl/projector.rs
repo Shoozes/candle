@@ -20,13 +20,13 @@ pub struct Lfm2VlProjector {
 
 #[cfg_attr(not(test), allow(dead_code))]
 #[derive(Debug)]
-struct ProjectorStages {
-    pixel_unshuffle: Tensor,
-    layer_norm: Option<Tensor>,
-    linear_1: Tensor,
-    activation: Tensor,
-    linear_2: Tensor,
-    output: Tensor,
+pub(crate) struct ProjectorStages {
+    pub(crate) pixel_unshuffle: Tensor,
+    pub(crate) layer_norm: Option<Tensor>,
+    pub(crate) linear_1: Tensor,
+    pub(crate) activation: Tensor,
+    pub(crate) linear_2: Tensor,
+    pub(crate) output: Tensor,
 }
 
 impl Lfm2VlProjector {
@@ -163,7 +163,7 @@ impl Lfm2VlProjector {
         reshaped.permute((0, 2, 1, 3))
     }
 
-    fn forward_stages(&self, hidden_states: &Tensor) -> Result<ProjectorStages> {
+    pub(crate) fn forward_stages(&self, hidden_states: &Tensor) -> Result<ProjectorStages> {
         let pixel_unshuffle = self.pixel_unshuffle(hidden_states)?;
         let output_channels = pixel_unshuffle.dim(3)?;
         if output_channels != self.input_size {

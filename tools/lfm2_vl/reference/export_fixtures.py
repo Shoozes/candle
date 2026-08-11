@@ -17,6 +17,7 @@ from typing import Any, Mapping
 
 try:
     from .inspect_config import inspect_config
+    from .inspect_artifact import resolve_model_snapshot, verify_artifact_unchanged
     from .manifest import (
         REFERENCE_PACKAGE_PINS,
         assert_secret_safe,
@@ -25,12 +26,18 @@ try:
         model_entry,
         normalized_model_summary,
         package_versions,
+        reference_environment_lock,
+        require_reference_environment,
         repo_root,
         transformers_entry,
     )
     from .tensor_dump import write_metadata_bundle, write_tensor_bundle
 except ImportError:  # pragma: no cover - direct script execution
     from inspect_config import inspect_config  # type: ignore
+    from inspect_artifact import (  # type: ignore
+        resolve_model_snapshot,
+        verify_artifact_unchanged,
+    )
     from manifest import (  # type: ignore
         REFERENCE_PACKAGE_PINS,
         assert_secret_safe,
@@ -39,6 +46,8 @@ except ImportError:  # pragma: no cover - direct script execution
         model_entry,
         normalized_model_summary,
         package_versions,
+        reference_environment_lock,
+        require_reference_environment,
         repo_root,
         transformers_entry,
     )
@@ -69,6 +78,7 @@ TINY_CONFIG = {
 
 
 def _torch_and_official_classes():
+    require_reference_environment()
     try:
         import torch
         from transformers import (
@@ -225,11 +235,14 @@ def _project_valid_features(
     vision_hidden: Any,
     mask: Any,
     spatial_shapes: Any,
+    *,
+    capture_inputs: bool = False,
 ) -> tuple[Any, dict[str, Any]]:
     """Use the official projector class after official vision execution."""
 
     torch, *_ = _torch_and_official_classes()
     projected = []
+    projector_inputs = []
     stages: dict[str, Any] = {}
     projector = model.model.multi_modal_projector
     factor = int(model.config.downsample_factor)
@@ -241,6 +254,8 @@ def _project_valid_features(
         if rows % factor or cols % factor:
             raise ValueError("tiny spatial shape is not divisible by downsample factor")
         grid = valid.reshape(1, rows, cols, valid.shape[-1])
+        if capture_inputs:
+            projector_inputs.append(valid.detach().clone())
 
         # pixel_unshuffle is a plain method on the pinned projector class, not
         # a child module.  Keep this explicit stage sequence aligned with its
@@ -264,6 +279,8 @@ def _project_valid_features(
         projected.append(output.reshape(-1, output.shape[-1]))
     if not projected:
         raise ValueError("no image crops to project")
+    if capture_inputs:
+        stages["stage.projector.input"] = torch.cat(projector_inputs, dim=0)
     return torch.cat(projected, dim=0), stages
 
 
@@ -552,13 +569,27 @@ def _production_metadata(args: argparse.Namespace) -> dict[str, Any]:
             f"revision {args.revision} is not the locked revision {entry['revision']}"
         )
     revision = entry["revision"]
+    model_dir = None
+    artifact_manifest = None
+    if args.model_dir:
+        if args.allow_download:
+            raise ValueError("an external model snapshot cannot be combined with --allow-download")
+        model_dir, artifact_manifest = resolve_model_snapshot(args.model, args.model_dir)
     loaded_model = None
     if args.load_model:
-        loaded_model = load_production_model(
-            entry["id"],
-            revision,
-            allow_download=args.allow_download,
+        loader_args = {"allow_download": args.allow_download}
+        if model_dir is not None:
+            loader_args["model_dir"] = model_dir
+        loaded_model = load_production_model(entry["id"], revision, **loader_args)
+    artifact_manifest_reverified = False
+    if model_dir is not None and artifact_manifest is not None:
+        _, final_artifact_manifest = resolve_model_snapshot(args.model, model_dir)
+        verify_artifact_unchanged(
+            artifact_manifest,
+            final_artifact_manifest,
+            operation="production loading",
         )
+        artifact_manifest_reverified = True
     if args.config:
         summary = inspect_config(
             model=args.model,
@@ -574,14 +605,16 @@ def _production_metadata(args: argparse.Namespace) -> dict[str, Any]:
         )
         source = "loaded-pinned-production-config"
     else:
+        require_reference_environment()
         try:
             from transformers import AutoConfig
         except ImportError as exc:  # pragma: no cover - manager environment
             raise RuntimeError("production metadata mode requires pinned transformers") from exc
+        config_source = str(model_dir) if model_dir is not None else entry["id"]
         config = AutoConfig.from_pretrained(
-            entry["id"],
+            config_source,
             revision=revision,
-            local_files_only=not args.allow_download,
+            local_files_only=model_dir is not None or not args.allow_download,
             trust_remote_code=False,
         )
         processor_config = None
@@ -605,10 +638,16 @@ def _production_metadata(args: argparse.Namespace) -> dict[str, Any]:
         "source_image_sha256": image_hash,
         "package_versions": package_versions(),
         "package_pins": REFERENCE_PACKAGE_PINS,
+        "environment_lock": reference_environment_lock(),
         "transformers_revision": transformers_entry(lock)["revision"],
         "model_id": entry["id"],
         "model_revision": revision,
         "processor_revision": revision,
+        "model_snapshot_mode": (
+            "external-regular-file" if model_dir is not None else "hub-cache-or-local"
+        ),
+        "artifact_manifest": artifact_manifest,
+        "artifact_manifest_reverified": artifact_manifest_reverified,
         "summary": summary,
         "weights_loaded": loaded_model is not None,
         "tensor_payload_generated": False,
@@ -625,6 +664,11 @@ def _production_metadata(args: argparse.Namespace) -> dict[str, Any]:
         "model_id": entry["id"],
         "model_revision": revision,
         "processor_revision": revision,
+        "model_snapshot_mode": (
+            "external-regular-file" if model_dir is not None else "hub-cache-or-local"
+        ),
+        "artifact_manifest": artifact_manifest,
+        "artifact_manifest_reverified": artifact_manifest_reverified,
         "weights_loaded": loaded_model is not None,
         "tensor_payload_generated": False,
     }
@@ -637,21 +681,100 @@ def _production_metadata(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
-def load_production_model(model_id: str, revision: str, *, allow_download: bool):
+def _production_trace(args: argparse.Namespace) -> dict[str, Any]:
+    if not args.allow_production:
+        raise PermissionError(
+            "production trace is disabled; pass --allow-production explicitly"
+        )
+    if not args.load_model:
+        raise PermissionError("production trace requires --load-model explicitly")
+    if not args.output:
+        raise ValueError("production trace requires --output outside the repository")
+    if not args.image:
+        raise ValueError("production trace requires --image")
+    if not args.prompt or not args.prompt.strip():
+        raise ValueError("production trace requires a non-empty --prompt")
+    if not args.model_dir:
+        raise ValueError(
+            "production trace requires --model-dir for an identified regular-file snapshot"
+        )
+    if args.allow_download:
+        raise ValueError("production trace with --model-dir cannot use --allow-download")
+    root = repo_root()
+    output = args.output.resolve()
+    image = args.image.resolve()
+    for label, path in (("trace output", output), ("source image", image)):
+        try:
+            path.relative_to(root)
+        except ValueError:
+            continue
+        raise PermissionError(f"{label} must be outside the repository: {path}")
+    try:
+        from .production_trace import (
+            DEFAULT_MAX_IMAGE_PATCHES,
+            DEFAULT_MAX_INPUT_TOKENS,
+            DEFAULT_MAX_NEW_TOKENS,
+            export_production_trace,
+        )
+    except ImportError:  # pragma: no cover - direct script execution
+        from production_trace import (  # type: ignore
+            DEFAULT_MAX_IMAGE_PATCHES,
+            DEFAULT_MAX_INPUT_TOKENS,
+            DEFAULT_MAX_NEW_TOKENS,
+            export_production_trace,
+        )
+    return export_production_trace(
+        model=args.model,
+        revision=args.revision,
+        image_path=image,
+        prompt=args.prompt,
+        output=output,
+        allow_download=args.allow_download,
+        model_dir=args.model_dir,
+        max_new_tokens=(
+            args.max_new_tokens
+            if args.max_new_tokens is not None
+            else DEFAULT_MAX_NEW_TOKENS
+        ),
+        max_input_tokens=(
+            args.max_input_tokens
+            if args.max_input_tokens is not None
+            else DEFAULT_MAX_INPUT_TOKENS
+        ),
+        max_image_patches=(
+            args.max_image_patches
+            if args.max_image_patches is not None
+            else DEFAULT_MAX_IMAGE_PATCHES
+        ),
+        overwrite=args.overwrite,
+    )
+
+
+def load_production_model(
+    model_id: str,
+    revision: str,
+    *,
+    allow_download: bool,
+    model_dir: Path | None = None,
+):
     """Load a pinned model only after the CLI has explicitly authorized it.
 
     The returned model is intentionally not serialized.  This helper is kept
     separate so tests can mock it without network access or a model cache.
     """
 
+    if model_dir is not None and allow_download:
+        raise ValueError("an external model snapshot cannot be combined with --allow-download")
+    require_reference_environment()
     try:
         from transformers import Lfm2VlForConditionalGeneration
     except ImportError as exc:  # pragma: no cover - manager environment
         raise RuntimeError("production model loading requires pinned transformers") from exc
+    source = str(model_dir) if model_dir is not None else model_id
     model = Lfm2VlForConditionalGeneration.from_pretrained(
-        model_id,
+        source,
         revision=revision,
-        local_files_only=not allow_download,
+        local_files_only=model_dir is not None or not allow_download,
         trust_remote_code=False,
     )
     model.eval()
@@ -666,6 +789,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="config-only",
     )
     parser.add_argument("--model", default="450m")
+    parser.add_argument(
+        "--model-dir",
+        type=Path,
+        help="external regular-file snapshot used for identified production loading/tracing",
+    )
     parser.add_argument("--config", type=Path)
     parser.add_argument("--processor-config", type=Path)
     parser.add_argument("--output", type=Path)
@@ -678,14 +806,25 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="in production mode, load the pinned model without serializing its tensors",
     )
+    parser.add_argument(
+        "--trace",
+        action="store_true",
+        help="in production mode, export bounded CPU-F32 component tensors outside the repository",
+    )
     parser.add_argument("--revision")
     parser.add_argument("--image", type=Path)
+    parser.add_argument("--prompt")
+    parser.add_argument("--max-new-tokens", type=int)
+    parser.add_argument("--max-input-tokens", type=int)
+    parser.add_argument("--max-image-patches", type=int)
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        if args.trace and args.mode != "production":
+            raise ValueError("--trace requires --mode production")
         if args.mode == "config-only":
             result = _config_export(args)
         elif args.mode == "tiny-random":
@@ -693,7 +832,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ValueError("tiny-random mode requires --output")
             result = _tiny_export(args)
         else:
-            result = _production_metadata(args)
+            result = _production_trace(args) if args.trace else _production_metadata(args)
         print(json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
         return 0
     except (FileExistsError, ImportError, PermissionError, RuntimeError, ValueError) as exc:

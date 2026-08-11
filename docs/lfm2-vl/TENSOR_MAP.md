@@ -13,6 +13,10 @@ This map is locked to the official model revisions in `SOURCES.md`. Shapes and n
 
 All inspected safetensors production tensors are BF16. The official MMProj headers contain F16/F32 or Q8_0/F32 tensors as recorded below. Shape notation follows Candle logical order: linear weights are `[out, in]`; embeddings are `[rows, hidden]`; the depthwise short-convolution kernel is `[channels, 1, kernel]`.
 
+## Bounded Trace Stage Contract
+
+The opt-in native `--trace-output` lane and the pinned Python production trace use the same external bundle names for the first parity checkpoint. Both are CPU F32, retain no weights, and deliberately require one non-tiled crop so projector stage shapes are deterministic. Inputs are `input.pixel_values`, `input.pixel_attention_mask`, `input.spatial_shapes`, `input.input_ids`, `input.projector_crop_ranges`, `input.image_rgb_u8`, and `input.decode_token_ids`. Vision stages are `stage.vision.patch_embedding`, `stage.vision.resized_position_embedding`, `stage.vision.embeddings_with_resized_position`, `stage.vision.encoder_layer.{i}`, `stage.vision.post_layernorm`, and `stage.vision.last_hidden_state`. Projector stages are `stage.projector.input`, `pixel_unshuffle`, optional `layer_norm`, `linear_1`, `activation`, `linear_2`, and `output`; language stages are `stage.text.embeddings`, `stage.multimodal.merged_embeddings`, `stage.language.hidden_states`, `stage.language.prefill_logits`, and `stage.language.decode_logits`. The decode input/logit tensors contain the fixed number of cached steps from the trace request, starting with the prefill-selected token, independent of the user-facing generated-token report.
+
 ## Normalized Dimensions
 
 | Symbol or property | 450M | 1.6B | Evidence |
@@ -101,11 +105,11 @@ Header-confirmed representative Candle shapes are patch `[768,3,16,16]`, positio
 7. Native Q8 execution retains only eligible Q8_0 rank-2 weights as `QMatMul::QTensor`; their input width must be divisible by the Q8_0 block size. Eligible F32/F16/BF16 weights use `LinearOp::Dense`, so mixed checkpoints remain valid.
 8. Explicit native-Q8 loading rejects lower-bit weights and Q8_0 tensors assigned to patch, position, norm, or bias roles. The Phase 6 dense loader remains available as a separate compatibility API.
 
-## Remaining Mapping Work
+## Open Mapping Boundaries
 
-- Capture the tokenizer-derived numeric IDs for image wrapper, row/column, and thumbnail tokens in the config-only reference harness.
+- The config-only harness now reports tokenizer-derived image wrapper, row/column, and thumbnail IDs from an explicitly supplied local `tokenizer.json`. It requires at least one grid marker, distinct marker IDs, and IDs within the model vocabulary. P3 owns running it against the acquired pinned 1.6B snapshot and recording the official mapping; runtime code continues to resolve these IDs dynamically rather than hardcoding them.
 - Run production-payload numerical parity only under a separately authorized model-download task; header evidence alone does not establish production numerical parity.
 - Extend the native operator map for lower-bit vision formats only in a separately scoped follow-up; Phase 7 intentionally stops at Q8_0.
 
 ---
-AI-edited: 2026-08-10T08:45:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-7 | change=classified native Q8 linear roles and preserved dense tensor boundaries
+AI-edited: 2026-08-11T09:15:59-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=docs | change=recorded strict tokenizer marker inspection before P3 load

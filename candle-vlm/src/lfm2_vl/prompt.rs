@@ -31,7 +31,7 @@ impl Default for PromptOptions {
     fn default() -> Self {
         Self {
             // The pinned Lfm2VlProcessorKwargs default is true. Callers that
-            // intentionally need adjacent placeholder runs must opt out.
+            // need adjacent placeholder runs must opt out explicitly.
             use_image_special_tokens: true,
             context_length: None,
         }

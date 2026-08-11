@@ -11,8 +11,9 @@ const MAX_NEW_TOKENS: usize = 1_024;
 const DEFAULT_VISION_BATCH_SIZE: usize = 1;
 const MAX_VISION_BATCH_SIZE: usize = 64;
 const MAX_PROMPT_BYTES: usize = 1024 * 1024;
+const MAX_TRACE_NEW_TOKENS: usize = 32;
 
-pub const USAGE: &str = "usage: lfm2-vl --model-dir <hf-checkpoint-dir> [--processor-config <override.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--vision-cpu] [inference]\n       lfm2-vl --model-file <text.gguf> (--mmproj-file <mmproj.gguf> | --mmproj-dir <split-dir>) --tokenizer <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense|q8>] [--cpu] [--vision-cpu] [inference]\n       lfm2-vl <text.gguf> <split-mmproj-dir> <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--vision-cpu] [inference]\n\ninference: --prompt <text> [--image <path>]... [--max-new-tokens <0..1024>] [--vision-batch-size <1..64>] [--eos-token-id <u32>] [--json]\nEach image requires one literal <image> sentinel in the prompt. Without --prompt the command remains load-and-report only.";
+pub const USAGE: &str = "usage: lfm2-vl --model-dir <hf-checkpoint-dir> [--processor-config <override.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--vision-cpu] [inference]\n       lfm2-vl --model-file <text.gguf> (--mmproj-file <mmproj.gguf> | --mmproj-dir <split-dir>) --tokenizer <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense|q8>] [--cpu] [--vision-cpu] [inference]\n       lfm2-vl <text.gguf> <split-mmproj-dir> <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--vision-cpu] [inference]\n\ninference: --prompt <text> [--image <path>]... [--max-new-tokens <0..1024>] [--vision-batch-size <1..64>] [--eos-token-id <u32>] [--json] [--trace-output <external-dir>]\nEach image requires one literal <image> sentinel in the prompt. Without --prompt the command remains load-and-report only. --trace-output is a native CPU/F32, single-crop parity lane and requires --cpu, one image, and at most 32 generated tokens.";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MmprojArg {
@@ -38,6 +39,7 @@ pub struct InferenceArgs {
     pub vision_batch_size: usize,
     pub eos_token_id: Option<u32>,
     pub json: bool,
+    pub trace_output: Option<PathBuf>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -187,7 +189,7 @@ impl Args {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ParseOutcome {
-    Run(Args),
+    Run(Box<Args>),
     Help,
 }
 
@@ -216,12 +218,18 @@ where
     let mut vision_batch_size = None;
     let mut eos_token_id = None;
     let mut json = false;
+    let mut trace_output = None;
     let mut arguments = arguments.into_iter();
     while let Some(argument) = arguments.next() {
         match argument.as_str() {
             "--cpu" => cpu = true,
             "--vision-cpu" => vision_cpu = true,
             "--json" => json = true,
+            "--trace-output" => set_once(
+                &mut trace_output,
+                PathBuf::from(next_value(&mut arguments, "--trace-output")?),
+                "--trace-output",
+            )?,
             "--model-dir" => set_once(
                 &mut model_dir,
                 PathBuf::from(next_value(&mut arguments, "--model-dir")?),
@@ -362,6 +370,7 @@ where
         || max_new_tokens.is_some()
         || vision_batch_size.is_some()
         || eos_token_id.is_some()
+        || trace_output.is_some()
         || json;
     let inference = match prompt {
         Some(prompt) => {
@@ -379,6 +388,20 @@ where
             if max_new_tokens > MAX_NEW_TOKENS {
                 bail!("--max-new-tokens {max_new_tokens} exceeds {MAX_NEW_TOKENS}")
             }
+            if trace_output.is_some() {
+                if !cpu {
+                    bail!("--trace-output requires --cpu for the bounded CPU/F32 parity lane")
+                }
+                if dtype.is_some_and(|value| value != DTypeArg::F32) {
+                    bail!("--trace-output requires --dtype f32 when dtype is explicit")
+                }
+                if images.len() != 1 {
+                    bail!("--trace-output requires exactly one --image input")
+                }
+                if max_new_tokens > MAX_TRACE_NEW_TOKENS {
+                    bail!("--trace-output allows at most {MAX_TRACE_NEW_TOKENS} generated tokens")
+                }
+            }
             let vision_batch_size = vision_batch_size.unwrap_or(DEFAULT_VISION_BATCH_SIZE);
             if !(1..=MAX_VISION_BATCH_SIZE).contains(&vision_batch_size) {
                 bail!(
@@ -392,6 +415,7 @@ where
                 vision_batch_size,
                 eos_token_id,
                 json,
+                trace_output,
             })
         }
         None if inference_requested => {
@@ -427,7 +451,14 @@ where
             } => {}
         }
     }
-    Ok(ParseOutcome::Run(args))
+    if let Some(inference) = &args.inference {
+        if inference.trace_output.is_some()
+            && !matches!(args.source, ModelSource::NativeDirectory(_))
+        {
+            bail!("--trace-output is supported only with native safetensors loading")
+        }
+    }
+    Ok(ParseOutcome::Run(Box::new(args)))
 }
 
 fn next_value(arguments: &mut impl Iterator<Item = String>, option: &str) -> Result<String> {
@@ -460,7 +491,7 @@ mod tests {
 
     fn run(values: &[&str]) -> Result<Args> {
         match parse(values)? {
-            ParseOutcome::Run(args) => Ok(args),
+            ParseOutcome::Run(args) => Ok(*args),
             ParseOutcome::Help => bail!("unexpected help result"),
         }
     }
@@ -695,8 +726,60 @@ mod tests {
                 vision_batch_size: 4,
                 eos_token_id: Some(7),
                 json: true,
+                trace_output: None,
             })
         );
+        Ok(())
+    }
+
+    #[test]
+    fn trace_output_is_bounded_and_native_cpu_only() -> Result<()> {
+        let args = run(&[
+            "--model-dir",
+            "checkpoint",
+            "--cpu",
+            "--prompt",
+            "describe <image>",
+            "--image",
+            "image.png",
+            "--trace-output",
+            "trace",
+            "--max-new-tokens",
+            "8",
+        ])?;
+        assert_eq!(
+            args.inference
+                .as_ref()
+                .and_then(|inference| inference.trace_output.as_deref()),
+            Some(PathBuf::from("trace").as_path())
+        );
+        assert!(parse(&[
+            "--model-dir",
+            "checkpoint",
+            "--prompt",
+            "<image>",
+            "--image",
+            "image.png",
+            "--trace-output",
+            "trace",
+        ])
+        .is_err());
+        assert!(parse(&[
+            "--model-file",
+            "text.gguf",
+            "--mmproj-file",
+            "mmproj.gguf",
+            "--tokenizer",
+            "tokenizer.json",
+            "--cpu",
+            "--prompt",
+            "<image>",
+            "--image",
+            "image.png",
+            "--trace-output",
+            "trace",
+        ])
+        .is_err());
         Ok(())
     }
 
