@@ -76,7 +76,7 @@ Verification: Before/after size report; import/compile checks; deterministic fix
 
 What: Integrate only useful Gknome project/context controls while preserving this mature repository's authority and safely refusing its Linux-absolute `.git` pointer.
 
-Why: Native Windows is the normal product workflow, but this checkout is a detached WSL-owned linked worktree. The latest dry run correctly applied nothing and found four authority conflicts; bypassing them could overwrite project policy or context routing.
+Why: Native Windows is the normal product workflow, but this checkout remains a WSL-owned linked worktree even though it is now intentionally attached to local `main`. Windows Git still cannot resolve the Linux absolute pointer. The latest dry run correctly applied nothing and found four authority conflicts; bypassing them could overwrite project policy or context routing.
 
 When: After Gknome produces a reviewed zero-conflict mature-repository plan. Do not use repair or implicit template replacement.
 
@@ -129,4 +129,4 @@ Verification: Exact Linux test command and exit code; post-test temporary-path
 inventory; native Windows example replay; `git diff --check`.
 
 ---
-AI-edited: 2026-08-11T09:33:07-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=docs | change=added bounded Linux publication replay and marker acceptance
+AI-edited: 2026-08-11T09:59:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=updated Gknome's linked-main boundary without changing active product priority

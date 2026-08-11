@@ -367,7 +367,7 @@ impl Lfm2VlProcessorConfig {
                 }
             }
         }
-        if self.image_std.iter().any(|&value| value == 0.0) {
+        if self.image_std.contains(&0.0) {
             candle::bail!("processor image_std values must be non-zero")
         }
         if self.downsample_factor == 0 || self.encoder_patch_size == 0 {

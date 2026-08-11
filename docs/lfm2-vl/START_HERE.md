@@ -15,7 +15,18 @@ This is the live execution entry point for the Candle 0.11 LFM2.5-VL/MMProj exte
 
 ## Current Gate
 
-Phases 1 through 7 are checkpointed. The published review checkpoint is `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `Shoozes/candle:feat/lfm2-vl-mmproj`. Native Windows is the product and release-proof platform; WSL2/Linux is a secondary portability replay. NR-5B official 450M native Windows CPU-F32 component parity, P2 official-base GGUF same-artifact decoded-output comparison, and P3's no-model 1.6B admission forecast are green. The exact next task is a separately guarded acquisition of the absent 3,198,084,631-byte 1.6B regular snapshot; stop before model load.
+Phases 1 through 7 are checkpointed. `feat/lfm2-vl-mmproj` at
+`c9b60f0b906fa8fe70423295e2e1164648a8fa53` is the historical implementation
+checkpoint; owner-reviewed integration now lands directly on
+`Shoozes/candle:main` without a PR. The current release preserves Candle main
+through upstream base `6f74e7c390c717f8fd34f23ce02aceb058173370`
+and merge checkpoint `2b1d9e80de06b251b2fe5f25e51c17d56db86591`.
+Native Windows is the product and release-proof platform; WSL2/Linux is a
+secondary portability replay. NR-5B official 450M native Windows CPU-F32
+component parity, P2 official-base GGUF same-artifact decoded-output
+comparison, and P3's no-model 1.6B admission forecast are green. The exact next
+task is a separately guarded acquisition of the absent 3,198,084,631-byte 1.6B
+regular snapshot; stop before model load.
 
 Do not load the 1.6B checkpoint until its immutable inventory, resource forecast, reviewed Job ceiling, and fresh preflight are safe. Do not start CUDA inference before P3 is green, or any model while a prior inference/build process or host-memory pressure remains.
 
@@ -77,12 +88,23 @@ Before any production-model run:
 
 ## Git and Worktree Boundary
 
-This particular Windows folder is a WSL-owned linked worktree. At the published checkpoint it is detached at `c9b60f0b906fa8fe70423295e2e1164648a8fa53`; the named feature branch is already checked out by `/home/workbench/code/candle-lfm2-vl`. Windows Git cannot resolve the Linux absolute `.git` pointer. This is a local Git topology, not a requirement for building or using the fork on Windows.
+This particular Windows folder is a WSL-owned linked worktree attached to local
+`main`. The historical feature branch remains checked out by
+`/home/workbench/code/candle-lfm2-vl`; it is not a second publication line.
+Windows Git cannot resolve the Linux absolute `.git` pointer, so WSL Git owns
+all repository operations here. This is local Git topology, not a requirement
+for building or using the fork on Windows.
 
 - Read and edit here when requested.
-- Use WSL Git for status and diff inspection.
+- Use WSL Git for status, staging, commits, merges, and revision checks.
 - Do not force-attach the same branch to two worktrees.
-- Land changes from an intentionally named WSL branch/worktree or transfer the reviewed patch to the owning worktree.
+- Keep `main` as the single local and GitHub integration branch; no PR is
+  required for owner-reviewed work.
+- Fetch and review `origin/main`, preserve both histories without force, and
+  rerun the local release gate after every integration.
+- Invoke the ignored `.tools/gitpush.ps1` only after explicit approval and only
+  from a clean named `main`; it verifies ancestry and remote identity and does
+  not stage, commit, merge, or force-push.
 - Keep `.tools/.secrets/`, the ignored `Cargo.lock`, models, caches, downloads, artifacts, and local logs out of publication.
 - Stage only paths authorized by `MOD_MANIFEST.md`; never use broad staging.
 
@@ -99,4 +121,4 @@ Gknome adoption must support ordinary native Windows repositories and recognize 
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-11T09:15:59-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=docs | change=fixed Gknome routing and checkpoint-neutral inspection guidance
+AI-edited: 2026-08-11T09:59:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=made main the single owner-reviewed publication branch and recorded the upstream-preserving merge

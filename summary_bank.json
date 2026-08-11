@@ -193,7 +193,7 @@
       ]
     },
     "issue__oracle_memory_containment": {
-      "description": "The Windows llama.cpp residency incident, mandatory Job Object owner, smoke proof, and guarded future oracle workflow.",
+      "description": "The Windows llama.cpp residency incident, mandatory Job Object owner, post-assignment owner-exit handshake, exact failure cleanup, smoke proof, and guarded future oracle workflow.",
       "status": "active",
       "paths": [
         "scripts/lfm2-vl/preflight.ps1",
@@ -234,7 +234,7 @@
       ]
     },
     "issue__gknome_adoption_and_linked_git": {
-      "description": "Current checkout's WSL-owned Git topology plus Gknome's blocked mature-repository authority, context-bank, runtime-inventory, and safe-landing integration; neither is a product-platform requirement.",
+      "description": "Current checkout's WSL-owned linked-main Git boundary plus Gknome's blocked mature-repository authority, context-bank, and runtime-inventory integration; neither is a product-platform requirement.",
       "status": "active",
       "paths": [
         "AGENTS.md",
@@ -246,14 +246,17 @@
       ]
     },
     "workflow__publication_provenance": {
-      "description": "Fork-versus-mod file ownership, external source/license provenance, publication exclusions, and current checkpoint truth.",
+      "description": "Direct-main policy, upstream integration base, fork-versus-mod file ownership, source/license provenance, publication exclusions, and local/remote verification contract.",
       "status": "active",
       "paths": [
         ".gitignore",
+        "AGENTS.md",
+        "docs/lfm2-vl/START_HERE.md",
         "docs/lfm2-vl/MOD_MANIFEST.md",
         "docs/lfm2-vl/SOURCES.md",
         "docs/lfm2-vl/LICENSE_NOTES.md",
-        "docs/lfm2-vl/DECISIONS.md"
+        "docs/lfm2-vl/DECISIONS.md",
+        "scripts/lfm2-vl/verify-mod-manifest.sh"
       ]
     },
     "workflow__context_integrity": {

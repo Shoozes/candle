@@ -770,5 +770,43 @@ PowerShell, and native Windows boundaries. Linux source uses the same
 no-replace primitive as guarded acquisition; its exact Rust regression remains
 a secondary TODO until a local WSL Rust toolchain is available.
 
+## D-0043: Use One Owner-Reviewed Direct-Main Publication Line
+
+Status: Accepted
+
+Decision:
+Use `main` in `Shoozes/candle` as the single integration and publication
+branch. Review and verify changes locally, preserve any fetched `origin/main`
+history through an explicit non-force integration, and push the already-clean
+named branch without a pull request. Retain `feat/lfm2-vl-mmproj` only as a
+historical checkpoint line.
+
+Why:
+The owner reviews code in the local Coding app and explicitly chose direct-main
+publication. Maintaining a second active feature branch and PR ceremony would
+create avoidable branch-state ambiguity. At the same time, GitHub main had
+advanced nine upstream Candle commits beyond the pinned 0.11 implementation
+base, so replacing it with the feature history would have discarded valid fork
+updates.
+
+Consequences:
+The Windows folder remains a WSL-owned linked worktree but is now attached to
+local `main`; WSL Git owns all repository operations. Before every push, fetch
+and inspect `origin/main`, require a reviewed fast-forward ancestry result after
+any merge, rerun local verification, stage only manifest-authorized paths, and
+keep the worktree clean. The ignored `.tools/gitpush.ps1` reads the operator
+token internally and may fetch, verify, push, and confirm the remote head; it
+must not stage, commit, merge, rebase, create a repository, expose the token, or
+force-push. Hosted CI and PR status remain outside the verification contract.
+
+Evidence:
+`origin/main` at `6f74e7c390c717f8fd34f23ce02aceb058173370`
+diverged from historical mod checkpoint
+`c9b60f0b906fa8fe70423295e2e1164648a8fa53` at Candle 0.11.0. Its 29 changed
+paths did not overlap the mod's nine fork-origin files. Merge checkpoint
+`2b1d9e80de06b251b2fe5f25e51c17d56db86591` preserved both histories without
+conflict or force, and post-merge local Rust, Python, PowerShell, provenance,
+and documentation gates remained authoritative.
+
 ---
-AI-edited: 2026-08-11T09:15:59-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=design | change=made durable evidence publication exclusive by default
+AI-edited: 2026-08-11T09:59:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=made owner-reviewed main the single non-force publication line

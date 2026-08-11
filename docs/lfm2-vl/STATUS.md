@@ -2,19 +2,20 @@
 
 ## Baseline and Publication
 
-- Upstream baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
-- Feature branch: `feat/lfm2-vl-mmproj`.
-- Published checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` at `https://github.com/Shoozes/candle.git`.
+- Model and compatibility baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
+- Upstream integration base: Candle main at `6f74e7c390c717f8fd34f23ce02aceb058173370`.
+- Integration and publication branch: `main` at `https://github.com/Shoozes/candle.git`.
+- Historical feature checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`.
+- Current code checkpoint: `a83acf13d2b6bff6528e8b8c87209500f6fbc85c`; upstream-preserving merge checkpoint: `2b1d9e80de06b251b2fe5f25e51c17d56db86591`.
 - Pull request: none.
-- Published provenance: 74 changed paths, exactly 9 fork-origin modifications and 65 mod-owned additions.
-- Current review provenance: 91 allowlisted paths, exactly 9 fork-origin modifications and 82 mod-owned additions. Current changes are uncommitted and unpublished.
+- Current mod overlay relative to the upstream integration base: 91 allowlisted paths, exactly 9 fork-origin modifications and 82 mod-owned additions. The 29 inherited post-0.11 upstream paths remain outside the mod overlay.
 
 ## Worktree Boundary
 
 - Native Windows/MSVC is the product and primary proof lane; WSL2/Linux is a secondary portability replay.
-- `C:\DevStuff\candle-mods` is a detached Windows edit worktree whose `.git` file points to Linux-owned metadata under `/home/workbench/code/candle-lfm2-vl`.
-- Windows Git cannot resolve that pointer. Read-only Git inspection now works through the explicit `NVIDIA-Workbench` WSL distribution; landing still requires an intentional WSL branch/worktree, and the feature branch must never be forced into both worktrees.
-- Do not commit, push, open a PR, broadly stage, inspect `.tools/.secrets/`, or publish external evidence/models without a separate explicit action.
+- `C:\DevStuff\candle-mods` is a WSL-owned linked worktree attached to local `main`; its `.git` file points to Linux-owned metadata under `/home/workbench/code/candle-lfm2-vl`.
+- Windows Git cannot resolve that pointer. Use the explicit `NVIDIA-Workbench` WSL distribution for all Git operations. The historical feature branch remains in the Linux-home worktree and must not be attached here.
+- Owner-reviewed work lands directly on `main` without a PR. Broad staging, force-push, implicit merge/rebase, and secret inspection remain prohibited; the ignored `.tools/gitpush.ps1` only verifies and pushes an already clean fast-forward branch after explicit approval.
 
 ## Current Phase
 
@@ -80,16 +81,16 @@
 
 - `cargo fmt --all -- --check`: green after the final trace fixes.
 - Locked/offline `cargo check -j 2` is green for `candle-core`, `candle-nn`, `candle-transformers`, and `candle-vlm`, plus the `lfm2`, `quantized-lfm2`, and `lfm2-vl` examples.
-- Locked/offline `cargo test -j 2` is green for the affected core/transformer/VLM workspace lanes: transformer 56/56, generation 5/5, NMS 8/8, VLM 29/29, and all core integration/doc lanes.
+- Locked/offline `cargo test -j 2` is green after upstream integration for the affected core/transformer/VLM workspace lanes: transformer 58/58, generation 5/5, NMS 8/8, VLM 29/29, and all core integration/doc lanes.
 - `cargo test --locked --offline -j 2 -p candle-examples --example lfm2-vl`: 29/29 green, including destination-race preservation for native trace publication.
-- Scoped strict Clippy is green for the affected libraries and the LFM2-VL example with the five documented workspace allowances.
+- Scoped strict Clippy is green for the affected libraries and the LFM2-VL example with only `manual-is-multiple-of` and `needless-range-loop` allowed for compatibility/indexing clarity. Two mod-owned `manual_contains` findings were fixed.
 - Exact pinned `pytest tools/lfm2_vl/reference -q`: 81/81 green after shared no-clobber report publication, tokenizer marker/range validation, split-MMProj race preservation, guarded acquisition coverage, and prior GGUF/reference regressions.
 - Exact pinned Python compileall and environment/lock verification are green; generated repository Python caches were removed afterward.
 - The retained `.venv` cannot launch inside the managed sandbox because its Python 3.10.11 base executable lives under user AppData. The approved native execution replay passed the exact environment/lock verifier, 81/81 tests, and compileall without reinstalling any package.
-- Bounded-wrapper smoke: green under PowerShell 7.6.4 and Windows PowerShell 5.1, including suspended assignment, timeout/tree cleanup, owner-exit cleanup, name/executable concurrency, combined logging, and a synthetic process counter above `Int32::MAX`.
-- Resource-preflight smoke is green under both PowerShell versions. The summary bank also verifies under both versions at SHA-256 `8233b54c57b97de582e994cda64d846bbad63b1d13eeb0fca05afc866cf6cbae`; all routes remain below 256 KiB after separating native loading, reference environment, GGUF inspection, production parity, and exclusive-publication context.
+- Bounded-wrapper smoke: green under PowerShell 7.6.4 and Windows PowerShell 5.1, including suspended assignment, timeout/tree cleanup, owner-exit cleanup, name/executable concurrency, combined logging, and a synthetic process counter above `Int32::MAX`. The owner-exit regression now waits for a child-written post-resume handshake so the test cannot kill its owner before job assignment; failure cleanup also terminates the exact test child.
+- Resource-preflight smoke is green under both PowerShell versions. The summary bank also verifies under both versions at SHA-256 `91a0ccf11512bc71617ecc251922ecf652164391c0f197a3d398cea66892a507`; all routes remain below 256 KiB after separating native loading, reference environment, GGUF inspection, production parity, exclusive-publication, and direct-main provenance context.
 - Relative links pass across all 20 mod-owned Markdown files. A repository-wide diagnostic separately found three pre-existing malformed upstream Qwen example links; they are outside the LFM2-VL publication allowlist and were not changed.
-- Current WSL Git inspection is green through the explicit `NVIDIA-Workbench` distribution: `git diff --check` passed and the mod-manifest verifier reports exactly 91 allowlisted paths, 9 fork-origin modifications, and 82 mod-owned additions. The worktree remains detached, uncommitted, and unpublished.
+- Current WSL Git inspection is green through the explicit `NVIDIA-Workbench` distribution. GitHub main at `6f74e7c390c717f8fd34f23ce02aceb058173370` was merged without conflict or force; the release overlay remains exactly 91 allowlisted paths, 9 fork-origin modifications, and 82 mod-owned additions.
 - The Linux-specific native trace collision test could not launch in the installed WSL distribution because `cargo` is absent. An offline Windows-hosted Linux-target check reached cached compilation but stopped at `openssl-sys` because no Linux OpenSSL sysroot is configured. Windows proved the same public no-clobber contract; TODO C3 retains the truthful secondary-lane replay instead of installing tooling implicitly.
 
 ## Proven
@@ -117,44 +118,18 @@
 - None for local source work.
 - P3 artifact acquisition requires a separate guarded network/write action for an expected 3,198,084,631-byte external snapshot; no implicit multi-gigabyte download was performed.
 - P3 inference remains blocked until the acquired regular snapshot passes exact local hashes and a fresh preflight satisfies the stage-specific forecast thresholds.
-- Landing requires an intentional WSL branch/worktree decision because this Windows edit worktree is detached; read-only metadata access does not make it a valid commit target.
+- Native Windows CUDA/distinct-device proof remains sequencing-blocked until P3 CPU-F32 parity is green.
+- The Linux native-trace no-replace regression remains environment-blocked because the installed WSL distribution has no Cargo and the Windows cross target has no Linux OpenSSL sysroot. This is secondary portability debt, not a Windows release blocker.
 - Gknome apply remains blocked until its dry plan has zero unresolved authority conflicts; repair/bypass is not authorized.
 
 ## Active Files
 
-- `candle-examples/examples/lfm2-vl/trace.rs`
-- `candle-examples/examples/lfm2-vl/runner.rs`
-- `scripts/lfm2-vl/run-bounded-oracle.ps1`
-- `scripts/lfm2-vl/preflight.ps1`
-- `scripts/lfm2-vl/test-bounded-oracle.ps1`
-- `tools/lfm2_vl/reference/compare_traces.py`
-- `tools/lfm2_vl/reference/inspect_artifact.py`
-- `tools/lfm2_vl/reference/inspect_config.py`
-- `tools/lfm2_vl/reference/inspect_gguf_header.py`
-- `tools/lfm2_vl/reference/acquire_snapshot.py`
-- `tools/lfm2_vl/reference/test_acquire_snapshot.py`
-- `tools/lfm2_vl/reference/test_reference_tools.py`
-- `tools/lfm2_vl/reference/manifest.py`
-- `tools/lfm2_vl/reference/tensor_dump.py`
-- `tools/lfm2_vl/reference/verify_environment.py`
-- `tools/lfm2_vl/reference/requirements-reference-windows.txt`
-- `tools/lfm2_vl/reference/test_gguf_header.py`
-- `tools/lfm2_vl/reference/test_mmproj_exporter.py`
-- `tools/export_lfm2_vl_mmproj.py`
-- `tools/lfm2_vl/reference-lock.json`
-- `docs/lfm2-vl/START_HERE.md`
-- `docs/lfm2-vl/STATUS.md`
-- `docs/lfm2-vl/TODO.md`
-- `docs/lfm2-vl/HISTORY.md`
-- `docs/lfm2-vl/DECISIONS.md`
-- `docs/lfm2-vl/PARITY.md`
-- `docs/lfm2-vl/FAILURE_LOG.md`
-- `docs/lfm2-vl/MOD_MANIFEST.md`
-- `summary_bank.json`
+- No source file remains under uncommitted release work after the direct-main closeout.
+- The next guarded acquisition task owns `tools/lfm2_vl/reference/acquire_snapshot.py`, `tools/lfm2_vl/reference-lock.json`, and external ignored evidence paths only; it must stop before model load.
 
 ## Exact Next Task
 
 With separate approval for the multi-gigabyte production download, invoke the documented `--allow-production-download` argument array through `run-bounded-oracle.ps1` directly from the current PowerShell process. Use the exact `.venv` Python, 2 GiB Job ceiling, 7,200-second timeout, executable-scoped concurrency, and external log/owner evidence. Acquire the eight pinned 1.6B files into the named external regular-file snapshot, retain repository/revision/size/hash evidence, and verify `model.safetensors` is exactly 3,193,334,216 bytes with SHA-256 `7fc7458e4382fc6e558cfdda45857fbf9ab5b40a8bf199c9cd073003b14ac26d`. Stop before model load; dry load remains the next independent bounded task.
 
 ---
-AI-edited: 2026-08-11T09:33:07-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=review | change=reconciled integrity fixes, proof, context routes, and portability debt
+AI-edited: 2026-08-11T09:59:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=recorded direct-main integration, post-merge verification, and the owner-exit smoke race fix

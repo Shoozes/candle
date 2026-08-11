@@ -1,15 +1,15 @@
 # LFM2-VL Mod File Manifest
 
-This manifest separates the LFM2-VL mod from its Candle 0.11.0 fork base. It is the publication allowlist authority; files not represented here must not be staged merely because they exist in the worktree.
+This manifest separates the LFM2-VL mod overlay from the integrated Candle fork. It is the publication allowlist authority; files not represented here must not be staged merely because they exist in the worktree.
 
 ## Classification Rule
 
-- Untouched fork baseline: Candle commit `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
-- Published mod checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`, matched by `origin/feat/lfm2-vl-mmproj` when publication was verified.
-- Published checkpoint delta: 74 paths, exactly 9 fork-origin modifications and 65 mod-owned additions; 27,843 insertions and 111 deletions.
-- Current review delta after the uncommitted integrity, production-trace, resource-preflight, artifact-identity, reference-environment, NR-5B trace-integrity, completed P2 GGUF comparison, P3 no-model forecast, guarded artifact acquisition, and exclusive-evidence-publication slices: 91 paths, still exactly 9 fork-origin modifications, plus 82 mod-owned additions. The latest integrity slice changes only already-allowlisted files; P2/P3 runtime, forecast, and future snapshot evidence remains external.
-- A **fork-origin modification** is a path that exists in the untouched baseline and is intentionally changed by this mod.
-- A **mod-owned addition** is a path absent from the untouched baseline and created for this project.
+- Model and compatibility baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
+- Current publication baseline: Candle main at `6f74e7c390c717f8fd34f23ce02aceb058173370`, the exact `origin/main` tip integrated before this direct-main release.
+- Historical mod checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`; that branch is retained as evidence, not used as a second publication line.
+- Current `main` overlay: 91 paths, exactly 9 fork-origin modifications and 82 mod-owned additions. The 29 upstream paths added or changed between Candle 0.11.0 and the publication baseline are inherited fork state and are intentionally outside this overlay.
+- A **fork-origin modification** is a path that exists in the current publication baseline and is intentionally changed by this mod.
+- A **mod-owned addition** is a path absent from the current publication baseline and created for this project.
 - “Mod-owned” describes repository provenance, not third-party authorship. External source and license provenance remains authoritative in `SOURCES.md` and `LICENSE_NOTES.md`.
 - Every other tracked path is inherited unchanged from the Candle fork.
 
@@ -29,7 +29,7 @@ Exactly these nine baseline files contain mod changes:
 | `candle-transformers/src/models/mod.rs` | Register the new SigLIP2 and LFM2-VL model modules. |
 | `candle-transformers/src/models/quantized_lfm2.rs` | Add validated GGUF metadata, tied-output handling, embedding-driven forwarding, and cache support for hybrid execution. |
 
-No other Candle-baseline source file is part of the mod delta.
+No other file from the integrated Candle publication baseline is part of the mod delta.
 
 ## Mod-Owned Runtime and Example Additions
 
@@ -148,4 +148,4 @@ No other Candle-baseline source file is part of the mod delta.
 Publication must use an explicit path allowlist derived from this manifest, followed by `git diff --cached --name-status`, `git diff --cached --check`, and a staged secret/name audit. Broad staging commands are prohibited.
 
 ---
-AI-edited: 2026-08-11T09:15:59-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=docs | change=confirmed integrity changes stay within the 91-path allowlist
+AI-edited: 2026-08-11T09:59:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=rebased fork-versus-mod provenance on the exact upstream main integration base

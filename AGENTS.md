@@ -41,8 +41,13 @@ Document every material conflict in `docs/lfm2-vl/DECISIONS.md`.
 
 ## Baseline
 
-- Base revision: Candle 0.11.0.
-- Working branch: `feat/lfm2-vl-mmproj`.
+- Model and compatibility baseline: Candle 0.11.0 at
+  `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
+- Integration and publication branch: `main` on `Shoozes/candle`.
+- Current upstream integration base: Candle main at
+  `6f74e7c390c717f8fd34f23ce02aceb058173370`.
+- Historical implementation branch: `feat/lfm2-vl-mmproj`; retain it as a
+  checkpoint record rather than a second publication line.
 - First checkpoint: `LiquidAI/LFM2.5-VL-450M`.
 - Second checkpoint: `LiquidAI/LFM2.5-VL-1.6B`.
 - First backend: CPU F32.
@@ -175,10 +180,23 @@ Do not hide pre-existing failures. Record them separately from failures caused b
 - Do not reset, clean, force-push, rewrite, or discard unrelated work.
 - Do not commit unless the current task explicitly requests a commit.
 - Keep commits limited to one proven responsibility.
-- Do not open a pull request during early implementation phases.
+- Owner-reviewed work lands directly on `main`; do not open a pull request
+  unless the owner explicitly changes this workflow.
 - Create a checkpoint commit after every green phase gate.
 - Review staged files before committing.
-- This Windows edit folder is currently a detached WSL-owned linked worktree. Use WSL Git for this checkout's inspection; do not commit from detached HEAD or force the feature branch into two worktrees. This is a local Git constraint, not a runtime/platform requirement. See `START_HERE.md` and `FAILURE_LOG.md` F-0009.
+- This Windows edit folder is a WSL-owned linked worktree attached to local
+  `main`; Windows Git still cannot resolve its Linux absolute `.git` pointer.
+  Use WSL Git for status, staging, commits, merges, and revision checks. Never
+  attach the same named branch to a second worktree. This remains local Git
+  topology, not a runtime/platform requirement. See `START_HERE.md` and
+  `FAILURE_LOG.md` F-0009.
+- Before publication, fetch `origin/main`, preserve both histories through a
+  reviewed non-force integration, rerun the local gate, and require a clean
+  named `main` worktree.
+- Push only after explicit owner authorization, using the ignored
+  `.tools/gitpush.ps1`. The helper must not stage, commit, merge, rebase,
+  create repositories, or force-push; it may only verify and publish an
+  already-reviewed fast-forward `main`.
 - Never read, stage, or publish `.tools/.secrets/`; never use broad staging for this mod.
 
 ## Codex Task Scope
@@ -213,4 +231,4 @@ The next Codex session must be able to continue from this file without reconstru
 Keep active tasks and their What/Why/When/Where/How/Done-when/Verification contract in `TODO.md`. Move completed details to `HISTORY.md`, recurring hazards to `FAILURE_LOG.md`, and never duplicate either into the summary bank.
 
 ---
-AI-edited: 2026-08-10T16:42:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=repo-integrity | change=made native Windows the primary runtime/proof lane while retaining WSL as secondary portability and current-checkout Git support
+AI-edited: 2026-08-11T10:02:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=made owner-reviewed main the single publication line with WSL-safe non-force Git controls

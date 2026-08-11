@@ -136,19 +136,19 @@ Status: Host recovered only after an operator restart; bounded prevention is loc
 
 ## F-0009: WSL-Owned Linked Worktree Can Look Like a Broken or Detached Windows Repository
 
-Status: Current workflow pitfall; source state is intact. Gknome's `.git`-file recognition and WSL-pointer refusal are fixture-proven, while Git mutation remains intentionally fail-closed. Mature-repository adoption is blocked separately in F-0010.
+Status: Branch-landing blocker resolved; linked-worktree pitfall remains current. Gknome's `.git`-file recognition and WSL-pointer refusal are fixture-proven, while mature-repository adoption is blocked separately in F-0010.
 
 ### Q: What pitfall are we preventing?
 
-**What:** Do not treat `C:\DevStuff\candle-mods` as an ordinary Windows Git checkout, and do not commit or force-checkout the feature branch from its detached linked worktree.
+**What:** Do not treat `C:\DevStuff\candle-mods` as an ordinary Windows Git checkout or attach a branch already owned by another worktree. Use WSL Git against its linked metadata and publish only from the intentionally attached local `main`.
 
-**Context and constraints:** The current Git metadata owner lives at `/home/workbench/code/candle-lfm2-vl` in WSL2 `NVIDIA-Workbench`. The Windows folder is a linked worktree whose `.git` file contains a Linux absolute gitdir. The intended review checkpoint is `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`. Native Windows remains the product and release-proof platform. Review, local source edits, and native Windows Cargo checks are allowed; secret inspection, implicit Git mutation, broad staging, and publication are not.
+**Context and constraints:** The shared Git metadata owner lives under `/home/workbench/code/candle-lfm2-vl` in WSL2 `NVIDIA-Workbench`. The Windows folder is a linked worktree whose `.git` file contains a Linux absolute gitdir. It is now attached to local `main`; `/home/workbench/code/candle-lfm2-vl` retains `feat/lfm2-vl-mmproj` at historical checkpoint `c9b60f0b906fa8fe70423295e2e1164648a8fa53`. Native Windows remains the product and release-proof platform. Secret inspection, broad staging, implicit integration, and force-push remain prohibited.
 
-**Why it happened:** A linked worktree stores Git metadata in a `.git` file rather than a `.git` directory. Windows Git cannot resolve the Linux absolute target, and Git permits a named branch to be checked out by only one worktree. The owning WSL worktree already holds `feat/lfm2-vl-mmproj`, so the Windows-mounted worktree is correctly detached at the same commit. Tools that equate “repository” with a `.git` directory can misreport it; tools that assume a normal Windows Git backend can offer unsafe actions.
+**Why it happened:** A linked worktree stores Git metadata in a `.git` file rather than a `.git` directory. Windows Git cannot resolve the Linux absolute target, and Git permits a named branch to be checked out by only one worktree. The owning WSL worktree already held `feat/lfm2-vl-mmproj`, so the Windows-mounted worktree was correctly detached at the same commit until the distinct local `main` branch was selected. Tools that equate “repository” with a `.git` directory can misreport it; tools that assume a normal Windows Git backend can offer unsafe actions.
 
 **Where:** `C:\DevStuff\candle-mods\.git`, `/mnt/c/DevStuff/candle-mods`, `/home/workbench/code/candle-lfm2-vl`, Gknome existing-repository adoption, and every Git status/commit/push instruction for this project.
 
-**Evidence:** WSL `git status --short --branch` in the Windows worktree reported `## HEAD (no branch)`. `git rev-parse HEAD` returned the expected published SHA `c9b60f0b906fa8fe70423295e2e1164648a8fa53`. `git worktree list --porcelain` showed `/home/workbench/code/candle-lfm2-vl` on `refs/heads/feat/lfm2-vl-mmproj` and `/mnt/c/DevStuff/candle-mods` detached at the same SHA. `git branch --all --contains HEAD` showed the local feature branch and `origin/feat/lfm2-vl-mmproj`. Remotes remained `Shoozes/candle` for `origin` and `huggingface/candle` for `upstream`. No source loss or branch divergence was observed.
+**Evidence:** Initial WSL inspection reported `## HEAD (no branch)` and proved both the detached edit tree and feature branch were at `c9b60f0b906fa8fe70423295e2e1164648a8fa53`. The release audit then found no local `main`, fetched GitHub main at `6f74e7c390c717f8fd34f23ce02aceb058173370`, attached this worktree to a new local `main`, and merged the two histories without conflict or force at `2b1d9e80de06b251b2fe5f25e51c17d56db86591`. `git worktree list --porcelain` still shows the feature branch owned only by `/home/workbench/code/candle-lfm2-vl`. Remotes remain `Shoozes/candle` for `origin` and `huggingface/candle` for `upstream`.
 
 **Developer story:** A repository-integrity check initially expected the Windows worktree to report the feature branch. The read-only WSL status instead reported detached HEAD, which looked like branch drift. Exact HEAD, worktree ownership, containing branches, and remotes separated content identity from attachment state: the source was still at the published commit, while the branch was already and correctly owned by the Linux-home worktree. The safe response was to stop Git-affecting setup, preserve local edits, and make linked-worktree recognition plus fail-closed Git capability an explicit Gknome gate.
 
@@ -161,15 +161,15 @@ Status: Current workflow pitfall; source state is intact. Gknome's `.git`-file r
 3. `90/100` — Use WSL Git for read-only inspection and land through the owning WSL repository or a dedicated WSL branch/worktree; accurately preserves branch ownership and source identity.
 4. `90/100` — Teach Gknome adoption that `.git` may be a file and make unsupported Windows Git operations fail closed; the 45-assertion adoption fixture and Candle dry run both identify the existing repository without attempting Windows Git mutation.
 
-**Current solution:** Continue source review, edits, and native Windows build/test work in the detached Windows-linked worktree; use WSL only for this checkout's Git status/diff verification, and make no commit or push here. After review, transfer the patch to an intentionally named WSL branch/worktree or apply it in the owning worktree. Run Gknome adoption only after its normal native-Windows and linked-worktree tests are green and only in dry-run mode first.
+**Current solution:** Keep source edits and native Windows build/test work in this linked folder, but route every Git operation through WSL. Local `main` intentionally owns this worktree; the feature branch remains in its original WSL-home worktree. Fetch and review `origin/main`, preserve both histories without force, stage only manifest-authorized paths, and use the ignored fail-closed push helper only from a clean named branch. Run Gknome adoption only after its native-Windows and linked-worktree tests are green and only in dry-run mode first.
 
-**Decision rationale:** Exact source identity and Git's existing worktree ownership are preserved without force, metadata rewriting, or secret access. Moving all Git inspection through WSL is simpler and more truthful than trying to translate Linux gitdir paths for Windows Git during this product task.
+**Decision rationale:** Exact source identity and Git's existing worktree ownership are preserved without force, metadata rewriting, or direct secret access. Moving all Git operations through WSL is simpler and more truthful than trying to translate Linux gitdir paths for Windows Git during this product task.
 
-**Effectiveness:** `95/100`, durable for current repository operations. Read-only detection, source identity, and the safe landing route are evidence-backed. The remaining Gknome blockers are project-authority/context/inventory integration issues, not `.git` recognition.
+**Effectiveness:** `97/100`, durable for current repository operations. Read-only detection, source identity, intentional `main` ownership, non-force upstream integration, and the safe push route are evidence-backed. The remaining Gknome blockers are project-authority/context/inventory integration issues, not `.git` recognition.
 
 **Relevance check:** Current for this checkout's Git operations only. It is not a runtime, build, or product requirement for the Candle fork.
 
-**Next prevention step:** Keep WSL Git ownership explicit, resolve F-0010 without weakening this refusal, and record the intentional landing branch before any commit.
+**Next prevention step:** Keep WSL Git ownership and single-branch ownership explicit, verify local and remote `main` SHAs after every push, and resolve F-0010 without weakening this refusal.
 
 ## F-0010: Do Not Force Gknome Through Mature-Repository Authority Conflicts
 
@@ -1437,5 +1437,76 @@ use, while routine report and trace paths now share the same default.
 output/manifest inventory, then run TODO C3's exact Linux native-trace collision
 test when a local WSL Rust toolchain is available.
 
+## F-0037: Owner-Exit Tests Must Wait for Post-Assignment Execution
+
+Status: Resolved in the PowerShell 7 and 5.1 smoke lanes.
+
+### Q: What pitfall are we preventing?
+
+**What:** A kill-on-job-close test must not kill the wrapper merely because its
+suspended child PID is visible. Process visibility precedes Job Object
+assignment, so that timing can manufacture the orphan the test is intended to
+detect.
+
+**Context and constraints:** `run-bounded-oracle.ps1` deliberately creates the
+child suspended, assigns it to the bounded Job Object, and only then resumes
+it. The smoke launches the wrapper in a separate PowerShell owner and kills
+that owner to prove the operating system terminates the assigned child.
+
+**Why it happened:** The original test polled only `Get-Process`. It could
+observe the new suspended process in the narrow interval between
+`CreateProcessW` and `AssignProcessToJobObject`, kill the owner, and leave a
+never-assigned suspended child. Under host build pressure the race became
+repeatable. The first attempted handshake also used an embedded quoted
+redirection path; generic Windows argv escaping is not `cmd.exe /c` command
+syntax, so the shell rejected that filename.
+
+**Where:** `scripts/lfm2-vl/test-bounded-oracle.ps1`, specifically the
+owner-exit smoke. The production assignment-before-resume order remains in
+`scripts/lfm2-vl/run-bounded-oracle.ps1`.
+
+**Evidence:** The failing smoke left exact test child PID 20048 at about 2 MiB;
+identity was verified before `taskkill /PID 20048 /T /F`, after which the PID
+was absent. A bounded two-second diagnostic proved `job_assigned=true`,
+`resumed=true`, and exact cleanup while the first quoted marker failed with a
+`cmd.exe` filename-syntax error. The corrected relative marker passed the full
+smoke under PowerShell 7.6.4 and Windows PowerShell 5.1, and no
+`bounded-oracle-child` process remained.
+
+**How to catch it:** Require a child-written marker in the pinned working
+directory before killing the owner. Because the child cannot execute while
+suspended and the wrapper assigns before resume, the marker is an observable
+post-assignment handshake. After owner termination, require exact PID absence
+and no completion evidence. On any assertion failure, clean up only the
+captured test PID after rechecking its unique test-process name.
+
+**Solutions tried:**
+
+1. `18/100` Increase the PID-only wait: does not close the semantic race.
+2. `54/100` Use an absolute quoted marker path inside `cmd.exe /c`: assignment
+   ordering is sound, but generic argv quoting makes the shell command
+   ambiguous.
+3. `98/100` Write a fixed relative marker in the already validated unique test
+   working directory, then kill the owner and retain exact-PID failure cleanup.
+
+**Current solution:** The owner child writes `owner-ready.txt` only after
+resume. The test waits up to ten seconds for both the exact process and marker,
+then exercises kill-on-close. Its `finally` block removes any captured exact
+test child without converting the original assertion into a pass.
+
+**Decision rationale:** The handshake observes the actual ordering guarantee,
+adds no production hook, avoids shell quoting, and makes a failed smoke safe to
+rerun without leaving a process or hiding the failure.
+
+**Effectiveness:** `98/100`, green on both supported PowerShell runtimes. The
+remaining uncertainty is ordinary scheduler variance, bounded by the explicit
+ten-second handshake deadline and exact cleanup.
+
+**Relevance check:** Current for every owner-death or kill-on-close regression
+that starts a child suspended.
+
+**Next prevention step:** Keep the post-resume handshake and exact failure
+cleanup whenever the owner-exit fixture or process-launch sequence changes.
+
 ---
-AI-edited: 2026-08-11T09:33:07-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=review | change=broadened exclusive-publication evidence and remaining Linux replay
+AI-edited: 2026-08-11T09:59:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=resolved the pre-assignment owner-exit test race and updated linked-main Git guidance

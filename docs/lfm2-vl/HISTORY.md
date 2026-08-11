@@ -1,6 +1,47 @@
 # LFM2.5-VL Completed Work History
 
-This file preserves the detailed status snapshot through the published checkpoint `c9b60f0b906fa8fe70423295e2e1164648a8fa53`. Present-tense phase, blocker, worktree, and next-task statements below are historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
+This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
+
+## 2026-08-11 — Direct-main integration and integrity release closeout
+
+- Attached the formerly detached Windows-linked edit worktree to local `main`
+  through WSL Git. The historical `feat/lfm2-vl-mmproj` branch remains owned by
+  `/home/workbench/code/candle-lfm2-vl` at checkpoint
+  `c9b60f0b906fa8fe70423295e2e1164648a8fa53`.
+- Fetched GitHub main at `6f74e7c390c717f8fd34f23ce02aceb058173370`.
+  Its nine post-0.11 upstream commits changed 29 paths and did not overlap the
+  mod's nine fork-origin files. Checkpoint
+  `a83acf13d2b6bff6528e8b8c87209500f6fbc85c` captured the reviewed integrity
+  slice; merge checkpoint `2b1d9e80de06b251b2fe5f25e51c17d56db86591`
+  then preserved both histories without conflict or force.
+- Made `main` the single owner-reviewed publication line with no PR. Added an
+  ignored WSL-aware `.tools/gitpush.ps1` that refuses dirty, detached, behind,
+  diverged, wrong-remote, tracked-token, or non-main state and never stages,
+  commits, merges, rebases, creates a repository, or force-pushes.
+- Rebased `MOD_MANIFEST.md` and its verifier on the exact integrated upstream
+  main commit. The overlay remains 91 paths: 9 fork-origin modifications and 82
+  mod-owned additions; inherited upstream changes are no longer misclassified
+  as mod files.
+- The first PowerShell 7 bounded-owner replay exposed an owner-exit test race:
+  PID visibility preceded Job Object assignment, so the test itself could kill
+  the wrapper too early and strand its suspended 2 MiB fixture child. The exact
+  PID was verified and terminated, the smoke gained a child-written
+  post-resume handshake plus exact failure cleanup, and PowerShell 7.6.4 and
+  Windows PowerShell 5.1 both passed the corrected bounded-owner and preflight
+  suites. Failed-test temp directories were removed after PID absence.
+- Fixed both actionable strict-Clippy `manual_contains` findings in mod-owned
+  VLM validation. Strict Clippy then passed the affected libraries and
+  LFM2-VL example with only compatibility-sensitive
+  `manual-is-multiple-of` and indexing-clarity `needless-range-loop` allowed.
+- Post-merge native Windows verification passed formatting; locked/offline
+  checks for core, NN, transformers, VLM, and all three LFM2 examples; all core
+  integration/doc lanes; transformer 58/58, generation 5/5, NMS 8/8, VLM
+  29/29; and LFM2-VL example 29/29. The exact Windows oracle environment and
+  81-test Python reference suite also passed in this release task.
+- No production model, llama.cpp process, CUDA workload, package installation,
+  hosted CI, PR, broad stage, force-push, or secret-value inspection occurred.
+  The separately approved 1.6B acquisition and subsequent CPU proof remain the
+  product next task.
 
 ## 2026-08-11 — Guarded 1.6B snapshot acquisition made source-complete
 
@@ -773,4 +814,4 @@ Linux-specific native-trace collision regression is therefore truthfully
 deferred to TODO C3; no network or toolchain install was substituted.
 
 ---
-AI-edited: 2026-08-11T09:33:07-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=docs | change=archived repository integrity and exclusive-publication closure
+AI-edited: 2026-08-11T09:59:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=archived direct-main integration, release verification, and owner-exit race closure

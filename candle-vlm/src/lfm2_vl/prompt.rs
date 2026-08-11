@@ -727,10 +727,7 @@ fn find_crop_spans(
         spans.push(ImageTokenSpan::new(0, cursor, end));
         cursor = end;
     }
-    if input_ids[cursor..]
-        .iter()
-        .any(|&token_id| token_id == image_token_id)
-    {
+    if input_ids[cursor..].contains(&image_token_id) {
         candle::bail!("LFM2-VL prompt contains unexpected image placeholders")
     }
     Ok(spans)

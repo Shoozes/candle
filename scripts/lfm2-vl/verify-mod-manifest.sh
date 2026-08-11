@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd -P)"
-BASELINE="${1:-31f35b147389700ed2a178ee66a91c3cc25cc80d}"
+BASELINE="${1:-6f74e7c390c717f8fd34f23ce02aceb058173370}"
 MANIFEST="${REPO_ROOT}/docs/lfm2-vl/MOD_MANIFEST.md"
 cd -- "$REPO_ROOT"
 
