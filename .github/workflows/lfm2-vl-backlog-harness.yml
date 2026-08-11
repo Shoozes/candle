@@ -69,6 +69,10 @@ jobs:
           git diff --check
           echo "git diff check: passed"
 
+          # Actions cannot push workflow-file changes without a workflow-scoped token.
+          # The verified guard is applied immediately afterward through the GitHub connector.
+          git restore --source=HEAD -- .github/workflows/ci_cuda.yaml
+
           git add -A
           git status --short
           GIT_AUTHOR_NAME='github-actions[bot]' \
