@@ -15,7 +15,7 @@ def remove_suffix(path: str, suffix: str) -> None:
     text = file_path.read_text(encoding="utf-8")
     if not text.endswith(suffix):
         raise SystemExit(f"{path}: expected suffix is missing: {suffix!r}")
-    file_path.write_text(text[: -len(suffix)] + "\n", encoding="utf-8")
+    file_path.write_text(text[: -len(suffix)], encoding="utf-8")
 
 
 replace_once(
@@ -86,3 +86,20 @@ replace_once(
     "pub struct Siglip2VisionModel {",
     "/// Candle SigLIP2 NaFlex vision encoder for packed patch tensors.\n#[derive(Debug)]\npub struct Siglip2VisionModel {",
 )
+
+for path in (
+    "candle-transformers/src/models/lfm2/config.rs",
+    "candle-transformers/src/models/lfm2/cache.rs",
+    "candle-transformers/src/models/lfm2_vl/model/types.rs",
+    "candle-transformers/src/models/lfm2_vl/model/runtime.rs",
+    "candle-transformers/src/models/lfm2_vl/model/encoding.rs",
+    "candle-transformers/src/models/lfm2_vl/model/merge.rs",
+    "candle-transformers/src/models/lfm2_vl/weights/manifest.rs",
+    "candle-transformers/src/models/lfm2_vl/weights/runtime.rs",
+    "candle-transformers/src/models/siglip2/config.rs",
+    "candle-transformers/src/models/siglip2/embeddings.rs",
+    "candle-transformers/src/models/siglip2/encoder.rs",
+    "candle-transformers/src/models/siglip2/model.rs",
+):
+    file_path = Path(path)
+    file_path.write_text(file_path.read_text(encoding="utf-8").rstrip("\n") + "\n", encoding="utf-8")
