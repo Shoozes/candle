@@ -1,5 +1,7 @@
 //! llama.cpp-compatible GGUF MMProj loading through dense or native Q8 execution.
 
+#![allow(clippy::manual_is_multiple_of)]
+
 use super::weights::{Mmproj, MmprojLoadReport, MmprojMetadata};
 use super::{Lfm2VlMmprojConfig, Lfm2VlProjector};
 use crate::models::siglip2;

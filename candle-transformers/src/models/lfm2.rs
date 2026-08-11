@@ -5,6 +5,8 @@
 //!
 //! This implementation supports the LFM2ForCausalLM architecture from HuggingFace transformers.
 
+#![allow(clippy::manual_is_multiple_of)]
+
 use crate::models::with_tracing::{linear_no_bias as linear, Embedding, Linear, RmsNorm};
 use crate::utils::repeat_kv;
 use candle::{DType, Device, IndexOp, Module, Result, Tensor};

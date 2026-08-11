@@ -1,3 +1,5 @@
+#![allow(clippy::needless_range_loop)]
+
 use crate::models::lfm2_vl::config::{Lfm2VlConfig, VisionLimits};
 use crate::models::lfm2_vl::projector::Lfm2VlProjector;
 use crate::models::{lfm2, siglip2};

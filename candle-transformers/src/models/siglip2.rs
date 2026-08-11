@@ -4,6 +4,8 @@
 //! resizing, tiling, normalization, patchification, and the LFM2.5-VL
 //! projector are separate phases.
 
+#![allow(clippy::manual_is_multiple_of, clippy::needless_range_loop)]
+
 use crate::models::lfm2_vl::linear::LinearOp;
 use candle::quantized::QTensor;
 use candle::{DType, Device, IndexOp, Module, Result, Tensor};
