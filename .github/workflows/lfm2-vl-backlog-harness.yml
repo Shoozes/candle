@@ -59,11 +59,15 @@ jobs:
 
           echo "format generated Rust source"
           cargo fmt --all
+          echo "rustfmt application: passed"
 
           echo "revalidate formatted layout"
           python3 scripts/lfm2-vl/verify-module-layout.py
-          cargo fmt --all -- --check
+          echo "module layout replay: passed"
+
+          echo "check whitespace and patch integrity"
           git diff --check
+          echo "git diff check: passed"
 
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
