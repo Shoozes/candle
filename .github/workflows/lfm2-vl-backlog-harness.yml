@@ -1,4 +1,4 @@
-# Temporary connector-triggered validation revision 4; removed before publication.
+# Temporary connector-triggered validation revision 5; removed before publication.
 name: LFM2-VL backlog harness
 
 on:
@@ -12,57 +12,12 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-vlm-clippy-fixes:
-    name: Apply remaining VLM compatibility annotations
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
-      - name: Add narrow module-level annotations
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          updates = {
-              "candle-vlm/src/lfm2_vl/config.rs": "#![allow(clippy::manual_is_multiple_of)]",
-              "candle-vlm/src/lfm2_vl/processor.rs": "#![allow(clippy::manual_is_multiple_of)]",
-          }
-          for path_text, attribute in updates.items():
-              path = Path(path_text)
-              text = path.read_text(encoding="utf-8")
-              if attribute in text:
-                  continue
-              lines = text.splitlines(keepends=True)
-              index = 0
-              while index < len(lines) and (lines[index].startswith("//!") or not lines[index].strip()):
-                  index += 1
-              lines[index:index] = [attribute + "\n", "\n"]
-              path.write_text("".join(lines), encoding="utf-8")
-          PY
-          git diff --check
-          git add candle-vlm/src/lfm2_vl/config.rs candle-vlm/src/lfm2_vl/processor.rs
-          if git diff --cached --quiet; then
-            echo "VLM compatibility annotations already present."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: document VLM Clippy compatibility exceptions"
-          git push origin "HEAD:${{ github.head_ref }}"
-
   export-workspace:
     name: Export exact tracked workspace
     runs-on: ubuntu-latest
-    needs: apply-vlm-clippy-fixes
-    if: always() && needs.apply-vlm-clippy-fixes.result == 'success'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -85,8 +40,6 @@ jobs:
   linux-exclusive-publication:
     name: Linux native-trace exclusive publication
     runs-on: ubuntu-latest
-    needs: apply-vlm-clippy-fixes
-    if: always() && needs.apply-vlm-clippy-fixes.result == 'success'
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
@@ -125,8 +78,6 @@ jobs:
   clippy-diagnostics:
     name: Focused Clippy diagnostics
     runs-on: ubuntu-latest
-    needs: apply-vlm-clippy-fixes
-    if: always() && needs.apply-vlm-clippy-fixes.result == 'success'
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
@@ -159,8 +110,6 @@ jobs:
   windows-test-diagnostics:
     name: Windows test diagnostics
     runs-on: windows-latest
-    needs: apply-vlm-clippy-fixes
-    if: always() && needs.apply-vlm-clippy-fixes.result == 'success'
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
