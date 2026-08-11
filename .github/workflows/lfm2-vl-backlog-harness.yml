@@ -46,11 +46,18 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y pkg-config libssl-dev
+      - name: Resolve one isolated dependency graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e Cargo.lock
+          cargo generate-lockfile
+          cargo fetch --locked
       - name: Prove exact regression exists
         shell: bash
         run: |
           set -euo pipefail
-          cargo test --locked -j 2 -p candle-examples --example lfm2-vl -- --list \
+          cargo test --locked --offline -j 2 -p candle-examples --example lfm2-vl -- --list \
             | tee "$RUNNER_TEMP/lfm2-vl-tests.txt"
           grep -F "trace::tests::trace_publication_does_not_replace_a_racing_directory: test" \
             "$RUNNER_TEMP/lfm2-vl-tests.txt"
@@ -58,12 +65,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cargo test --locked -j 2 -p candle-examples --example lfm2-vl \
+          cargo test --locked --offline -j 2 -p candle-examples --example lfm2-vl \
             trace::tests::trace_publication_does_not_replace_a_racing_directory \
             -- --exact --nocapture
       - name: Check tracked source integrity
         shell: bash
         run: |
           set -euo pipefail
+          rm -f Cargo.lock
           git diff --check
           test -z "$(git status --short)"
