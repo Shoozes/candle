@@ -50,10 +50,18 @@ jobs:
             .github/lfm2-vl-backlog-payload.ready \
             .github/lfm2-vl-backlog-payload.part-*
 
+          echo "apply deterministic C1 split"
           python3 .github/apply-c1-refactor.py
           rm -f .github/apply-c1-refactor.py
-          python3 scripts/lfm2-vl/verify-module-layout.py
+
+          echo "validate generated metadata"
           python3 -m json.tool summary_bank.json >/dev/null
+
+          echo "format generated Rust source"
+          cargo fmt --all
+
+          echo "revalidate formatted layout"
+          python3 scripts/lfm2-vl/verify-module-layout.py
           cargo fmt --all -- --check
           git diff --check
 
