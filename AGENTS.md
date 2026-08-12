@@ -195,8 +195,11 @@ Do not hide pre-existing failures. Record them separately from failures caused b
   named `main` worktree.
 - Push only after explicit owner authorization, using the ignored
   `.tools/gitpush.ps1`. The helper must not stage, commit, merge, rebase,
-  create repositories, or force-push; it may only verify and publish an
-  already-reviewed fast-forward `main`.
+  create repositories, delete refs, or force-push. It may publish an
+  already-reviewed fast-forward `main`; after remote `main` exactly matches
+  local `HEAD`, its guarded tag mode may publish one annotated
+  `lfm2-vl-mvp-X.Y.Z` tag that peels to that same commit. It must reject
+  lightweight, mismatched, pre-existing-conflicting, or unrelated refs.
 - Never read, stage, or publish `.tools/.secrets/`; never use broad staging for this mod.
 
 ## Codex Task Scope
@@ -231,4 +234,4 @@ The next Codex session must be able to continue from this file without reconstru
 Keep active tasks and their What/Why/When/Where/How/Done-when/Verification contract in `TODO.md`. Move completed details to `HISTORY.md`, recurring hazards to `FAILURE_LOG.md`, and never duplicate either into the summary bank.
 
 ---
-AI-edited: 2026-08-11T10:02:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=made owner-reviewed main the single publication line with WSL-safe non-force Git controls
+AI-edited: 2026-08-11T23:28:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-tag | change=added guarded annotated MVP tag publication after exact remote-main equality

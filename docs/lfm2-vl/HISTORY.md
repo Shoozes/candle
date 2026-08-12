@@ -1286,5 +1286,28 @@ deferred to TODO C3; no network or toolchain install was substituted.
   module-layout nine wrappers; cross-version summary/preflight smoke; 23-file
   relative-link audit; 141/14/127 mod manifest; and clean `git diff --check`.
 
+## 2026-08-12 — Guarded annotated release-tag publication
+
+- What: Extended the ignored direct-main publication helper with a narrow
+  annotated LFM2-VL MVP tag mode and recorded its durable policy.
+- Why: The release contract requires an annotated tag, while raw Git or a
+  second ad hoc credential path would bypass the existing remote, ancestry,
+  cleanliness, and secret-containment checks.
+- When: After implementation closeout commit `7601b766` was published and
+  verified on `origin/main`.
+- Where: `.tools/gitpush.ps1` locally; durable policy in `AGENTS.md`,
+  `START_HERE.md`, `DECISIONS.md`, `STATUS.md`, and this history record.
+- How: Permit only `lfm2-vl-mvp-X.Y.Z`; require a clean named `main`, exact
+  expected HEAD, remote `main` equality, an annotated local tag that peels to
+  HEAD, and an absent-or-identical remote tag; push one exact tag ref without
+  force and verify both its remote object and peeled commit. Branch deletion
+  remains unsupported.
+- Done when: Main and tag use one authenticated helper, conflicting or
+  lightweight tags fail closed, no unrelated ref can be selected, and the
+  remote tag verifies at the final main commit.
+- Verification: PowerShell 7/5.1 syntax, guarded main/tag dry runs, exact local
+  tag type/peel checks, local documentation/context/manifest gates, and final
+  remote-ref verification.
+
 ---
-AI-edited: 2026-08-11T23:12:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=archived the final local gate and consolidated current status
+AI-edited: 2026-08-11T23:28:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-tag | change=archived guarded annotated release-tag publication controls

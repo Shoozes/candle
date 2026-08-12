@@ -829,9 +829,13 @@ local `main`; WSL Git owns all repository operations. Before every push, fetch
 and inspect `origin/main`, require a reviewed fast-forward ancestry result after
 any merge, rerun local verification, stage only manifest-authorized paths, and
 keep the worktree clean. The ignored `.tools/gitpush.ps1` reads the operator
-token internally and may fetch, verify, push, and confirm the remote head; it
-must not stage, commit, merge, rebase, create a repository, expose the token, or
-force-push. Hosted CI and PR status remain outside the verification contract.
+token internally and may fetch, verify, push, and confirm the remote head. Once
+remote `main` exactly equals reviewed local `HEAD`, its guarded tag mode may
+publish one annotated `lfm2-vl-mvp-X.Y.Z` tag that peels to the same commit and
+whose remote name is absent or already identical. It must not stage, commit,
+merge, rebase, create a repository, delete refs, expose the token, force-push,
+or publish unrelated refs. Hosted CI and PR status remain outside the
+verification contract.
 
 Evidence:
 `origin/main` at `6f74e7c390c717f8fd34f23ce02aceb058173370`
@@ -964,4 +968,4 @@ regression protects the non-contiguous input case. Future optimization must
 measure this materialization before attempting to remove or fuse it.
 
 ---
-AI-edited: 2026-08-11T23:22:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=recorded benchmark retention and resolved CPU dtype contracts
+AI-edited: 2026-08-11T23:28:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-tag | change=bounded annotated-tag publication inside the existing authenticated helper

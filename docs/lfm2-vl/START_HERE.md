@@ -116,7 +116,9 @@ for building or using the fork on Windows.
   rerun the local release gate after every integration.
 - Invoke the ignored `.tools/gitpush.ps1` only after explicit approval and only
   from a clean named `main`; it verifies ancestry and remote identity and does
-  not stage, commit, merge, or force-push.
+  not stage, commit, merge, delete refs, or force-push. Its optional guarded
+  tag mode runs only after remote `main` equals local `HEAD` and publishes one
+  annotated `lfm2-vl-mvp-X.Y.Z` tag that peels to that exact commit.
 - Keep `.tools/.secrets/`, the ignored `Cargo.lock`, models, caches, downloads, artifacts, and local logs out of publication.
 - Stage only paths authorized by `MOD_MANIFEST.md`; never use broad staging.
 
@@ -138,4 +140,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-11T23:22:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=closed the entry-point MVP gate after P4.5 and PERF-1
+AI-edited: 2026-08-11T23:28:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-tag | change=documented guarded annotated-tag publication after exact main equality

@@ -12,8 +12,9 @@
   `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on
   `feat/lfm2-vl-mmproj`.
 - Current reviewed parent before this release slice:
-  `95c067f7cc9a702575b5b7c0f400ca3aa3ff1386`. The final release commit and
-  annotated tag own the post-slice identity.
+  `95c067f7cc9a702575b5b7c0f400ca3aa3ff1386`. Implementation closeout commit
+  `7601b766538d591157d7ac51015a20352a7e7cc0` is published on `main`; the final
+  guarded tag-policy commit and annotated tag own the post-slice identity.
 - Current overlay relative to the upstream integration base: 141 allowlisted
   paths, exactly 14 fork-origin modifications and 127 mod-owned additions.
 
@@ -141,9 +142,9 @@
   main commit `6ea6aef5`; deletion therefore risks no unique file state, but
   the managed approval layer requires a fresh exact authorization naming that
   branch. Retain `feat/lfm2-vl-mmproj`.
-- The complete local diff and verification gate are reviewed. Remote main/tag
-  publication is the remaining release action. The main-only
-  `.tools/gitpush.ps1` must not be weakened to delete branches or publish
+- The complete local diff and verification gate are reviewed. Final main/tag
+  publication is the remaining release action. The guarded
+  `.tools/gitpush.ps1` must not delete branches, force-push, or publish
   unrelated refs.
 - Hosted GitHub Actions state is intentionally not a blocker or verification
   dependency.
@@ -167,4 +168,4 @@ already-proven temporary remote branch after fresh exact owner authorization.
 Then stop; do not start another product phase implicitly.
 
 ---
-AI-edited: 2026-08-11T23:22:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=consolidated current state around the final local MVP gate
+AI-edited: 2026-08-11T23:28:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-tag | change=recorded published implementation closeout and final guarded tag handoff
