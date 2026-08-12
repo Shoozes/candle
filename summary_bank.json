@@ -27,6 +27,7 @@
         "docs/lfm2-vl/START_HERE.md",
         "docs/lfm2-vl/STATUS.md",
         "docs/lfm2-vl/TODO.md",
+        "docs/FORK_OVERLAYS.md",
         "docs/lfm2-vl/MOD_MANIFEST.md",
         "summary_bank.json"
       ]
@@ -101,6 +102,27 @@
         "candle-examples/examples/lfm2-vl/native_loading/types.rs",
         "candle-examples/examples/lfm2-vl/native_loading/load.rs",
         "candle-examples/examples/lfm2-vl/native_loading/inventory.rs"
+      ]
+    },
+    "workflow__hybrid_consumer_loading": {
+      "description": "Public local-only LFM2-VL hybrid assembly, requested MMProj execution policy, exact consumed-file inventory, thin example adaptation, and deterministic split/direct loader fixtures.",
+      "status": "active",
+      "paths": [
+        "candle-vlm/Cargo.toml",
+        "candle-vlm/README.md",
+        "candle-vlm/src/lfm2_vl/mod.rs",
+        "candle-vlm/src/lfm2_vl/loading.rs",
+        "candle-examples/examples/lfm2-vl/args.rs",
+        "candle-examples/examples/lfm2-vl/loading.rs",
+        "candle-examples/examples/lfm2-vl/main.rs",
+        "candle-examples/examples/lfm2-vl/runner.rs",
+        "tests/fixtures/lfm2_vl_loader_tiny/README.md",
+        "tests/fixtures/lfm2_vl_loader_tiny/manifest.json",
+        "tests/fixtures/lfm2_vl_loader_tiny/mmproj-dense.gguf",
+        "tests/fixtures/lfm2_vl_loader_tiny/mmproj-q8.gguf",
+        "tests/fixtures/lfm2_vl_loader_tiny/text.gguf",
+        "tests/fixtures/lfm2_vl_loader_tiny/tokenizer.json",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/processor_config.json"
       ]
     },
     "feature__image_processing_and_prompt": {
@@ -360,6 +382,19 @@
         "docs/lfm2-vl/LICENSE_NOTES.md",
         "docs/lfm2-vl/DECISIONS.md",
         "scripts/lfm2-vl/verify-mod-manifest.sh"
+      ]
+    },
+    "workflow__fork_overlays": {
+      "description": "Repository-wide overlay registry, shared-path ownership, independent LFM2-VL and SnapFlash-derived manifests, union completeness, and application-to-framework dependency direction.",
+      "status": "active",
+      "paths": [
+        "AGENTS.md",
+        "CHANGELOG.md",
+        "docs/FORK_OVERLAYS.md",
+        "docs/snapflash/MOD_MANIFEST.md",
+        "scripts/lfm2-vl/verify-mod-manifest.sh",
+        "scripts/verify-fork-overlays.sh",
+        "summary_bank.json"
       ]
     },
     "workflow__context_integrity": {

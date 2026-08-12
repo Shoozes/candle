@@ -1,0 +1,23 @@
+{
+  "schema": "candle-lfm2-vl-loader-fixture-v1",
+  "source_config": "../lfm2_vl_mmproj_tiny/source_model_config.json",
+  "source_weights": "../lfm2_vl_tiny/tensors.safetensors",
+  "files": {
+    "mmproj-dense.gguf": {
+      "bytes": 30880,
+      "sha256": "7361b57e6d9dbf2d7809d4f446944fdc7325b368e4444fee2bc3497376695256"
+    },
+    "mmproj-q8.gguf": {
+      "bytes": 23360,
+      "sha256": "225241e57bc84c62d097aab6daa9466a75e920dbb858daf4cba4cc18ef8bb3f0"
+    },
+    "text.gguf": {
+      "bytes": 14592,
+      "sha256": "a26fa36c415b740a9fc508ed83401368957fe736dd7f77d3bf497da92d394875"
+    },
+    "tokenizer.json": {
+      "bytes": 3332,
+      "sha256": "291e3ce6e60bb452ce91c4199b14ac5de6e3af15e5b45fdee5025de477ed91f7"
+    }
+  }
+}

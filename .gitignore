@@ -22,6 +22,7 @@ Cargo.lock
 *.pdb
 
 *tokenizer*.json
+!tests/fixtures/lfm2_vl_loader_tiny/tokenizer.json
 *.npz
 
 perf.data

@@ -80,18 +80,16 @@ fn run_hybrid(
         .as_ref()
         .is_some_and(|inference| inference.timings);
     let load_started = Instant::now();
-    let mut loaded = loading::load_hybrid(
+    let mut loaded = loading::load_hybrid(loading::HybridLoadOptions {
         text_gguf,
-        mmproj_input,
+        mmproj: mmproj_input,
         tokenizer,
-        args.processor_config.as_deref(),
-        loading::MmprojLoadOptions {
-            execution: args.mmproj_execution,
-            dtype: vision_dtype,
-            device: vision_device,
-        },
+        processor_config: args.processor_config.as_deref(),
+        mmproj_execution: args.mmproj_execution,
+        vision_dtype,
+        vision_device,
         text_device,
-    )?;
+    })?;
     if profile {
         synchronize_timing_devices(loaded.model.vision_device(), loaded.model.text_device())?;
         eprintln!(
@@ -144,7 +142,7 @@ fn run_hybrid(
             &mut loaded.model,
             &loaded.processor,
             &loaded.prompt,
-            inference_request(backend, &loaded.source_files, inference),
+            inference_request(backend, &loaded.consumed_files, inference),
         )?;
         emit_report(&report, inference.json)?;
     }

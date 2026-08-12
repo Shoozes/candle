@@ -5,6 +5,11 @@ This documents the main changes to the `candle` crate.
 
 ### Added
 
+- Added independent LFM2-VL and SnapFlash-derived fork overlay manifests with
+  a repository-wide ownership verifier.
+- Added a public, local-only LFM2-VL hybrid loader in `candle-vlm` for
+  quantized GGUF text with split, direct dense, or native Q8 MMProj inputs.
+
 ### Modified
 
 ## v0.3.0 - 2023-10-01

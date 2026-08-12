@@ -3,6 +3,7 @@
 use anyhow::{bail, Result};
 use candle::{DType, Device};
 use candle_transformers::models::lfm2_vl::VisionLimits;
+use candle_vlm::lfm2_vl::Lfm2VlMmprojExecution;
 use std::fmt;
 use std::path::PathBuf;
 
@@ -80,34 +81,7 @@ impl fmt::Display for DTypeArg {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum MmprojExecutionArg {
-    #[default]
-    Auto,
-    Dense,
-    Q8,
-}
-
-impl MmprojExecutionArg {
-    fn parse(value: &str) -> Result<Self> {
-        match value.to_ascii_lowercase().as_str() {
-            "auto" => Ok(Self::Auto),
-            "dense" | "dequantize" => Ok(Self::Dense),
-            "q8" | "q8_0" | "native-q8" => Ok(Self::Q8),
-            _ => bail!("unsupported --mmproj-execution {value:?}; expected auto, dense, or q8"),
-        }
-    }
-}
-
-impl fmt::Display for MmprojExecutionArg {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(match self {
-            Self::Auto => "auto",
-            Self::Dense => "dense",
-            Self::Q8 => "q8",
-        })
-    }
-}
+pub type MmprojExecutionArg = Lfm2VlMmprojExecution;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Args {
@@ -335,11 +309,7 @@ where
             }
             "--mmproj-execution" => {
                 let value = next_value(&mut arguments, "--mmproj-execution")?;
-                set_once(
-                    &mut mmproj_execution,
-                    MmprojExecutionArg::parse(&value)?,
-                    "--mmproj-execution",
-                )?;
+                set_once(&mut mmproj_execution, value.parse()?, "--mmproj-execution")?;
             }
             "-h" | "--help" => return Ok(ParseOutcome::Help),
             _ if argument.starts_with('-') => bail!("unknown option {argument}\n{USAGE}"),

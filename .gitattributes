@@ -14,3 +14,7 @@
 /tests/fixtures/lfm2_vl_mmproj_tiny/*.json text eol=lf
 /tests/fixtures/lfm2_vl_mmproj_tiny/*.md text eol=lf
 /tests/fixtures/lfm2_vl_mmproj_tiny/*.safetensors -text
+
+/tests/fixtures/lfm2_vl_loader_tiny/*.json text eol=lf
+/tests/fixtures/lfm2_vl_loader_tiny/*.md text eol=lf
+/tests/fixtures/lfm2_vl_loader_tiny/*.gguf -text

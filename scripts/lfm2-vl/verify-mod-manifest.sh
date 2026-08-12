@@ -26,15 +26,15 @@ case "$TEMP_DIR" in
 esac
 trap 'rm -rf -- "$TEMP_DIR"' EXIT
 
-CURRENT_PATHS="${TEMP_DIR}/current-paths.txt"
+REPO_PATHS="${TEMP_DIR}/repo-paths.txt"
 MANIFEST_PATHS="${TEMP_DIR}/manifest-paths.txt"
-MISSING_PATHS="${TEMP_DIR}/missing-paths.txt"
 STALE_PATHS="${TEMP_DIR}/stale-paths.txt"
 
 fixture_roots=(
     tests/fixtures/lfm2_vl_tiny
     tests/fixtures/lfm2_vl_processor_tiny
     tests/fixtures/lfm2_vl_mmproj_tiny
+    tests/fixtures/lfm2_vl_loader_tiny
 )
 
 mapfile -t fixture_text_files < <(
@@ -43,11 +43,11 @@ mapfile -t fixture_text_files < <(
 )
 mapfile -t fixture_binary_files < <(
     find "${fixture_roots[@]}" -maxdepth 1 -type f \
-        -name '*.safetensors' -print | LC_ALL=C sort
+        \( -name '*.safetensors' -o -name '*.gguf' \) -print | LC_ALL=C sort
 )
 mapfile -t fixture_unclassified_files < <(
     find "${fixture_roots[@]}" -maxdepth 1 -type f \
-        ! \( -name '*.json' -o -name '*.md' -o -name '*.safetensors' \) \
+        ! \( -name '*.json' -o -name '*.md' -o -name '*.safetensors' -o -name '*.gguf' \) \
         -print | LC_ALL=C sort
 )
 
@@ -91,27 +91,21 @@ done
 {
     git diff --name-only --diff-filter=ACDMRTUXB "$BASELINE" --
     git ls-files --others --exclude-standard
-} | LC_ALL=C sort -u >"$CURRENT_PATHS"
+} | LC_ALL=C sort -u >"$REPO_PATHS"
 
 sed -n \
     -e 's/^| `\([^`]*\)` |.*$/\1/p' \
     -e 's/^- `\([^`]*\)`$/\1/p' \
     "$MANIFEST" | LC_ALL=C sort -u >"$MANIFEST_PATHS"
 
-if grep -E '^(Cargo\.lock|\.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$CURRENT_PATHS"; then
-    printf 'error: current publication delta contains a prohibited local/runtime path\n' >&2
+if grep -E '^(Cargo\.lock|\.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$MANIFEST_PATHS"; then
+    printf 'error: LFM2-VL manifest contains a prohibited local/runtime path\n' >&2
     exit 1
 fi
 
-comm -23 "$CURRENT_PATHS" "$MANIFEST_PATHS" >"$MISSING_PATHS"
-comm -13 "$CURRENT_PATHS" "$MANIFEST_PATHS" >"$STALE_PATHS"
-if [[ -s "$MISSING_PATHS" ]]; then
-    printf 'error: changed paths missing from MOD_MANIFEST.md:\n' >&2
-    sed 's/^/  - /' "$MISSING_PATHS" >&2
-    exit 1
-fi
+comm -23 "$MANIFEST_PATHS" "$REPO_PATHS" >"$STALE_PATHS"
 if [[ -s "$STALE_PATHS" ]]; then
-    printf 'error: MOD_MANIFEST.md paths absent from the baseline-to-current delta:\n' >&2
+    printf 'error: LFM2-VL manifest paths absent from the baseline-to-current delta:\n' >&2
     sed 's/^/  - /' "$STALE_PATHS" >&2
     exit 1
 fi
@@ -124,15 +118,20 @@ while IFS= read -r path; do
     else
         added_count=$((added_count + 1))
     fi
-done <"$CURRENT_PATHS"
+done <"$MANIFEST_PATHS"
 
-if [[ "$modified_count" -ne 14 ]]; then
-    printf 'error: expected exactly 14 fork-origin modifications, found %s\n' "$modified_count" >&2
+if [[ "$modified_count" -ne 15 ]]; then
+    printf 'error: expected exactly 15 LFM2-VL fork-origin modifications, found %s\n' "$modified_count" >&2
+    exit 1
+fi
+
+if [[ "$added_count" -ne 135 ]]; then
+    printf 'error: expected exactly 135 LFM2-VL additions, found %s\n' "$added_count" >&2
     exit 1
 fi
 
 total_count=$((modified_count + added_count))
-printf 'mod-manifest baseline=%s total=%s fork_modified=%s mod_added=%s\n' \
+printf 'lfm2-vl-mod-manifest baseline=%s total=%s fork_modified=%s mod_added=%s\n' \
     "$BASELINE" "$total_count" "$modified_count" "$added_count"
 printf 'fixture-attributes text=%s binary=%s: passed\n' \
     "${#fixture_text_files[@]}" "${#fixture_binary_files[@]}"

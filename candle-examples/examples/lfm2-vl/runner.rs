@@ -43,7 +43,7 @@ include!("runner/evidence.rs");
 mod tests {
     use super::*;
     use crate::args::MmprojExecutionArg;
-    use crate::loading::{self, MmprojInput, MmprojLoadOptions};
+    use crate::loading::{self, HybridLoadOptions, MmprojInput};
     use candle::quantized::{gguf_file, GgmlDType, QTensor};
     use candle_nn::VarBuilder;
     use candle_transformers::models::{lfm2, lfm2_vl::Lfm2VlConfig};
@@ -485,18 +485,16 @@ mod tests {
         tokenizer()?
             .save(&tokenizer_path, false)
             .map_err(anyhow::Error::msg)?;
-        let mut loaded = loading::load_hybrid(
-            &text_path,
-            MmprojInput::SplitDirectory(&split_bundle_dir()),
-            &tokenizer_path,
-            None,
-            MmprojLoadOptions {
-                execution: MmprojExecutionArg::Dense,
-                dtype: DType::F32,
-                device: &device,
-            },
-            &device,
-        )?;
+        let mut loaded = loading::load_hybrid(HybridLoadOptions {
+            text_gguf: &text_path,
+            mmproj: MmprojInput::SplitDirectory(&split_bundle_dir()),
+            tokenizer: &tokenizer_path,
+            processor_config: None,
+            mmproj_execution: MmprojExecutionArg::Dense,
+            vision_dtype: DType::F32,
+            vision_device: &device,
+            text_device: &device,
+        })?;
         let image_path = dir.path().join("fixture.png");
         let pixels = RgbImage::from_fn(8, 4, |x, y| {
             Rgb([(x * 17) as u8, (y * 41) as u8, ((x + y) * 13) as u8])
@@ -509,7 +507,7 @@ mod tests {
             &loaded.prompt,
             InferenceRequest {
                 backend: "hybrid-split-fixture",
-                model_inputs: &loaded.source_files,
+                model_inputs: &loaded.consumed_files,
                 prompt: "<image> hello",
                 image_paths: &image_paths,
                 max_new_tokens: 3,

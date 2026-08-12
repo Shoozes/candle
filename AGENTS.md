@@ -22,6 +22,11 @@ The execution sequence is:
 
 `docs/lfm2-vl/START_HERE.md`
 
+Cross-overlay ownership and dependency direction are defined in
+`docs/FORK_OVERLAYS.md`. Read it before changing a shared path or promoting an
+application-derived primitive into Candle. LFM2-VL evidence and any
+SnapFlash-derived diffusion work remain independently reviewable.
+
 Read both before planning or editing, then read `docs/lfm2-vl/STATUS.md` and `docs/lfm2-vl/TODO.md`. Use `summary_bank.json` to load only the focused implementation/test group needed by the task.
 
 ## Authority Order
@@ -133,7 +138,9 @@ After every task:
 7. Update `docs/lfm2-vl/DECISIONS.md` when architecture or compatibility decisions changed.
 8. Update `docs/lfm2-vl/TODO.md`, `HISTORY.md`, `MOD_MANIFEST.md`, and `summary_bank.json` only when their owned state changed.
 9. Run the summary-bank and mod-manifest verifiers when routes or publication paths changed.
-10. Report exact commands, pass/fail status, blockers, and remaining work.
+10. Run `scripts/verify-fork-overlays.sh` whenever overlay ownership, a shared
+    path, or the baseline-to-current publication inventory changed.
+11. Report exact commands, pass/fail status, blockers, and remaining work.
 
 Do not report a test as passing unless it was executed in the current task.
 

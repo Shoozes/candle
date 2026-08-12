@@ -24,6 +24,47 @@ It does not provide a generic VLM abstraction. Lower-bit vision execution,
 video, true text batching, and WebGPU are future work rather than supported
 behavior.
 
+## Public hybrid loader
+
+`candle_vlm::lfm2_vl::load_lfm2_vl_hybrid` assembles quantized LFM2 GGUF text
+with either a split safetensors MMProj bundle or a direct llama.cpp-compatible
+MMProj GGUF. The caller supplies every path, device, dtype, and execution
+policy explicitly:
+
+```rust,no_run
+use candle::{DType, Device};
+use candle_vlm::lfm2_vl::{
+    load_lfm2_vl_hybrid, Lfm2VlHybridLoadOptions, Lfm2VlMmprojExecution,
+    Lfm2VlMmprojSource,
+};
+use std::path::Path;
+
+# fn load() -> candle::Result<()> {
+let device = Device::Cpu;
+let loaded = load_lfm2_vl_hybrid(Lfm2VlHybridLoadOptions {
+    text_gguf: Path::new("text.gguf"),
+    mmproj: Lfm2VlMmprojSource::GgufFile(Path::new("mmproj.gguf")),
+    tokenizer: Path::new("tokenizer.json"),
+    processor_config: Some(Path::new("processor_config.json")),
+    mmproj_execution: Lfm2VlMmprojExecution::Dense,
+    vision_dtype: DType::F32,
+    vision_device: &device,
+    text_device: &device,
+})?;
+
+for path in &loaded.consumed_files {
+    println!("{}", path.display());
+}
+# Ok(())
+# }
+```
+
+The returned bundle contains the paired model, processor, prompt contract, and
+the exact local file inventory consumed during construction. Applications
+remain responsible for hashing, retained handles, resource admission, and
+proof/report policy. The loader performs no discovery, download, or text-only
+fallback.
+
 ## Example
 
 Run the detailed example from the repository root:
@@ -37,4 +78,4 @@ for checkpoint preparation, native and GGUF/MMProj forms, device placement,
 bounded inference, JSON evidence, and local verification commands.
 
 ---
-AI-edited: 2026-08-11T23:12:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=added crate purpose, safety boundary, and supported-device contract
+AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=hybrid-loader-promotion | change=documented the public local-only hybrid loader and application ownership boundary

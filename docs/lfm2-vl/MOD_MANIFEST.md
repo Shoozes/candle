@@ -7,7 +7,7 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 - Model and compatibility baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Current publication baseline: Candle main at `6f74e7c390c717f8fd34f23ce02aceb058173370`, the exact `origin/main` tip integrated before this direct-main release.
 - Historical mod checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`; that branch is retained as evidence, not used as a second publication line.
-- Current `main` overlay: 142 paths, exactly 14 fork-origin modifications and 128 mod-owned additions. The 29 upstream paths added or changed between Candle 0.11.0 and the publication baseline are inherited fork state and are intentionally outside this overlay.
+- Current `main` LFM2-VL overlay: 150 paths, exactly 15 fork-origin modifications and 135 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL.
 - A **fork-origin modification** is a path that exists in the current publication baseline and is intentionally changed by this mod.
 - A **mod-owned addition** is a path absent from the current publication baseline and created for this project.
 - “Mod-owned” describes repository provenance, not third-party authorship. External source and license provenance remains authoritative in `SOURCES.md` and `LICENSE_NOTES.md`.
@@ -15,12 +15,13 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 
 ## Fork-Origin Files Intentionally Modified
 
-Exactly these fourteen baseline files contain mod changes:
+Exactly these fifteen baseline files contain LFM2-VL changes:
 
 | Path | LFM2-VL reason |
 | --- | --- |
 | `.github/workflows/ci_cuda.yaml` | Limit the inherited private AWS CUDA runner job to the upstream repository so fork pull requests skip instead of failing before checkout. |
 | `.gitignore` | Exclude local reference environments, caches, downloads, production models, and generated artifacts. |
+| `CHANGELOG.md` | Record the reusable public LFM2-VL hybrid loader; this shared path is registered in `docs/FORK_OVERLAYS.md`. |
 | `README.md` | Add the discoverable LFM2.5-VL example and support-boundary entry for this fork. |
 | `Cargo.toml` | Register the new `candle-vlm` workspace crate and its shared dependencies. |
 | `candle-core/src/quantized/gguf_file.rs` | Add bounded GGUF directory parsing and validation used by direct MMProj loading. |
@@ -98,6 +99,7 @@ No other file from the integrated Candle publication baseline is part of the mod
 - `candle-vlm/src/lib.rs`
 - `candle-vlm/src/image.rs`
 - `candle-vlm/src/lfm2_vl/config.rs`
+- `candle-vlm/src/lfm2_vl/loading.rs`
 - `candle-vlm/src/lfm2_vl/mod.rs`
 - `candle-vlm/src/lfm2_vl/processor.rs`
 - `candle-vlm/src/lfm2_vl/processor/types.rs`
@@ -162,6 +164,12 @@ No other file from the integrated Candle publication baseline is part of the mod
 - `tests/fixtures/lfm2_vl_mmproj_tiny/mmproj.safetensors`
 - `tests/fixtures/lfm2_vl_mmproj_tiny/processor_config.json`
 - `tests/fixtures/lfm2_vl_mmproj_tiny/source_model_config.json`
+- `tests/fixtures/lfm2_vl_loader_tiny/README.md`
+- `tests/fixtures/lfm2_vl_loader_tiny/manifest.json`
+- `tests/fixtures/lfm2_vl_loader_tiny/mmproj-dense.gguf`
+- `tests/fixtures/lfm2_vl_loader_tiny/mmproj-q8.gguf`
+- `tests/fixtures/lfm2_vl_loader_tiny/text.gguf`
+- `tests/fixtures/lfm2_vl_loader_tiny/tokenizer.json`
 
 ### Export, inspection, and reference tools
 
@@ -195,7 +203,11 @@ No other file from the integrated Candle publication baseline is part of the mod
 - `.venv/`, `artifacts/`, `downloads/`, `models/`, Hugging Face caches, or generated reference outputs.
 - Production model weights, authentication material, or ad hoc local logs.
 
-Publication must use an explicit path allowlist derived from this manifest, followed by `git diff --cached --name-status`, `git diff --cached --check`, and a staged secret/name audit. Broad staging commands are prohibited.
+Publication must use the union of registered overlay manifests, followed by
+`bash scripts/verify-fork-overlays.sh`, `git diff --cached --name-status`,
+`git diff --cached --check`, and a staged secret/name audit. Broad staging
+commands are prohibited. The LFM2-VL verifier remains independently runnable
+and does not absorb unfinished diffusion paths.
 
 ---
-AI-edited: 2026-08-12T10:45:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=fixture-portability | change=added canonical fixture checkout attributes to the publication inventory
+AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=hybrid-loader-promotion | change=added public loader and deterministic loader fixtures to the isolated LFM2-VL overlay

@@ -28,6 +28,10 @@ Post-snapshot maintenance makes hash-pinned fixture bytes portable across
 Windows Git newline settings. Its clean native `core.autocrlf=true` proof and
 direct-main release gate are green. Use live Git refs, not prose, to confirm
 whether a particular checkout has the maintenance commit.
+The current Round 1 integration promotes complete local hybrid assembly into
+`candle-vlm` and registers independent LFM2-VL and SnapFlash-derived fork
+overlays. The public loader returns exact consumed paths; application hashing,
+retained handles, resource leases, and proof records remain outside Candle.
 Native Windows is the product and release-proof platform; WSL2/Linux is a
 secondary portability replay. NR-5B official 450M native Windows CPU-F32
 component parity, P2 official-base GGUF same-artifact decoded-output
@@ -41,8 +45,11 @@ CUDA/distinct-device fixture, P4.3's initial official 450M CUDA parity, and
 P4.5's complete CPU/CPU F32, all-CUDA F32/BF16/F16, and both mixed F32 routes
 are green. P4.4 is closed as a synchronized end-to-end diagnostic; PERF-1 has
 a stable isolated generation baseline, and no speculative optimization is
-retained. There is no active MVP product gate; lower-bit work and the optional
-WSL replay remain deferred.
+retained. The exact coordinated next gate is EdgeSymbio's separate CLI-only
+450M CPU/F32 consumer proof on one immutable published Candle revision. The
+existing text-only Edge model must remain unchanged, and official inference
+must wait for the complete Edge-owned asset bundle. Lower-bit work and the
+optional WSL replay remain deferred.
 Explicit BF16 and F16 on a resolved CPU component are rejected before model
 load because the CPU matmul backend does not support those dtypes. Every future
 production run still requires a fresh snapshot/executable rehash, reviewed Job
@@ -68,6 +75,8 @@ After editing:
 5. Run the native Windows locked/offline gate when the slice reaches a phase or handoff boundary.
 6. Replay `scripts/lfm2-vl/verify-baseline.sh` in WSL2/Linux when practical.
 7. Update `STATUS.md`; update `DECISIONS.md` only for a material architecture or compatibility decision.
+8. Run both the affected overlay verifier and
+   `bash scripts/verify-fork-overlays.sh` when a publication path changes.
 
 Use native Windows PowerShell and the MSVC Rust toolchain for the primary gate. Keep builds CPU-only and memory-bounded until CPU parity is green:
 
@@ -127,7 +136,8 @@ for building or using the fork on Windows.
   tag mode runs only after remote `main` equals local `HEAD` and publishes one
   annotated `lfm2-vl-mvp-X.Y.Z` tag that peels to that exact commit.
 - Keep `.tools/.secrets/`, the ignored `Cargo.lock`, models, caches, downloads, artifacts, and local logs out of publication.
-- Stage only paths authorized by `MOD_MANIFEST.md`; never use broad staging.
+- Stage only paths authorized by the affected overlay manifest and the root
+  union verifier; never use broad staging.
 - Keep committed LFM2-VL fixture JSON and Markdown LF-stable and fixture
   safetensors `-text` through root `.gitattributes`. Hash exact checkout bytes;
   never normalize line endings in a loader to hide a checkout-identity defect.
@@ -147,7 +157,8 @@ prohibited.
 - `PARITY.md`: claim matrix and numerical boundaries.
 - `FAILURE_LOG.md`: recurring hazards and prevention rules.
 - `MOD_MANIFEST.md`: fork-versus-mod provenance and publication allowlist.
+- `docs/FORK_OVERLAYS.md`: cross-overlay ownership, ordering, and shared paths.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-12T11:16:23-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=fixture-portability-release | change=closed the fixture-portability release gate
+AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-1 | change=made the public loader and Edge consumer proof the current integration handoff

@@ -1397,5 +1397,38 @@ deferred to TODO C3; no network or toolchain install was substituted.
   inventory; guarded helper dry run and publication; exact remote-main
   equality; no model load.
 
+## 2026-08-12 — Three-repository Round 1 consumer boundary
+
+- What: Established independent Candle fork overlays and promoted complete
+  local LFM2-VL hybrid construction from the example into the public
+  `candle-vlm` library.
+- Why: EdgeSymbio must consume a stable framework API without copying example
+  code, while later SnapFlash-derived diffusion work must remain independently
+  reviewable and must not contaminate the immutable LFM2-VL release history.
+- When: Before EdgeSymbio dependency pinning or proof-only 450M integration and
+  before any shared SDXL LoRA promotion.
+- Where: `candle-vlm/src/lfm2_vl/loading.rs`, the LFM2-VL example adapter,
+  deterministic loader fixtures, `docs/FORK_OVERLAYS.md`, both overlay
+  manifests, the root union verifier, current-state docs, and
+  `summary_bank.json`.
+- How: Added explicit local-only source/options/result types; retained split,
+  direct dense, and native Q8 execution policy; returned exact consumed paths;
+  moved all unique hybrid assembly into the library; kept hashing, retained
+  handles, resource admission, proof JSON, discovery, and download policy in
+  applications. Registered shared overlay paths and made union completeness a
+  publication gate while preserving an independently runnable LFM2-VL
+  verifier.
+- Done when: The example owns no duplicate loader, all three hybrid forms load
+  through the public API, generated inputs are byte/hash pinned, LFM2-VL and
+  SnapFlash-derived paths are independently attributable, and the complete
+  local Candle gate remains green. These conditions are met.
+- Verification: Native Windows formatting; VLM 35/35; LFM2-VL example 32/32;
+  strict targeted and full-workspace Clippy with `-D warnings`; complete
+  locked/offline workspace tests and doc tests; LFM2-VL manifest 150/15/135;
+  root overlay union 153 paths/two overlays/five shared paths; summary-bank 23
+  groups; exact diff checks. The expanded workspace gate used the installed
+  Python 3.13 required by the unrelated ABI3 crate and performed no download,
+  model inference, llama.cpp execution, or concurrent large-model work.
+
 ---
-AI-edited: 2026-08-12T11:16:23-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=fixture-portability-release | change=archived M-1 verification and guarded direct-main publication
+AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-1 | change=archived the public hybrid loader and independent overlay release gate

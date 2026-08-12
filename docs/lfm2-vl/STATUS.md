@@ -6,90 +6,81 @@
   `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Upstream integration base: Candle main at
   `6f74e7c390c717f8fd34f23ce02aceb058173370`.
-- Integration and publication branch: `main` at
-  `https://github.com/Shoozes/candle.git`; no pull request is used.
-- Fixture-portability release parent:
-  `2a01aaf0e874c4d6a57ff3276cd24be7af0656e3`. The maintenance commit is the
-  next direct descendant on `main`; use live Git refs for its current local and
-  remote identity rather than inferring publication from prose.
+- Round 1 release parent: `6a7a9ceec6be038b0b4df3c6b06d32597e2762bd`.
+  The exact consumer revision is the clean published `Shoozes/candle:main`
+  descendant containing this loader promotion; use live Git refs rather than
+  copying a prose hash into a dependency manifest.
+- Integration and publication branch: `main`; owner-reviewed work lands
+  directly without a pull request.
 - Historical implementation checkpoint:
   `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on
   `feat/lfm2-vl-mmproj`.
 - Immutable first-MVP snapshot: annotated tag `lfm2-vl-mvp-0.1.0` peels to
-  `ff885586f6d44a3d9b9ac1724032cdf5f0155384`. Reviewed maintenance may
-  advance `main`; the snapshot tag must not be moved or reused.
-- Current maintenance overlay relative to the upstream integration base: 142
-  allowlisted paths, exactly 14 fork-origin modifications and 128 mod-owned
-  additions.
+  `ff885586f6d44a3d9b9ac1724032cdf5f0155384`. Do not move or reuse it for the
+  coordinated runtime.
+- Current LFM2-VL overlay: 150 paths, exactly 15 fork-origin modifications and
+  135 mod-owned additions. The repository-wide union is 153 paths across the
+  LFM2-VL overlay and the SnapFlash-derived boundary scaffold.
 
 ## Worktree Boundary
 
 - Native Windows/MSVC is the product and primary proof lane; WSL2/Linux is a
   secondary portability replay.
 - `C:\DevStuff\candle-mods` is a WSL-owned linked worktree attached to local
-  `main`. Use `NVIDIA-Workbench` WSL Git for status, staging, commits, tags,
-  and revision checks; do not attach `main` to another worktree.
+  `main`. Use `NVIDIA-Workbench` WSL Git for status, staging, commits, and
+  revision checks.
 - Owner-reviewed work lands directly on `main`. Broad staging, force-push,
   implicit merge/rebase, hosted-CI evidence, PR creation, and secret inspection
   remain prohibited.
+- `.tools/gitpush.ps1` is the only authorized publication path. It may publish
+  an already-reviewed fast-forward `main`; it must not stage or commit.
 
 ## Current Phase
 
-- Product phase: post-Phase 7 production stabilization; the defined first MVP
-  remains feature-complete and production-proven, not LTS.
-- Maintenance posture: hash-pinned deterministic fixture bytes are stable
-  across native Windows Git checkouts without weakening byte-exact loader or
-  manifest verification. M-1 is complete.
-- The repository-wide source audit found no production placeholder, unfinished
-  LFM2-VL branch, broken public export, or new async/run-condition defect that
-  warrants a source change. Test-only panics remain test assertions; the
-  documented legacy infallible config adapter remains paired with its checked
-  API.
-- `TODO.md` has no active implementation, parity, safety, performance,
-  environment, or maintenance release task.
+- Product phase: coordinated three-repository integration, Round 1 complete at
+  the local release gate.
+- The reusable hybrid constructor now lives at
+  `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid`. It accepts explicit local text,
+  tokenizer, processor, MMProj, dtype, device, and execution-policy inputs and
+  returns the paired model, processor, prompt, and exact consumed-file list.
+- The example is a thin CLI/reporting adapter. Candle performs no discovery,
+  download, hidden fallback, retained-handle admission, hashing, resource
+  leasing, or product-proof publication.
+- Independent LFM2-VL and SnapFlash-derived manifests plus a union verifier now
+  prevent one overlay from silently claiming another overlay's files or proof.
+- Round 2 is the exact next gate: EdgeSymbio pins one published Candle revision
+  and adds a separate proof-only 450M `Lfm2VlModel`. SnapFlash-Server remains on
+  its reviewed crates.io Candle graph until the later shared LoRA API exists.
 
 ## Last Green Verification
 
-### Current fixture-portability worktree
+### Round 1 public-loader release gate
 
-- A disposable native Windows Git 2.54 checkout at the reviewed parent with
-  `core.autocrlf=true` reproduced the defect exactly: canonical
-  `processor_config.json` changed from 524 LF bytes and SHA-256
-  `97b79ebfc8eae3a5bcbeb8f1494c1decdbade5d20d3204739143d17b460906f2`
-  to 553 CRLF bytes and SHA-256
-  `09150e818ebe443d2df9009b78c46ef5aaa4aed17ebc4b20cf55eefb8f01e53f`.
-- A fresh native Windows clone containing the maintenance fix and the same
-  `core.autocrlf=true` setting retained all 10 fixture JSON/Markdown files as
-  LF with zero carriage returns. All three safetensors files resolve
-  `text=unset`. The split bundle retained exact SHA-256 values
-  `b932d4e6c58224d6d97182b0aa969c701beafb0130e2f6031bba189cf9d04f39`,
-  `97b79ebfc8eae3a5bcbeb8f1494c1decdbade5d20d3204739143d17b460906f2`,
-  and `b6aef395937e6ce1dbc1fe110438b19db82e87c9351edc61fca7b27a72a287d3`.
-- The two exact split-MMProj identity/hybrid tests passed. The full native
-  Windows locked/offline workspace test gate passed, including transformer
-  59/59 and VLM 29/29. Strict workspace Clippy passed with `-D warnings`.
-- The final release audit repeated both exact regressions, exercised an
-  ephemeral unknown-extension probe and observed the required controlled
-  verifier failure, removed the probe, and passed the real inventory again.
-  The complete `cargo test --locked --offline -j 2 --workspace` gate and strict
-  workspace Clippy then exited zero. The first workspace attempt was blocked
-  only by managed-sandbox denial of the installed Python interpreter; the
-  identical approved-boundary rerun passed without a download or file change.
-- The broad gate selected the installed Python 3.13 interpreter explicitly for
-  the unrelated `candle-pyo3` ABI3 crate; no dependency installation or network
-  access was used. The prior statement that Python 3.13 was absent is stale.
-- The mod-manifest verifier now discovers every committed fixture text/binary
-  payload and enforces LF/no-CR or `-text` attributes. It passes at
-  142/14/128 with 10 text and three binary fixtures.
-- Current-root formatting, locked/offline checks for the four affected crates
-  and all three LFM2 examples, PowerShell 7 and Windows PowerShell 5.1 context
-  verification, all nine module-layout wrappers, 23 Markdown documents with 50
-  relative links, 11 JSON files, and 16 Python files pass. No production
-  TODO/FIXME/todo!/unimplemented! marker was found. Current
-  `summary_bank.json` SHA-256 is
-  `d91bf698d4a9561081197a619dc3bcde6d34268a1d20752e65aa7bcfb4906502`.
+- `cargo fmt --all -- --check`: passed.
+- `cargo test --locked --offline -j 2 -p candle-vlm`: passed, 35/35 unit tests
+  plus doc tests.
+- `cargo test --locked --offline -j 2 -p candle-examples --example lfm2-vl`:
+  passed, 32/32.
+- Strict targeted Clippy passed for `candle-vlm --all-targets` and the
+  `lfm2-vl` example with `-D warnings`.
+- `cargo test --locked --offline -j 2 --workspace`: passed on native Windows,
+  including core, NN, transformer 59/59, VLM 35/35, WASM, Python-binding build,
+  integration, and doc-test lanes.
+- `cargo clippy --locked --offline -j 2 --workspace --all-targets -- -D
+  warnings`: passed.
+- The workspace-wide commands selected the already-installed Python 3.13
+  interpreter because the unrelated `candle-pyo3` ABI3 feature rejects the
+  bundled Python 3.12 interpreter. No Python package installation or network
+  access occurred.
+- Public-loader fixtures prove split dense, direct dense GGUF, and direct Q8_0
+  GGUF construction. Their four generated inputs are size/hash pinned and
+  contain no production checkpoint bytes.
+- The LFM2-VL manifest verifier passes at 150/15/135 with 13 text and six
+  binary fixture files. The root overlay verifier passes at 153 paths, two
+  overlays, and five registered shared paths. The summary bank passes with 23
+  groups.
 - No production checkpoint, Python oracle, llama.cpp process, CUDA inference,
-  or concurrent large-model run was started.
+  dependency download, or concurrent large-model run was started.
 
 ### Retained production evidence
 
@@ -102,9 +93,6 @@
 - Official 1.6B native Windows CPU-F32 parity remains green at 51/51 tensors;
   comparison SHA-256 is
   `9a0b16256a222678f9dce1282660e49fc6d19103cc6dd6a53c824bb58a6412c0`.
-- The isolated all-CUDA F32 baseline remains 30 measurements with median
-  458.0633 ms and relative MAD 2.1454%. No candidate met the 10% retention
-  threshold, so no speculative optimization is retained.
 - Detailed production commands, thresholds, and evidence identities live in
   `PARITY.md` and `HISTORY.md`; they are not duplicated here.
 
@@ -116,6 +104,8 @@
 - Native safetensors, quantized GGUF text plus split dense MMProj, direct GGUF
   MMProj, CPU-F32 native Q8_0 execution, strict inventory/provenance checks,
   and controlled malformed-input errors.
+- Public local-only hybrid assembly with exact consumed-file inventory and
+  deterministic construction tests for every supported hybrid form.
 - Deterministic native/hybrid evidence, official 450M and 1.6B CPU parity,
   complete advertised 450M placement/dtype parity, and official GGUF
   same-artifact decoded-output agreement with pinned llama.cpp.
@@ -124,47 +114,57 @@
 
 ## Known Gaps and Conflicts
 
+- EdgeSymbio does not yet consume this fork or expose LFM2-VL. Its existing
+  `LfmModel` remains text-only and must stay unchanged.
+- EdgeSymbio currently lacks an admitted first-proof bundle containing an exact
+  compatible 450M text GGUF, direct F16 MMProj GGUF, standalone tokenizer,
+  processor configuration, and fixed image with revisions, sizes, hashes, and
+  license records. Presence of an untracked file is not proof eligibility.
+- SnapFlash-Server has the strongest three-component SDXL LoRA donor behavior,
+  but no generic LoRA transaction has been promoted to Candle yet. It must not
+  pin this fork merely for the boundary scaffold.
 - Lower-than-Q8 vision quantization, video, true text batching, generic VLM
   traits, converters, WebGPU/WASM, broad WSL replay, public signing, and LTS are
   deferred future scope, not hidden MVP promises.
-- Official config context is 128,000 while model cards advertise 32,768;
-  construction follows config and production policy remains unresolved.
-- Official MMProj headers omit tiling metadata; pinned processor configuration
-  or documented architecture defaults remain required.
 - The prior llama.cpp residency incident required a host restart. Exact cause
-  remains unproven; F-0008 containment is mandatory for every future run.
-- Gknome adoption remains fail-closed on mature-repository authority conflicts
-  and is outside the LFM2-VL product backlog.
+  remains unproven; `FAILURE_LOG.md` F-0008 containment is mandatory for every
+  future model run.
 
 ## Blockers
 
-- No implementation, fixture, test, memory, dependency, environment,
-  publication-policy, or remote-history blocker remains for the defined MVP or
-  this maintenance slice.
-- Owner authorization for direct-main commit and guarded publication was
-  provided. Live local/remote ref equality remains the only authority for
-  whether a particular checkout has received the maintenance commit.
+- Candle Round 1 has no implementation, test, dependency, memory, or local
+  verification blocker.
+- EdgeSymbio Round 2 can begin dependency pinning, tiny-fixture integration,
+  admission code, and controlled failure tests after Candle publication. The
+  official CPU/F32 proof is blocked until the exact Edge-owned asset bundle is
+  acquired and admitted; CUDA/F16 proof remains sequenced after CPU acceptance.
+- SnapFlash-Server is intentionally held before fork pinning and runtime work,
+  not blocked. Its next implementation starts only after Edge Round 2 passes
+  and Candle publishes the generic three-component LoRA transaction.
 - Hosted GitHub Actions state is intentionally not a blocker or verification
   dependency.
 
-## Active Files
+## Active Change Set
 
-- No source or documentation file remains under active implementation. The
-  completed fixture-portability release changed `.gitattributes`,
-  `scripts/lfm2-vl/verify-mod-manifest.sh`, the split fixture README,
-  `summary_bank.json`, and the seven current/decision/history/provenance docs.
-- Models, caches, downloads, generated proof clones/logs, Cargo output, and
+- Public loader: `candle-vlm/src/lfm2_vl/loading.rs`, its export, crate docs,
+  exact loader fixtures, and the thin example adapter.
+- Overlay boundary: `docs/FORK_OVERLAYS.md`, both overlay manifests, the root
+  union verifier, `AGENTS.md`, `CHANGELOG.md`, and `summary_bank.json`.
+- Current-state records: this file, `TODO.md`, `HISTORY.md`, `DECISIONS.md`,
+  and `START_HERE.md`.
+- Models, caches, downloads, generated proof logs, Cargo output, and
   `.tools/.secrets/` remain ignored or external.
 
 ## Exact Next Task
 
-If live `origin/main` differs from the clean local `main`, stop and determine
-whether this checkout is merely behind or has unreviewed divergence; do not
-merge or overwrite automatically. Otherwise no release task remains. Any
-deferred feature, new backend, LTS effort, or further maintenance must begin
-with a new focused acceptance contract. Do not move
-`lfm2-vl-mvp-0.1.0`; a new maintenance tag requires a separate explicit
-request.
+After guarded publication proves local `main == origin/main`, pass the exact
+Candle commit to EdgeSymbio. In EdgeSymbio, replace every direct Candle package
+with the same immutable Git `rev`, add `candle-vlm`, prove a single Candle
+source with locked/offline metadata, and implement the separate CLI-only
+CPU/F32 450M LFM2-VL proof lane described in `TODO.md`. Do not begin Candle
+LoRA promotion, SnapFlash dependency migration, a public Edge route, CUDA
+inference, or any large-model run before that CPU lane's prerequisites and
+admission checks are green.
 
 ---
-AI-edited: 2026-08-12T11:16:23-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=fixture-portability-release | change=closed the audited fixture-portability maintenance gate
+AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-1 | change=recorded public loader, overlay boundary, verification, consumer blocker, and exact Edge handoff

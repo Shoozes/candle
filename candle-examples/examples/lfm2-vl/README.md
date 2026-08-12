@@ -46,6 +46,11 @@ cargo run --locked --offline -p candle-examples --example lfm2-vl --release -- \
 
 Without `--prompt`, all three forms validate, load, and report the resolved model/processor/device policy without generating tokens.
 
+The two hybrid forms delegate construction to the public, local-only
+`candle_vlm::lfm2_vl::load_lfm2_vl_hybrid` API. The example owns only CLI
+argument/device selection and inference reporting; it does not contain a
+second model-loading implementation.
+
 ## Inference
 
 Each `--image` requires exactly one literal `<image>` sentinel in the prompt:
@@ -108,4 +113,4 @@ are unsupported/deferred rather than implicit release promises.
 For production parity, follow `docs/lfm2-vl/START_HERE.md`: record a host/GPU/PID census, run the 450M CPU-F32 gate first, serialize large-model work, and verify cleanup before another run. Never invoke a llama.cpp oracle directly; use the bounded owner described in `docs/lfm2-vl/FAILURE_LOG.md` F-0008.
 
 ---
-AI-edited: 2026-08-12T00:15:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=repo-integrity | change=clarified actual cached-decode and positive-duration benchmark gates
+AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=hybrid-loader-promotion | change=made the example boundary explicit after public loader promotion

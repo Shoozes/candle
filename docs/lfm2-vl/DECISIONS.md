@@ -1000,5 +1000,61 @@ Clippy passed. Any new hashed fixture directory or text extension must extend
 the attributes and verifier together. This decision adds no production
 dependency and changes no runtime input format.
 
+## D-0051: Make `candle-vlm` the Hybrid LFM2-VL Assembly Owner
+
+Status: Accepted.
+
+Decision:
+Promote explicit local hybrid assembly from the LFM2-VL example into
+`candle_vlm::lfm2_vl::load_lfm2_vl_hybrid`. The public API accepts the text
+GGUF, tokenizer, optional processor configuration, split or GGUF MMProj source,
+execution policy, dtype, and component devices. It returns the paired model,
+processor, prompt contract, and exact local paths consumed. The example remains
+a thin argument, device-policy, inference, and report adapter.
+
+Why:
+The model, processor, and prompt types were already reusable, but applications
+would otherwise need to copy the only complete hybrid construction sequence
+from `candle-examples`. Copying would duplicate pairing, image-token,
+processor, and Q8 policy checks precisely where EdgeSymbio needs one stable
+framework boundary. A path-explicit constructor preserves Candle's local-first
+behavior without importing application policy.
+
+Consequences:
+The library performs no discovery, network access, download, fallback, hash
+admission, retained-handle ownership, resource leasing, or proof publication.
+Applications must bind the returned consumed-file list to their own admission
+and evidence contracts. Deterministic tests construct split dense, direct dense
+GGUF, and direct native-Q8 GGUF runtimes through the public API; invalid Q8
+policy fails before path access. The change adds only a test-time SHA-256
+dependency for fixture identity and leaves native and text-only paths intact.
+
+## D-0052: Track Independent Fork Overlays and Verify Their Union
+
+Status: Accepted.
+
+Decision:
+Keep LFM2-VL/MMProj and SnapFlash-derived diffusion work in separate overlay
+manifests, with `docs/FORK_OVERLAYS.md` as the shared-path registry and
+`scripts/verify-fork-overlays.sh` as the repository-wide union-completeness
+gate. Permit duplicate manifest ownership only for an explicitly registered
+shared path. Keep each overlay-specific verifier independently runnable.
+
+Why:
+The fork's first LFM2-VL snapshot is immutable, while future generic diffusion
+primitives have a different donor, proof, and consumer sequence. One growing
+manifest would let unfinished application-derived work appear inside an
+unrelated model release and would make upstream reconciliation ambiguous.
+
+Consequences:
+Every baseline-to-current path must belong to at least one overlay, prohibited
+local/runtime paths fail closed, and overlapping paths require declared shared
+ownership plus both focused gates. Candle may absorb generic tensor, loader,
+preprocessing, scheduler, or mutation primitives, but it must not depend on or
+expose EdgeSymbio/SnapFlash request schemas, application names, filesystem
+policy, queues, resource brokers, or proof records. A future composite tag is
+eligible only after both consumers pin the same Candle revision and pass their
+local gates; `lfm2-vl-mvp-0.1.0` remains unchanged.
+
 ---
-AI-edited: 2026-08-12T11:16:23-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=fixture-portability-release | change=accepted canonical checkout bytes as the durable mainline contract
+AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-1 | change=accepted public hybrid assembly ownership and independent overlay union verification
