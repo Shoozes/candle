@@ -393,8 +393,20 @@
         "docs/FORK_OVERLAYS.md",
         "docs/snapflash/MOD_MANIFEST.md",
         "scripts/lfm2-vl/verify-mod-manifest.sh",
+        "scripts/snapflash/verify-mod-manifest.sh",
         "scripts/verify-fork-overlays.sh",
         "summary_bank.json"
+      ]
+    },
+    "feature__sdxl_lora_transaction": {
+      "description": "Generic three-component SDXL LoRA parsing, target resolution, canonical tensor evidence, immutable-base replacement, exact clear, and cross-component rollback.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/stable_diffusion/lora.rs",
+        "candle-transformers/src/models/stable_diffusion/mutable.rs",
+        "candle-transformers/src/models/stable_diffusion/mod.rs",
+        "docs/snapflash/MOD_MANIFEST.md",
+        "scripts/snapflash/verify-mod-manifest.sh"
       ]
     },
     "workflow__context_integrity": {

@@ -10,7 +10,7 @@ integration plan.
 | Overlay | Manifest | Current boundary |
 | --- | --- | --- |
 | LFM2-VL/MMProj | `docs/lfm2-vl/MOD_MANIFEST.md` | Proven model, loader, processor, fixture, and verification work |
-| SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Boundary scaffolding only; no diffusion primitive is promoted yet |
+| SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic three-component SDXL LoRA parsing, evidence, and rollback-capable mutable replacement |
 
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each
@@ -36,18 +36,19 @@ Candle implementation -> EdgeSymbio integration -> optional SnapFlash use
 
 ## Coordinated progress
 
-Reviewed parents for this integration round are Candle
-`6a7a9ceec6be038b0b4df3c6b06d32597e2762bd`, EdgeSymbio
-`826e36eb2f4934e6fb4fe66951f84f2e40bf49c3`, and SnapFlash-Server
-`de68a751a055d55caf9daecf19e3733719cecbf0`. Consumer manifests must use the
-new clean published Candle revision, not the Candle parent recorded here.
+The reusable loader parent is Candle
+`c0fb3a9fe098e50d07ec1b749c77015d7bd8d9a5`. EdgeSymbio Round 2 is published
+at `d535a4f56f5a8e06407cb4b8f5be0df7f3121327`; it pins that Candle revision and
+passes the bounded 450M CPU/F32 token-level proof. The current SnapFlash-Server
+behavior donor remains `de68a751a055d55caf9daecf19e3733719cecbf0` until it
+consumes the LoRA promotion commit produced by order 3.
 
 | Order | Repository | Focused result | State / release condition |
 | --- | --- | --- | --- |
-| 1 | Candle | Overlay registry plus public LFM2-VL hybrid loader | Locally green; complete when guarded publication proves remote-main equality |
-| 2 | EdgeSymbio | Exact-revision pin plus separate proof-only 450M CPU/F32 LFM2-VL lane | Next; code may start after order 1, official proof waits for the admitted asset bundle |
-| 3 | Candle | Generic three-component SDXL LoRA transaction | Held until order 2 is green; done when transaction, replacement, exact clear, and injected rollback tests pass |
-| 4 | SnapFlash-Server | Reconsume Candle LoRA and delete duplicate tensor/transaction code | Held until order 3 is published; done when A -> B -> base and live regression proof remain green |
+| 1 | Candle | Overlay registry plus public LFM2-VL hybrid loader | Complete and published at `c0fb3a9fe098e50d07ec1b749c77015d7bd8d9a5` |
+| 2 | EdgeSymbio | Exact-revision pin plus separate proof-only 450M CPU/F32 LFM2-VL lane | Complete and published at `d535a4f56f5a8e06407cb4b8f5be0df7f3121327` |
+| 3 | Candle | Generic three-component SDXL LoRA transaction | Current candidate; complete when local gates and guarded remote-main equality pass |
+| 4 | SnapFlash-Server | Reconsume Candle LoRA and delete duplicate tensor/transaction code | Exact next consumer after order 3 publication; done when A -> B -> base and live regression proof remain green |
 | 5 | EdgeSymbio | Reconsume Candle LoRA and add both SDXL text encoders | Held until order 4; done when both consumers report the same targets/delta hashes on one Candle revision |
 | 6 | SnapFlash-Server | Adopt typed immutable runtime context, retained-file checks, and completion-last publication | Held until shared LoRA migration; done when direct, queued, and inpaint paths share the hardened boundary |
 | 7 | Candle | Evaluate ControlNet hooks, then inpainting math | Later proposal only; no implementation starts without differential fixtures and a focused acceptance contract |
@@ -94,4 +95,4 @@ product policy remain outside the framework API.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-1 | change=added reviewed baselines, ordered progress, and cross-repository release conditions
+AI-edited: 2026-08-12T16:05:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-3 | change=closed Edge acceptance and defined the rollback-capable Candle LoRA promotion gate

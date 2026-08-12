@@ -28,9 +28,15 @@ Post-snapshot maintenance makes hash-pinned fixture bytes portable across
 Windows Git newline settings. Its clean native `core.autocrlf=true` proof and
 direct-main release gate are green. Use live Git refs, not prose, to confirm
 whether a particular checkout has the maintenance commit.
-The current Round 1 integration promotes complete local hybrid assembly into
-`candle-vlm` and registers independent LFM2-VL and SnapFlash-derived fork
-overlays. The public loader returns exact consumed paths; application hashing,
+Round 1 is published at `c0fb3a9fe098e50d07ec1b749c77015d7bd8d9a5` and
+promotes complete local hybrid assembly into `candle-vlm`. Round 2 is published
+in EdgeSymbio at `d535a4f56f5a8e06407cb4b8f5be0df7f3121327` with its
+separate CLI-only 450M CPU/F32 proof. Round 3 is the current Candle gate: a
+generic three-component SDXL LoRA parser, evidence contract, and rollback-
+capable mutable transaction for the UNet and both text encoders. The exact
+next consumer after Round 3 publication is SnapFlash-Server; see `STATUS.md`
+and `TODO.md` rather than reconstructing the handoff from completed history.
+The public LFM loader returns exact consumed paths; application hashing,
 retained handles, resource leases, and proof records remain outside Candle.
 Native Windows is the product and release-proof platform; WSL2/Linux is a
 secondary portability replay. NR-5B official 450M native Windows CPU-F32
@@ -45,11 +51,12 @@ CUDA/distinct-device fixture, P4.3's initial official 450M CUDA parity, and
 P4.5's complete CPU/CPU F32, all-CUDA F32/BF16/F16, and both mixed F32 routes
 are green. P4.4 is closed as a synchronized end-to-end diagnostic; PERF-1 has
 a stable isolated generation baseline, and no speculative optimization is
-retained. The exact coordinated next gate is EdgeSymbio's separate CLI-only
-450M CPU/F32 consumer proof on one immutable published Candle revision. The
-existing text-only Edge model must remain unchanged, and official inference
-must wait for the complete Edge-owned asset bundle. Lower-bit work and the
-optional WSL replay remain deferred.
+retained. The Edge proof matched exact generated IDs, decoded text,
+preprocessing, image span, stop reason, and cache-reset replay. Its cross-linked
+executable's prefill hash differed from the standalone Candle executable with
+no identified source, dependency, or feature drift; this is retained as a
+non-bitwise observation, not a fabricated equality or an active Round 3
+blocker. Lower-bit work and the optional WSL replay remain deferred.
 Explicit BF16 and F16 on a resolved CPU component are rejected before model
 load because the CPU matmul backend does not support those dtypes. Every future
 production run still requires a fresh snapshot/executable rehash, reviewed Job
@@ -161,4 +168,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-1 | change=made the public loader and Edge consumer proof the current integration handoff
+AI-edited: 2026-08-12T16:04:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-3 | change=advanced the entry point through Edge acceptance to the Candle LoRA publication gate

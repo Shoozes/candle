@@ -1430,5 +1430,81 @@ deferred to TODO C3; no network or toolchain install was substituted.
   Python 3.13 required by the unrelated ABI3 crate and performed no download,
   model inference, llama.cpp execution, or concurrent large-model work.
 
+## 2026-08-12 — EdgeSymbio Round 2 CPU/F32 consumer acceptance
+
+- What: EdgeSymbio pinned all Candle packages to Round 1 commit
+  `c0fb3a9fe098e50d07ec1b749c77015d7bd8d9a5`, added an isolated CLI-only
+  LFM2-VL 450M adapter, admitted five exact official/owner fixture files, and
+  published the completed consumer at
+  `d535a4f56f5a8e06407cb4b8f5be0df7f3121327`.
+- Why: A product consumer had to prove the public hybrid loader together with
+  retained-file identity, resource leasing, cancellation, evidence, exact
+  cache reset, and no hidden product/API exposure.
+- When: After Candle Round 1 and before shared SDXL LoRA promotion, CUDA,
+  public chat attachments, RAG captioning, or SnapFlash integration.
+- Where: EdgeSymbio's backend LFM2-VL adapter and runtime proof, explicit CLI
+  registry, exact proof manifest, dependency/lock guards, state docs, pitfall
+  ledger, review, and summary bank.
+- How: Restricted the proof to CPU/F32, one 256x256 PNG, the official rendered
+  prompt, and three generated tokens; ran it inside the 8 GiB/300-second Candle
+  Windows Job Object; compared exact token/text/image/span/stop behavior and
+  two generations around `clear_cache()`; retained the reference and
+  Edge-observed prefill hashes as distinct evidence rather than treating
+  independently linked binaries as a bitwise-logit acceptance contract.
+- Done when: Exact IDs `[1098, 4646, 5251]`, text `The image features`, one
+  whole crop, 64 projected tokens, span `[5,69)`, max-token stop, and exact
+  in-process reset replay pass; every PID and lease is released; normal
+  text-only/API/Tauri/release surfaces remain unchanged; local and remote main
+  are equal. These conditions are met.
+- Verification: Corrected release proof exited in 8.510 seconds with 1.111 GiB
+  peak Job memory and PID cleanup. Edge's observed prefill hash
+  `460fc9d4e2be1ad2687d066faf935455f96124d014f146c753bdfd0e3a803610`
+  differed from Candle's reference
+  `f84844259d6001d3701df6e3a9602fb9cbc2e6db03e3c27cefab81ca7daec2d7`;
+  no source/dependency/feature drift was found, so the numerical cause remains
+  unproven and the mismatch is recorded without a bitwise claim. The complete
+  local gate passed backend 805, API 208, CLI 115/115, desktop 22, fetch 5,
+  Playwright 16, Python 111, and context checks twice. No third model run was
+  performed.
+
+## 2026-08-12 — Candle Round 3 three-component SDXL LoRA transaction
+
+- What: Added generic public LoRA parsing, component/target evidence, and one
+  rollback-capable mutable transaction across SDXL UNet, text encoder 1, and
+  text encoder 2.
+- Why: SnapFlash-Server and EdgeSymbio duplicated pair parsing, delta math,
+  immutable-base replacement, and rollback. Candle is the reusable owner, but
+  application naming, files, licensing, reports, and orchestration must remain
+  in the consumers.
+- When: After Edge CPU/F32 acceptance and before either consumer's LoRA
+  dependency migration or any ControlNet/inpainting promotion.
+- Where: `stable_diffusion/lora.rs`, `stable_diffusion/mutable.rs`, their module
+  export, the SnapFlash-derived manifest/verifier, overlay registry, decision,
+  changelog, current state/backlog, and focused summary-bank route.
+- How: Parse every safetensor name into an explicit component and paired
+  up/down/alpha record; inject target resolution; validate shapes, devices,
+  dtypes, finite values, rank, alpha, strength, target uniqueness, and effect;
+  retain independent bases; construct revision-bound plans from base; snapshot
+  and revalidate all live targets; apply all writes; roll back in reverse on
+  failure; reject revision exhaustion before mutation; require the application
+  to retain its exclusive model lease; hash shape plus canonical F32 values
+  for base/delta/merged evidence.
+- Done when: UNet-only, both text-only, and mixed adapters pass; A -> B is from
+  base; clear is exact; failures in components 2 and 3 restore all prior
+  writes; malformed, zero, unsupported, duplicate/unmatched, non-finite, and
+  stale inputs and revision exhaustion fail closed; BF16 1x1 and evidence
+  hashes pass; all local and overlay gates pass. These implementation
+  conditions are met.
+- Verification: Focused Stable Diffusion 12/12; complete transformer 71/71
+  plus 5 generation and 8 NMS tests; strict all-target transformer Clippy;
+  independent SnapFlash-derived manifest 8/2/6; root overlay union 157 paths,
+  two overlays, five registered shared paths; summary bank 24 groups with a
+  72.2 KiB focused LoRA route. The native workspace gate passed with only the
+  pre-existing live-HTTP dataset test explicitly excluded; its crate check
+  passed, its exact socket denial is F-0053, and strict full-workspace Clippy
+  remained green. The blocked probe transferred no network data; no model,
+  CUDA workload, Python oracle, llama.cpp process, or production checkpoint was
+  loaded.
+
 ---
-AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-1 | change=archived the public hybrid loader and independent overlay release gate
+AI-edited: 2026-08-12T16:05:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-3 | change=archived Edge acceptance, the audited LoRA implementation, and its local workspace gate

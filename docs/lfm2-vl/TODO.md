@@ -4,128 +4,126 @@ Only incomplete work belongs here. Completed Candle implementation and proof
 belong in `HISTORY.md`; recurring hazards belong in `FAILURE_LOG.md`. All
 required verification is local. Do not invoke, inspect, or depend on hosted CI.
 
-## INT-2 — EdgeSymbio proof-only 450M consumer
+## INT-4 — SnapFlash-Server reconsumes Candle's LoRA transaction
 
 ### What
 
-Pin EdgeSymbio to the exact published Candle Round 1 revision and add a
-separate, CLI-only `Lfm2VlModel` for one-image LFM2.5-VL proof. Preserve the
-existing text-only `LfmModel` unchanged.
+Pin SnapFlash-Server to the exact Candle Round 3 publication revision and
+replace its local LoRA pair parsing, tensor merge, immutable-base replacement,
+and three-component rollback internals with Candle's public Stable Diffusion
+LoRA modules.
 
 ### Why
 
-Candle now owns complete local hybrid construction, but only a product consumer
-can prove retained-file admission, resource leasing, cancellation, evidence
-publication, and mutation detection across a real application boundary.
+SnapFlash-Server is the complete behavior donor and therefore the strongest
+first regression witness. Reconsumption proves that the framework boundary is
+usable without copying application paths, licenses, catalogs, JSON reports, or
+model-family key policy into Candle.
 
 ### When
 
-Start after guarded publication proves the clean Candle `main` revision equals
-`origin/main`. Finish the CPU/CPU F32 lane before Q8, CUDA, public API, UI, RAG,
-captioning, or SnapFlash integration.
+Start only after guarded Candle publication proves clean local and remote
+`main` equality for the LoRA promotion commit. Complete SnapFlash-Server before
+EdgeSymbio's UNet-only implementation migrates or any ControlNet/inpainting
+promotion begins.
 
 ### Where
 
-- Edge dependency and lock manifests under `source/backend/`.
-- New `source/backend/src/lfm2_vl.rs` rather than adding multimodal state to
-  the text-only model.
-- `source/backend/src/models.rs`, proof dispatch, resource admission,
-  retained-asset handling, and Edge-owned runtime-proof modules.
-- Edge current-state, verification, and summary-bank documents.
+- SnapFlash-Server Candle dependency entries and `Cargo.lock` under
+  `source/src-tauri/`.
+- `source/src-tauri/src/engine/loader/lora.rs` for its application-owned
+  inspection, filename, mapping, and report adapter.
+- `source/src-tauri/src/engine/loader/head_swap.rs` for replacement by
+  `VarMapSwapTransaction`.
+- `source/src-tauri/src/engine/loader/sdxl.rs` for initialization and swap
+  wiring across UNet and both text encoders.
+- SnapFlash-Server integrity tests, live proof scripts, app-state, TODO,
+  history, review, and focused summary-bank route.
 
 ### How
 
-1. Dependency identity
-   - Replace direct crates.io `candle-core`, `candle-nn`, and
-     `candle-transformers` entries with one immutable Git `rev`.
-   - Add `candle-vlm` at that same `rev`; keep feature selection consumer-owned.
-   - Refresh both lockfiles through the repository's explicit dependency-update
-     workflow, then return to locked/offline operation.
-   - Add a metadata gate that rejects any crates.io Candle package, more than
-     one Candle source, or differing Candle Git revisions.
-2. Asset admission
-   - Define one Edge-owned `Lfm2VlAssetSet` containing the exact compatible
-     450M text GGUF, direct F16 MMProj GGUF, tokenizer, processor config, and
-     fixed PNG/JPEG proof image.
-   - Record repository revisions, filenames, byte sizes, SHA-256 values, and
-     license/source policy before any production proof.
-   - Open each file through expected-size/hash admission and retain the verified
-     handles or equivalent identity guard through report emission.
-   - Fail explicitly for a missing, changed, mismatched, or unapproved member;
-     never discover or download an alternative.
-3. Runtime boundary
-   - Create a dedicated model wrapper around Candle's returned model,
-     processor, prompt, and consumed-file inventory plus Edge's retained
-     handles, resource lease, bundle identity, and cancellation state.
-   - Admit one image, one prompt, PNG/JPEG only, at most 32 generated tokens,
-     CPU/CPU F32, and exact `<image>` handling.
-   - Reserve the combined text, vision, projector, processor, and decode budget
-     before construction; release it on every success and failure path.
-   - Reject any attempt to route this proof target through the normal Tauri or
-     public product surface.
-4. Proof and evidence
-   - Add `model-proof lfm2-vl --json` as an explicit-only target.
-   - Record Candle revision, every asset hash, source image identity and
-     dimensions, crop/projected-token counts, image-token spans, component
-     devices/dtypes, generated token IDs, stop reason, and cache-clear replay.
-   - Require at least one generated token before `RealOutput`.
-   - Compare the fixed CPU fixture against Candle's standalone example and
-     require exact generated token IDs.
-5. Failure and regression coverage
-   - Prove missing MMProj/tokenizer/processor/image failures, text/MMProj
-     mismatch, post-admission mutation detection, prompt/image-count mismatch,
-     cancellation, resource-release cleanup, and unchanged text-only LFM2
-     behavior.
+1. Pin one framework graph.
+   - Set `candle-core`, `candle-nn`, and `candle-transformers` to the same exact
+     Git revision produced by Round 3.
+   - Refresh the lockfile only through the repo's explicit dependency workflow.
+   - Add or update a locked/offline metadata guard rejecting crates.io Candle,
+     mixed revisions, or duplicate Candle graphs.
+2. Replace only shared internals.
+   - Feed loaded safetensor tensors to `parse_sdxl_lora_pairs` and
+     `VarMapSwapTransaction`.
+   - Wrap the existing direct/Kohya mapping in `SdxlLoraTargetResolver`.
+   - Hold SnapFlash-Server's exclusive generation/model lease across plan
+     preparation and apply; Candle does not serialize concurrent inference.
+   - Keep safe adapter-name/path handling, license and catalog policy,
+     inspection JSON, Tauri/API types, queues, caches, and resource policy in
+     SnapFlash-Server.
+   - Delete superseded local pair validation, delta math, base-copy, and
+     rollback code only after parity passes.
+3. Prove deterministic parity.
+   - Use the same model tensors, adapter bytes, strength, and target resolver
+     before and after migration.
+   - Compare per-component target inventory and the canonical Candle base,
+     effective-delta, and merged hashes.
+   - Prove base -> adapter A -> adapter B -> exact base with no temporary
+     merged model file.
+   - Re-run injected component-2/component-3 rollback and invalid later-
+     component tests through the public Candle API.
+4. Preserve product behavior.
+   - Keep direct, queued, img2img, inpaint, and current ControlNet behavior
+     unchanged.
+   - Run one bounded live same-seed regression only after tensor-level parity
+     and a quiet-host memory preflight are green.
 
 ### Current blocker
 
-EdgeSymbio has no admitted first-proof bundle yet. Its existing local 450M Q4
-text GGUF is only a presence observation and is not a confirmed compatible
-official pairing. The F16 MMProj, standalone tokenizer, processor config, and
-fixed image are absent from its tracked manifest. Code and tiny-fixture work may
-proceed after the Candle revision is published; official inference must wait
-for explicit asset acquisition/admission authority and a quiet-host preflight.
+There is no known Candle API, test, dependency, or memory blocker. The only
+sequencing gate is publication of the exact Round 3 Candle revision; do not pin
+SnapFlash-Server to an uncommitted worktree or moving branch.
 
 ### Done when
 
-- Both Edge lockfiles resolve one exact Git Candle revision with no crates.io or
+- SnapFlash-Server resolves exactly one Candle Git revision and no crates.io or
   duplicate Candle graph.
-- The separate CPU/F32 proof target loads the complete admitted bundle through
-  the public Candle API and matches Candle's generated token IDs for the fixed
-  image/prompt.
-- Mutation, missing-member, malformed-input, cancellation, and resource-release
-  tests fail safely and leave no resident model process or lease.
-- Existing text-only LFM2 behavior and normal no-download/no-GPU verification
-  remain unchanged.
-- Edge current-state docs identify the proof-only boundary and exact next gate.
+- Existing three-component LoRA tests call Candle rather than local tensor or
+  transaction internals.
+- The same adapter/model pair produces identical component targets and
+  canonical base/delta/merged hashes.
+- Base -> A -> B -> base and injected rollback proofs are green.
+- Local duplicate LoRA math/transaction code is removed without changing
+  filename, mapping, licensing, report, inpaint, ControlNet, queue, or API
+  policy.
+- Focused and full local verification pass, the worktree is clean, and guarded
+  direct-main publication proves remote equality.
 
 ### Verification
 
-- Edge's narrow unit/integration tests for dependency identity, admission,
-  resource cleanup, proof dispatch, and LFM2-VL failure paths.
-- Locked/offline CPU checks and full repository integrity gate.
-- `cargo metadata --locked --offline` and `cargo tree -d` audits proving one
-  Candle source/revision.
-- Bounded CPU/F32 parity through the Edge process owner, followed by PID,
-  memory, lease, and consumed-file revalidation.
-- Exact staged diff, secret/path audit, and local direct-main publication gate
-  only after every preceding condition passes.
+- Focused SnapFlash-Server LoRA parser, inspector, transaction, and SDXL loader
+  tests.
+- Locked/offline Cargo metadata/source and duplicate-graph guards.
+- Deterministic target/hash comparison plus A -> B -> base and component-2/3
+  rollback tests.
+- Existing inpaint, ControlNet, queue, direct-generation, API, and integrity
+  gates.
+- One owner-scoped bounded live regression only if the repository's admitted
+  assets and memory policy permit it.
+- Exact staged-file and secret/path audit followed by the guarded direct-main
+  helper; no PR and no hosted CI.
 
 ## Sequencing hold
 
-The next cross-repository slice is Candle's generic three-component SDXL LoRA
-transaction. It does not become active here until INT-2 is green. SnapFlash
-fork pinning, SnapFlash LoRA migration, Edge LoRA migration, SnapFlash runtime
-hardening, ControlNet hooks, inpainting promotion, and optional captioning
-remain ordered follow-ons in `docs/FORK_OVERLAYS.md`; none may bypass INT-2.
+After INT-4, EdgeSymbio consumes the same Candle revision, replaces its
+UNet-only generic LoRA internals, and retains mutable maps for both SDXL text
+encoders. SnapFlash runtime-context hardening, ControlNet hooks, inpainting
+promotion, and optional LFM2-VL captioning remain later ordered tasks in
+`docs/FORK_OVERLAYS.md`.
 
 ## Deferred outside this product backlog
 
 Gknome adoption, lower-bit vision quantization, generic VLM traits, video,
 true text batching, converters, WebGPU, broad WSL replay, public signing, and
 LTS remain separate repository or future-product work. They are not release
-gates for INT-2 and must not be introduced without a scoped proposal and
+gates for INT-4 and must not be introduced without a scoped proposal and
 acceptance contract.
 
 ---
-AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-1 | change=opened the exact Edge proof-only consumer gate with prerequisites and completion conditions
+AI-edited: 2026-08-12T16:04:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-3 | change=opened exact SnapFlash reconsumption with the consumer-owned execution lease

@@ -9,6 +9,8 @@ This documents the main changes to the `candle` crate.
   a repository-wide ownership verifier.
 - Added a public, local-only LFM2-VL hybrid loader in `candle-vlm` for
   quantized GGUF text with split, direct dense, or native Q8 MMProj inputs.
+- Added validated three-component SDXL LoRA parsing, canonical tensor evidence,
+  and rollback-capable UNet/text-encoder replacement with exact clear.
 
 ### Modified
 

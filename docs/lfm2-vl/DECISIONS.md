@@ -1056,5 +1056,50 @@ policy, queues, resource brokers, or proof records. A future composite tag is
 eligible only after both consumers pin the same Candle revision and pass their
 local gates; `lfm2-vl-mvp-0.1.0` remains unchanged.
 
+## D-0053: Keep SDXL LoRA Tensor Semantics in Candle and Name Policy in Consumers
+
+Status: Accepted.
+
+Decision:
+Expose validated SDXL LoRA pair parsing and a revision-bound
+`VarMapSwapTransaction` from Candle. The transaction always owns three ordered
+components (UNet, text encoder 1, text encoder 2), retains independent base
+copies lazily, prepares and revalidates every target before the first write,
+computes replacement adapters from base, restores exact base values, and rolls
+back in reverse order after a later write failure. Require consumers to supply
+`SdxlLoraTargetResolver`; do not put Kohya conversion, filenames, paths,
+catalogs, license policy, or report schemas in Candle.
+
+Require the consumer to hold its exclusive model execution/mutation lease
+through plan preparation and application. Candle provides all-or-rollback
+mutation inside that boundary, but cannot serialize inference or direct VarMap
+mutation performed elsewhere. Check revision advancement before the first
+write so exhausted bookkeeping cannot leave an applied-but-uncommitted state.
+
+Define cross-consumer target evidence as SHA-256 over a fixed domain prefix,
+tensor rank/shape, and finite canonical F32 values in little-endian order.
+Record base, effective-delta, and merged hashes per applied target. Reject
+unknown tensor names, incomplete or duplicate pairs, invalid alpha/rank,
+unsupported shapes/dtypes, duplicate or unmatched targets, non-finite
+strength, all-zero effective adapters, and stale plans.
+
+Why:
+SnapFlash-Server already proves three-component behavior while EdgeSymbio
+independently proves immutable-base replacement and rollback, but duplicating
+their tensor math would let the two applications drift. Key naming and product
+policy genuinely differ and would make a framework API application-specific.
+An opaque prepared plan plus exact live-snapshot check closes the gap between
+validation and mutation without inventing a generic VLM/diffusion runtime.
+
+Consequences:
+SnapFlash-Server is the first consumer migration and EdgeSymbio follows on the
+same exact Candle revision. Both can compare stable target/delta evidence while
+retaining their own mapping and proof JSON. The canonical hash intentionally
+normalizes supported floating dtypes to F32 and includes shape; it is an LoRA
+comparison contract, not a general byte-identity hash. Adapter parsing accepts
+rank-2 factors and rank-2 or 1x1 rank-4 model targets only. The implementation
+is fresh Candle-native code based on behavior review; no application code was
+copied, and the unlicensed SnapFlash donor remains a behavior reference only.
+
 ---
-AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-1 | change=accepted public hybrid assembly ownership and independent overlay union verification
+AI-edited: 2026-08-12T16:04:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-3 | change=accepted framework LoRA semantics with consumer-owned mapping, policy, and execution serialization

@@ -1896,5 +1896,40 @@ platform-specific fixture copy, or rely on a contributor's global Git config.
 text file or a new fixture directory/extension is introduced. Attributes and
 the verifier must expand in the same change.
 
+## F-0053: Cargo Offline Mode Does Not Disable Runtime HTTP Tests
+
+Status: Diagnosed; upstream network test is an owner-scoped local skip.
+
+**What:** `cargo test --locked --offline --workspace` reached the unrelated
+`candle-datasets::hub::tests::test_dataset` test and attempted a Hugging Face
+socket connection. The managed local sandbox denied it with Windows error
+10013. Repeating the focused test with `HF_HUB_OFFLINE=1` produced the same
+denial.
+
+**Why:** Cargo's `--offline` flag governs registry and dependency resolution;
+it does not prevent arbitrary runtime HTTP in a test binary. This upstream test
+constructs `hf_hub::api::sync::Api` and calls repository metadata/download
+methods without a committed fixture or an ignore gate.
+
+**Where:** The pre-existing test is in `candle-datasets/src/hub.rs`; it is not
+part of either fork overlay or the SDXL LoRA implementation.
+
+**How to catch it:** Run the complete workspace command once under denied
+network, retain the exact failing test, then run the local release gate as
+`cargo test --locked --offline --workspace --exclude candle-datasets` plus
+`cargo check --locked --offline -p candle-datasets`. Keep the crate in strict
+workspace Clippy. Do not grant network, claim the test passed, or modify an
+unrelated upstream module merely to make an overlay release green.
+
+**Evidence:** Both the complete workspace attempt and the focused
+`candle-datasets --lib` replay failed only at the same socket call. The dataset
+crate's locked/offline check passed; all remaining workspace tests and doc
+tests passed with the crate excluded; strict `--workspace --all-targets`
+Clippy passed with `-D warnings` and still compiled the dataset test target.
+
+**Relevance check:** Current for local-only Candle workspace gates until
+upstream replaces this live test with a deterministic fixture or explicitly
+marks it network-dependent.
+
 ---
-AI-edited: 2026-08-12T11:16:23-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=fixture-portability-release | change=closed the Windows fixture-mutation pitfall on main
+AI-edited: 2026-08-12T16:04:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-3 | change=recorded the runtime-network limit of Cargo offline mode and the exact owner-scoped skip
