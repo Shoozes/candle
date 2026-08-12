@@ -52,29 +52,6 @@ Done when: A new user can find the example and distinguish proven, optional, and
 
 Verification: Root and mod-owned relative-link checks; README command smoke against `--help`; supported-matrix review against `PARITY.md`; complete diff inspection.
 
-## C1 — Split Large Modules at Proven Seams
-
-What: Reduce context and merge pressure in the largest LFM2-VL modules without changing public behavior or serialized evidence.
-
-Why: `gguf.rs`, `weights.rs`, `runner.rs`, `processor.rs`, `model.rs`, `lfm2.rs`, `prompt.rs`, `siglip2.rs`, and `native_loading.rs` each exceed 1,200 lines. Splitting without measured seams would add indirection; leaving unrelated responsibilities together impedes review and scaling. The context bank now separates native model math from checkpoint loading, so a physical split is not a substitute for the P3/P4 product gates or R1 release handoff.
-
-When: After P3, P4, and R1. The only earlier extraction allowed is the smallest proven device-policy seam required by P4.1.
-
-Where: `candle-transformers/src/models/lfm2_vl/gguf.rs`, `candle-transformers/src/models/lfm2_vl/weights.rs`, `candle-examples/examples/lfm2-vl/runner.rs`, `candle-vlm/src/lfm2_vl/processor.rs`, `candle-transformers/src/models/lfm2_vl/model.rs`, `candle-transformers/src/models/lfm2.rs`, `candle-vlm/src/lfm2_vl/prompt.rs`, `candle-transformers/src/models/siglip2.rs`, `candle-examples/examples/lfm2-vl/native_loading.rs`, their nearest tests, and the affected `summary_bank.json` routes.
-
-How:
-
-1. Measure line/context size and call/test ownership before editing.
-2. Split GGUF metadata/name normalization, tensor decode/layout, and model construction.
-3. Split native weight inventory validation, canonical shape/layout conversion, and builder wiring.
-4. Split runner artifact evidence, deterministic generation, trace serialization, and report emission.
-5. Split processor/prompt only at image preprocessing versus token/span validation; retain shared checked-arithmetic helpers.
-6. Re-measure routes and remove only proven duplication; do not create a generic VLM framework.
-
-Done when: Each selected module has one clear responsibility, public APIs and evidence schemas are unchanged, routes load no more context than before, and every prior focused/full test remains green.
-
-Verification: Before/after size report; import/compile checks; deterministic fixture and trace hashes where applicable; full local baseline; complete diff inspection.
-
 ## C2 — Adopt Gknome Safely Across Native Windows and This Linked Worktree
 
 What: Integrate only useful Gknome project/context controls while preserving this mature repository's authority and safely refusing its Linux-absolute `.git` pointer.

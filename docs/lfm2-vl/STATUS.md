@@ -221,7 +221,7 @@
 ## Active Files
 
 - The working tree contains the reviewed SigLIP2 parity fix, phase-contract comparator/test, CUDA cast and contiguous-linear fixes, independent text/vision placement wiring, and documentation/context edits. Snapshots, caches, manifests, logs, owner evidence, and trace output remain external and ignored.
-- P3.1–P3.6 and P4.1–P4.3 are archived; P4.4 owns the next measured optimization proof.
+- P3.1–P3.6, P4.1–P4.3, and C1 modular source layout are archived; P4.4 owns the next measured optimization proof.
 
 ## Exact Next Task
 

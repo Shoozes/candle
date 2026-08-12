@@ -1092,5 +1092,30 @@ deferred to TODO C3; no network or toolchain install was substituted.
   Windows `cargo test --locked --offline -j 2 -p candle-examples --example
   lfm2-vl` 32/32; WSL manifest verification; `git diff --check`.
 
+## 2026-08-11 — C1 modular source layout
+
+- What: Split the largest LFM2-VL production files into bounded same-module
+  source units while keeping wrappers, private name resolution, public APIs,
+  evidence schemas, and tests stable.
+- Why: Reduce context and merge pressure without introducing a generic VLM
+  abstraction or changing runtime behavior.
+- When: 2026-08-11, after the existing P3/P4 parity gates and during the
+  owner-reviewed main integration.
+- Where: LFM2 text/cache, SigLIP2, GGUF, weights, native composite, processor,
+  prompt, runner, and native-loading wrappers plus their `include!` parts.
+- How: Moved only proven responsibility seams into the new source units,
+  retained tests in wrappers, added `MODULE_LAYOUT.md` and
+  `verify-module-layout.py`, routed the new files through `summary_bank.json`,
+  and preserved our stable LayerNorm and timing diagnostics at their new
+  seams.
+- Done when: Every wrapper/part stays within the documented size limits,
+  include inventories match, compilation and focused/full tests remain green,
+  and the mod manifest accounts for every new path. These conditions are met;
+  C1 is complete.
+- Verification: module-layout verifier passed; Windows locked/offline library
+  and example checks passed; the LFM2-VL example suite passed 32/32; the
+  focused SigLIP2 stable-LayerNorm test passed 1/1; summary-bank and
+  mod-manifest verifiers passed.
+
 ---
-AI-edited: 2026-08-11T22:45:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=s4-integrity-audit | change=archived the green WSL trace-publication replay and retained only measured CUDA optimization and Gknome adoption as active work
+AI-edited: 2026-08-11T23:05:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=merge-review | change=archived C1 after modular-layout and regression verification while retaining P4.4 and C2

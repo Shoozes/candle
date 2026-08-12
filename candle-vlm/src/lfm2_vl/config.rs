@@ -1,5 +1,7 @@
 //! Dynamic processor configuration and source-precedence resolution.
 
+#![allow(clippy::manual_is_multiple_of)]
+
 use candle::Result;
 use candle_transformers::models::lfm2_vl::{Lfm2VlConfig, MmprojMetadata, VisionLimits};
 use serde::Deserialize;

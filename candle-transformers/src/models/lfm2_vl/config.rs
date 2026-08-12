@@ -1,3 +1,5 @@
+#![allow(clippy::manual_is_multiple_of)]
+
 use crate::models::{lfm2, siglip2};
 use candle::Result;
 use candle_nn::Activation;

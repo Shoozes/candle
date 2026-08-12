@@ -7,7 +7,7 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 - Model and compatibility baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Current publication baseline: Candle main at `6f74e7c390c717f8fd34f23ce02aceb058173370`, the exact `origin/main` tip integrated before this direct-main release.
 - Historical mod checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`; that branch is retained as evidence, not used as a second publication line.
-- Current `main` overlay: 94 paths, exactly 12 fork-origin modifications and 82 mod-owned additions. The 29 upstream paths added or changed between Candle 0.11.0 and the publication baseline are inherited fork state and are intentionally outside this overlay.
+- Current `main` overlay: 139 paths, exactly 13 fork-origin modifications and 126 mod-owned additions. The 29 upstream paths added or changed between Candle 0.11.0 and the publication baseline are inherited fork state and are intentionally outside this overlay.
 - A **fork-origin modification** is a path that exists in the current publication baseline and is intentionally changed by this mod.
 - A **mod-owned addition** is a path absent from the current publication baseline and created for this project.
 - “Mod-owned” describes repository provenance, not third-party authorship. External source and license provenance remains authoritative in `SOURCES.md` and `LICENSE_NOTES.md`.
@@ -15,10 +15,11 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 
 ## Fork-Origin Files Intentionally Modified
 
-Exactly these twelve baseline files contain mod changes:
+Exactly these thirteen baseline files contain mod changes:
 
 | Path | LFM2-VL reason |
 | --- | --- |
+| `.github/workflows/ci_cuda.yaml` | Limit the inherited private AWS CUDA runner job to the upstream repository so fork pull requests skip instead of failing before checkout. |
 | `.gitignore` | Exclude local reference environments, caches, downloads, production models, and generated artifacts. |
 | `Cargo.toml` | Register the new `candle-vlm` workspace crate and its shared dependencies. |
 | `candle-core/src/quantized/gguf_file.rs` | Add bounded GGUF directory parsing and validation used by direct MMProj loading. |
@@ -44,19 +45,49 @@ No other file from the integrated Candle publication baseline is part of the mod
 - `candle-examples/examples/lfm2-vl/main.rs`
 - `candle-examples/examples/lfm2-vl/native_checkpoint.rs`
 - `candle-examples/examples/lfm2-vl/native_loading.rs`
+- `candle-examples/examples/lfm2-vl/native_loading/types.rs`
+- `candle-examples/examples/lfm2-vl/native_loading/load.rs`
+- `candle-examples/examples/lfm2-vl/native_loading/inventory.rs`
 - `candle-examples/examples/lfm2-vl/runner.rs`
+- `candle-examples/examples/lfm2-vl/runner/types.rs`
+- `candle-examples/examples/lfm2-vl/runner/runtime.rs`
+- `candle-examples/examples/lfm2-vl/runner/run.rs`
+- `candle-examples/examples/lfm2-vl/runner/generation.rs`
+- `candle-examples/examples/lfm2-vl/runner/evidence.rs`
 - `candle-examples/examples/lfm2-vl/trace.rs`
 
 ### Transformer models and loaders
 
+- `candle-transformers/src/models/lfm2/config.rs`
+- `candle-transformers/src/models/lfm2/cache.rs`
+- `candle-transformers/src/models/lfm2/layers.rs`
+- `candle-transformers/src/models/lfm2/model.rs`
 - `candle-transformers/src/models/siglip2.rs`
+- `candle-transformers/src/models/siglip2/config.rs`
+- `candle-transformers/src/models/siglip2/embeddings.rs`
+- `candle-transformers/src/models/siglip2/encoder.rs`
+- `candle-transformers/src/models/siglip2/model.rs`
+- `candle-transformers/src/models/siglip2/interpolation.rs`
 - `candle-transformers/src/models/lfm2_vl/config.rs`
 - `candle-transformers/src/models/lfm2_vl/gguf.rs`
+- `candle-transformers/src/models/lfm2_vl/gguf/types.rs`
+- `candle-transformers/src/models/lfm2_vl/gguf/loading.rs`
+- `candle-transformers/src/models/lfm2_vl/gguf/metadata.rs`
+- `candle-transformers/src/models/lfm2_vl/gguf/inventory.rs`
+- `candle-transformers/src/models/lfm2_vl/gguf/metadata_values.rs`
 - `candle-transformers/src/models/lfm2_vl/linear.rs`
 - `candle-transformers/src/models/lfm2_vl/mod.rs`
 - `candle-transformers/src/models/lfm2_vl/model.rs`
+- `candle-transformers/src/models/lfm2_vl/model/types.rs`
+- `candle-transformers/src/models/lfm2_vl/model/runtime.rs`
+- `candle-transformers/src/models/lfm2_vl/model/encoding.rs`
+- `candle-transformers/src/models/lfm2_vl/model/merge.rs`
+- `candle-transformers/src/models/lfm2_vl/model/config_ext.rs`
 - `candle-transformers/src/models/lfm2_vl/projector.rs`
 - `candle-transformers/src/models/lfm2_vl/weights.rs`
+- `candle-transformers/src/models/lfm2_vl/weights/manifest.rs`
+- `candle-transformers/src/models/lfm2_vl/weights/runtime.rs`
+- `candle-transformers/src/models/lfm2_vl/weights/safetensors.rs`
 
 ### Rust-native vision-language processing crate
 
@@ -66,7 +97,18 @@ No other file from the integrated Candle publication baseline is part of the mod
 - `candle-vlm/src/lfm2_vl/config.rs`
 - `candle-vlm/src/lfm2_vl/mod.rs`
 - `candle-vlm/src/lfm2_vl/processor.rs`
+- `candle-vlm/src/lfm2_vl/processor/types.rs`
+- `candle-vlm/src/lfm2_vl/processor/entry.rs`
+- `candle-vlm/src/lfm2_vl/processor/budget.rs`
+- `candle-vlm/src/lfm2_vl/processor/crops.rs`
+- `candle-vlm/src/lfm2_vl/processor/helpers.rs`
 - `candle-vlm/src/lfm2_vl/prompt.rs`
+- `candle-vlm/src/lfm2_vl/prompt/types.rs`
+- `candle-vlm/src/lfm2_vl/prompt/tokens.rs`
+- `candle-vlm/src/lfm2_vl/prompt/expand.rs`
+- `candle-vlm/src/lfm2_vl/prompt/validation.rs`
+- `candle-vlm/src/lfm2_vl/prompt/image_block.rs`
+- `candle-vlm/src/lfm2_vl/prompt/helpers.rs`
 - `candle-vlm/src/lfm2_vl/types.rs`
 
 ## Mod-Owned Project Control and Evidence
@@ -79,6 +121,7 @@ No other file from the integrated Candle publication baseline is part of the mod
 - `docs/lfm2-vl/HISTORY.md`
 - `docs/lfm2-vl/LICENSE_NOTES.md`
 - `docs/lfm2-vl/MOD_MANIFEST.md`
+- `docs/lfm2-vl/MODULE_LAYOUT.md`
 - `docs/lfm2-vl/PARITY.md`
 - `docs/lfm2-vl/SOURCES.md`
 - `docs/lfm2-vl/SPEC.md`
@@ -91,6 +134,7 @@ No other file from the integrated Candle publication baseline is part of the mod
 
 ### Local verification scripts
 
+- `.github/workflows/lfm2-vl-backlog-harness.yml`
 - `scripts/lfm2-vl/env-report.sh`
 - `scripts/lfm2-vl/preflight.ps1`
 - `scripts/lfm2-vl/run-bounded-oracle.ps1`
@@ -98,6 +142,7 @@ No other file from the integrated Candle publication baseline is part of the mod
 - `scripts/lfm2-vl/test-preflight.ps1`
 - `scripts/lfm2-vl/verify-baseline.sh`
 - `scripts/lfm2-vl/verify-mod-manifest.sh`
+- `scripts/lfm2-vl/verify-module-layout.py`
 - `scripts/lfm2-vl/verify-summary-bank.ps1`
 
 ### Committed deterministic fixtures
@@ -151,4 +196,4 @@ No other file from the integrated Candle publication baseline is part of the mod
 Publication must use an explicit path allowlist derived from this manifest, followed by `git diff --cached --name-status`, `git diff --cached --check`, and a staged secret/name audit. Broad staging commands are prohibited.
 
 ---
-AI-edited: 2026-08-11T09:59:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=rebased fork-versus-mod provenance on the exact upstream main integration base
+AI-edited: 2026-08-11T22:55:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=merge-review | change=merged modular source layout with verified CUDA provenance
