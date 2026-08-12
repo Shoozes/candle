@@ -7,8 +7,11 @@ do not invoke, inspect, or depend on hosted CI.
 
 ## No active release tasks
 
-P4.5 and PERF-1 are complete and archived in `HISTORY.md`. The defined
-LFM2.5-VL MVP has no open implementation, parity, safety, or performance task.
+M-1 fixture-portability maintenance is complete and archived in `HISTORY.md`.
+The defined LFM2.5-VL MVP has no open implementation, parity, safety,
+performance, environment, or maintenance release task. Live Git refs—not this
+file—remain authoritative for local/remote `main` equality.
+
 Any new item must be promoted from deferred scope through a focused proposal
 with What/Why/When/Where/How/Done-when/Verification before implementation.
 
@@ -21,4 +24,4 @@ gates for the current LFM2.5-VL MVP and must not be reintroduced here without a
 scoped proposal and acceptance contract.
 
 ---
-AI-edited: 2026-08-12T00:36:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=maintenance-closeout | change=closed ENV-1 after exact Windows lock and 82-test verification
+AI-edited: 2026-08-12T11:16:23-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=fixture-portability-release | change=archived M-1 after audited direct-main release completion

@@ -24,6 +24,10 @@ Annotated tag `lfm2-vl-mvp-0.1.0` is the immutable first-MVP snapshot at
 `ff885586f6d44a3d9b9ac1724032cdf5f0155384`. `main` may advance through
 reviewed maintenance commits; do not move or reuse that tag. The tag and the
 then-current `main` peeled to the same commit when the snapshot was published.
+Post-snapshot maintenance makes hash-pinned fixture bytes portable across
+Windows Git newline settings. Its clean native `core.autocrlf=true` proof and
+direct-main release gate are green. Use live Git refs, not prose, to confirm
+whether a particular checkout has the maintenance commit.
 Native Windows is the product and release-proof platform; WSL2/Linux is a
 secondary portability replay. NR-5B official 450M native Windows CPU-F32
 component parity, P2 official-base GGUF same-artifact decoded-output
@@ -124,6 +128,9 @@ for building or using the fork on Windows.
   annotated `lfm2-vl-mvp-X.Y.Z` tag that peels to that exact commit.
 - Keep `.tools/.secrets/`, the ignored `Cargo.lock`, models, caches, downloads, artifacts, and local logs out of publication.
 - Stage only paths authorized by `MOD_MANIFEST.md`; never use broad staging.
+- Keep committed LFM2-VL fixture JSON and Markdown LF-stable and fixture
+  safetensors `-text` through root `.gitattributes`. Hash exact checkout bytes;
+  never normalize line endings in a loader to hide a checkout-identity defect.
 
 Gknome adoption is deferred outside the LFM2-VL product backlog. If revisited,
 it must support ordinary native Windows repositories and recognize this
@@ -143,4 +150,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-12T00:27:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=maintenance-closeout | change=made the first-MVP tag immutable while allowing reviewed main maintenance
+AI-edited: 2026-08-12T11:16:23-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=fixture-portability-release | change=closed the fixture-portability release gate

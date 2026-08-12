@@ -7,7 +7,7 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 - Model and compatibility baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Current publication baseline: Candle main at `6f74e7c390c717f8fd34f23ce02aceb058173370`, the exact `origin/main` tip integrated before this direct-main release.
 - Historical mod checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`; that branch is retained as evidence, not used as a second publication line.
-- Current `main` overlay: 141 paths, exactly 14 fork-origin modifications and 127 mod-owned additions. The 29 upstream paths added or changed between Candle 0.11.0 and the publication baseline are inherited fork state and are intentionally outside this overlay.
+- Current `main` overlay: 142 paths, exactly 14 fork-origin modifications and 128 mod-owned additions. The 29 upstream paths added or changed between Candle 0.11.0 and the publication baseline are inherited fork state and are intentionally outside this overlay.
 - A **fork-origin modification** is a path that exists in the current publication baseline and is intentionally changed by this mod.
 - A **mod-owned addition** is a path absent from the current publication baseline and created for this project.
 - “Mod-owned” describes repository provenance, not third-party authorship. External source and license provenance remains authoritative in `SOURCES.md` and `LICENSE_NOTES.md`.
@@ -117,6 +117,7 @@ No other file from the integrated Candle publication baseline is part of the mod
 ## Mod-Owned Project Control and Evidence
 
 ### Repository control and design documents
+- `.gitattributes`
 - `AGENTS.md`
 - `docs/lfm2-vl/DECISIONS.md`
 - `docs/lfm2-vl/FAILURE_LOG.md`
@@ -197,4 +198,4 @@ No other file from the integrated Candle publication baseline is part of the mod
 Publication must use an explicit path allowlist derived from this manifest, followed by `git diff --cached --name-status`, `git diff --cached --check`, and a staged secret/name audit. Broad staging commands are prohibited.
 
 ---
-AI-edited: 2026-08-11T22:55:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=merge-review | change=merged modular source layout with verified CUDA provenance
+AI-edited: 2026-08-12T10:45:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=fixture-portability | change=added canonical fixture checkout attributes to the publication inventory

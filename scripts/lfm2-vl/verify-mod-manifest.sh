@@ -31,6 +31,63 @@ MANIFEST_PATHS="${TEMP_DIR}/manifest-paths.txt"
 MISSING_PATHS="${TEMP_DIR}/missing-paths.txt"
 STALE_PATHS="${TEMP_DIR}/stale-paths.txt"
 
+fixture_roots=(
+    tests/fixtures/lfm2_vl_tiny
+    tests/fixtures/lfm2_vl_processor_tiny
+    tests/fixtures/lfm2_vl_mmproj_tiny
+)
+
+mapfile -t fixture_text_files < <(
+    find "${fixture_roots[@]}" -maxdepth 1 -type f \
+        \( -name '*.json' -o -name '*.md' \) -print | LC_ALL=C sort
+)
+mapfile -t fixture_binary_files < <(
+    find "${fixture_roots[@]}" -maxdepth 1 -type f \
+        -name '*.safetensors' -print | LC_ALL=C sort
+)
+mapfile -t fixture_unclassified_files < <(
+    find "${fixture_roots[@]}" -maxdepth 1 -type f \
+        ! \( -name '*.json' -o -name '*.md' -o -name '*.safetensors' \) \
+        -print | LC_ALL=C sort
+)
+
+if [[ "${#fixture_text_files[@]}" -eq 0 || "${#fixture_binary_files[@]}" -eq 0 ]]; then
+    printf 'error: deterministic fixture inventory is unexpectedly empty\n' >&2
+    exit 1
+fi
+if [[ "${#fixture_unclassified_files[@]}" -ne 0 ]]; then
+    printf 'error: deterministic fixture file has no checkout-byte policy:\n' >&2
+    printf '  - %s\n' "${fixture_unclassified_files[@]}" >&2
+    exit 1
+fi
+
+attribute_value() {
+    local path="$1"
+    local attribute="$2"
+    local output
+    output="$(git check-attr "$attribute" -- "$path")"
+    printf '%s\n' "${output##*: }"
+}
+
+for path in "${fixture_text_files[@]}"; do
+    if [[ "$(attribute_value "$path" text)" != set || \
+          "$(attribute_value "$path" eol)" != lf ]]; then
+        printf 'error: fixture text file must use text eol=lf: %s\n' "$path" >&2
+        exit 1
+    fi
+done
+if LC_ALL=C grep -Il $'\r' "${fixture_text_files[@]}"; then
+    printf 'error: fixture text file contains a carriage-return byte\n' >&2
+    exit 1
+fi
+
+for path in "${fixture_binary_files[@]}"; do
+    if [[ "$(attribute_value "$path" text)" != unset ]]; then
+        printf 'error: fixture binary file must use -text: %s\n' "$path" >&2
+        exit 1
+    fi
+done
+
 {
     git diff --name-only --diff-filter=ACDMRTUXB "$BASELINE" --
     git ls-files --others --exclude-standard
@@ -77,4 +134,6 @@ fi
 total_count=$((modified_count + added_count))
 printf 'mod-manifest baseline=%s total=%s fork_modified=%s mod_added=%s\n' \
     "$BASELINE" "$total_count" "$modified_count" "$added_count"
+printf 'fixture-attributes text=%s binary=%s: passed\n' \
+    "${#fixture_text_files[@]}" "${#fixture_binary_files[@]}"
 printf 'mod-manifest: passed\n'

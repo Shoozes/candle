@@ -1852,5 +1852,49 @@ workspace venv backed by an interpreter outside the writable workspace. Treat
 the sandbox boundary as the first diagnostic branch before declaring ENV-1 or
 performing an installation.
 
+## F-0052: Windows Newline Conversion Can Invalidate Hash-Pinned Fixtures
+
+Status: Resolved on `main` and clean-checkout proven.
+
+**What:** A normal native Windows clone with `core.autocrlf=true` rewrote
+hash-pinned fixture JSON from LF to CRLF. The split-MMProj loader then rejected
+the checkout because its exact SHA-256 no longer matched the manifest even
+though the visible JSON values were unchanged.
+
+**Why:** The repository had no attribute contract for the fixture directories,
+so Git's user-level newline policy controlled checkout bytes. Exact artifact
+hashing correctly detected the mutation; changing the loader to normalize it
+would erase evidence that the consumed file differs from the pinned file.
+
+**Where:** `tests/fixtures/lfm2_vl_tiny/`,
+`tests/fixtures/lfm2_vl_processor_tiny/`, and
+`tests/fixtures/lfm2_vl_mmproj_tiny/`. The first two manifests hash
+`metadata.json`; the split manifest hashes its JSON sidecars directly.
+
+**How to catch it:** In a fresh native Windows checkout with
+`core.autocrlf=true`, inspect `git check-attr text eol`, reject any carriage
+return in committed fixture JSON/Markdown, require safetensors `text=unset`,
+and run the exact hash/inventory tests. The mod-manifest verifier performs the
+attribute and byte checks dynamically for all three fixture roots.
+
+**Evidence:** The unfixed clone changed `processor_config.json` from 524 bytes
+and SHA-256
+`97b79ebfc8eae3a5bcbeb8f1494c1decdbade5d20d3204739143d17b460906f2`
+to 553 bytes and
+`09150e818ebe443d2df9009b78c46ef5aaa4aed17ebc4b20cf55eefb8f01e53f`.
+A second fresh clone containing `.gitattributes` retained all 10 text fixtures
+without carriage returns, marked all three binaries `-text`, preserved the
+three split-bundle hashes, passed the exact split identity/hybrid tests, passed
+the complete locked/offline workspace test gate, and passed workspace Clippy
+with `-D warnings`.
+
+**Current solution:** Preserve canonical bytes at the Git boundary as D-0050
+defines. Do not weaken runtime hashes, commit alternate CRLF hashes, add a
+platform-specific fixture copy, or rely on a contributor's global Git config.
+
+**Relevance check:** Current whenever a committed fixture manifest hashes a
+text file or a new fixture directory/extension is introduced. Attributes and
+the verifier must expand in the same change.
+
 ---
-AI-edited: 2026-08-12T00:36:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=maintenance-closeout | change=recorded sandbox-denied venv execution as a false environment blocker
+AI-edited: 2026-08-12T11:16:23-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=fixture-portability-release | change=closed the Windows fixture-mutation pitfall on main

@@ -1,0 +1,16 @@
+# LFM2-VL fixtures use byte-exact hashes. Keep their checkout bytes stable
+# across Git core.autocrlf settings and never run binary payloads through text
+# conversion.
+/.gitattributes text eol=lf
+
+/tests/fixtures/lfm2_vl_tiny/*.json text eol=lf
+/tests/fixtures/lfm2_vl_tiny/*.md text eol=lf
+/tests/fixtures/lfm2_vl_tiny/*.safetensors -text
+
+/tests/fixtures/lfm2_vl_processor_tiny/*.json text eol=lf
+/tests/fixtures/lfm2_vl_processor_tiny/*.md text eol=lf
+/tests/fixtures/lfm2_vl_processor_tiny/*.safetensors -text
+
+/tests/fixtures/lfm2_vl_mmproj_tiny/*.json text eol=lf
+/tests/fixtures/lfm2_vl_mmproj_tiny/*.md text eol=lf
+/tests/fixtures/lfm2_vl_mmproj_tiny/*.safetensors -text

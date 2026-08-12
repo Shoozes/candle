@@ -967,5 +967,38 @@ The all-CUDA and CPU-text/CUDA-vision 450M F32 routes pass; a focused CUDA
 regression protects the non-contiguous input case. Future optimization must
 measure this materialization before attempting to remove or fuse it.
 
+## D-0050: Canonicalize Hashed Fixture Bytes at the Git Boundary
+
+Status: Accepted.
+
+Decision:
+Use root `.gitattributes` to require LF checkout bytes for JSON and Markdown in
+all three committed LFM2-VL fixture directories and to mark their safetensors
+payloads `-text`. Keep manifests and runtime loaders byte-exact: do not
+normalize, rewrite, or hash a transformed representation after checkout.
+
+Why:
+The fixture hashes identify exact consumed files. A native Windows Git 2.54
+checkout with `core.autocrlf=true` changed `processor_config.json` from 524 LF
+bytes and SHA-256
+`97b79ebfc8eae3a5bcbeb8f1494c1decdbade5d20d3204739143d17b460906f2`
+to 553 CRLF bytes and SHA-256
+`09150e818ebe443d2df9009b78c46ef5aaa4aed17ebc4b20cf55eefb8f01e53f`.
+Normalizing inside the loader would conceal a mutated artifact and weaken the
+existing provenance contract. The other deterministic fixture manifests also
+hash text metadata, so a split-bundle-only rule would leave the same defect in
+two neighboring fixture families.
+
+Consequences:
+The mod-manifest verifier dynamically inventories the three fixture roots,
+requires every committed JSON/Markdown file to resolve `text=set eol=lf` with
+no carriage-return byte, and requires each safetensors file to resolve
+`text=unset`. A fresh native Windows clone with `core.autocrlf=true` retained
+all 10 text fixtures and all three split-bundle hashes exactly; the two exact
+split-MMProj tests, full locked/offline workspace tests, and strict workspace
+Clippy passed. Any new hashed fixture directory or text extension must extend
+the attributes and verifier together. This decision adds no production
+dependency and changes no runtime input format.
+
 ---
-AI-edited: 2026-08-11T23:28:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-tag | change=bounded annotated-tag publication inside the existing authenticated helper
+AI-edited: 2026-08-12T11:16:23-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=fixture-portability-release | change=accepted canonical checkout bytes as the durable mainline contract

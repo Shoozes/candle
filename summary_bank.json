@@ -256,6 +256,24 @@
         "docs/lfm2-vl/MODULE_LAYOUT.md"
       ]
     },
+    "issue__fixture_checkout_identity": {
+      "description": "Cross-platform byte identity for hash-pinned LFM2-VL fixtures: Git LF/binary attributes, exact loader and manifest hashing, all three fixture families, and the dynamic verifier.",
+      "status": "active",
+      "paths": [
+        ".gitattributes",
+        "scripts/lfm2-vl/verify-mod-manifest.sh",
+        "candle-transformers/src/models/lfm2_vl/weights/runtime.rs",
+        "tests/fixtures/lfm2_vl_tiny/README.md",
+        "tests/fixtures/lfm2_vl_tiny/manifest.json",
+        "tests/fixtures/lfm2_vl_tiny/metadata.json",
+        "tests/fixtures/lfm2_vl_processor_tiny/README.md",
+        "tests/fixtures/lfm2_vl_processor_tiny/manifest.json",
+        "tests/fixtures/lfm2_vl_processor_tiny/metadata.json",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/README.md",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/mmproj.json",
+        "tests/fixtures/lfm2_vl_mmproj_tiny/processor_config.json"
+      ]
+    },
     "issue__cuda_production_parity": {
       "description": "Official 450M complete device/dtype matrix, resolved placement policy, CUDA cast/layout regressions, synchronized diagnostics, and the isolated generation benchmark contract.",
       "status": "active",
@@ -331,6 +349,7 @@
       "description": "Direct-main policy, upstream integration base, fork-versus-mod file ownership, source/license provenance, publication exclusions, and local/remote verification contract.",
       "status": "active",
       "paths": [
+        ".gitattributes",
         ".gitignore",
         "README.md",
         "AGENTS.md",

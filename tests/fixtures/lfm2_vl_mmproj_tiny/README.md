@@ -24,9 +24,14 @@ Pinned SHA-256 values:
 - `mmproj.safetensors`: `9ef641ccc2d1587b6c6499ca2a9dee874d89f1aa5f53e2576d591c70414e930a`
 - `mmproj.json`: `b932d4e6c58224d6d97182b0aa969c701beafb0130e2f6031bba189cf9d04f39`
 - `processor_config.json`: `97b79ebfc8eae3a5bcbeb8f1494c1decdbade5d20d3204739143d17b460906f2`
+- `source_model_config.json`: `b6aef395937e6ce1dbc1fe110438b19db82e87c9351edc61fca7b27a72a287d3`
+
+The root `.gitattributes` preserves every fixture JSON/README as LF and marks
+the safetensors payload as binary. Production loaders still hash exact bytes;
+they do not normalize line endings.
 
 The fixture contains no credentials, user content, production tensors, or
 GGUF payloads.
 
 ---
-AI-edited: 2026-08-10T04:42:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=lfm2-vl-phase-5 | change=added deterministic split dense mmproj fixture and regeneration contract
+AI-edited: 2026-08-12T10:45:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=fixture-portability | change=documented canonical checkout bytes and the complete pinned split-bundle identity

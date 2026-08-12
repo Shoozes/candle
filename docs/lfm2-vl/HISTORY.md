@@ -1365,5 +1365,37 @@ deferred to TODO C3; no network or toolchain install was substituted.
   verifier passed Python 3.10.11, all 42 locked distributions, and the pinned
   Transformers revision; the complete pytest suite passed 82/82 in 38.80s.
 
+## 2026-08-12 — Hash-pinned fixture checkout portability
+
+- What: Reproduced and fixed Windows checkout-time mutation of deterministic
+  fixture text, extended the manifest verifier, and completed a focused
+  repository-integrity audit around the affected provenance boundary.
+- Why: A clone with `core.autocrlf=true` converted LF JSON to CRLF and changed
+  an exact split-MMProj hash. That made a valid repository revision fail its
+  own loader on a normal supported Windows configuration.
+- When: Post-MVP maintenance at reviewed parent `2a01aaf0`; no product phase,
+  model inference, remote ref, or immutable tag changed.
+- Where: Root `.gitattributes`, all three committed LFM2-VL fixture families,
+  `verify-mod-manifest.sh`, the split fixture README, current state/backlog,
+  D-0050, F-0052, `MOD_MANIFEST.md`, and `summary_bank.json`.
+- How: Pin fixture JSON/Markdown to LF and safetensors to `-text`; keep runtime
+  and manifest hashing exact; dynamically enumerate and validate 10 text plus
+  three binary fixtures; reproduce the old bytes in one native clone and prove
+  the fix in a second fresh native clone using the same Git setting.
+- Done when: Clean Windows checkout bytes and split hashes are exact; malformed
+  identity still fails rather than being normalized; exact split tests and the
+  broad local source gate pass; the owner-reviewed direct-main release is
+  clean locally and remotely; no production stub, broken export, overlapping
+  context route, active maintenance task, or temporary proof file remains.
+- Verification: Unfixed 524-byte LF to 553-byte CRLF reproduction; fixed 10/10
+  LF text and 3/3 `-text` binary inventory; exact split identity and hybrid
+  tests; transformer 59/59; VLM 29/29; complete native Windows locked/offline
+  workspace tests; strict workspace Clippy with `-D warnings`; current-root
+  formatting and affected checks; both summary-bank lanes; nine module-layout
+  wrappers; 23-document/50-link, 11-JSON, and 16-Python syntax audits; an
+  unknown-extension negative verifier probe followed by a clean positive
+  inventory; guarded helper dry run and publication; exact remote-main
+  equality; no model load.
+
 ---
-AI-edited: 2026-08-12T00:36:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=maintenance-closeout | change=closed benchmark, context, and pinned-environment verification
+AI-edited: 2026-08-12T11:16:23-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=fixture-portability-release | change=archived M-1 verification and guarded direct-main publication
