@@ -36,6 +36,7 @@ include!("runner/types.rs");
 include!("runner/runtime.rs");
 include!("runner/run.rs");
 include!("runner/generation.rs");
+include!("runner/benchmark.rs");
 include!("runner/evidence.rs");
 
 #[cfg(test)]
@@ -343,6 +344,19 @@ mod tests {
     }
 
     #[test]
+    fn generation_benchmark_statistics_use_median_and_mad() -> Result<()> {
+        let (median, mad) = median_and_mad(&[1.0, 2.0, 3.0, 100.0])?;
+        assert_eq!(median, 2.5);
+        assert_eq!(mad, 1.0);
+        assert!(median_and_mad(&[f64::MAX, f64::MAX])?.0.is_finite());
+        assert!(median_and_mad(&[]).is_err());
+        assert!(median_and_mad(&[f64::NAN]).is_err());
+        assert!(median_and_mad(&[-1.0]).is_err());
+        assert!(ensure_benchmark_ids(0, "measured", &[1, 2], &[1, 3]).is_err());
+        Ok(())
+    }
+
+    #[test]
     fn native_fixture_runs_image_prefill_decode_and_exact_cache_replay() -> Result<()> {
         let config = Lfm2VlConfig::from_json(TINY_CONFIG)?;
         let weights = VarBuilder::from_slice_safetensors(TINY_FIXTURE, DType::F32, &Device::Cpu)?;
@@ -371,6 +385,7 @@ mod tests {
                 vision_batch_size: 1,
                 eos_token_id: None,
                 timings: false,
+                benchmark_generation: false,
                 trace_output: Some(trace_output.as_path()),
             },
         )?;
@@ -495,6 +510,7 @@ mod tests {
                 vision_batch_size: 1,
                 eos_token_id: None,
                 timings: false,
+                benchmark_generation: false,
                 trace_output: None,
             },
         )?;

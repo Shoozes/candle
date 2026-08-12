@@ -19,9 +19,8 @@ Phases 1 through 7 are checkpointed. `feat/lfm2-vl-mmproj` at
 `c9b60f0b906fa8fe70423295e2e1164648a8fa53` is the historical implementation
 checkpoint; owner-reviewed integration now lands directly on
 `Shoozes/candle:main` without a PR. The current release preserves Candle main
-through upstream base `6f74e7c390c717f8fd34f23ce02aceb058173370`
-and merge checkpoint `2b1d9e80de06b251b2fe5f25e51c17d56db86591`; the
-current reviewed release base is `b10c3a0c335050c066d8e02fd9f528f6b490fa39`.
+through upstream base `6f74e7c390c717f8fd34f23ce02aceb058173370`; the
+current reviewed release parent is `95c067f7cc9a702575b5b7c0f400ca3aa3ff1386`.
 Native Windows is the product and release-proof platform; WSL2/Linux is a
 secondary portability replay. NR-5B official 450M native Windows CPU-F32
 component parity, P2 official-base GGUF same-artifact decoded-output
@@ -30,14 +29,17 @@ The admitted 3,198,084,631-byte regular snapshot, config/tokenizer/processor
 contract, 589-tensor inventory, Python/native load-only proofs, 51-tensor
 Python/native traces, exact reset, phase-specific comparison, and bounded
 cleanup all pass. The project is a feature-complete MVP release candidate, not
-LTS: P4.1's minimal `--text-cpu` route and P4.2's smallest native
-CUDA/distinct-device fixture and P4.3's official 450M all-CUDA and
-CPU-text/CUDA-vision F32 parity are green. All-CUDA BF16 is also green.
-P4.4 now profiles one measured CUDA bottleneck at a time; lower-bit work and
-the optional WSL replay remain later. Explicit BF16 on a CPU component is
-rejected before model load because the CPU matmul backend does not support that
-dtype. Every future production run still requires a fresh snapshot/executable
-rehash, reviewed Job ceiling, and preflight.
+LTS: P4.1's minimal `--text-cpu` route, P4.2's smallest native
+CUDA/distinct-device fixture, P4.3's initial official 450M CUDA parity, and
+P4.5's complete CPU/CPU F32, all-CUDA F32/BF16/F16, and both mixed F32 routes
+are green. P4.4 is closed as a synchronized end-to-end diagnostic; PERF-1 has
+a stable isolated generation baseline, and no speculative optimization is
+retained. There is no active MVP product gate; lower-bit work and the optional
+WSL replay remain deferred.
+Explicit BF16 and F16 on a resolved CPU component are rejected before model
+load because the CPU matmul backend does not support those dtypes. Every future
+production run still requires a fresh snapshot/executable rehash, reviewed Job
+ceiling, and preflight.
 
 ## One-Task Contract
 
@@ -87,7 +89,8 @@ Before any production-model run:
 1. Run `scripts/lfm2-vl/preflight.ps1 -AsJson` and retain its read-only report outside Git; `review` still requires explicit owner approval, while `blocked` stops admission.
 2. Run `tools/lfm2_vl/reference/inspect_artifact.py --model <450m|1.6b> --model-dir <regular-file-snapshot> --output <external-manifest.json> --allow-production` and verify the exact repository revision plus every model-snapshot config, tokenizer, processor, index, and weight identity. Pass that same `<regular-file-snapshot>` as Python oracle `--model-dir` and native Candle `--model-dir`; the Python trace refuses cache-only or download-backed model resolution, both lanes rehash their inputs after inference, and the comparator requires Candle's consumed-file sizes and hashes to match the oracle manifest. Record the source-image identity separately in each trace. This is a local-only hash pass; it never downloads or serializes weights.
 3. Record physical memory, Windows committed bytes and limit, GPU memory, and all existing inference PIDs.
-4. Refuse concurrent large-model execution.
+4. Refuse concurrent Python, build, llama, or model execution; `quiet_host`
+   requires all dedicated workload sets to be empty.
 5. For Transformers parity, run the bounded Python oracle first. Its `--prompt` is user text and its `metadata.json.prompt` is the exact official chat-template output containing the image sentinel. Pass that recorded prompt value plus the same image to Candle CPU F32 natively on Windows; do not pass the untemplated user text. Use WSL only as a later portability replay.
 6. Launch every production Python, Candle, or llama.cpp inference executable through `scripts/lfm2-vl/run-bounded-oracle.ps1`; never wrap `cargo run`. Use name-wide concurrency for unique model tools, exact-executable concurrency for generic interpreters, and retain `-LogPath` so nonzero children preserve their combined stdout/stderr.
 7. Verify the owner and complete process tree exit, then repeat the host/GPU census.
@@ -117,7 +120,12 @@ for building or using the fork on Windows.
 - Keep `.tools/.secrets/`, the ignored `Cargo.lock`, models, caches, downloads, artifacts, and local logs out of publication.
 - Stage only paths authorized by `MOD_MANIFEST.md`; never use broad staging.
 
-Gknome adoption must support ordinary native Windows repositories and recognize this checkout's `.git` file. It must fail closed when its Git backend cannot operate through the WSL pointer. A dry run is mandatory before any generated file is accepted. The latest Candle dry run (`20260811T032224Z-4a87c2b8`) is inventory-clean but remains blocked on four project-authority conflicts; apply and additive repair are both prohibited until TODO C2's completion gates are met.
+Gknome adoption is deferred outside the LFM2-VL product backlog. If revisited,
+it must support ordinary native Windows repositories and recognize this
+checkout's `.git` file, fail closed when its Git backend cannot operate through
+the WSL pointer, and require a dry run with zero authority conflicts before any
+generated file is accepted. Repair and additive template replacement remain
+prohibited.
 
 ## Documentation Roles
 
@@ -130,4 +138,4 @@ Gknome adoption must support ordinary native Windows repositories and recognize 
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-11T19:30:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=p4-3 | change=advanced the entry point to measured P4.4 optimization after green official 450M CUDA parity
+AI-edited: 2026-08-11T23:22:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=closed the entry-point MVP gate after P4.5 and PERF-1

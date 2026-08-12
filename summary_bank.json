@@ -108,6 +108,7 @@
       "status": "active",
       "paths": [
         "candle-vlm/src/image.rs",
+        "candle-vlm/README.md",
         "candle-vlm/src/lfm2_vl/config.rs",
         "candle-vlm/src/lfm2_vl/processor.rs",
         "candle-vlm/src/lfm2_vl/prompt.rs",
@@ -217,7 +218,7 @@
       ]
     },
     "workflow__production_parity": {
-      "description": "Pinned environment, hash-only artifact admission, production trace export, native comparison, phase-specific CPU-F32 contracts, and exact parity evidence.",
+      "description": "Pinned environment, hash-only artifact admission, production trace export, native comparison, phase-specific CPU-F32 contracts, complete device/dtype matrix, isolated generation benchmark, and exact parity evidence.",
       "status": "active",
       "paths": [
         "tools/lfm2_vl/reference/production_trace.py",
@@ -232,6 +233,7 @@
         "candle-examples/examples/lfm2-vl/runner/runtime.rs",
         "candle-examples/examples/lfm2-vl/runner/run.rs",
         "candle-examples/examples/lfm2-vl/runner/generation.rs",
+        "candle-examples/examples/lfm2-vl/runner/benchmark.rs",
         "candle-examples/examples/lfm2-vl/runner/evidence.rs"
       ]
     },
@@ -254,7 +256,7 @@
       ]
     },
     "issue__cuda_production_parity": {
-      "description": "Official 450M CUDA parity, bounded placement/dtype policy, CUDA cast/layout regressions, and the measured-optimization handoff.",
+      "description": "Official 450M complete device/dtype matrix, resolved placement policy, CUDA cast/layout regressions, synchronized diagnostics, and the isolated generation benchmark contract.",
       "status": "active",
       "paths": [
         "candle-core/tests/custom_op_tests.rs",
@@ -263,6 +265,10 @@
         "candle-examples/examples/lfm2-vl/main.rs",
         "candle-examples/examples/lfm2-vl/args.rs",
         "candle-examples/examples/lfm2-vl/runner.rs",
+        "candle-examples/examples/lfm2-vl/runner/runtime.rs",
+        "candle-examples/examples/lfm2-vl/runner/run.rs",
+        "candle-examples/examples/lfm2-vl/runner/benchmark.rs",
+        "candle-examples/examples/lfm2-vl/README.md",
         "docs/lfm2-vl/PARITY.md"
       ]
     },
@@ -295,7 +301,7 @@
       ]
     },
     "issue__exclusive_evidence_publication": {
-      "description": "Recurring check-then-replace races in snapshot, report, split-bundle, and native-trace publication; routes the shared no-clobber primitives, affected writers, narrow tests, and F-0036 guidance.",
+      "description": "Recurring check-then-replace races in snapshot, report, split-bundle, and native-trace publication; routes the shared no-clobber primitives, affected writers, narrow tests, and D-0042 contract.",
       "status": "active",
       "paths": [
         "tools/lfm2_vl/reference/manifest.py",
@@ -307,7 +313,7 @@
         "candle-examples/examples/lfm2-vl/trace.rs",
         "tools/lfm2_vl/reference/test_gguf_header.py",
         "tools/lfm2_vl/reference/test_mmproj_exporter.py",
-        "docs/lfm2-vl/FAILURE_LOG.md"
+        "docs/lfm2-vl/DECISIONS.md"
       ]
     },
     "issue__gknome_adoption_and_linked_git": {
@@ -327,6 +333,7 @@
       "status": "active",
       "paths": [
         ".gitignore",
+        "README.md",
         "AGENTS.md",
         "docs/lfm2-vl/START_HERE.md",
         "docs/lfm2-vl/MOD_MANIFEST.md",
@@ -337,7 +344,7 @@
       ]
     },
     "workflow__context_integrity": {
-      "description": "Focused routing contract, verifier, compact current docs, active backlog, and publication inventory for future integrity passes.",
+      "description": "Focused routing contract, verifier, compact current docs, backlog state, and publication inventory for future integrity passes.",
       "status": "active",
       "paths": [
         "summary_bank.json",

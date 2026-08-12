@@ -371,7 +371,7 @@ Decoded text alone cannot distinguish artifact drift, prompt mismatch, cache lea
 Consequences:
 Committed tests cover native and real split-MMProj hybrid image prefill, cached decode, EOS provenance, all consumed-file hashes, exact direct/split/override source lists, and exact reset replay. The local fine-tuned text GGUF plus byte-identical official MMProj produces the same eight-token caption in Candle and llama.cpp under aligned deterministic settings. That result is same-artifact runtime evidence only: official-base text parity and llama.cpp component/logit equality remain separate gates.
 
-## D-0049: Timing Diagnostics Stay Outside Deterministic Evidence
+## D-0049: Timing and Benchmark Evidence Stay Outside Deterministic Inference
 
 Status: Accepted
 
@@ -381,18 +381,25 @@ the versioned JSON report free of wall-clock values so repeated evidence remains
 byte-comparable. The diagnostic may report model load, image load, processor,
 prompt, vision, first generation, cache-reset replay, and total inference, but
 it must not alter execution order, cache-reset behavior, sampling, or report
-schema.
+schema. Expose the isolated generation lane separately through
+`--benchmark-generation`: ten warm-ups, thirty measured direct
+prefill/cached-decode iterations, device synchronization around the measured
+region, exact generated-ID replay, and a versioned stderr-only benchmark
+record. The benchmark and diagnostic/trace modes are mutually exclusive.
 
 Why:
-P4.4 needs measured performance data, while the existing JSON contract is a
+P4.4 needed measured performance data, while the existing JSON contract is a
 deterministic parity artifact. Mixing timing into that artifact would create
 false diffs and encourage consumers to treat noisy wall-clock values as model
 correctness evidence.
 
 Consequences:
-Performance claims require bounded owner records, repeated warm-up, explicit
-variance, and unchanged JSON/parity output. A timing line without a retained
-before/after owner record is diagnostic only and cannot close P4.4.
+Performance claims require bounded owner records, explicit median and median
+absolute deviation, unchanged inference/parity output, and at most 5% relative
+MAD. A source optimization is retained only after a quiet-host before/after
+series proves at least a 10% improvement. The stable baseline closes PERF-1
+without retaining a candidate because the earlier candidate did not meet that
+contract.
 
 ## D-0028: Immutable llama.cpp Bundles and Suspended Job Containment
 
@@ -479,14 +486,18 @@ the admission evidence reusable for native Windows and WSL replay without
 weakening Job Object, timeout, or exact-PID cleanup requirements.
 
 Consequences:
-`preflight.ps1` returns `blocked` when a llama process or required physical or
-committed-memory probe prevents safe admission and returns `review` when both
-memory measurements are complete but owner approval is still required. Its smoke contract runs under
+`preflight.ps1` returns `blocked` when any recognized model process
+(`llama`/MTMD/`lfm2-vl`), build process (Cargo/rustc/Ninja/CMake), Python
+process, or required physical/committed-memory probe prevents quiet-host
+admission. It returns `review` only when the model/build/Python sets are empty
+and both memory measurements are complete; owner approval is still required.
+Its smoke contract runs under
 PowerShell 5.1 and 7, writes only an explicitly requested atomic report, and
 reports linked-worktree Git failures as data rather than terminating on native
-stderr. The general process evidence is capped, but the llama collection is
-complete before that cap. It is resource evidence, not model or numerical
-parity evidence.
+stderr. The general process evidence is capped, but the dedicated
+model/build/Python
+collections are complete before that cap. It is resource evidence, not model
+or numerical parity evidence.
 
 ## D-0033: Make Pinned Artifact Identity a Separate, Hash-Only Admission Record
 
@@ -910,25 +921,26 @@ preserving the CPU-only path and avoiding a global warning suppression. The
 build remains explicitly toolchain-dependent; this decision does not claim
 official production CUDA parity or lower-bit CUDA support.
 
-## D-0047: Keep CPU BF16 Explicitly Unsupported and Fail Early
+## D-0047: Keep CPU Low-Precision Dtypes Explicitly Unsupported and Fail Early
 
 Status: Accepted
 
 Decision:
-Reject explicit BF16 when either LFM2-VL component is placed on CPU, before
-loading checkpoint weights. Keep CPU F32 as the supported fallback and retain
-BF16 for CUDA components.
+Reject explicit BF16 or F16 when either LFM2-VL component resolves to CPU,
+before loading checkpoint weights. Keep CPU F32 as the supported fallback and
+retain BF16/F16 for CUDA components.
 
 Why:
-Candle's CPU matmul path does not support BF16. Allowing the request through
-model loading produces a deep operator error after allocation rather than an
-actionable placement message. The public placement flags must describe a
-supported matrix, not defer an invalid dtype/device combination to runtime.
+Candle's CPU matmul path does not support these low-precision dtypes for this
+model. Allowing the request through model loading produces a deep operator
+error after allocation rather than an actionable placement message. Requested
+flags are also insufficient because an accelerator helper can resolve to CPU;
+the public placement contract must follow the actual devices.
 
 Consequences:
-The example reports a concise error for `--text-cpu --dtype bf16` and
-`--vision-cpu --dtype bf16`; no production model load occurs. CUDA BF16 remains
-covered by the all-CUDA 450M proof. This is a capability boundary, not a
+The example reports a concise error for BF16/F16 on any resolved CPU text or
+vision component; no production model load occurs. All-CUDA BF16 and F16 are
+covered by the official 450M matrix. This is a capability boundary, not a
 silent dtype conversion.
 
 ## D-0048: Materialize CUDA Matmul Inputs at the Narrow Dense Boundary
@@ -952,4 +964,4 @@ regression protects the non-contiguous input case. Future optimization must
 measure this materialization before attempting to remove or fuse it.
 
 ---
-AI-edited: 2026-08-11T19:30:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=p4-3 | change=recorded CPU-BF16 policy, independent text/vision placement, and narrow CUDA layout compatibility decisions
+AI-edited: 2026-08-11T23:22:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=recorded benchmark retention and resolved CPU dtype contracts

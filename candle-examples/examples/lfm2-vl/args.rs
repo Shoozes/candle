@@ -13,7 +13,7 @@ const MAX_VISION_BATCH_SIZE: usize = 64;
 const MAX_PROMPT_BYTES: usize = 1024 * 1024;
 const MAX_TRACE_NEW_TOKENS: usize = 32;
 
-pub const USAGE: &str = "usage: lfm2-vl --model-dir <hf-checkpoint-dir> [--processor-config <override.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n       lfm2-vl --model-file <text.gguf> (--mmproj-file <mmproj.gguf> | --mmproj-dir <split-dir>) --tokenizer <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense|q8>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n       lfm2-vl <text.gguf> <split-mmproj-dir> <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n\ninference: --prompt <text> [--image <path>]... [--max-new-tokens <0..1024>] [--vision-batch-size <1..64>] [--eos-token-id <u32>] [--json] [--timings] [--trace-output <external-dir>]\nEach image requires one literal <image> sentinel in the prompt. Without --prompt the command remains load-and-report only. --timings writes stage durations to stderr without changing JSON evidence. --trace-output is a native CPU/F32, single-crop parity lane and requires --cpu, one image, and at most 32 generated tokens.";
+pub const USAGE: &str = "usage: lfm2-vl --model-dir <hf-checkpoint-dir> [--processor-config <override.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n       lfm2-vl --model-file <text.gguf> (--mmproj-file <mmproj.gguf> | --mmproj-dir <split-dir>) --tokenizer <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense|q8>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n       lfm2-vl <text.gguf> <split-mmproj-dir> <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n\ninference: --prompt <text> [--image <path>]... [--max-new-tokens <0..1024>] [--vision-batch-size <1..64>] [--eos-token-id <u32>] [--json] [--timings | --benchmark-generation] [--trace-output <external-dir>]\nEach image requires one literal <image> sentinel in the prompt. Without --prompt the command remains load-and-report only. --timings writes synchronized end-to-end stage durations to stderr. --benchmark-generation runs a fixed 10-warm-up/30-measurement direct prefill/decode benchmark and writes a separate JSON record to stderr without changing inference JSON. --trace-output is a native CPU/F32, single-crop parity lane and requires --cpu, one image, and at most 32 generated tokens.";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MmprojArg {
@@ -40,6 +40,7 @@ pub struct InferenceArgs {
     pub eos_token_id: Option<u32>,
     pub json: bool,
     pub timings: bool,
+    pub benchmark_generation: bool,
     pub trace_output: Option<PathBuf>,
 }
 
@@ -190,18 +191,19 @@ impl Args {
 
     pub fn validate_device_dtypes(
         &self,
-        policy: DevicePolicy,
+        vision_device: &Device,
+        text_device: &Device,
         vision_dtype: DType,
         text_dtype: DType,
     ) -> Result<()> {
-        if policy.vision_cpu && vision_dtype == DType::BF16 {
+        if vision_device.is_cpu() && vision_dtype != DType::F32 {
             bail!(
-                "--dtype bf16 is unsupported for CPU vision matmul; use --dtype f32 or keep vision on CUDA"
+                "resolved vision device is CPU but dtype {vision_dtype:?} is unsupported; use --dtype f32 or keep vision on CUDA"
             )
         }
-        if policy.text_cpu && text_dtype == DType::BF16 {
+        if text_device.is_cpu() && text_dtype != DType::F32 {
             bail!(
-                "--dtype bf16 is unsupported for CPU text matmul; use --dtype f32 or keep text on CUDA"
+                "resolved text device is CPU but dtype {text_dtype:?} is unsupported; use --dtype f32 or keep text on CUDA"
             )
         }
         Ok(())
@@ -241,6 +243,7 @@ where
     let mut eos_token_id = None;
     let mut json = false;
     let mut timings = false;
+    let mut benchmark_generation = false;
     let mut trace_output = None;
     let mut arguments = arguments.into_iter();
     while let Some(argument) = arguments.next() {
@@ -250,6 +253,7 @@ where
             "--vision-cpu" => vision_cpu = true,
             "--json" => json = true,
             "--timings" => timings = true,
+            "--benchmark-generation" => benchmark_generation = true,
             "--trace-output" => set_once(
                 &mut trace_output,
                 PathBuf::from(next_value(&mut arguments, "--trace-output")?),
@@ -396,6 +400,7 @@ where
         || vision_batch_size.is_some()
         || eos_token_id.is_some()
         || timings
+        || benchmark_generation
         || trace_output.is_some()
         || json;
     let inference = match prompt {
@@ -413,6 +418,17 @@ where
             let max_new_tokens = max_new_tokens.unwrap_or(DEFAULT_MAX_NEW_TOKENS);
             if max_new_tokens > MAX_NEW_TOKENS {
                 bail!("--max-new-tokens {max_new_tokens} exceeds {MAX_NEW_TOKENS}")
+            }
+            if benchmark_generation {
+                if timings {
+                    bail!("--benchmark-generation and --timings are mutually exclusive")
+                }
+                if trace_output.is_some() {
+                    bail!("--benchmark-generation and --trace-output are mutually exclusive")
+                }
+                if max_new_tokens < 2 {
+                    bail!("--benchmark-generation requires --max-new-tokens of at least 2")
+                }
             }
             if trace_output.is_some() {
                 if !cpu {
@@ -442,6 +458,7 @@ where
                 eos_token_id,
                 json,
                 timings,
+                benchmark_generation,
                 trace_output,
             })
         }
@@ -719,9 +736,51 @@ mod tests {
     #[test]
     fn cpu_bf16_component_is_rejected_before_model_load() -> Result<()> {
         let args = run(&["--model-dir", "checkpoint", "--dtype", "bf16", "--text-cpu"])?;
-        let policy = args.device_policy();
         assert!(args
-            .validate_device_dtypes(policy, DType::BF16, DType::BF16)
+            .validate_device_dtypes(&Device::Cpu, &Device::Cpu, DType::BF16, DType::BF16)
+            .is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn resolved_cpu_f16_component_is_rejected_before_model_load() -> Result<()> {
+        let args = run(&["--model-dir", "checkpoint", "--dtype", "f16", "--cpu"])?;
+        assert!(args
+            .validate_device_dtypes(&Device::Cpu, &Device::Cpu, DType::F16, DType::F16)
+            .is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn resolved_cpu_guard_catches_accelerator_fallback() -> Result<()> {
+        let args = run(&["--model-dir", "checkpoint", "--dtype", "bf16"])?;
+        let cpu_fallback = Device::Cpu;
+        assert!(!args.device_policy().vision_cpu);
+        assert!(!args.device_policy().text_cpu);
+        assert!(args
+            .validate_device_dtypes(&cpu_fallback, &Device::Cpu, DType::BF16, DType::BF16)
+            .is_err());
+        Ok(())
+    }
+
+    #[cfg(feature = "cuda")]
+    #[test]
+    fn resolved_cuda_matrix_accepts_f16_and_rejects_cpu_components() -> Result<()> {
+        let args = run(&["--model-dir", "checkpoint", "--dtype", "f16"])?;
+        let cuda = Device::new_cuda(0)?;
+
+        args.validate_device_dtypes(&cuda, &cuda, DType::F16, DType::F16)?;
+        assert!(args
+            .validate_device_dtypes(&cuda, &Device::Cpu, DType::BF16, DType::BF16)
+            .is_err());
+        assert!(args
+            .validate_device_dtypes(&Device::Cpu, &cuda, DType::BF16, DType::BF16)
+            .is_err());
+        assert!(args
+            .validate_device_dtypes(&cuda, &Device::Cpu, DType::F16, DType::F16)
+            .is_err());
+        assert!(args
+            .validate_device_dtypes(&Device::Cpu, &cuda, DType::F16, DType::F16)
             .is_err());
         Ok(())
     }
@@ -786,6 +845,60 @@ mod tests {
     }
 
     #[test]
+    fn generation_benchmark_is_bounded_and_separate_from_diagnostics() -> Result<()> {
+        assert!(USAGE.contains("--benchmark-generation"));
+        assert!(parse(&["--model-dir", "checkpoint", "--benchmark-generation"]).is_err());
+        assert!(parse(&[
+            "--model-dir",
+            "checkpoint",
+            "--prompt",
+            "hello",
+            "--max-new-tokens",
+            "1",
+            "--benchmark-generation",
+        ])
+        .is_err());
+        assert!(parse(&[
+            "--model-dir",
+            "checkpoint",
+            "--prompt",
+            "hello",
+            "--timings",
+            "--benchmark-generation",
+        ])
+        .is_err());
+        assert!(parse(&[
+            "--model-dir",
+            "checkpoint",
+            "--prompt",
+            "<image>",
+            "--image",
+            "image.png",
+            "--max-new-tokens",
+            "3",
+            "--trace-output",
+            "trace",
+            "--cpu",
+            "--benchmark-generation",
+        ])
+        .is_err());
+        let args = run(&[
+            "--model-dir",
+            "checkpoint",
+            "--prompt",
+            "hello",
+            "--max-new-tokens",
+            "3",
+            "--benchmark-generation",
+        ])?;
+        assert!(args
+            .inference
+            .as_ref()
+            .is_some_and(|inference| inference.benchmark_generation));
+        Ok(())
+    }
+
+    #[test]
     fn inference_options_parse_with_exact_image_sentinel_pairing() -> Result<()> {
         let args = run(&[
             "--model-dir",
@@ -813,6 +926,7 @@ mod tests {
                 eos_token_id: Some(7),
                 json: true,
                 timings: true,
+                benchmark_generation: false,
                 trace_output: None,
             })
         );

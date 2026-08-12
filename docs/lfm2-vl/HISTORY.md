@@ -1117,5 +1117,174 @@ deferred to TODO C3; no network or toolchain install was substituted.
   focused SigLIP2 stable-LayerNorm test passed 1/1; summary-bank and
   mod-manifest verifiers passed.
 
+## 2026-08-11 — S4 release-integrity closeout slice
+
+- What: Closed the self-mutating one-shot backlog workflow from the publication
+  tree, synchronized the opt-in timing diagnostic around CUDA device work, and
+  moved the remaining performance experiment to a future PERF-1 backlog item.
+- Why: A write-enabled workflow that edits and pushes project state is not a
+  safe release control, and unsynchronized stage timings can include queued
+  work without making that boundary visible.
+- Where: `.github/workflows/lfm2-vl-backlog-harness.yml`,
+  `candle-examples/examples/lfm2-vl/runner/{run,runtime}.rs`, `main.rs`,
+  `docs/lfm2-vl/{TODO,STATUS,PARITY,START_HERE}.md`, and the release docs.
+- How: Deleted the workflow rather than repairing or disabling it; added
+  resolved-device synchronization before and after timed model stages and
+  labeled the output `sync=cuda-device-complete`; kept no speculative source
+  optimization after the noisy P4.4 measurements.
+- Done when: No current source references the workflow, timing output states
+  its synchronization boundary, JSON evidence is unchanged, and P4.4 has no
+  unproven optimization claim. These conditions are met locally.
+- Verification: `cargo fmt --all -- --check`; locked/offline package and
+  example checks; the LFM2-VL example suite 34/34; PowerShell summary-bank;
+  WSL mod-manifest; WSL `git diff --check`; and strict example Clippy all pass.
+  The temporary branch head tree is byte-identical to squashed main commit
+  `6ea6aef5`; it was not deleted because the guarded helper is intentionally
+  main-only and remote deletion needs its own explicit authorization path.
+
+## 2026-08-11 — Resolved device/dtype guard
+
+- What: Changed the LFM2-VL CLI guard to validate the actual resolved vision
+  and text `Device` values and reject both BF16 and F16 on CPU, with tests for
+  BF16, F16, and accelerator-helper CPU fallback.
+- Why: Policy flags describe intent, but a requested accelerator can resolve to
+  CPU. A policy-only guard could therefore let an unsupported low-precision
+  dtype reach a CPU matmul path.
+- Where: `candle-examples/examples/lfm2-vl/args.rs` and `main.rs`.
+- How: Pass the resolved devices into one validation function, use
+  `Device::is_cpu()`, and return an actionable component/dtype error before any
+  model load.
+- Done when: CPU F32 remains accepted, CPU BF16/F16 fail before loading, and
+  fallback is covered by a deterministic unit test. The source/tests are
+  complete; official CUDA F16 and CUDA-text/CPU-vision F32 parity remain P4.5.
+- Verification: Focused argument tests 16/16 and the full LFM2-VL example
+  suite 34/34 pass; no production model run was started.
+
+## 2026-08-12 — P4.5 complete resolved device/dtype matrix
+
+- What: Closed every advertised native 450M placement/dtype route: CPU/CPU
+  F32, all-CUDA F32/BF16/F16, CPU-text/CUDA-vision F32, and
+  CUDA-text/CPU-vision F32. CPU components remain explicitly F32-only.
+- Why: CUDA F16 and CUDA-text/CPU-vision F32 were the last unproven public
+  routes; policy flags alone could not establish resolved-device behavior.
+- When: After artifact rehash and an exclusive, clean host census with no
+  model, Python, Cargo, rustc, or llama process.
+- Where: The native `lfm2-vl` release example, resolved-device guards,
+  bounded owner records under `C:\DevStuff\candle-oracle\evidence`, and the
+  support-matrix documentation.
+- How: Rebuilt the CUDA release offline under a 16 GiB Job limit, then ran all
+  six routes sequentially under 12 GiB limits over the pinned 450M artifact,
+  exact rendered prompt, and deterministic image. Every route produced IDs
+  `[1098, 4646, 5251]`, the same prefill top-5 ID order, 64 image tokens, exact
+  cache replay, exit 0, and PID absence. Peak Job memory ranged from
+  2,412,109,824 to 3,474,620,416 bytes.
+- Done when: Every advertised route has parity evidence or an explicit early
+  rejection, CPU BF16/F16 fallback is guarded, and resource cleanup is exact.
+  These conditions are met; P4.5 is complete.
+- Verification: Artifact manifest SHA-256
+  `659c8421530586b6cc28c094cfcdc69719ea8626f2abc0efd9eec4ac2a68a984`;
+  release executable 65,076,736 bytes / SHA-256
+  `7a9261f6808b09ffab0963f5c015661c515534c6b949ac4893f4fa8cbe0023a2`;
+  six audited owner/log pairs; exact model/image/prompt/token-span checks; and
+  owner-exit cleanup for every run.
+
+## 2026-08-12 — PERF-1 isolated generation baseline
+
+- What: Added and executed a dedicated `--benchmark-generation` lane for the
+  native runner without changing `candle-lfm2-vl-inference-v1`.
+- Why: End-to-end stage diagnostics included load/evidence noise and could not
+  justify retaining the earlier speculative ShortConv change.
+- When: After P4.5 on an empty model/build/Python census.
+- Where: `runner/benchmark.rs`, CLI/runner guards and tests, the example
+  README, and external bounded evidence
+  `perf-1-cuda-f32-baseline-20260812T020500Z*`.
+- How: Ran 10 warm-ups and 30 measured all-CUDA F32 direct
+  prefill/greedy/cached-decode iterations, synchronized devices, excluded
+  cache reset and evidence/tokenizer work from the timed region, and required
+  exact IDs plus no more than 5% relative MAD.
+- Done when: A reproducible baseline plus unchanged parity/resource evidence
+  either proves a candidate's at least 10% gain or rejects it. Median was
+  458.0633 ms, MAD 9.82745 ms, relative MAD 2.1454%, IDs remained
+  `[1098, 4646, 5251]`, and no candidate met the retention threshold; the
+  baseline is retained and PERF-1 is complete.
+- Verification: Benchmark log SHA-256
+  `2660209b7adc9b26eb204d50a165d78f85145b84532f8922b6fbdadc72a6e541`;
+  owner SHA-256
+  `a6f15d637ed340de9c7aa2188ae9e64c2e13964708244e7c0afcb7a017dd9066`;
+  exit 0, 3,475,435,520 peak Job bytes, PID absent, and inference cache replay
+  exact.
+
+## 2026-08-12 — Cross-platform integrity-verifier closeout
+
+- What: Fixed native Windows module-layout verification and reduced one
+  context route below its existing 256 KiB ceiling.
+- Why: `Path` stringification emitted backslashes on Windows while the
+  canonical include inventory uses repository-style slashes; the
+  exclusive-publication route also loaded the entire pitfall ledger and grew
+  to 258 KiB.
+- When: During the final post-PERF integrity audit, before publication.
+- Where: `scripts/lfm2-vl/verify-module-layout.py` and `summary_bank.json`.
+- How: Normalize discovered repository-relative paths with `as_posix()` and
+  route the exclusive-publication group to the smaller accepted D-0042
+  decision contract instead of the complete failure ledger.
+- Done when: Native Windows module-layout verification passes, both PowerShell
+  summary-bank lanes pass, and all routes remain below 256 KiB. These
+  conditions are met; the affected route is 215.5 KiB.
+- Verification: Native bundled Python module-layout verifier passed all nine
+  split wrappers; PowerShell 7 and Windows PowerShell 5.1 summary-bank
+  verifiers passed with the 139.0 KiB default orientation pack.
+
+## 2026-08-12 — MVP release discoverability and support contract
+
+- What: Completed the public LFM2.5-VL entry, crate-level orientation, exact
+  device/dtype matrix, proof-level boundary, and zero-active-task handoff.
+- Why: The implementation and evidence were complete, but users should not
+  need historical parity documents to discover the example or distinguish
+  proven, fixture-protected, rejected, and deferred behavior.
+- When: After the complete P4.5 production matrix and PERF-1 baseline.
+- Where: Root `README.md`, `candle-vlm/README.md`, the detailed example
+  README, `START_HERE.md`, `STATUS.md`, `PARITY.md`, `TODO.md`, and
+  `summary_bank.json`.
+- How: Added the exact native/GGUF/MMProj discovery entry, documented the
+  crate's no-network and checked-allocation boundary, published the 4x3
+  text/vision/dtype matrix, kept future features outside the MVP backlog, and
+  routed benchmark code only through parity/CUDA context groups.
+- Done when: Public docs agree on one feature-complete MVP release candidate,
+  CPU low precision fails early, all advertised production routes are proven,
+  deferred work is not a release promise, and TODO has no active MVP item.
+  These conditions are met.
+- Verification: Relative links pass across all 23 mod-owned Markdown files;
+  summary-bank routes pass both PowerShell versions below 256 KiB; the
+  141-path mod manifest and WSL `git diff --check` pass.
+
+## 2026-08-12 — Final local MVP gate and status consolidation
+
+- What: Ran the final native Windows source gate, closed the review's exact
+  CUDA device/dtype unit matrix, fixed the only mod-owned workspace Clippy
+  finding, and reduced `STATUS.md` to current handoff state.
+- Why: The release tag must follow a warning-clean, locally proven source tree,
+  while completed phase narratives belong in `HISTORY.md`/`PARITY.md` rather
+  than the live status document.
+- When: After the complete six-route production matrix and isolated PERF-1
+  baseline, without rerunning unchanged 1.6B model math.
+- Where: The LFM2-VL example tests/benchmark, native Windows workspace gates,
+  `STATUS.md`, and external preflight evidence
+  `release-closeout-preflight-20260812T025925Z.json`.
+- How: Added CUDA-gated assertions for all-CUDA F16 acceptance and BF16/F16
+  rejection on either resolved CPU side; used `is_multiple_of(2)` for the
+  benchmark median helper; ran the exact workspace Clippy target with
+  `PYO3_NO_PYTHON=1` because the unrelated ABI3 binding requires Python 3.13;
+  and kept only current truth in status.
+- Done when: Formatting, full workspace strict Clippy, affected checks/tests,
+  full example tests, CUDA regressions, module/context/manifest/link gates, and
+  diff review are green with no active MVP product task. The local source gate
+  is complete; remote branch deletion and main/tag publication remain separate
+  explicit remote-hygiene steps.
+- Verification: Example 36/36; CUDA device/dtype matrix 1/1; transformer 59/59
+  plus generation 5/5 and NMS 8/8; VLM 29/29; complete core lanes; CUDA cast
+  1/1; CUDA dense-linear 1/1; full workspace Clippy with `-D warnings`;
+  module-layout nine wrappers; cross-version summary/preflight smoke; 23-file
+  relative-link audit; 141/14/127 mod manifest; and clean `git diff --check`.
+
 ---
-AI-edited: 2026-08-11T23:05:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=merge-review | change=archived C1 after modular-layout and regression verification while retaining P4.4 and C2
+AI-edited: 2026-08-11T23:12:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=archived the final local gate and consolidated current status

@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     };
     let vision_dtype = args.resolved_vision_dtype(&vision_device);
     let text_dtype = args.resolved_text_dtype(&text_device);
-    args.validate_device_dtypes(device_policy, vision_dtype, text_dtype)?;
+    args.validate_device_dtypes(&vision_device, &text_device, vision_dtype, text_dtype)?;
     args.validate_execution(vision_dtype)?;
     match &args.source {
         ModelSource::NativeDirectory(model_dir) => run_native(
@@ -93,8 +93,9 @@ fn run_hybrid(
         text_device,
     )?;
     if profile {
+        synchronize_timing_devices(loaded.model.vision_device(), loaded.model.text_device())?;
         eprintln!(
-            "lfm2-vl timings_ms model_load={:.3}",
+            "lfm2-vl timings_ms model_load={:.3} sync=cuda-device-complete",
             load_started.elapsed().as_secs_f64() * 1000.0
         );
     }
@@ -174,8 +175,9 @@ fn run_native(
         },
     )?;
     if profile {
+        synchronize_timing_devices(loaded.model.vision_device(), loaded.model.text_device())?;
         eprintln!(
-            "lfm2-vl timings_ms model_load={:.3}",
+            "lfm2-vl timings_ms model_load={:.3} sync=cuda-device-complete",
             load_started.elapsed().as_secs_f64() * 1000.0
         );
     }
@@ -245,8 +247,17 @@ fn inference_request<'a>(
         vision_batch_size: inference.vision_batch_size,
         eos_token_id: inference.eos_token_id,
         timings: inference.timings,
+        benchmark_generation: inference.benchmark_generation,
         trace_output: inference.trace_output.as_deref(),
     }
+}
+
+fn synchronize_timing_devices(vision_device: &Device, text_device: &Device) -> Result<()> {
+    vision_device.synchronize()?;
+    if !vision_device.same_device(text_device) {
+        text_device.synchronize()?;
+    }
+    Ok(())
 }
 
 fn emit_report(report: &runner::InferenceReport, json: bool) -> Result<()> {

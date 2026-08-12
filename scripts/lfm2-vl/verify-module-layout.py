@@ -96,6 +96,7 @@ SPLITS = (
             "candle-examples/examples/lfm2-vl/runner/runtime.rs",
             "candle-examples/examples/lfm2-vl/runner/run.rs",
             "candle-examples/examples/lfm2-vl/runner/generation.rs",
+            "candle-examples/examples/lfm2-vl/runner/benchmark.rs",
             "candle-examples/examples/lfm2-vl/runner/evidence.rs",
         ),
     ),
@@ -134,7 +135,7 @@ def main() -> None:
             )
 
         declared = {
-            str((wrapper.parent / relative).resolve().relative_to(ROOT))
+            (wrapper.parent / relative).resolve().relative_to(ROOT).as_posix()
             for relative in INCLUDE_RE.findall(wrapper_text)
         }
         expected = set(split.parts)

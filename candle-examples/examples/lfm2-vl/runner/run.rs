@@ -30,6 +30,15 @@ fn run(
     if request.vision_batch_size == 0 {
         bail!("vision batch size must be greater than zero")
     }
+    if request.benchmark_generation && request.timings {
+        bail!("generation benchmark and end-to-end timings are mutually exclusive")
+    }
+    if request.benchmark_generation && request.trace_output.is_some() {
+        bail!("generation benchmark and native trace capture are mutually exclusive")
+    }
+    if request.benchmark_generation && request.max_new_tokens < 2 {
+        bail!("generation benchmark requires at least two generated tokens")
+    }
     let model_inputs = inspect_input_paths(request.model_inputs)?;
     if request.trace_output.is_some() && request.image_paths.len() != 1 {
         bail!("LFM2-VL native trace requires exactly one image input")
@@ -38,6 +47,9 @@ fn run(
     let image_load_started = Instant::now();
     let (images, image_files) = load_images(request.image_paths, limits)?;
     let image_load_ms = image_load_started.elapsed().as_secs_f64() * 1000.0;
+    if request.timings {
+        runtime.synchronize_devices()?;
+    }
     let processor_started = Instant::now();
     let processed = if images.is_empty() {
         empty_processed_batch()?
@@ -46,6 +58,9 @@ fn run(
             .process(&images, runtime.vision_device())
             .map_err(anyhow::Error::from)?
     };
+    if request.timings {
+        runtime.synchronize_devices()?;
+    }
     let processor_ms = processor_started.elapsed().as_secs_f64() * 1000.0;
     let prompt_started = Instant::now();
     let expanded = prompt
@@ -75,6 +90,9 @@ fn run(
         runtime.default_eos_source(),
         prompt.tokenizer(),
     );
+    if request.timings {
+        runtime.synchronize_devices()?;
+    }
     let vision_started = Instant::now();
     let (encoded, image_trace) = if images.is_empty() {
         if request.trace_output.is_some() {
@@ -91,6 +109,9 @@ fn run(
             None,
         )
     };
+    if request.timings {
+        runtime.synchronize_devices()?;
+    }
     let vision_ms = vision_started.elapsed().as_secs_f64() * 1000.0;
     let mut trace_capture = match (request.trace_output, image_trace) {
         (Some(_), Some(image)) => Some(NativeTraceCapture::new(image)),
@@ -108,14 +129,26 @@ fn run(
         max_new_tokens: request.max_new_tokens,
         eos_token_id: eos.token_id,
     };
+    if request.timings {
+        runtime.synchronize_devices()?;
+    }
     let first_started = Instant::now();
     let first = generate_once(runtime, &generation_inputs)?;
+    if request.timings {
+        runtime.synchronize_devices()?;
+    }
     let first_generation_ms = first_started.elapsed().as_secs_f64() * 1000.0;
     if let Some(capture) = trace_capture.as_mut() {
         capture_trace(runtime, &generation_inputs, capture)?;
     }
+    if request.timings {
+        runtime.synchronize_devices()?;
+    }
     let reset_started = Instant::now();
     let second = generate_once(runtime, &generation_inputs)?;
+    if request.timings {
+        runtime.synchronize_devices()?;
+    }
     let reset_generation_ms = reset_started.elapsed().as_secs_f64() * 1000.0;
     if first != second {
         bail!(
@@ -123,6 +156,25 @@ fn run(
             first.generated_ids,
             second.generated_ids
         )
+    }
+    if request.benchmark_generation {
+        let benchmark = run_generation_benchmark(
+            runtime,
+            &generation_inputs,
+            request.backend,
+            &first.generated_ids,
+        )?;
+        eprintln!(
+            "lfm2-vl generation_benchmark_json {}",
+            serde_json::to_string(&benchmark)?
+        );
+        if !benchmark.stable {
+            bail!(
+                "LFM2-VL generation benchmark relative MAD {:.6} exceeds {:.6}",
+                benchmark.relative_mad,
+                benchmark.max_relative_mad
+            )
+        }
     }
     if request.trace_output.is_some() {
         verify_input_paths_unchanged(request.model_inputs, &model_inputs)?;
@@ -160,8 +212,9 @@ fn run(
         )?;
     }
     if request.timings {
+        runtime.synchronize_devices()?;
         eprintln!(
-            "lfm2-vl timings_ms image_load={image_load_ms:.3} processor={processor_ms:.3} prompt={prompt_ms:.3} vision={vision_ms:.3} generation_first={first_generation_ms:.3} generation_reset={reset_generation_ms:.3} inference_total={:.3}",
+            "lfm2-vl timings_ms image_load={image_load_ms:.3} processor={processor_ms:.3} prompt={prompt_ms:.3} vision={vision_ms:.3} generation_first={first_generation_ms:.3} generation_reset={reset_generation_ms:.3} inference_total={:.3} sync=cuda-device-complete",
             total_started.elapsed().as_secs_f64() * 1000.0
         );
     }

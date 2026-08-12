@@ -69,8 +69,8 @@ while IFS= read -r path; do
     fi
 done <"$CURRENT_PATHS"
 
-if [[ "$modified_count" -ne 13 ]]; then
-    printf 'error: expected exactly 13 fork-origin modifications, found %s\n' "$modified_count" >&2
+if [[ "$modified_count" -ne 14 ]]; then
+    printf 'error: expected exactly 14 fork-origin modifications, found %s\n' "$modified_count" >&2
     exit 1
 fi
 

@@ -61,6 +61,9 @@ These online demos run entirely in your browser:
 
 We also provide some command line based examples using state of the art models:
 
+- [LFM2.5-VL](./candle-examples/examples/lfm2-vl/): native safetensors,
+  hybrid GGUF text plus MMProj, direct GGUF MMProj, CPU/CUDA placement, and
+  deterministic evidence.
 - [LLaMA v1, v2, and v3](./candle-examples/examples/llama/): general LLM, includes
   the SOLAR-10.7B variant.
 - [Falcon](./candle-examples/examples/falcon/): general LLM.

@@ -15,14 +15,14 @@ This document records the C1 production-source split. The split is intentionally
 
 | Original file | Before | Wrapper after | Largest production part | Split responsibility |
 | --- | ---: | ---: | ---: | --- |
-| `candle-transformers/src/models/lfm2.rs` | 1,484 | 490 | 405 | Configuration, cache, layers, model API |
-| `candle-transformers/src/models/siglip2.rs` | 1,286 | 370 | 256 | Configuration, embeddings, encoder, model, interpolation |
-| `candle-transformers/src/models/lfm2_vl/gguf.rs` | 1,952 | 869 | 398 | Types, loading, metadata, inventory, metadata values |
+| `candle-transformers/src/models/lfm2.rs` | 1,484 | 492 | 402 | Configuration, cache, layers, model API |
+| `candle-transformers/src/models/siglip2.rs` | 1,286 | 404 | 256 | Configuration, embeddings, encoder, model, interpolation |
+| `candle-transformers/src/models/lfm2_vl/gguf.rs` | 1,952 | 871 | 398 | Types, loading, metadata, inventory, metadata values |
 | `candle-transformers/src/models/lfm2_vl/weights.rs` | 1,889 | 733 | 453 | Manifest/pairing, runtime, safetensors inspection |
-| `candle-transformers/src/models/lfm2_vl/model.rs` | 1,537 | 535 | 363 | Types, runtime, image encoding, merge/validation, config extension |
-| `candle-vlm/src/lfm2_vl/processor.rs` | 1,324 | 603 | 289 | Types, entry/resize, budgets, crop construction, helpers |
+| `candle-transformers/src/models/lfm2_vl/model.rs` | 1,537 | 537 | 364 | Types, runtime, image encoding, merge/validation, config extension |
+| `candle-vlm/src/lfm2_vl/processor.rs` | 1,324 | 605 | 289 | Types, entry/resize, budgets, crop construction, helpers |
 | `candle-vlm/src/lfm2_vl/prompt.rs` | 1,303 | 583 | 242 | Types, token resolution, expansion, validation, image blocks, helpers |
-| `candle-examples/examples/lfm2-vl/runner.rs` | 1,555 | 544 | 260 | Report types, runtime adapters, orchestration, generation, evidence |
+| `candle-examples/examples/lfm2-vl/runner.rs` | 1,555 | 562 | 260 | Report types, runtime adapters, orchestration, generation/benchmarking, evidence |
 | `candle-examples/examples/lfm2-vl/native_loading.rs` | 1,209 | 704 | 310 | Load/report types, construction, inventory validation |
 
 ## Why Same-Module Source Units
@@ -40,4 +40,4 @@ C1 remains green only when:
 5. `MOD_MANIFEST.md` contains every added source unit.
 
 ---
-AI-edited: 2026-08-11T11:30:00-04:00 | agent=ChatGPT | model=gpt-5.6-pro | task=C1 | change=recorded bounded source split and verification contract
+AI-edited: 2026-08-11T23:12:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=updated the bounded runner layout for the isolated benchmark source unit

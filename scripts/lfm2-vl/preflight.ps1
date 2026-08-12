@@ -351,10 +351,16 @@ $disk = [ordered]@{
 
 $parentProcessMap = Get-ParentProcessMap
 $matchingProcessObjects = @(Get-Process -ErrorAction SilentlyContinue |
-    Where-Object { $_.ProcessName -match '(?i)llama|python|cargo|rustc|ninja|cmake' } |
+    Where-Object { $_.ProcessName -match '(?i)llama|mtmd|lfm2-vl|python|cargo|rustc|ninja|cmake' } |
     ForEach-Object { $_ })
 $llamaProcessObjects = @($matchingProcessObjects |
-    Where-Object { $_.ProcessName -match '(?i)llama' })
+    Where-Object { $_.ProcessName -match '(?i)llama|mtmd' })
+$modelProcessObjects = @($matchingProcessObjects |
+    Where-Object { $_.ProcessName -match '(?i)llama|mtmd|lfm2-vl' })
+$buildProcessObjects = @($matchingProcessObjects |
+    Where-Object { $_.ProcessName -match '(?i)cargo|rustc|ninja|cmake' })
+$pythonProcessObjects = @($matchingProcessObjects |
+    Where-Object { $_.ProcessName -match '(?i)^python(?:w)?$' })
 $trackedProcessObjects = @($matchingProcessObjects |
     Sort-Object -Property PrivateMemorySize64 -Descending |
     Select-Object -First 64)
@@ -362,8 +368,15 @@ $trackedProcesses = @($trackedProcessObjects |
     ForEach-Object { Get-SafeProcessRecord -Process $_ -ParentMap $parentProcessMap })
 $llamaProcesses = @($llamaProcessObjects |
     ForEach-Object { Get-SafeProcessRecord -Process $_ -ParentMap $parentProcessMap })
+$modelProcesses = @($modelProcessObjects |
+    ForEach-Object { Get-SafeProcessRecord -Process $_ -ParentMap $parentProcessMap })
+$buildProcesses = @($buildProcessObjects |
+    ForEach-Object { Get-SafeProcessRecord -Process $_ -ParentMap $parentProcessMap })
+$pythonProcesses = @($pythonProcessObjects |
+    ForEach-Object { Get-SafeProcessRecord -Process $_ -ParentMap $parentProcessMap })
 $physicalComplete = $null -ne $physical.total_physical_bytes -and $null -ne $physical.available_physical_bytes
 $commitComplete = $null -ne $committedBytes -and $null -ne $commitLimit
+$quietHost = $modelProcesses.Count -eq 0 -and $buildProcesses.Count -eq 0 -and $pythonProcesses.Count -eq 0
 $report = [ordered]@{
     schema = $contract
     generated_at_utc = [DateTimeOffset]::UtcNow.ToString("O")
@@ -379,12 +392,19 @@ $report = [ordered]@{
     gpu = Get-GpuSnapshot
     tracked_processes = @($trackedProcesses)
     llama_processes = @($llamaProcesses)
+    model_processes = @($modelProcesses)
+    build_processes = @($buildProcesses)
+    python_processes = @($pythonProcesses)
     admission = [ordered]@{
         llama_processes_absent = ($llamaProcesses.Count -eq 0)
+        model_processes_absent = ($modelProcesses.Count -eq 0)
+        build_processes_absent = ($buildProcesses.Count -eq 0)
+        python_processes_absent = ($pythonProcesses.Count -eq 0)
+        quiet_host = $quietHost
         physical_memory_probe_complete = $physicalComplete
         commit_probe_complete = $commitComplete
         owner_review_required = $true
-        status = if ($llamaProcesses.Count -gt 0) { "blocked" } elseif (-not $physicalComplete) { "blocked" } elseif (-not $commitComplete) { "blocked" } else { "review" }
+        status = if (-not $quietHost) { "blocked" } elseif (-not $physicalComplete) { "blocked" } elseif (-not $commitComplete) { "blocked" } else { "review" }
     }
     probe_errors = @($probeErrors)
     redaction = [ordered]@{
@@ -400,6 +420,6 @@ if ($AsJson) {
     Write-Output $json
 }
 else {
-    Write-Output "resource-preflight: $($report.admission.status); llama=$($llamaProcesses.Count); physical_probe=$physicalComplete; commit_probe=$commitComplete"
+    Write-Output "resource-preflight: $($report.admission.status); quiet=$quietHost; model=$($modelProcesses.Count); build=$($buildProcesses.Count); python=$($pythonProcesses.Count); physical_probe=$physicalComplete; commit_probe=$commitComplete"
     if ($probeErrors.Count -gt 0) { Write-Output "probe-errors=$($probeErrors.Count)" }
 }

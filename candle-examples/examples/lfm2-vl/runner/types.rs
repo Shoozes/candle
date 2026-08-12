@@ -7,6 +7,7 @@ pub struct InferenceRequest<'a> {
     pub vision_batch_size: usize,
     pub eos_token_id: Option<u32>,
     pub timings: bool,
+    pub benchmark_generation: bool,
     pub trace_output: Option<&'a Path>,
 }
 

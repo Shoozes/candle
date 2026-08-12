@@ -571,15 +571,17 @@ must fail closed rather than be treated as a review-only caveat.
 **Where:** `scripts/lfm2-vl/preflight.ps1` admission status and
 `test-preflight.ps1` schema assertions.
 
-**How to catch it:** Require `blocked` whenever a llama process, physical-memory
-probe, or committed-memory probe is unavailable; allow `review` only when both
-memory probes are complete.
+**How to catch it:** Require `blocked` whenever a recognized model/build
+process is present or a physical/committed-memory probe is unavailable; allow
+`review` only when the host is quiet and both memory probes are complete.
 
 **Solution:** The admission status now returns `blocked` for incomplete commit
-measurement while preserving the raw probe error and redaction contract.
+measurement or a non-empty model/build process set while preserving the raw
+process evidence, probe error, and redaction contract.
 
-**Evidence:** PowerShell 5.1 and 7 preflight smoke tests pass after the change;
-the current host has complete commit evidence and therefore reports `review`.
+**Evidence:** PowerShell 5.1 and 7 preflight smoke tests pass after the change.
+With the external EdgeSymbio Cargo owner active, the current host has complete
+memory evidence but correctly reports `blocked` and `quiet_host=false`.
 
 **Relevance check:** Current for every future Python/native/llama admission;
 never substitute a guessed commit limit.
@@ -1670,8 +1672,9 @@ exited and cleaned up without memory pressure.
 narrow matmul boundary; a focused CUDA regression covers the non-contiguous
 input case. The regression passed 1/1.
 
-**Next prevention step:** Profile this materialization in P4.4 before changing
-the layout contract or attempting fusion.
+**Next prevention step:** Keep the narrow materialization until a future,
+separately accepted optimization proves that changing the layout contract or
+attempting fusion preserves CUDA parity and clears the benchmark threshold.
 
 ## F-0045: `--text-cpu` Accidentally Forced Vision to CPU
 
@@ -1693,22 +1696,24 @@ matches the CPU baseline.
 **Next prevention step:** Keep device identity assertions in parser tests and
 runtime reports whenever a placement flag changes.
 
-## F-0046: CPU BF16 Matmul Fails Deep in Runtime
+## F-0046: CPU Low-Precision Matmul Fails Deep in Runtime
 
-Status: Controlled refusal for P4.3.
+Status: Controlled refusal for the supported device/dtype matrix.
 
-**What:** Explicit BF16 on a CPU component reaches Candle CPU matmul and fails
-with `unsupported dtype BF16 for op matmul`.
+**What:** Explicit BF16 or F16 on a CPU component can reach Candle CPU matmul
+and fail deep in model execution instead of reporting an actionable placement
+error.
 
 **Evidence:** The pre-guard bounded replay exited 1 after entering the model
 path; no model process remained and peak Job memory was 2,488,860,672 bytes.
 
 **Current solution:** Validate resolved component dtypes against placement
-before checkpoint loading. `--dtype bf16 --text-cpu` and the corresponding
-CPU-vision route now return an actionable error; all-CUDA BF16 remains green.
+before checkpoint loading. `--dtype bf16`/`f16` on a resolved CPU component now
+return an actionable error; all-CUDA BF16/F16 remain green.
 
-**Next prevention step:** Extend the supported placement/dtype matrix tests
-before adding another accelerator or dtype route.
+**Next prevention step:** Keep validation keyed to resolved `Device` values,
+including accelerator-helper fallback, and extend the supported placement/dtype
+matrix tests before adding another accelerator or dtype route.
 
 ## F-0047: P4.4 Timing Claims Need Exact Prompts and a Quiet Host
 
@@ -1733,14 +1738,14 @@ model, or llama process before each timing series. Record exact owner/log
 hashes and compare medians plus spread; do not retain a source change on a
 single noisy sample.
 
-**Next prevention step:** P4.4 must rerun the decode/cache microbenchmark only
-after a quiet preflight, then retain one optimization only if the exact
-official prompt, IDs, logits, cache reset, and bounded resource contract are
-unchanged and the measured improvement survives the stated variance bound.
+**Next prevention step:** Any future optimization proposal must start from a
+quiet preflight and the retained PERF-1 baseline, then preserve the exact
+official prompt, IDs, logits, cache reset, and bounded resource contract while
+meeting the stated improvement and variance thresholds.
 
 ## F-0048: Quiet-Host Preflight Can Time Out on an External Respawn Loop
 
-Status: Active environment blocker; no Candle failure.
+Status: Resolved for P4.5/PERF-1; recurring admission hazard.
 
 **What:** A safe wait-and-launch guard can remain blocked when an unrelated
 owner repeatedly recreates its Cargo process. The guard must not kill or adopt
@@ -1751,10 +1756,65 @@ Cargo/rustc/model/llama process timed out while
 `C:\Users\jc816\AppData\Local\Temp\es-*` EdgeSymbio proof work respawned.
 No LFM2-VL owner was launched by the timed-out attempt.
 
-**Current solution:** Leave the external owner untouched, record the timeout,
-and keep P4.4 open. Run the next exact-prompt timing series only after a
-stable quiet census or an operator-authorized, identity-checked stop of that
-external owner.
+**Current solution:** Leave the external owner untouched, record the blocked
+preflight, and coordinate a cooperative quiet window. P4.5 and PERF-1 waited
+for clean censuses and then completed under bounded owners. Future production
+runs must repeat the same identity-safe admission rather than assuming the
+environment remains quiet.
+
+## F-0049: Temporary Write-Enabled Backlog Workflow Was a Publication Hazard
+
+Status: Resolved locally; remote temporary branch is tree-equivalent but not yet deleted.
+
+**What:** The main tree contained a one-shot workflow with `contents: write`
+that rewrote status/context files, committed, and pushed its own changes. Its
+stale heading assumptions could also have produced false closeout records.
+
+**Evidence:** `.github/workflows/lfm2-vl-backlog-harness.yml` was present in
+the current `main` tree and referenced the temporary closeout branch. The file
+was deleted and all current non-history references were removed. The remote
+`agent/lfm2-vl-backlog-closeout` branch is not an ancestor of current `main`
+because the work landed as a squash. A direct tree comparison proves its head
+`52342156` is byte-identical to main commit `6ea6aef5`, so it contains no unique
+file state.
+
+**Current solution:** Keep publication owner-reviewed and local-only; use
+explicit WSL Git plus the guarded push helper for reviewed fast-forward work.
+Do not repair, disable, or re-enable the self-mutating workflow.
+
+**Next prevention step:** Delete only the temporary remote branch through an
+explicitly authorized remote-hygiene path; retain `feat/lfm2-vl-mmproj`. Do not
+weaken the main-only push helper to perform branch deletion.
+
+## F-0050: Python Work Must Participate in Quiet-Host Admission
+
+Status: Resolved in `preflight.ps1` and its cross-version smoke contract.
+
+**What:** The preflight listed Python processes in its general census but did
+not include them in `quiet_host`, so an active Python workload could coexist
+with `status=review`.
+
+**Why:** Python can own a reference oracle, test suite, converter, or model
+runtime. Process-name ambiguity is not permission to overlap it with a CUDA
+build or production inference, especially after an OOM incident.
+
+**Where:** `scripts/lfm2-vl/preflight.ps1` admission fields and
+`test-preflight.ps1` array/name/review assertions.
+
+**How to catch it:** Require a dedicated `python_processes` array and
+`python_processes_absent` admission field. `review` requires model, build, and
+Python process sets all to be empty; owner review still decides whether other
+tracked processes are relevant.
+
+**Evidence:** The first P4.5 preflight saw a separate Python tree with about
+1.84 GB private memory while reporting `quiet_host=true`. Candle waited for
+that tree to exit naturally, captured a second empty census, and only then
+started the CUDA build. PowerShell 7 and Windows PowerShell 5.1 smoke tests
+pass after adding Python to admission.
+
+**Relevance check:** Current for every production build, Python oracle, native
+inference, and performance benchmark; do not terminate an unidentified Python
+process to obtain admission.
 
 ---
-AI-edited: 2026-08-11T21:20:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=p4-4 | change=logged recurring external-owner quiet-preflight timeout without starting an invalid benchmark
+AI-edited: 2026-08-11T23:22:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=closed the quiet-window blocker and added Python to fail-closed admission

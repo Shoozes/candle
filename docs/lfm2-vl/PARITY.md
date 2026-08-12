@@ -2,13 +2,13 @@
 
 ## Current State
 
-The deterministic fixture phases, official 450M native Windows CPU-F32 component gate, and official 1.6B native Windows CPU-F32 component gate are green. Candle and pinned llama.cpp also executed the same official Q4_0 text GGUF plus Q8_0 MMProj and produced the exact decoded text `The image features` under bounded CPU runs. The 1.6B comparison uses one pinned regular-file snapshot, one deterministic image, the official rendered prompt, 51 processor/vision/projector/merge/language tensors, three cached decode steps, exact reset replay, and before/after resource evidence. Native CUDA, lower-bit production MMProj execution, llama.cpp component/logit equality, and the optional WSL portability replay remain unclaimed.
+The deterministic fixture phases, official 450M native Windows CPU-F32 component gate, and official 1.6B native Windows CPU-F32 component gate are green. Candle and pinned llama.cpp also executed the same official Q4_0 text GGUF plus Q8_0 MMProj and produced the exact decoded text `The image features` under bounded CPU runs. The 1.6B comparison uses one pinned regular-file snapshot, one deterministic image, the official rendered prompt, 51 processor/vision/projector/merge/language tensors, three cached decode steps, exact reset replay, and before/after resource evidence. The official 450M matrix is green for CPU/CPU F32, all-CUDA F32/BF16/F16, CPU-text/CUDA-vision F32, and CUDA-text/CPU-vision F32. Lower-bit production MMProj execution, llama.cpp component/logit equality, and the optional broad WSL portability replay remain later.
 
 ## Required Gates
 
 | Gate | Required evidence | Phase status |
 | --- | --- | --- |
-| Native Windows workspace baseline | Locked CPU-only Candle checks under MSVC plus diff/manifest gates | Green for the current source tree: bounded offline core/transformer/VLM and example tests/checks passed; read-only WSL Git replay now passes `git diff --check` and the 94-path mod-manifest gate. |
+| Native Windows workspace baseline | Locked CPU-only Candle checks under MSVC plus diff/manifest gates | Green for the current source tree: bounded offline core/transformer/VLM and example tests/checks passed; read-only WSL Git replay passes `git diff --check` and the 141-path mod-manifest gate. |
 | WSL portability baseline | Locked CPU-only Candle checks and diff/manifest gates from Linux home | Secondary replay green; Phase 7 staged log SHA-256 `ff46cc0b23a28050ffe856be2cb81ef7144667977587021f1d3cd221e00ed330` and current consolidated baseline green |
 | Reference fixture | Deterministic pinned-Python export with component and multimodal tensors | Green; 87 tensors, byte-identical independent exports; manifest SHA-256 `c5461dadb0edfd920b20f308650c59676977110a1cc2f199e317dea7d75bdd7b` |
 | LFM2 text configuration | 450M effective FFN width `4608`; 1.6B width `8192` | Green in config tests and header evidence |
@@ -30,9 +30,9 @@ The deterministic fixture phases, official 450M native Windows CPU-F32 component
 | Local same-artifact oracle | Identical text GGUF, MMProj, tokenizer, processor policy, image, prompt framing, context, and deterministic decode settings in Candle and llama.cpp | Green for the local fine-tuned text GGUF plus byte-identical official Q8_0 MMProj: 608x416, 247 image tokens, 268 prompt tokens, and exact eight-token output agreement |
 | Official MMProj header contract | Pinned F16/Q8_0 metadata, names, physical shapes, dtype placement, and zero-payload evidence | Green; 32 metadata records, 201 tensors, tensor-data offset 12,736, no retained payload bytes |
 | Official text GGUF identity | Immutable official source, full-file size/SHA-256, payload-free bounded header, text/tokenizer metadata, quantization placement, and separation from the local derivative | Green; 219,311,264 bytes, SHA-256 `6d2757dd0f0b98aea7dc90477bb5b3a0df1089be85ef92943f8cecb05121ccbf`, 39 metadata records, 148 tensors, exact physical/declared extent |
-| Distinct devices | Vision and text may differ; only projected image features cross at merge | Public `--text-cpu` route and official 450M CPU-text/CUDA-vision F32 parity are green; optional WSL replay remains secondary |
+| Distinct devices | Vision and text may differ; only projected image features cross at merge | Public component placement plus official 450M CPU-text/CUDA-vision and CUDA-text/CPU-vision F32 parity are green; optional WSL replay remains secondary |
 | Official 450M production checkpoint | Pinned Transformers versus native Candle processor, vision, projector, merge, prefill, cached-decode, artifact, replay, and cleanup evidence | Green on native Windows CPU F32; 36/36 tensors, zero failures, exact input tensors and reset, comparison SHA-256 `caaae9ad159ec8370007169bd7c486ccff96f8b547ea6a113685f0c8703bbbac` |
-| Remaining production checkpoints and GGUF | Same-artifact official-base GGUF, 1.6B, CUDA, and lower-bit numerical validation | Official-base GGUF identity and both bounded runtime replays are green at every shared stable field; 1.6B artifact/config/load, Python/native traces, and phase-specific comparison are green; 450M CUDA F32/BF16 parity is green; lower-bit production CUDA remains |
+| Remaining production checkpoints and GGUF | Same-artifact official-base GGUF, 1.6B, complete native 450M device/dtype matrix, and lower-bit numerical validation | Official-base GGUF identity and both bounded runtime replays are green at every shared stable field; 1.6B artifact/config/load, Python/native traces, and phase-specific comparison are green; the complete advertised 450M matrix is green; lower-bit production CUDA remains deferred |
 
 ## Native Windows 450M Load-Only Evidence
 
@@ -123,7 +123,7 @@ The example automatically selects native Q8 for valid F32 Q8 artifacts and repor
 
 ## Native Unified Loader Evidence
 
-The local native loader accepts the official unified namespace without file renaming and supports one safetensors file or an indexed shard set. It bounds and validates the complete header/index inventory before memory mapping, resolves tied versus explicit output weights, pairs processor and tokenizer semantics with model configuration, and reports roots, shards, bytes, dtypes, devices, and all inventory defects. Its 19 focused tests construct real tiny checkpoint files and compare the generated official 450M/1.6B inventories against canonical sorted name/BF16/shape digests from zero-payload pinned header reads. This is loader proof, not production numerical parity. The feature-gated native CUDA test is construction-only; native CUDA inference remains unclaimed.
+The local native loader accepts the official unified namespace without file renaming and supports one safetensors file or an indexed shard set. It bounds and validates the complete header/index inventory before memory mapping, resolves tied versus explicit output weights, pairs processor and tokenizer semantics with model configuration, and reports roots, shards, bytes, dtypes, devices, and all inventory defects. Its 19 focused tests construct real tiny checkpoint files and compare the generated official 450M/1.6B inventories against canonical sorted name/BF16/shape digests from zero-payload pinned header reads. This is loader proof, not production numerical parity. Production CUDA claims are recorded separately in P4.3 and P4.5.
 
 ## Local llama.cpp Oracle Boundary
 
@@ -153,7 +153,7 @@ Three bundles remain deliberately separate: legacy b9981 incident evidence; user
 
 The earlier P3.2 admission paragraphs above were written before the native run and are superseded by this addendum. The bounded native Candle load-only proof is green: the immediate pre-load artifact rehash preserved the eight-file snapshot and manifest SHA-256 `b8d582c40214a1a8df82f21ece21fb683a5e5377c7c03b4fba0e97feb865e585`; executable SHA-256 was `338ebcbf02dbac13fabf6ce9115bdb3a91fc3316a84a9c23e1ad304fbd900d9a`; PID 15792 exited 0 in 2,264 ms under the 12 GiB bound with peak Job memory 6,433,579,008 bytes and exact cleanup. The loader reported 589 tensors, one shard, CPU F32 for vision/text, expected roots, tied output, and tokenizer image token 396. No inference or trace payload was generated. External owner evidence is `C:\DevStuff\candle-oracle\evidence\p3-1.6b-native-load-owner-20260811T204250Z.json`; combined log SHA-256 is `8c8395c2da88d76848fc66830a50c42bfee02b88e291bb27592808ae8acaee3e`.
 
-P3.1 through P3.5 are green; CUDA, lower-bit production MMProj, llama.cpp component/logit equality, and optional WSL replay remain unclaimed.
+P3.1 through P3.5 are green. The later P4.3/P4.5 sections own native CUDA claims; lower-bit production MMProj, llama.cpp component/logit equality, and optional WSL replay remain unclaimed.
 
 ## P3.3 Official 1.6B Python Component Trace
 
@@ -225,9 +225,9 @@ Sequential bounded runs prove the two supported F32 placements:
 - All-CUDA F32 exited 0, peaked at 3,474,706,432 Job bytes, and left PID 14684 absent. Owner SHA-256 is `346925d6be44621b5b03d5c10ca1b69d06c5b279bfb63fabd0d8351ebc82de77`; log SHA-256 is `2991fedc58de944dbe7065cf0a824ec8e6460dce68a4d2ee601a17768c30c076`.
 - CPU-text/CUDA-vision F32 exited 0, peaked at 3,241,332,736 Job bytes, and left PID 28720 absent. Owner SHA-256 is `42340a9659dbfa1b889715fd9abd94556c2b1e55b9f2b38d7635e7fb7912d63a`; log SHA-256 is `f92322fd8ce307701220767da0da0c974bcfe62d0d38f63c811b973ac33d05b0`.
 
-Both routes generated `[1098, 4646, 5251]`, expanded the same prompt, projected 64 image tokens, reset the cache exactly, and matched the CPU baseline's top-k IDs at all three steps. Maximum displayed top-k drift was approximately `3.960059e-5` all-CUDA and `2.660059e-5` CPU-text/CUDA-vision. All-CUDA BF16 also exited 0 with peak Job memory 2,783,182,848 bytes (owner SHA-256 `b01977d99ea6dd5fb64ad8d552bc4a932d3e6654356fc706a755024f4a174e94`; log SHA-256 `c143193787e869864e8c071abc9fa72b4a580ea93d3d75657dfa7e040cec8764`). Explicit BF16 on a CPU component is intentionally rejected before model load; guarded exit-1 evidence owner SHA-256 is `2317d3bc44650f0b35862ed139eee4d86be10cc07f5541e58d7eb8b8c194f465`, log SHA-256 `e1a4285ea5bcc186d869a214defc8b04754414ba1714a7dddbf53c5a21e6f78`.
+Both routes generated `[1098, 4646, 5251]`, expanded the same prompt, projected 64 image tokens, reset the cache exactly, and matched the CPU baseline's top-k IDs at all three steps. Maximum displayed top-k drift was approximately `3.960059e-5` all-CUDA and `2.660059e-5` CPU-text/CUDA-vision. All-CUDA BF16 also exited 0 with peak Job memory 2,783,182,848 bytes (owner SHA-256 `b01977d99ea6dd5fb64ad8d552bc4a932d3e6654356fc706a755024f4a174e94`; log SHA-256 `c143193787e869864e8c071abc9fa72b4a580ea93d3d75657dfa7e040cec8764`). Explicit BF16 or F16 on a resolved CPU component is intentionally rejected before model load; guarded BF16 exit-1 evidence owner SHA-256 is `2317d3bc44650f0b35862ed139eee4d86be10cc07f5541e58d7eb8b8c194f465`, log SHA-256 `e1a4285ea5bcc186d869a214defc8b04754414ba1714a7dddbf53c5a21e6f78`. The guard uses resolved devices so an accelerator helper that falls back to CPU cannot bypass the rejection.
 
-The gate required two source fixes: CUDA `I32 -> F32` cast registration for packed masks and contiguous materialization before dense CUDA matmul. The public `--text-cpu` path now constructs CUDA vision independently instead of inheriting the CPU text device. P4.3 is green for the admitted native 450M placements; P4.4 now owns measured CUDA optimization.
+The gate required two source fixes: CUDA `I32 -> F32` cast registration for packed masks and contiguous materialization before dense CUDA matmul. The public `--text-cpu` path now constructs CUDA vision independently instead of inheriting the CPU text device. P4.3 is green for the admitted native 450M placements; P4.4 subsequently owned the diagnostic baseline and is closed below.
 
 ## P4.4 Diagnostic Timing Baseline
 
@@ -260,18 +260,55 @@ externally under `C:\DevStuff\candle-oracle\evidence` with owner/log hashes:
 `6ec4f82dc8a0cbe30ace447c963345dbee7757c78d4d9cdfe18904d3c2cb9f0a`.
 
 The timing-only probe does not change the versioned JSON evidence contract.
-Generation is the largest measured stage, but token-count narrowing showed
-warm-up and runtime variance, so no optimization is claimed yet. The next
-P4.4 action is a decode/cache microbenchmark with repeated warm-up and an
-explicit variance bound before changing one generation hot path.
+CUDA devices are synchronized around timed device work and the output is
+labeled `sync=cuda-device-complete`; evidence extraction remains outside an
+isolated generation claim. Generation is the largest measured stage, but
+token-count narrowing showed warm-up and runtime variance, so no optimization
+was retained from that diagnostic.
+
+## P4.5 Resolved Device/Dtype Matrix and PERF-1
+
+The source-matching CUDA release executable is 65,076,736 bytes with SHA-256
+`7a9261f6808b09ffab0963f5c015661c515534c6b949ac4893f4fa8cbe0023a2`.
+The bounded offline rebuild exited 0 in 83,383 ms, peaked at 2,065,166,336 Job
+bytes, and left its PID absent. It consumed the same admitted 450M artifact
+(manifest SHA-256
+`659c8421530586b6cc28c094cfcdc69719ea8626f2abc0efd9eec4ac2a68a984`)
+and deterministic image (SHA-256
+`f902f8d2e47e53eafac86831cfc692001dc15870eb81d57abc3128f048d2efca`).
+
+Six sequential 12 GiB-bounded runs prove the complete public matrix:
+
+- CPU/CPU F32: exit 0; peak Job 2,412,109,824 bytes.
+- All-CUDA F32: exit 0; peak Job 3,474,620,416 bytes.
+- All-CUDA BF16: exit 0; peak Job 2,782,670,848 bytes.
+- All-CUDA F16: exit 0; peak Job 3,002,773,504 bytes.
+- CPU-text/CUDA-vision F32: exit 0; peak Job 3,207,000,064 bytes.
+- CUDA-text/CPU-vision F32: exit 0; peak Job 3,326,500,864 bytes.
+
+Every route used the exact rendered prompt and admitted model/image hashes,
+expanded one image to 64 tokens, produced `[1098, 4646, 5251]`, matched the
+CPU baseline prefill top-5 ID order, reset the cache exactly, and left its
+owner PID absent. BF16/F16 remain deliberately rejected before loading when
+either resolved component is CPU.
+
+PERF-1 then ran on a separate quiet-host all-CUDA F32 lane. Ten warm-ups and
+thirty measured direct prefill/greedy/cached-decode iterations produced median
+458.0633 ms, MAD 9.82745 ms, and 2.1454% relative MAD against a 5% ceiling.
+Generated IDs and the ordinary inference report remained exact. The benchmark
+owner exited 0, peaked at 3,475,435,520 Job bytes, and left its PID absent;
+owner/log SHA-256 values are
+`a6f15d637ed340de9c7aa2188ae9e64c2e13964708244e7c0afcb7a017dd9066` /
+`2660209b7adc9b26eb204d50a165d78f85145b84532f8922b6fbdadc72a6e541`.
+The earlier candidate remains rejected because it did not prove the required
+10% quiet-host improvement. No optimization is retained.
 
 ## Next Parity Task
 
-NR-5B, the official-base GGUF same-artifact comparison, P3.1–P3.5, P4.1,
-P4.2, and P4.3 are green. P4.4's stage-timed baseline is captured; next,
-measure the decode/cache hot path with repeated warm-up, change one measured
-bottleneck, and replay CPU/CUDA parity. Lower-bit CUDA and the optional WSL
-replay remain later lanes.
+NR-5B, the official-base GGUF same-artifact comparison, P3.1–P3.5, P4.1–P4.5,
+and PERF-1 are green. There is no active MVP parity task. Lower-bit CUDA,
+video, batching, WebGPU, and the optional broad WSL replay remain deferred
+lanes that require separate acceptance contracts.
 
 ---
-AI-edited: 2026-08-11T19:30:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=p4-3 | change=recorded official 450M CUDA F32/BF16 parity and advanced the active gate to measured optimization
+AI-edited: 2026-08-11T23:22:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=recorded the complete matrix, mixed placements, and stable PERF-1 baseline

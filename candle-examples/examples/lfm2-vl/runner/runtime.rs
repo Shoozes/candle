@@ -4,6 +4,13 @@ trait Runtime {
     fn default_eos_source(&self) -> &'static str;
     fn vision_device(&self) -> &Device;
     fn text_device(&self) -> &Device;
+    fn synchronize_devices(&self) -> Result<()> {
+        self.vision_device().synchronize()?;
+        if !self.vision_device().same_device(self.text_device()) {
+            self.text_device().synchronize()?;
+        }
+        Ok(())
+    }
     fn reset(&mut self) -> Result<()>;
     fn encode_images(
         &mut self,
