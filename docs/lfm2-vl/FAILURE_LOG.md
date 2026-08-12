@@ -1764,7 +1764,7 @@ environment remains quiet.
 
 ## F-0049: Temporary Write-Enabled Backlog Workflow Was a Publication Hazard
 
-Status: Resolved locally; remote temporary branch is tree-equivalent but not yet deleted.
+Status: Resolved locally and remotely.
 
 **What:** The main tree contained a one-shot workflow with `contents: write`
 that rewrote status/context files, committed, and pushed its own changes. Its
@@ -1778,13 +1778,18 @@ because the work landed as a squash. A direct tree comparison proves its head
 `52342156` is byte-identical to main commit `6ea6aef5`, so it contains no unique
 file state.
 
-**Current solution:** Keep publication owner-reviewed and local-only; use
-explicit WSL Git plus the guarded push helper for reviewed fast-forward work.
-Do not repair, disable, or re-enable the self-mutating workflow.
+**Current solution:** The workflow is absent from `main`. After exact owner
+authorization, an identity-pinned one-shot helper re-fetched remote head
+`52342156`, reconfirmed tree `cf30d53a` against integrated commit `6ea6aef5`,
+deleted only `agent/lfm2-vl-backlog-closeout`, and verified it absent.
+Historical `feat/lfm2-vl-mmproj` remains unchanged. Publication stays
+owner-reviewed through explicit WSL Git and guarded exact-ref helpers; do not
+repair, disable, or re-enable the self-mutating workflow.
 
-**Next prevention step:** Delete only the temporary remote branch through an
-explicitly authorized remote-hygiene path; retain `feat/lfm2-vl-mmproj`. Do not
-weaken the main-only push helper to perform branch deletion.
+**Next prevention step:** Keep temporary write-enabled workflows out of the
+publication tree. Any future temporary-ref cleanup requires a fresh remote
+identity/tree proof and explicit authorization naming the exact ref; the normal
+push helper remains unable to delete branches.
 
 ## F-0050: Python Work Must Participate in Quiet-Host Admission
 
@@ -1817,4 +1822,4 @@ inference, and performance benchmark; do not terminate an unidentified Python
 process to obtain admission.
 
 ---
-AI-edited: 2026-08-11T23:22:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=closed the quiet-window blocker and added Python to fail-closed admission
+AI-edited: 2026-08-11T23:46:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=closed the temporary workflow and remote branch hazard with exact-ref evidence

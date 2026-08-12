@@ -1309,5 +1309,30 @@ deferred to TODO C3; no network or toolchain install was substituted.
   tag type/peel checks, local documentation/context/manifest gates, and final
   remote-ref verification.
 
+## 2026-08-12 — Final remote hygiene and MVP snapshot
+
+- What: Removed the proven temporary agent branch, reconciled current-state
+  documentation, and recreated the annotated MVP tag at final clean `main`.
+- Why: The release contract requires no temporary closeout infrastructure and
+  requires the remote clean head and immutable tag to identify the same state.
+- When: After all implementation, six-route production parity, PERF-1, local
+  source gates, release documentation, and exact owner authorization were
+  complete.
+- Where: Remote branch `agent/lfm2-vl-backlog-closeout`, annotated tag
+  `lfm2-vl-mvp-0.1.0`, `STATUS.md`, `FAILURE_LOG.md`, and this history record.
+- How: Re-fetched and pinned branch head `52342156`, proved tree `cf30d53a`
+  equal to integrated commit `6ea6aef5`, deleted only that branch, retained
+  `feat/lfm2-vl-mmproj`, verified the old annotated tag object before its
+  approved removal, then fast-forwarded reviewed docs and recreated the same
+  annotated tag at exact final `main` without force.
+- Done when: The temporary branch and workflow are absent; the historical
+  branch remains; TODO has zero active release items; worktree and remote main
+  are clean; and the annotated tag peels to exact remote main. These conditions
+  are met after final publication.
+- Verification: Identity-pinned dry runs, exact approval-phrase guards,
+  cross-version summary-bank checks, relative-link and mod-manifest gates,
+  staged/committed diff checks, guarded fast-forward main/tag publication, and
+  final `ls-remote` equality/absence checks.
+
 ---
-AI-edited: 2026-08-11T23:28:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-tag | change=archived guarded annotated release-tag publication controls
+AI-edited: 2026-08-11T23:46:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=archived final remote hygiene and immutable MVP publication

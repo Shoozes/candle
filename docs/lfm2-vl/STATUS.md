@@ -11,10 +11,14 @@
 - Historical implementation checkpoint:
   `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on
   `feat/lfm2-vl-mmproj`.
-- Current reviewed parent before this release slice:
-  `95c067f7cc9a702575b5b7c0f400ca3aa3ff1386`. Implementation closeout commit
-  `7601b766538d591157d7ac51015a20352a7e7cc0` is published on `main`; the final
-  guarded tag-policy commit and annotated tag own the post-slice identity.
+- This release series began at reviewed parent
+  `95c067f7cc9a702575b5b7c0f400ca3aa3ff1386`; implementation closeout commit
+  `7601b766538d591157d7ac51015a20352a7e7cc0` and guarded tag-policy commit
+  `0ebb5eb2612f38f4bb4138fa3321a6fefd790737` are preserved in its history.
+- Final snapshot boundary: current `main` and annotated tag
+  `lfm2-vl-mvp-0.1.0`. Their peeled commit equality is required and verified
+  after publication; use live Git revision checks rather than embedding this
+  document's self-referential commit SHA.
 - Current overlay relative to the upstream integration base: 141 allowlisted
   paths, exactly 14 fork-origin modifications and 127 mod-owned additions.
 
@@ -32,7 +36,7 @@
 ## Current Phase
 
 - Product phase: post-Phase 7 production stabilization.
-- Release posture: feature-complete MVP release candidate, not LTS.
+- Release posture: first feature-complete MVP snapshot, not LTS.
 - NR-5B official 450M CPU-F32 component parity, official-base GGUF
   same-artifact output, official 1.6B CPU-F32 component parity, public device
   placement, tiny distinct-device CUDA proof, official 450M CUDA parity,
@@ -134,38 +138,28 @@
 
 ## Blockers
 
-- No implementation, parity, safety, test, or performance blocker remains for
-  the defined MVP.
-- Remote hygiene is not complete: `agent/lfm2-vl-backlog-closeout` still
-  exists. Its remote head `52342156dcc20d8351a96ac8901293e972681bbb` has tree
-  SHA-1 `cf30d53a81248fba4a5f0ab30fca7fec7d0aacc0`, exactly matching integrated
-  main commit `6ea6aef5`; deletion therefore risks no unique file state, but
-  the managed approval layer requires a fresh exact authorization naming that
-  branch. Retain `feat/lfm2-vl-mmproj`.
-- The complete local diff and verification gate are reviewed. Final main/tag
-  publication is the remaining release action. The guarded
-  `.tools/gitpush.ps1` must not delete branches, force-push, or publish
-  unrelated refs.
+- No implementation, parity, safety, test, performance, publication, or remote
+  hygiene blocker remains for the defined MVP.
+- Temporary branch `agent/lfm2-vl-backlog-closeout` was deleted only after its
+  head/tree matched integrated state and the owner explicitly authorized the
+  exact ref. Historical `feat/lfm2-vl-mmproj` remains at its checkpoint.
+- Final `main` and annotated tag publication use guarded exact-ref helpers; no
+  force-push, pull request, or unrelated ref mutation is part of this release.
 - Hosted GitHub Actions state is intentionally not a blocker or verification
   dependency.
 
 ## Active Files
 
-- The working release slice contains resolved-device dtype validation/tests,
-  synchronized diagnostics, the isolated benchmark and regression coverage,
-  removal of the temporary workflow, release discoverability/support docs,
-  quiet-host preflight hardening, verifier portability fixes, context routes,
-  and this consolidated handoff.
+- No source or documentation file remains under active MVP work. The release
+  worktree is required to remain clean at handoff.
 - Models, downloads, caches, logs, owner evidence, generated traces, and
   `.tools/.secrets/` remain external or ignored.
 
 ## Exact Next Task
 
-Publish the reviewed fast-forward release commit on `main` through
-`.tools/gitpush.ps1`, create and publish annotated tag `lfm2-vl-mvp-0.1.0`,
-and verify both remote refs resolve to the same commit. Delete only the
-already-proven temporary remote branch after fresh exact owner authorization.
-Then stop; do not start another product phase implicitly.
+No active MVP task remains. Stop at this snapshot. Any maintenance release,
+LTS work, deferred feature, new backend, or optimization requires a separate
+What/Why/When/Where/How/Done-when/Verification contract before implementation.
 
 ---
-AI-edited: 2026-08-11T23:28:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-tag | change=recorded published implementation closeout and final guarded tag handoff
+AI-edited: 2026-08-11T23:46:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=recorded complete remote hygiene and the immutable MVP snapshot boundary
