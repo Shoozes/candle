@@ -351,7 +351,13 @@ mod tests {
         assert!(median_and_mad(&[f64::MAX, f64::MAX])?.0.is_finite());
         assert!(median_and_mad(&[]).is_err());
         assert!(median_and_mad(&[f64::NAN]).is_err());
+        let zero_duration = median_and_mad(&[0.0]).expect_err("zero duration was accepted");
+        assert!(zero_duration.to_string().contains("positive"));
         assert!(median_and_mad(&[-1.0]).is_err());
+        assert!(ensure_benchmark_reaches_decode(&[1, 2]).is_ok());
+        let prefill_only =
+            ensure_benchmark_reaches_decode(&[1]).expect_err("prefill-only benchmark was accepted");
+        assert!(prefill_only.to_string().contains("cached decode"));
         assert!(ensure_benchmark_ids(0, "measured", &[1, 2], &[1, 3]).is_err());
         Ok(())
     }

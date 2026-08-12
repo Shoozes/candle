@@ -175,7 +175,7 @@
       ]
     },
     "workflow__reference_environment": {
-      "description": "Platform-specific Python oracle pins, resolved locks, import-light environment verification, and their owning documentation/tests.",
+      "description": "Platform-specific Python oracle pins, resolved locks, import-light environment verification, managed-sandbox diagnosis, and their owning documentation/tests.",
       "status": "active",
       "paths": [
         "tools/lfm2_vl/README.md",
@@ -184,7 +184,8 @@
         "tools/lfm2_vl/reference/verify_environment.py",
         "tools/lfm2_vl/reference/requirements-reference.in",
         "tools/lfm2_vl/reference/requirements-reference.txt",
-        "tools/lfm2_vl/reference/requirements-reference-windows.txt"
+        "tools/lfm2_vl/reference/requirements-reference-windows.txt",
+        "docs/lfm2-vl/FAILURE_LOG.md"
       ]
     },
     "workflow__gguf_artifact_inspection": {
@@ -282,8 +283,7 @@
         "scripts/lfm2-vl/test-preflight.ps1",
         "tools/lfm2_vl/README.md",
         "docs/lfm2-vl/FAILURE_LOG.md",
-        "docs/lfm2-vl/PARITY.md",
-        "docs/lfm2-vl/TODO.md"
+        "docs/lfm2-vl/PARITY.md"
       ]
     },
     "issue__production_trace_integrity": {
@@ -322,7 +322,6 @@
       "paths": [
         "AGENTS.md",
         "docs/lfm2-vl/START_HERE.md",
-        "docs/lfm2-vl/STATUS.md",
         "docs/lfm2-vl/TODO.md",
         "docs/lfm2-vl/FAILURE_LOG.md",
         "docs/lfm2-vl/MOD_MANIFEST.md"
@@ -336,6 +335,7 @@
         "README.md",
         "AGENTS.md",
         "docs/lfm2-vl/START_HERE.md",
+        "docs/lfm2-vl/STATUS.md",
         "docs/lfm2-vl/MOD_MANIFEST.md",
         "docs/lfm2-vl/SOURCES.md",
         "docs/lfm2-vl/LICENSE_NOTES.md",

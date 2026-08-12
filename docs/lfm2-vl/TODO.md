@@ -21,4 +21,4 @@ gates for the current LFM2.5-VL MVP and must not be reintroduced here without a
 scoped proposal and acceptance contract.
 
 ---
-AI-edited: 2026-08-11T23:12:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=archived P4.5 and PERF-1 with no active MVP release task
+AI-edited: 2026-08-12T00:36:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=maintenance-closeout | change=closed ENV-1 after exact Windows lock and 82-test verification

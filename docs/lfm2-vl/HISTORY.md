@@ -1334,5 +1334,36 @@ deferred to TODO C3; no network or toolchain install was substituted.
   staged/committed diff checks, guarded fast-forward main/tag publication, and
   final `ls-remote` equality/absence checks.
 
+## 2026-08-12 — Post-snapshot benchmark and context integrity
+
+- What: Hardened the isolated generation benchmark and reconciled current
+  entry-point, backlog, status, and context-bank state after MVP publication.
+- Why: A request for two tokens does not guarantee two generated IDs when EOS
+  occurs first, so the old lane could report a prefill-only timing as a cached
+  decode benchmark. Zero-duration samples could also be labeled stable, and
+  `START_HERE.md` still described the already-tagged snapshot as a candidate.
+- When: During the first post-snapshot repository-integrity pass.
+- Where: The LFM2-VL runner benchmark and tests, example README,
+  `START_HERE.md`, `STATUS.md`, `TODO.md`, `HISTORY.md`, `FAILURE_LOG.md`, and
+  `summary_bank.json`.
+- How: Require the baseline to contain at least two generated IDs before any
+  warm-up, accept only positive finite durations, keep the output schema
+  unchanged, replace stale release wording, move existing context ownership
+  instead of adding an overlapping group. Recheck the ignored pinned Python
+  environment outside the managed sandbox after the sandbox denied access to
+  its external base interpreter.
+- Done when: Early-EOS and zero-duration cases fail explicitly; full example
+  and affected library tests, formatting, strict targeted Clippy, import and
+  module checks, both summary-bank lanes, script smokes, links, JSON, manifest,
+  shell syntax, and diff checks pass; no model process is launched. These
+  conditions are met for the Rust/documentation slice.
+- Verification: Benchmark regression 1/1; LFM2-VL example 36/36; transformer
+  59/59; VLM 29/29; core 21/21; locked/offline affected checks and strict
+  example Clippy; nine module wrappers; PowerShell preflight and bounded-owner
+  smokes; 23 Markdown documents/50 relative links; nine JSON files; and WSL
+  141/14/127 manifest proof. The exact native Windows reference-environment
+  verifier passed Python 3.10.11, all 42 locked distributions, and the pinned
+  Transformers revision; the complete pytest suite passed 82/82 in 38.80s.
+
 ---
-AI-edited: 2026-08-11T23:46:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=archived final remote hygiene and immutable MVP publication
+AI-edited: 2026-08-12T00:36:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=maintenance-closeout | change=closed benchmark, context, and pinned-environment verification

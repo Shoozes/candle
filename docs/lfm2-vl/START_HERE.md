@@ -19,8 +19,11 @@ Phases 1 through 7 are checkpointed. `feat/lfm2-vl-mmproj` at
 `c9b60f0b906fa8fe70423295e2e1164648a8fa53` is the historical implementation
 checkpoint; owner-reviewed integration now lands directly on
 `Shoozes/candle:main` without a PR. The current release preserves Candle main
-through upstream base `6f74e7c390c717f8fd34f23ce02aceb058173370`; the
-current reviewed release parent is `95c067f7cc9a702575b5b7c0f400ca3aa3ff1386`.
+through upstream base `6f74e7c390c717f8fd34f23ce02aceb058173370`.
+Annotated tag `lfm2-vl-mvp-0.1.0` is the immutable first-MVP snapshot at
+`ff885586f6d44a3d9b9ac1724032cdf5f0155384`. `main` may advance through
+reviewed maintenance commits; do not move or reuse that tag. The tag and the
+then-current `main` peeled to the same commit when the snapshot was published.
 Native Windows is the product and release-proof platform; WSL2/Linux is a
 secondary portability replay. NR-5B official 450M native Windows CPU-F32
 component parity, P2 official-base GGUF same-artifact decoded-output
@@ -28,7 +31,7 @@ comparison, and P3 official 1.6B native CPU-F32 component parity are green.
 The admitted 3,198,084,631-byte regular snapshot, config/tokenizer/processor
 contract, 589-tensor inventory, Python/native load-only proofs, 51-tensor
 Python/native traces, exact reset, phase-specific comparison, and bounded
-cleanup all pass. The project is a feature-complete MVP release candidate, not
+cleanup all pass. The project has a first feature-complete MVP snapshot, not
 LTS: P4.1's minimal `--text-cpu` route, P4.2's smallest native
 CUDA/distinct-device fixture, P4.3's initial official 450M CUDA parity, and
 P4.5's complete CPU/CPU F32, all-CUDA F32/BF16/F16, and both mixed F32 routes
@@ -140,4 +143,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-11T23:28:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-tag | change=documented guarded annotated-tag publication after exact main equality
+AI-edited: 2026-08-12T00:27:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=maintenance-closeout | change=made the first-MVP tag immutable while allowing reviewed main maintenance

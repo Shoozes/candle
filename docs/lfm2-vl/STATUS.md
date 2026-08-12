@@ -15,10 +15,10 @@
   `95c067f7cc9a702575b5b7c0f400ca3aa3ff1386`; implementation closeout commit
   `7601b766538d591157d7ac51015a20352a7e7cc0` and guarded tag-policy commit
   `0ebb5eb2612f38f4bb4138fa3321a6fefd790737` are preserved in its history.
-- Final snapshot boundary: current `main` and annotated tag
-  `lfm2-vl-mvp-0.1.0`. Their peeled commit equality is required and verified
-  after publication; use live Git revision checks rather than embedding this
-  document's self-referential commit SHA.
+- First-MVP snapshot boundary: annotated tag `lfm2-vl-mvp-0.1.0` peels to
+  `ff885586f6d44a3d9b9ac1724032cdf5f0155384`. `main` may advance through
+  reviewed maintenance commits; the snapshot tag must not be moved or reused.
+  Verify current local/remote `main` equality with live Git revision checks.
 - Current overlay relative to the upstream integration base: 141 allowlisted
   paths, exactly 14 fork-origin modifications and 127 mod-owned additions.
 
@@ -37,6 +37,10 @@
 
 - Product phase: post-Phase 7 production stabilization.
 - Release posture: first feature-complete MVP snapshot, not LTS.
+- Maintenance posture: the post-snapshot integrity slice hardens the isolated
+  generation benchmark and reconciles current handoff/context docs. It is
+  published only when live `origin/main` equals the local commit containing
+  this document; verify that identity instead of inferring it from prose.
 - NR-5B official 450M CPU-F32 component parity, official-base GGUF
   same-artifact output, official 1.6B CPU-F32 component parity, public device
   placement, tiny distinct-device CUDA proof, official 450M CUDA parity,
@@ -45,10 +49,36 @@
 - CPU components are F32-only. BF16/F16 on any resolved CPU component fail
   before model loading; all-CUDA F32/BF16/F16 and both mixed F32 placements
   are production-proven on the official 450M checkpoint.
-- `TODO.md` has no active MVP implementation, parity, safety, or performance
-  task. Future scope must be promoted through a new acceptance contract.
+- `TODO.md` has no active MVP implementation, parity, safety, performance, or
+  environment task. Future product scope requires a new acceptance contract.
 
 ## Last Green Verification
+
+### Current maintenance worktree
+
+- The benchmark now rejects a baseline that stops before producing two token
+  IDs, so an early EOS cannot silently turn the cached-decode benchmark into a
+  prefill-only measurement. Non-positive or non-finite duration samples also
+  fail instead of being classified as stable.
+- Focused benchmark regression passed 1/1; the complete LFM2-VL example suite
+  passed 36/36. Locked/offline two-job checks passed for `candle-core`,
+  `candle-nn`, `candle-transformers`, `candle-vlm`, and all three LFM2
+  examples. Strict targeted example Clippy and workspace formatting passed.
+- Default-feature library tests passed for core 21/21, transformers 59/59,
+  and VLM 29/29. Cargo metadata resolved the workspace and public example
+  targets without a network request.
+- Both PowerShell summary-bank lanes pass below 256 KiB; current
+  `summary_bank.json` SHA-256 is
+  `f873720efe2771573afdae1617eedb991129a0ad8141118b546ecee820b13954`.
+  Module-layout, PowerShell preflight/oracle smokes, WSL shell syntax and
+  141/14/127 manifest checks, 23-document relative-link checks, nine JSON
+  parses, Python syntax validation, formatting, and `git diff --check` pass.
+- The exact native Windows reference-environment verifier passed Python
+  3.10.11, all 42 locked distributions, and the pinned Transformers revision;
+  the complete reference suite passed 82/82 in 38.80s. The earlier launcher
+  failure was a managed-sandbox denial, not a broken venv; see F-0051.
+- No production checkpoint, llama.cpp process, CUDA inference, or concurrent
+  large-model run was started for this maintenance slice.
 
 ### Production evidence
 
@@ -74,7 +104,7 @@
   No model-math, processor, tokenizer, loading, or tensor-layout path changed
   after that proof, so the expensive Python/native traces were not repeated.
 
-### Current source tree
+### Published snapshot source gate
 
 - Clean admission record:
   `C:\DevStuff\candle-oracle\evidence\release-closeout-preflight-20260812T025925Z.json`,
@@ -143,23 +173,29 @@
 - Temporary branch `agent/lfm2-vl-backlog-closeout` was deleted only after its
   head/tree matched integrated state and the owner explicitly authorized the
   exact ref. Historical `feat/lfm2-vl-mmproj` remains at its checkpoint.
-- Final `main` and annotated tag publication use guarded exact-ref helpers; no
-  force-push, pull request, or unrelated ref mutation is part of this release.
+- Maintenance `main` publication uses the guarded exact-ref helper; the
+  first-MVP tag remains immutable. No force-push, pull request, or unrelated
+  ref mutation is part of this maintenance slice.
 - Hosted GitHub Actions state is intentionally not a blocker or verification
   dependency.
 
 ## Active Files
 
-- No source or documentation file remains under active MVP work. The release
-  worktree is required to remain clean at handoff.
+- No source or documentation file remains under active implementation. During
+  closeout, the reviewed publication allowlist is limited to benchmark
+  validation/tests, the example README, `START_HERE.md`, `STATUS.md`,
+  `TODO.md`, `HISTORY.md`, `FAILURE_LOG.md`, and `summary_bank.json`; after
+  publication the worktree must be clean.
 - Models, downloads, caches, logs, owner evidence, generated traces, and
   `.tools/.secrets/` remain external or ignored.
 
 ## Exact Next Task
 
-No active MVP task remains. Stop at this snapshot. Any maintenance release,
-LTS work, deferred feature, new backend, or optimization requires a separate
-What/Why/When/Where/How/Done-when/Verification contract before implementation.
+If live `origin/main` differs from the reviewed local `main`, publish only the
+accepted nine-path maintenance commit through the guarded helper and verify
+exact equality. Otherwise stop at the clean snapshot. Any maintenance release,
+LTS work, deferred feature, new backend, or optimization still requires its
+own acceptance contract.
 
 ---
-AI-edited: 2026-08-11T23:46:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=recorded complete remote hygiene and the immutable MVP snapshot boundary
+AI-edited: 2026-08-12T00:36:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=maintenance-closeout | change=closed the environment false positive and prepared guarded main publication

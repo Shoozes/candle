@@ -1821,5 +1821,36 @@ pass after adding Python to admission.
 inference, and performance benchmark; do not terminate an unidentified Python
 process to obtain admission.
 
+## F-0051: Managed Sandbox Denial Can Mimic a Broken Python Venv
+
+Status: Diagnosed and resolved as an execution-boundary false positive.
+
+**What:** Starting the ignored `.venv` from the managed workspace sandbox
+reported `Unable to create process` and `Access is denied` for its external
+Python 3.10.11 base interpreter. The same files therefore appeared to describe
+a removed or corrupt interpreter even though the installation was intact.
+
+**Why:** A Windows venv launcher delegates to the absolute `home` recorded in
+`pyvenv.cfg`. Workspace read/write permission does not imply process-execution
+permission for that external installation. A sandbox denial is not evidence
+that the interpreter or locked packages are missing.
+
+**How to catch it:** Inspect `pyvenv.cfg` without changing it, distinguish
+`Access is denied` from file-not-found or import errors, and rerun the exact
+venv command with the approved external-execution boundary. Do not recreate
+the environment, install packages, or rewrite the lock until the interpreter
+has been tested through that boundary.
+
+**Evidence:** Approved execution reported Python 3.10.11 and pytest 8.4.1.
+`verify_environment.py --require-tests --verify-lock` passed all 42 locked
+Windows distributions with no missing or unexpected packages, and the complete
+reference suite passed 82/82 in 38.80s. No environment or tracked source file
+was changed to obtain the result.
+
+**Relevance check:** Current for Codex-managed Windows sessions that launch a
+workspace venv backed by an interpreter outside the writable workspace. Treat
+the sandbox boundary as the first diagnostic branch before declaring ENV-1 or
+performing an installation.
+
 ---
-AI-edited: 2026-08-11T23:46:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release-closeout | change=closed the temporary workflow and remote branch hazard with exact-ref evidence
+AI-edited: 2026-08-12T00:36:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=maintenance-closeout | change=recorded sandbox-denied venv execution as a false environment blocker

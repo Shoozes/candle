@@ -28,9 +28,7 @@ fn run_generation_benchmark(
     backend: &str,
     expected_ids: &[u32],
 ) -> Result<GenerationBenchmarkReport> {
-    if inputs.max_new_tokens < 2 {
-        bail!("LFM2-VL generation benchmark requires at least two generated tokens")
-    }
+    ensure_benchmark_reaches_decode(expected_ids)?;
     for iteration in 0..GENERATION_BENCHMARK_WARMUPS {
         let (_, ids) = benchmark_generation_once(runtime, inputs)?;
         ensure_benchmark_ids(iteration, "warm-up", &ids, expected_ids)?;
@@ -46,11 +44,7 @@ fn run_generation_benchmark(
         durations_ms.push(duration_ms);
     }
     let (median_ms, mad_ms) = median_and_mad(&durations_ms)?;
-    let relative_mad = if median_ms == 0.0 {
-        0.0
-    } else {
-        mad_ms / median_ms
-    };
+    let relative_mad = mad_ms / median_ms;
     Ok(GenerationBenchmarkReport {
         contract: GENERATION_BENCHMARK_CONTRACT,
         backend: backend.to_owned(),
@@ -122,9 +116,19 @@ fn ensure_benchmark_ids(
     Ok(())
 }
 
+fn ensure_benchmark_reaches_decode(generated_ids: &[u32]) -> Result<()> {
+    if generated_ids.len() < 2 {
+        bail!(
+            "LFM2-VL generation benchmark requires at least two generated tokens to measure cached decode; baseline stopped after {} token(s), likely at EOS",
+            generated_ids.len()
+        )
+    }
+    Ok(())
+}
+
 fn median_and_mad(values: &[f64]) -> Result<(f64, f64)> {
-    if values.is_empty() || values.iter().any(|value| !value.is_finite() || *value < 0.0) {
-        bail!("generation benchmark durations must be non-empty, finite, and non-negative")
+    if values.is_empty() || values.iter().any(|value| !value.is_finite() || *value <= 0.0) {
+        bail!("generation benchmark durations must be non-empty, finite, and positive")
     }
     let mut sorted = values.to_vec();
     sorted.sort_by(f64::total_cmp);
