@@ -13,7 +13,7 @@ const MAX_VISION_BATCH_SIZE: usize = 64;
 const MAX_PROMPT_BYTES: usize = 1024 * 1024;
 const MAX_TRACE_NEW_TOKENS: usize = 32;
 
-pub const USAGE: &str = "usage: lfm2-vl --model-dir <hf-checkpoint-dir> [--processor-config <override.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--vision-cpu] [inference]\n       lfm2-vl --model-file <text.gguf> (--mmproj-file <mmproj.gguf> | --mmproj-dir <split-dir>) --tokenizer <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense|q8>] [--cpu] [--vision-cpu] [inference]\n       lfm2-vl <text.gguf> <split-mmproj-dir> <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--vision-cpu] [inference]\n\ninference: --prompt <text> [--image <path>]... [--max-new-tokens <0..1024>] [--vision-batch-size <1..64>] [--eos-token-id <u32>] [--json] [--trace-output <external-dir>]\nEach image requires one literal <image> sentinel in the prompt. Without --prompt the command remains load-and-report only. --trace-output is a native CPU/F32, single-crop parity lane and requires --cpu, one image, and at most 32 generated tokens.";
+pub const USAGE: &str = "usage: lfm2-vl --model-dir <hf-checkpoint-dir> [--processor-config <override.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n       lfm2-vl --model-file <text.gguf> (--mmproj-file <mmproj.gguf> | --mmproj-dir <split-dir>) --tokenizer <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense|q8>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n       lfm2-vl <text.gguf> <split-mmproj-dir> <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n\ninference: --prompt <text> [--image <path>]... [--max-new-tokens <0..1024>] [--vision-batch-size <1..64>] [--eos-token-id <u32>] [--json] [--timings] [--trace-output <external-dir>]\nEach image requires one literal <image> sentinel in the prompt. Without --prompt the command remains load-and-report only. --timings writes stage durations to stderr without changing JSON evidence. --trace-output is a native CPU/F32, single-crop parity lane and requires --cpu, one image, and at most 32 generated tokens.";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MmprojArg {
@@ -39,6 +39,7 @@ pub struct InferenceArgs {
     pub vision_batch_size: usize,
     pub eos_token_id: Option<u32>,
     pub json: bool,
+    pub timings: bool,
     pub trace_output: Option<PathBuf>,
 }
 
@@ -114,6 +115,7 @@ pub struct Args {
     pub dtype: Option<DTypeArg>,
     pub mmproj_execution: MmprojExecutionArg,
     pub cpu: bool,
+    pub text_cpu: bool,
     pub vision_cpu: bool,
     pub inference: Option<InferenceArgs>,
 }
@@ -127,7 +129,7 @@ pub struct DevicePolicy {
 impl Args {
     pub fn device_policy(&self) -> DevicePolicy {
         DevicePolicy {
-            text_cpu: self.cpu,
+            text_cpu: self.cpu || self.text_cpu,
             vision_cpu: self.cpu || self.vision_cpu,
         }
     }
@@ -185,6 +187,25 @@ impl Args {
         }
         Ok(())
     }
+
+    pub fn validate_device_dtypes(
+        &self,
+        policy: DevicePolicy,
+        vision_dtype: DType,
+        text_dtype: DType,
+    ) -> Result<()> {
+        if policy.vision_cpu && vision_dtype == DType::BF16 {
+            bail!(
+                "--dtype bf16 is unsupported for CPU vision matmul; use --dtype f32 or keep vision on CUDA"
+            )
+        }
+        if policy.text_cpu && text_dtype == DType::BF16 {
+            bail!(
+                "--dtype bf16 is unsupported for CPU text matmul; use --dtype f32 or keep text on CUDA"
+            )
+        }
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -211,6 +232,7 @@ where
     let mut dtype = None;
     let mut mmproj_execution = None;
     let mut cpu = false;
+    let mut text_cpu = false;
     let mut vision_cpu = false;
     let mut prompt = None;
     let mut images = Vec::new();
@@ -218,13 +240,16 @@ where
     let mut vision_batch_size = None;
     let mut eos_token_id = None;
     let mut json = false;
+    let mut timings = false;
     let mut trace_output = None;
     let mut arguments = arguments.into_iter();
     while let Some(argument) = arguments.next() {
         match argument.as_str() {
             "--cpu" => cpu = true,
+            "--text-cpu" => text_cpu = true,
             "--vision-cpu" => vision_cpu = true,
             "--json" => json = true,
+            "--timings" => timings = true,
             "--trace-output" => set_once(
                 &mut trace_output,
                 PathBuf::from(next_value(&mut arguments, "--trace-output")?),
@@ -370,6 +395,7 @@ where
         || max_new_tokens.is_some()
         || vision_batch_size.is_some()
         || eos_token_id.is_some()
+        || timings
         || trace_output.is_some()
         || json;
     let inference = match prompt {
@@ -415,6 +441,7 @@ where
                 vision_batch_size,
                 eos_token_id,
                 json,
+                timings,
                 trace_output,
             })
         }
@@ -429,6 +456,7 @@ where
         dtype,
         mmproj_execution: mmproj_execution.unwrap_or_default(),
         cpu,
+        text_cpu,
         vision_cpu,
         inference,
     };
@@ -531,6 +559,7 @@ mod tests {
             "--mmproj-execution",
             "dequantize",
             "--cpu",
+            "--text-cpu",
             "--vision-cpu",
         ])?;
         assert_eq!(
@@ -545,6 +574,7 @@ mod tests {
         assert_eq!(args.dtype, Some(DTypeArg::Bf16));
         assert_eq!(args.mmproj_execution, MmprojExecutionArg::Dense);
         assert!(args.cpu);
+        assert!(args.text_cpu);
         assert!(args.vision_cpu);
         Ok(())
     }
@@ -613,6 +643,15 @@ mod tests {
             }
         );
 
+        let text_only = run(&["text.gguf", "mmproj", "tokenizer.json", "--text-cpu"])?;
+        assert_eq!(
+            text_only.device_policy(),
+            DevicePolicy {
+                text_cpu: true,
+                vision_cpu: false,
+            }
+        );
+
         let all_cpu = run(&["text.gguf", "mmproj", "tokenizer.json", "--cpu"])?;
         assert_eq!(
             all_cpu.device_policy(),
@@ -621,6 +660,37 @@ mod tests {
                 vision_cpu: true,
             }
         );
+
+        let cpu_is_authoritative = run(&[
+            "text.gguf",
+            "mmproj",
+            "tokenizer.json",
+            "--cpu",
+            "--text-cpu",
+            "--vision-cpu",
+        ])?;
+        assert_eq!(
+            cpu_is_authoritative.device_policy(),
+            all_cpu.device_policy()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn text_cpu_help_and_trace_restriction_are_explicit() -> Result<()> {
+        assert!(USAGE.contains("--text-cpu"));
+        assert!(parse(&[
+            "--model-dir",
+            "checkpoint",
+            "--text-cpu",
+            "--prompt",
+            "describe <image>",
+            "--image",
+            "image.png",
+            "--trace-output",
+            "trace",
+        ])
+        .is_err());
         Ok(())
     }
 
@@ -643,6 +713,16 @@ mod tests {
         args.validate_execution(DType::F32)?;
         assert!(args.validate_execution(DType::BF16).is_err());
         assert!(args.validate_execution(DType::F16).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn cpu_bf16_component_is_rejected_before_model_load() -> Result<()> {
+        let args = run(&["--model-dir", "checkpoint", "--dtype", "bf16", "--text-cpu"])?;
+        let policy = args.device_policy();
+        assert!(args
+            .validate_device_dtypes(policy, DType::BF16, DType::BF16)
+            .is_err());
         Ok(())
     }
 
@@ -701,6 +781,11 @@ mod tests {
     }
 
     #[test]
+    fn timings_without_prompt_are_rejected_before_loading() {
+        assert!(parse(&["--model-dir", "checkpoint", "--timings"]).is_err());
+    }
+
+    #[test]
     fn inference_options_parse_with_exact_image_sentinel_pairing() -> Result<()> {
         let args = run(&[
             "--model-dir",
@@ -716,6 +801,7 @@ mod tests {
             "--eos-token-id",
             "7",
             "--json",
+            "--timings",
         ])?;
         assert_eq!(
             args.inference,
@@ -726,6 +812,7 @@ mod tests {
                 vision_batch_size: 4,
                 eos_token_id: Some(7),
                 json: true,
+                timings: true,
                 trace_output: None,
             })
         );

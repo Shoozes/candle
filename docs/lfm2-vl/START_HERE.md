@@ -20,15 +20,24 @@ Phases 1 through 7 are checkpointed. `feat/lfm2-vl-mmproj` at
 checkpoint; owner-reviewed integration now lands directly on
 `Shoozes/candle:main` without a PR. The current release preserves Candle main
 through upstream base `6f74e7c390c717f8fd34f23ce02aceb058173370`
-and merge checkpoint `2b1d9e80de06b251b2fe5f25e51c17d56db86591`.
+and merge checkpoint `2b1d9e80de06b251b2fe5f25e51c17d56db86591`; the
+current reviewed release base is `b10c3a0c335050c066d8e02fd9f528f6b490fa39`.
 Native Windows is the product and release-proof platform; WSL2/Linux is a
 secondary portability replay. NR-5B official 450M native Windows CPU-F32
 component parity, P2 official-base GGUF same-artifact decoded-output
-comparison, and P3's no-model 1.6B admission forecast are green. The exact next
-task is a separately guarded acquisition of the absent 3,198,084,631-byte 1.6B
-regular snapshot; stop before model load.
-
-Do not load the 1.6B checkpoint until its immutable inventory, resource forecast, reviewed Job ceiling, and fresh preflight are safe. Do not start CUDA inference before P3 is green, or any model while a prior inference/build process or host-memory pressure remains.
+comparison, and P3 official 1.6B native CPU-F32 component parity are green.
+The admitted 3,198,084,631-byte regular snapshot, config/tokenizer/processor
+contract, 589-tensor inventory, Python/native load-only proofs, 51-tensor
+Python/native traces, exact reset, phase-specific comparison, and bounded
+cleanup all pass. The project is a feature-complete MVP release candidate, not
+LTS: P4.1's minimal `--text-cpu` route and P4.2's smallest native
+CUDA/distinct-device fixture and P4.3's official 450M all-CUDA and
+CPU-text/CUDA-vision F32 parity are green. All-CUDA BF16 is also green.
+P4.4 now profiles one measured CUDA bottleneck at a time; lower-bit work and
+the optional WSL replay remain later. Explicit BF16 on a CPU component is
+rejected before model load because the CPU matmul backend does not support that
+dtype. Every future production run still requires a fresh snapshot/executable
+rehash, reviewed Job ceiling, and preflight.
 
 ## One-Task Contract
 
@@ -69,7 +78,7 @@ Then replay the portable baseline in WSL when its local cache is available:
 wsl.exe -d NVIDIA-Workbench --cd /mnt/c/DevStuff/candle-mods bash -lc "CARGO_TARGET_DIR=/home/workbench/code/candle-lfm2-vl/target bash scripts/lfm2-vl/verify-baseline.sh"
 ```
 
-These commands perform compilation and tests only. They do not authorize dependency downloads, model execution, hosted CI, commits, pushes, or PRs. A missing offline dependency is a blocked lane to record in `STATUS.md`, not permission to fetch it implicitly.
+These commands perform compilation and tests only. They do not authorize dependency downloads, model execution, hosted CI, commits, pushes, or PRs. Hosted CI is not a release authority for this fork; required evidence is local native Windows proof plus an explicitly labeled WSL replay when practical. A missing offline dependency is a blocked lane to record in `STATUS.md`, not permission to fetch it implicitly.
 
 ## Production Parity Safety
 
@@ -121,4 +130,4 @@ Gknome adoption must support ordinary native Windows repositories and recognize 
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-11T09:59:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=made main the single owner-reviewed publication branch and recorded the upstream-preserving merge
+AI-edited: 2026-08-11T19:30:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=p4-3 | change=advanced the entry point to measured P4.4 optimization after green official 450M CUDA parity

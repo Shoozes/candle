@@ -1,63 +1,66 @@
 # LFM2.5-VL Active Backlog
 
-Only incomplete work belongs here. Completed implementation and proof belong in `HISTORY.md`; recurring hazards belong in `FAILURE_LOG.md`. Execute these items in order unless an earlier gate exposes a correctness prerequisite.
-
-## P3 — Official 1.6B Native CPU-F32 Component Parity
-
-What: Repeat the proven NR-5B component gate for `LiquidAI/LFM2.5-VL-1.6B@919fde3d022e3f90a4716006f993938ee8c2eb97`.
-
-Why: The larger checkpoint changes text width, layer inventory, tensor count, trace size, and peak-memory risk. The 450M result cannot establish its numerical or operational behavior.
-
-When: Current product task. P2 and P3's no-model admission forecast are green; the guarded external artifact acquisition is next. Never overlap the 1.6B oracle/native runs with llama.cpp, Cargo, rustc, or another model.
-
-Where: The NR-5B reference/native trace paths, `docs/lfm2-vl/PARITY.md`, and a separate external 1.6B artifact/evidence directory.
-
-Completed admission: the exact Python 3.10.11/42-distribution environment is green; the pinned 589-tensor header is locked; official HEAD metadata fixes the eight-file snapshot at 3,198,084,631 bytes; the local cache is absent; the external 5,587-byte forecast (`0c8f3cd31cea807591356d90aa442a2a02421e86a58215c01b4bcecc12659a59`) defines stage-specific 16/24/12 GiB dry-load/Python-trace/native-trace ceilings; and the guarded acquisition plan is green without creating any path. No payload was downloaded or loaded.
-
-How:
-
-1. Re-run `acquire_snapshot.py --plan`, then, only with separate owner approval, invoke the exact `.venv` Python and `--allow-production-download` through `run-bounded-oracle.ps1` directly from the current PowerShell process. Use a 2 GiB Job ceiling, 7,200-second timeout, executable-scoped concurrency, and external log/owner evidence. Create the eight-file regular snapshot at the pinned revision; require 12 GiB free space first, use public/no-token serial Hub access with Xet disabled before import, hash every local file, and require `model.safetensors` to match expected 3,193,334,216 bytes and LFS SHA-256 `7fc7458e4382fc6e558cfdda45857fbf9ab5b40a8bf199c9cd073003b14ac26d` before any load. Snapshot and manifest publication must remain atomic and no-clobber. A killed transfer may resume from cache but cannot make a snapshot admissible; any leftover snapshot stage, manifest stage, output, or manifest blocks retry for inspection. Install the full CPU oracle lock only for later traces.
-2. Before model load, run the stdlib-only config inspector against the acquired `config.json`, `processor_config.json`, and `tokenizer.json`. Require image token ID 396, at least one row/column marker, unique in-range wrapper/thumbnail/grid IDs, and retain the complete mapping. Reconcile the `image-wrapper-token-ids` source-lock candidate without hardcoding runtime IDs.
-3. Run a fresh census before each process. Require at least 32 GiB available physical and commit headroom for the Python trace, and stop on any llama/model/Cargo/rustc process. Do not raise a Job ceiling automatically after a limit termination.
-4. Run the pinned Python dry load under 16 GiB and deterministic trace under 24 GiB, verify child-tree exit, then run the already-built native CPU-F32 trace under 12 GiB with the oracle's exact rendered prompt.
-5. Compare exact inputs, complete stage inventory, selected component tensors, cached decode, artifact identity, and reset replay; retain pre/post resource reports.
-6. Diagnose and fix any mismatch before proceeding; do not relax tolerances merely to pass.
-
-Done when: Every selected 1.6B tensor passes its recorded stage-specific tolerance, input and reset tensors are exact, all files are identified and reverified, both bounded processes are absent, and host/GPU memory recovers.
-
-Verification: Exact environment lock; artifact/trace bundle validation; machine-readable comparator; focused reference and Rust tests; native locked/offline gate; process and memory evidence.
+Only incomplete work belongs here. Completed implementation and proof belong in `HISTORY.md`; recurring hazards belong in `FAILURE_LOG.md`. Execute these items in order unless an earlier gate exposes a correctness prerequisite. All release proof is local: do not invoke, inspect, or depend on GitHub Actions or another hosted runner.
 
 ## P4 — CUDA and Distinct-Device Execution
 
-What: Execute the existing native Windows CUDA-vision/CPU-text boundary, then add only measured, evidence-backed CUDA optimizations.
+P3 CPU-F32 parity, P4.1's public device-policy route, P4.2's tiny native
+CUDA/distinct-device proof, and P4.3's official 450M CUDA parity are green.
+P4.4 is now the active product task.
+Do not install or update a CUDA toolkit implicitly; keep every build and model
+run memory-bounded and sequential.
 
-Why: The transfer boundary is source-complete but unexecuted. CPU proof cannot establish DLL/toolkit integration, device placement, kernel behavior, or accelerator memory safety.
+### P4.4 — Optimize Only Measured Bottlenecks
 
-When: After P3 is green and the owner confirms an existing compatible native Windows CUDA toolkit. Never install or update a toolkit implicitly.
+What: Profile and improve one proven CUDA bottleneck at a time.
 
-Where: `candle-transformers/src/models/lfm2_vl/`, `candle-transformers/src/models/siglip2.rs`, focused distinct-device tests, native build configuration, and external evidence.
+Why: Speculative changes to interpolation, attention dtype, crop batching, transfers, or Q8 kernels would enlarge the risk surface after parity.
 
-How:
+When: Now that P4.3 is green.
 
-1. Record MSVC, CUDA toolkit, driver, GPU, feature flags, executable/DLL identity, and a clear resource preflight.
-2. Build once with bounded concurrency; verify the executable and dependency closure before loading a model.
-3. Run the smallest distinct-device fixture, then the selected 450M production trace with explicit placement and containment.
-4. Measure transfers and peaks; ensure only projected image features cross the device boundary.
-5. Optimize only measured bottlenecks behind existing feature gates, replay CPU regressions, then repeat production parity.
+Where: Only the measured hot path and its focused benchmark/regression.
 
-Done when: The focused distinct-device test and selected production CUDA parity pass, CPU-only builds stay green, device transfers match policy, exact cleanup succeeds, and peak host/GPU memory is retained.
+How: Use the opt-in `--timings` stderr diagnostic with repeated warm-up and a
+fixed official 450M fixture; build the prompt with verified newline bytes and
+require a quiet-host census with no Cargo/rustc, model, or llama process;
+isolate decode/cache from load and vision cost; change one generation
+bottleneck; replay CPU and CUDA parity; compare median, spread, and Job
+memory; retain the change only when the measurement improves without contract
+drift. The first stage baseline is captured in `PARITY.md`; the remaining
+proof is a clean decode/cache microbenchmark.
 
-Verification: Feature-gated CUDA test; CPU regression replay; scoped Clippy; local Windows baseline; exact runtime/DLL and resource evidence; optional WSL replay labeled separately.
+Done when: Each retained optimization has a reproducible improvement and unchanged correctness evidence; P4 closes with a documented supported placement/dtype matrix.
+
+Verification: Before/after bounded local benchmark with repeated warm-up,
+explicit variance bound, and memory evidence; CPU/CUDA parity replay;
+focused and full affected gates; no change to JSON evidence or cache-reset
+semantics.
+
+## R1 — Release Discoverability and Supported Matrix
+
+What: Expose the proven LFM2-VL example from the repository entry points and state the actual support boundary.
+
+Why: The dedicated example documentation is strong, but root discoverability trails the implementation and could imply unsupported lower-bit, video, or batching behavior.
+
+When: After P4 is green; this is release polish, not a P3/P4 blocker.
+
+Where: Root `README.md`, a concise `candle-vlm/README.md`, and `candle-examples/examples/lfm2-vl/README.md`; update another documentation index only when it owns the relevant link.
+
+How: Add one root LFM2-VL example entry, introduce the crate briefly, link to the detailed example, publish the proven platform/artifact/device/dtype matrix, and name lower-bit MMProj, video, and true text batching as future work.
+
+Done when: A new user can find the example and distinguish proven, optional, and unsupported modes without reading project-history files.
+
+Verification: Root and mod-owned relative-link checks; README command smoke against `--help`; supported-matrix review against `PARITY.md`; complete diff inspection.
 
 ## C1 — Split Large Modules at Proven Seams
 
 What: Reduce context and merge pressure in the largest LFM2-VL modules without changing public behavior or serialized evidence.
 
-Why: `gguf.rs`, `weights.rs`, `runner.rs`, `processor.rs`, `model.rs`, `lfm2.rs`, `prompt.rs`, `siglip2.rs`, and `native_loading.rs` each exceed 1,200 lines. Splitting without measured seams would add indirection; leaving unrelated responsibilities together impedes review and scaling. The context bank now separates native model math from checkpoint loading, so a physical split is not an urgent substitute for the P3 product gate.
+Why: `gguf.rs`, `weights.rs`, `runner.rs`, `processor.rs`, `model.rs`, `lfm2.rs`, `prompt.rs`, `siglip2.rs`, and `native_loading.rs` each exceed 1,200 lines. Splitting without measured seams would add indirection; leaving unrelated responsibilities together impedes review and scaling. The context bank now separates native model math from checkpoint loading, so a physical split is not a substitute for the P3/P4 product gates or R1 release handoff.
 
-When: After P3, or earlier only when an active product fix already crosses one named seam.
+When: After P3, P4, and R1. The only earlier extraction allowed is the smallest proven device-policy seam required by P4.1.
 
-Where: The named modules, their nearest tests, and the relevant `summary_bank.json` routes.
+Where: `candle-transformers/src/models/lfm2_vl/gguf.rs`, `candle-transformers/src/models/lfm2_vl/weights.rs`, `candle-examples/examples/lfm2-vl/runner.rs`, `candle-vlm/src/lfm2_vl/processor.rs`, `candle-transformers/src/models/lfm2_vl/model.rs`, `candle-transformers/src/models/lfm2.rs`, `candle-vlm/src/lfm2_vl/prompt.rs`, `candle-transformers/src/models/siglip2.rs`, `candle-examples/examples/lfm2-vl/native_loading.rs`, their nearest tests, and the affected `summary_bank.json` routes.
 
 How:
 
@@ -78,7 +81,7 @@ What: Integrate only useful Gknome project/context controls while preserving thi
 
 Why: Native Windows is the normal product workflow, but this checkout remains a WSL-owned linked worktree even though it is now intentionally attached to local `main`. Windows Git still cannot resolve the Linux absolute pointer. The latest dry run correctly applied nothing and found four authority conflicts; bypassing them could overwrite project policy or context routing.
 
-When: After Gknome produces a reviewed zero-conflict mature-repository plan. Do not use repair or implicit template replacement.
+When: Last among the current deferred items, after product/release gates and only after Gknome produces a reviewed zero-conflict mature-repository plan. Do not use repair or implicit template replacement.
 
 Where: Gknome at `C:\Users\jc816\OneDrive\Desktop\Gen-App\gknome`, this repo's non-secret generated controls, and `summary_bank.json`. Never read or replace `.tools/.secrets/`.
 
@@ -93,40 +96,5 @@ Done when: Dry-run and adopted-project tests pass, no authority/runtime/secret p
 
 Verification: Gknome adoption/layout/inventory tests; zero-conflict plan JSON; before/after authority hashes; generated-file diff; context/project tests; WSL Git status when available; Candle summary-bank/mod-manifest verifiers; secret-tree exclusion with zero value exposure.
 
-## C3 — Replay Linux Native-Trace Exclusive Publication
-
-What: Run the exact native trace destination-race regression on a local
-Linux/WSL Rust toolchain.
-
-Why: Windows proves the user-facing no-clobber contract, and the Linux source
-uses `renameat2(RENAME_NOREPLACE)`, but the installed `NVIDIA-Workbench` WSL
-distribution currently has no `cargo`. The installed Linux Rust target is not
-enough: offline cross-checking stops at `openssl-sys` without a Linux OpenSSL
-sysroot. Source review is not a substitute for compiling and executing the
-platform-specific branch.
-
-When: After P3, or opportunistically when an existing local WSL Rust toolchain
-is available. Do not install a toolchain or fetch dependencies implicitly.
-
-Where: `candle-examples/examples/lfm2-vl/trace.rs` and the existing
-`trace::tests::trace_publication_does_not_replace_a_racing_directory` test.
-
-How:
-
-1. Record the explicit WSL distribution, kernel, Cargo/Rust versions, and
-   offline dependency availability.
-2. Run the exact trace collision test with `--locked --offline -j 2`.
-3. Confirm the competing owner directory remains intact and no staging
-   directory survives.
-4. Replay formatting and the native Windows example gate if a Linux-only fix
-   is required.
-
-Done when: The exact test compiles and passes on Linux without replacing the
-racing directory, leaves no temporary output, and the Windows 29-test example
-gate remains green.
-
-Verification: Exact Linux test command and exit code; post-test temporary-path
-inventory; native Windows example replay; `git diff --check`.
-
 ---
-AI-edited: 2026-08-11T09:59:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=updated Gknome's linked-main boundary without changing active product priority
+AI-edited: 2026-08-11T20:10:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=p4-4 | change=recorded the first stage-timing baseline and narrowed the active optimization to a measured decode/cache microbenchmark

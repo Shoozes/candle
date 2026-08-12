@@ -531,12 +531,28 @@ impl EncoderLayer {
         let residual = xs;
         let attended = self
             .self_attn
-            .forward(&xs.apply(&self.layer_norm1)?, mask)?;
+            .forward(&stable_layer_norm(&self.layer_norm1, xs)?, mask)?;
         let xs = (residual + attended)?;
         let residual = &xs;
-        let feed_forward = self.mlp.forward(&xs.apply(&self.layer_norm2)?)?;
+        let feed_forward = self
+            .mlp
+            .forward(&stable_layer_norm(&self.layer_norm2, &xs)?)?;
         residual + feed_forward
     }
+}
+
+/// Match the reference LayerNorm's mean-then-centered-variance evaluation.
+///
+/// The fast Candle CPU kernel evaluates variance as `E[x²] - E[x]²`, which is
+/// vulnerable to cancellation when a production vision activation has a large
+/// offset. SigLIP2's 1.6B checkpoint reaches that regime in later encoder
+/// layers, so keep this model's CPU-F32 parity path on the stable two-pass
+/// implementation without changing the global Candle LayerNorm contract.
+fn stable_layer_norm(layer: &LayerNorm, xs: &Tensor) -> Result<Tensor> {
+    let bias = layer
+        .bias()
+        .ok_or_else(|| candle::Error::Msg("SigLIP2 LayerNorm requires an affine bias".into()))?;
+    candle_nn::ops::layer_norm_slow(xs, layer.weight(), bias, layer.eps() as f32)
 }
 
 #[cfg_attr(not(test), allow(dead_code))]
@@ -987,6 +1003,31 @@ mod tests {
             r#"{"hidden_size": 16, "num_patches": 16, "vision_use_head": true}"#
         )
         .is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn stable_layer_norm_handles_large_offsets() -> Result<()> {
+        let device = Device::Cpu;
+        let layer = LayerNorm::new(
+            Tensor::ones(4, DType::F32, &device)?,
+            Tensor::zeros(4, DType::F32, &device)?,
+            1e-6,
+        );
+        let input = Tensor::new(&[[[10_000.0f32, 10_001.0, 9_999.0, 10_000.5]]], &device)?;
+        let actual = stable_layer_norm(&layer, &input)?.to_vec3::<f32>()?;
+        let values = [10_000.0f64, 10_001.0, 9_999.0, 10_000.5];
+        let mean = values.iter().sum::<f64>() / values.len() as f64;
+        let variance = values
+            .iter()
+            .map(|value| (value - mean).powi(2))
+            .sum::<f64>()
+            / values.len() as f64;
+        let scale = (variance + 1e-6).sqrt();
+        for (actual, expected) in actual[0][0].iter().zip(values) {
+            let expected = ((expected - mean) / scale) as f32;
+            assert!((actual - expected).abs() <= 1e-3);
+        }
         Ok(())
     }
 

@@ -726,6 +726,66 @@ def test_trace_comparator_rejects_contract_mismatch(tmp_path: Path):
         compare_traces(oracle, weighted)
 
 
+def test_trace_comparator_uses_cpu_f32_phase_contract(tmp_path: Path):
+    torch = pytest.importorskip("torch")
+    pytest.importorskip("safetensors")
+    artifact, model_inputs = _synthetic_artifact_contract()
+    tensors = _synthetic_trace_tensors(torch)
+    candidate = {name: value.clone() for name, value in tensors.items()}
+    candidate["stage.vision.encoder_layer.0"].reshape(-1)[0] += 1.0e-3
+    candidate["stage.projector.output"].reshape(-1)[0] += 1.0e-3
+    candidate["stage.language.hidden_states"].reshape(-1)[0] += 1.0e-3
+    candidate["stage.language.prefill_logits"].reshape(-1)[0] += 9.0e-4
+    metadata = {
+        "schema_version": 1,
+        "mode": "production-trace",
+        "source_image_sha256": "a" * 64,
+        "prompt": "test prompt",
+        "max_new_tokens": 3,
+        "dtype": "float32",
+        "device": "cpu",
+        "weights_serialized": False,
+        "cache_reset_exact": True,
+        "model_id": artifact["model_id"],
+        "model_revision": artifact["revision"],
+        "artifact_manifest": artifact,
+        "artifact_manifest_reverified": True,
+    }
+    oracle = tmp_path / "oracle"
+    native = tmp_path / "native"
+    write_tensor_bundle(
+        oracle,
+        tensors,
+        metadata,
+        {"schema_version": 1, "mode": "production-trace", "weights_serialized": False},
+        overwrite=False,
+    )
+    write_tensor_bundle(
+        native,
+        candidate,
+        {
+            **metadata,
+            "mode": "native-trace",
+            "model_id": None,
+            "model_revision": None,
+            "processor_revision": None,
+            "model_inputs": model_inputs,
+            "model_inputs_reverified": True,
+        },
+        {"schema_version": 1, "mode": "native-trace", "weights_serialized": False},
+        overwrite=False,
+    )
+    report = compare_traces(oracle, native)
+    assert report["passed"] is True
+    assert report["failure_count"] == 0
+    by_name = {tensor["name"]: tensor for tensor in report["tensors"]}
+    assert by_name["stage.vision.encoder_layer.0"]["kind"] == "cosine_or_allclose"
+    assert by_name["stage.projector.output"]["kind"] == "cosine_or_allclose"
+    assert by_name["stage.language.hidden_states"]["kind"] == "cosine_or_allclose"
+    assert by_name["stage.language.prefill_logits"]["kind"] == "max_abs"
+    assert by_name["stage.language.prefill_logits"]["allowed_max_abs"] == 1.0e-3
+
+
 def test_trace_artifact_identity_requires_matching_native_inputs():
     artifact, model_inputs = _synthetic_artifact_contract()
     oracle = {

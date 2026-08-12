@@ -16,6 +16,7 @@ use args::{Args, InferenceArgs, MmprojArg, ModelSource, ParseOutcome};
 use candle::{DType, Device};
 use candle_transformers::models::lfm2_vl::GgufMmprojExecution;
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 
 fn main() -> Result<()> {
     let args = match args::parse_env()? {
@@ -27,13 +28,14 @@ fn main() -> Result<()> {
     };
     let device_policy = args.device_policy();
     let text_device = candle_examples::device(device_policy.text_cpu)?;
-    let vision_device = if device_policy.vision_cpu {
-        Device::Cpu
-    } else {
-        text_device.clone()
+    let vision_device = match (device_policy.vision_cpu, device_policy.text_cpu) {
+        (true, _) => Device::Cpu,
+        (false, true) => candle_examples::device(false)?,
+        (false, false) => text_device.clone(),
     };
     let vision_dtype = args.resolved_vision_dtype(&vision_device);
     let text_dtype = args.resolved_text_dtype(&text_device);
+    args.validate_device_dtypes(device_policy, vision_dtype, text_dtype)?;
     args.validate_execution(vision_dtype)?;
     match &args.source {
         ModelSource::NativeDirectory(model_dir) => run_native(
@@ -73,6 +75,11 @@ fn run_hybrid(
         MmprojArg::SplitDirectory(path) => loading::MmprojInput::SplitDirectory(path),
         MmprojArg::GgufFile(path) => loading::MmprojInput::GgufFile(path),
     };
+    let profile = args
+        .inference
+        .as_ref()
+        .is_some_and(|inference| inference.timings);
+    let load_started = Instant::now();
     let mut loaded = loading::load_hybrid(
         text_gguf,
         mmproj_input,
@@ -85,6 +92,12 @@ fn run_hybrid(
         },
         text_device,
     )?;
+    if profile {
+        eprintln!(
+            "lfm2-vl timings_ms model_load={:.3}",
+            load_started.elapsed().as_secs_f64() * 1000.0
+        );
+    }
     let json = args
         .inference
         .as_ref()
@@ -145,6 +158,11 @@ fn run_native(
     vision_device: &Device,
     text_device: &Device,
 ) -> Result<()> {
+    let profile = args
+        .inference
+        .as_ref()
+        .is_some_and(|inference| inference.timings);
+    let load_started = Instant::now();
     let loaded = native_loading::load_native(
         model_dir,
         args.processor_config.as_deref(),
@@ -155,6 +173,12 @@ fn run_native(
             text_device,
         },
     )?;
+    if profile {
+        eprintln!(
+            "lfm2-vl timings_ms model_load={:.3}",
+            load_started.elapsed().as_secs_f64() * 1000.0
+        );
+    }
     let json = args
         .inference
         .as_ref()
@@ -220,6 +244,7 @@ fn inference_request<'a>(
         max_new_tokens: inference.max_new_tokens,
         vision_batch_size: inference.vision_batch_size,
         eos_token_id: inference.eos_token_id,
+        timings: inference.timings,
         trace_output: inference.trace_output.as_deref(),
     }
 }

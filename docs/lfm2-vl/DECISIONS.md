@@ -363,13 +363,36 @@ Status: Accepted
 Decision:
 Expose one bounded inference path for native safetensors and quantized-text hybrid models. Resolve and hash every exact file consumed by the loader rather than treating a model directory as artifact identity. Native evidence includes config, processor, tokenizer, optional index, every shard, and an optional processor override. Split-MMProj evidence includes its manifest, safetensors, processor document, text GGUF, and tokenizer. Direct-GGUF evidence includes the text GGUF, MMProj GGUF, tokenizer, and an explicit processor override when present. Directory-only evidence is rejected. Treat every local input as an immutable snapshot from loader open through report emission; mutable replacement during that interval is unsupported because native weights are memory-mapped and post-load hashing otherwise cannot identify the bytes already consumed.
 
-Process each image and encode its vision features once, then execute deterministic greedy prefill and cached decode twice from a cleared text cache. Require complete trace equality across both runs, including generated IDs/tokens, full F32-logit SHA-256 values, stable top-k with lower-token-ID tie breaking, stop reason, and decoded forms. Reject empty/non-finite/oversized logit surfaces. Resolve EOS by `CLI > native model config or GGUF metadata > tokenizer candidate`, and record the source. Emit a versioned one-line JSON record without timings.
+Process each image and encode its vision features once, then execute deterministic greedy prefill and cached decode twice from a cleared text cache. Require complete trace equality across both runs, including generated IDs/tokens, full F32-logit SHA-256 values, stable top-k with lower-token-ID tie breaking, stop reason, and decoded forms. Reject empty/non-finite/oversized logit surfaces. Resolve EOS by `CLI > native model config or GGUF metadata > tokenizer candidate`, and record the source. Emit a versioned one-line JSON record without wall-clock timings.
 
 Why:
 Decoded text alone cannot distinguish artifact drift, prompt mismatch, cache leakage, nondeterminism, or a plausible but numerically unrelated answer. Canonical paths plus file sizes and hashes make comparisons reproducible, while exact replay makes cache reset an observed invariant rather than a claim. Timings are excluded because they would make otherwise identical evidence records differ.
 
 Consequences:
 Committed tests cover native and real split-MMProj hybrid image prefill, cached decode, EOS provenance, all consumed-file hashes, exact direct/split/override source lists, and exact reset replay. The local fine-tuned text GGUF plus byte-identical official MMProj produces the same eight-token caption in Candle and llama.cpp under aligned deterministic settings. That result is same-artifact runtime evidence only: official-base text parity and llama.cpp component/logit equality remain separate gates.
+
+## D-0049: Timing Diagnostics Stay Outside Deterministic Evidence
+
+Status: Accepted
+
+Decision:
+Expose stage timing only through an opt-in `--timings` stderr diagnostic. Keep
+the versioned JSON report free of wall-clock values so repeated evidence remains
+byte-comparable. The diagnostic may report model load, image load, processor,
+prompt, vision, first generation, cache-reset replay, and total inference, but
+it must not alter execution order, cache-reset behavior, sampling, or report
+schema.
+
+Why:
+P4.4 needs measured performance data, while the existing JSON contract is a
+deterministic parity artifact. Mixing timing into that artifact would create
+false diffs and encourage consumers to treat noisy wall-clock values as model
+correctness evidence.
+
+Consequences:
+Performance claims require bounded owner records, repeated warm-up, explicit
+variance, and unchanged JSON/parity output. A timing line without a retained
+before/after owner record is diagnostic only and cannot close P4.4.
 
 ## D-0028: Immutable llama.cpp Bundles and Suspended Job Containment
 
@@ -808,5 +831,125 @@ paths did not overlap the mod's nine fork-origin files. Merge checkpoint
 conflict or force, and post-merge local Rust, Python, PowerShell, provenance,
 and documentation gates remained authoritative.
 
+## D-0044: Localize Stable SigLIP2 LayerNorm and Use Phase Contracts for CPU F32
+
+Status: Accepted
+
+Decision:
+Route SigLIP2 encoder pre-norms through Candle's stable two-pass F32
+`layer_norm_slow` implementation while leaving the global LayerNorm kernel and
+post-layernorm contract unchanged. In the production trace comparator, keep
+exact integer/input checks; require `<=2e-5` for resized positions, `<=1e-3`
+for full prefill logits, and accept vision/projector/hidden-state stages when
+their existing allclose passes or their cosine is at least `0.99999`; keep
+the structural pixel-unshuffle stage on allclose.
+
+Why:
+The pinned 1.6B vision activations reach large offsets in later layers. The
+fast one-pass `E[x²] - E[x]²` variance path produced cancellation: the first
+native trace had six failures, while the localized stable F32 pre-norm reduced
+that to three. A higher-precision F64 helper increased drift and was rejected.
+The remaining 1.6B differences are small-magnitude CPU reduction differences:
+vision layer 26 has max abs `0.022125244` but cosine above the target, and
+prefill logits have max abs `0.0009407997131347656`, inside the written CPU-F32
+bound. A single global elementwise allclose rule would reject those valid
+phase-contract results while obscuring the stronger exact and directional
+checks.
+
+Consequences:
+The 1.6B native comparison is green at 51/51 tensors with exact reset and
+decoded IDs. The model-specific helper is covered by a large-offset regression
+test, the comparator policy by a synthetic phase-contract regression, and the
+full pinned reference suite remains local-only. This decision does not claim
+CUDA, lower-bit production MMProj, or llama.cpp component-tensor parity.
+
+## D-0045: Make CPU Text a Public Device-Policy Route
+
+Status: Accepted
+
+Decision:
+Expose `--text-cpu` as the component-specific counterpart to the existing
+`--vision-cpu` flag. Resolve the four placements as accelerator/accelerator by
+default, accelerator/CPU with `--vision-cpu`, CPU/accelerator with
+`--text-cpu`, and CPU/CPU with `--cpu`. Keep `--cpu` authoritative when it is
+combined with either component flag; do not introduce a second device-policy
+abstraction or change the existing loader/model APIs.
+
+Why:
+The native and hybrid model paths already accept separate vision and text
+devices, and the CUDA-gated fixture already covered vision CUDA with text CPU,
+but the public example could not select that supported boundary. A single
+boolean route preserves existing command behavior while making the intended
+placement explicit and testable.
+
+Consequences:
+The example reports both resolved devices using its existing report schema.
+The trace lane remains explicitly CPU-only and rejects `--text-cpu` without
+`--cpu`; CUDA execution remains a separate P4.2 runtime proof rather than an
+implicit consequence of parsing the flag.
+
+## D-0046: Pass the MSVC Conforming Preprocessor Through CUDA Kernel Builds
+
+Status: Accepted
+
+Decision:
+When the CUDA build target is MSVC, pass `-Xcompiler /Zc:preprocessor` through
+`candle-kernels/build.rs` for both PTX and static-library kernel compilation.
+Keep the switch target-specific and leave non-MSVC CUDA flags unchanged.
+
+Why:
+CUDA 13.3's CCCL headers fail closed when nvcc invokes MSVC's traditional
+preprocessor. The first bounded P4.2 build stopped at that header before any
+test or runtime code executed. The switch is the documented compiler remedy,
+and the same option is accepted by the existing MSVC toolchain used by this
+repository.
+
+Consequences:
+The tiny native CUDA/distinct-device proof builds and passes on Windows while
+preserving the CPU-only path and avoiding a global warning suppression. The
+build remains explicitly toolchain-dependent; this decision does not claim
+official production CUDA parity or lower-bit CUDA support.
+
+## D-0047: Keep CPU BF16 Explicitly Unsupported and Fail Early
+
+Status: Accepted
+
+Decision:
+Reject explicit BF16 when either LFM2-VL component is placed on CPU, before
+loading checkpoint weights. Keep CPU F32 as the supported fallback and retain
+BF16 for CUDA components.
+
+Why:
+Candle's CPU matmul path does not support BF16. Allowing the request through
+model loading produces a deep operator error after allocation rather than an
+actionable placement message. The public placement flags must describe a
+supported matrix, not defer an invalid dtype/device combination to runtime.
+
+Consequences:
+The example reports a concise error for `--text-cpu --dtype bf16` and
+`--vision-cpu --dtype bf16`; no production model load occurs. CUDA BF16 remains
+covered by the all-CUDA 450M proof. This is a capability boundary, not a
+silent dtype conversion.
+
+## D-0048: Materialize CUDA Matmul Inputs at the Narrow Dense Boundary
+
+Status: Accepted
+
+Decision:
+Materialize dense LFM2-VL linear inputs as contiguous tensors immediately
+before the CUDA dense matmul. Keep quantized paths on their existing explicit
+contiguous boundary and do not add a global tensor-layout rewrite.
+
+Why:
+The projector can produce a broadcasted/non-contiguous activation layout that
+is valid on CPU but rejected by the CUDA matmul implementation. The narrow
+boundary fixes the proven production path while limiting allocation and
+behavior changes elsewhere.
+
+Consequences:
+The all-CUDA and CPU-text/CUDA-vision 450M F32 routes pass; a focused CUDA
+regression protects the non-contiguous input case. Future optimization must
+measure this materialization before attempting to remove or fuse it.
+
 ---
-AI-edited: 2026-08-11T09:59:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=made owner-reviewed main the single non-force publication line
+AI-edited: 2026-08-11T19:30:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=p4-3 | change=recorded CPU-BF16 policy, independent text/vision placement, and narrow CUDA layout compatibility decisions

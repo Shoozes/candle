@@ -26,7 +26,7 @@ impl LinearOp {
 
     pub fn forward(&self, xs: &Tensor) -> Result<Tensor> {
         match self {
-            Self::Dense(linear) => linear.forward(xs),
+            Self::Dense(linear) => linear.forward(&xs.contiguous()?),
             Self::Quantized { weight, bias } => {
                 let output = weight.forward(&xs.contiguous()?)?;
                 match bias {
@@ -69,6 +69,20 @@ mod tests {
         }
         let output = linear.forward(&Tensor::ones((2, 32), DType::F32, &device)?)?;
         assert_eq!(output.dims(), [2, 32]);
+        Ok(())
+    }
+
+    #[cfg(feature = "cuda")]
+    #[test]
+    fn dense_linear_materializes_non_contiguous_cuda_input() -> Result<()> {
+        let device = Device::new_cuda(0)?;
+        let dense = candle_nn::Linear::new(Tensor::ones((4, 3), DType::F32, &device)?, None);
+        let linear = LinearOp::Dense(dense);
+        let input = Tensor::arange(0f32, 12f32, &device)?
+            .reshape((1, 2, 2, 3))?
+            .permute((0, 2, 1, 3))?;
+        let output = linear.forward(&input)?;
+        assert_eq!(output.dims(), [1, 2, 2, 4]);
         Ok(())
     }
 }

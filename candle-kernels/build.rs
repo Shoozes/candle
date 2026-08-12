@@ -8,16 +8,27 @@ fn main() -> Result<()> {
     println!("cargo::rerun-if-changed=src/cuda_utils.cuh");
     println!("cargo::rerun-if-changed=src/binary_op_macros.cuh");
 
-    // Build for PTX
-    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let ptx_path = out_dir.join("ptx.rs");
-    let bindings = KernelBuilder::new()
+    let is_target_msvc = env::var("TARGET")
+        .map(|target| target.contains("msvc"))
+        .unwrap_or(false);
+
+    // CUDA 13.3's CCCL headers reject MSVC's traditional preprocessor. Pass
+    // the conforming-preprocessor switch through nvcc for both PTX and static
+    // library builds; older CUDA toolkits accept the same MSVC switch.
+    let mut ptx_builder = KernelBuilder::new()
         .source_dir("src") // Scan src/ for .cu files
         .exclude(&["moe_*.cu", "mmvq_gguf.cu", "mmq_*.cu"]) // Exclude statically compiled kernels from ptx build
         .arg("--expt-relaxed-constexpr")
         .arg("-std=c++17")
-        .arg("-O3")
-        .build_ptx()?;
+        .arg("-O3");
+    if is_target_msvc {
+        ptx_builder = ptx_builder.arg("-Xcompiler").arg("/Zc:preprocessor");
+    }
+
+    // Build for PTX
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let ptx_path = out_dir.join("ptx.rs");
+    let bindings = ptx_builder.build_ptx()?;
 
     bindings.write(&ptx_path)?;
 
@@ -43,6 +54,10 @@ fn main() -> Result<()> {
         .arg("-std=c++17")
         .arg("-O3");
 
+    if is_target_msvc {
+        moe_builder = moe_builder.arg("-Xcompiler").arg("/Zc:preprocessor");
+    }
+
     // Disable bf16 WMMA kernels on GPUs older than sm_80 (Ampere).
     // bf16 WMMA fragments require compute capability >= 8.0.
     let compute_cap = cudaforge::detect_compute_cap()
@@ -52,12 +67,8 @@ fn main() -> Result<()> {
         moe_builder = moe_builder.arg("-DNO_BF16_KERNEL");
     }
 
-    let mut is_target_msvc = false;
-    if let Ok(target) = std::env::var("TARGET") {
-        if target.contains("msvc") {
-            is_target_msvc = true;
-            moe_builder = moe_builder.arg("-D_USE_MATH_DEFINES");
-        }
+    if is_target_msvc {
+        moe_builder = moe_builder.arg("-D_USE_MATH_DEFINES");
     }
 
     if !is_target_msvc {

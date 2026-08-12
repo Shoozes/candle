@@ -70,7 +70,7 @@
       ]
     },
     "feature__image_processing_and_prompt": {
-      "description": "Rust image preprocessing, processor configuration, prompt expansion, image-span validation, and their committed fixtures.",
+      "description": "Rust image preprocessing, processor configuration, prompt expansion, image-span validation, public LFM2-VL device policy, and their committed fixtures.",
       "status": "active",
       "paths": [
         "candle-vlm/src/image.rs",
@@ -79,6 +79,8 @@
         "candle-vlm/src/lfm2_vl/prompt.rs",
         "candle-vlm/src/lfm2_vl/types.rs",
         "candle-examples/examples/lfm2-vl/args.rs",
+        "candle-examples/examples/lfm2-vl/main.rs",
+        "candle-examples/examples/lfm2-vl/README.md",
         "candle-examples/examples/lfm2-vl/loading.rs",
         "tests/fixtures/lfm2_vl_processor_tiny/README.md",
         "tests/fixtures/lfm2_vl_processor_tiny/manifest.json",
@@ -149,7 +151,7 @@
       ]
     },
     "workflow__artifact_acquisition": {
-      "description": "Pinned external snapshot planning, Xet-disabled resumable HTTP acquisition, source-identity verification, atomic no-clobber publication, and the active P3 approval boundary.",
+      "description": "Pinned external snapshot planning, Xet-disabled resumable HTTP acquisition, source-identity verification, atomic no-clobber publication, and reusable acquisition evidence.",
       "status": "active",
       "paths": [
         "tools/lfm2_vl/reference-lock.json",
@@ -162,7 +164,7 @@
       ]
     },
     "workflow__production_parity": {
-      "description": "Pinned environment, hash-only artifact admission, production trace export, native comparison, and exact parity evidence contracts.",
+      "description": "Pinned environment, hash-only artifact admission, production trace export, native comparison, phase-specific CPU-F32 contracts, and exact parity evidence.",
       "status": "active",
       "paths": [
         "tools/lfm2_vl/reference/production_trace.py",
@@ -179,6 +181,7 @@
       "description": "Native Windows-first verification, secondary WSL portability replay, baseline/environment scripts, bounded-process proof, parity claims, failures, and current handoff.",
       "status": "active",
       "paths": [
+        "candle-kernels/build.rs",
         "scripts/lfm2-vl/env-report.sh",
         "scripts/lfm2-vl/verify-baseline.sh",
         "scripts/lfm2-vl/preflight.ps1",
@@ -187,9 +190,20 @@
         "scripts/lfm2-vl/test-preflight.ps1",
         "scripts/lfm2-vl/verify-mod-manifest.sh",
         "scripts/lfm2-vl/verify-summary-bank.ps1",
-        "docs/lfm2-vl/PARITY.md",
-        "docs/lfm2-vl/FAILURE_LOG.md",
         "docs/lfm2-vl/STATUS.md"
+      ]
+    },
+    "issue__cuda_production_parity": {
+      "description": "Official 450M CUDA parity, bounded placement/dtype policy, CUDA cast/layout regressions, and the measured-optimization handoff.",
+      "status": "active",
+      "paths": [
+        "candle-core/tests/custom_op_tests.rs",
+        "candle-kernels/src/cast.cu",
+        "candle-transformers/src/models/lfm2_vl/linear.rs",
+        "candle-examples/examples/lfm2-vl/main.rs",
+        "candle-examples/examples/lfm2-vl/args.rs",
+        "candle-examples/examples/lfm2-vl/runner.rs",
+        "docs/lfm2-vl/PARITY.md"
       ]
     },
     "issue__oracle_memory_containment": {
@@ -207,7 +221,7 @@
       ]
     },
     "issue__production_trace_integrity": {
-      "description": "Cross-runtime trace dtype, artifact, stage-range, and comparison-exit contracts exposed by the official 450M parity gate.",
+      "description": "Cross-runtime trace dtype, artifact, stage-range, phase-specific CPU-F32 comparison, and comparison-exit contracts exposed by the official parity gates.",
       "status": "active",
       "paths": [
         "candle-examples/examples/lfm2-vl/trace.rs",

@@ -15,6 +15,7 @@ use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::{Cursor, Read};
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 use tokenizers::Tokenizer;
 
 use super::trace::{self, NativeTraceCapture};
@@ -40,6 +41,7 @@ pub struct InferenceRequest<'a> {
     pub max_new_tokens: usize,
     pub vision_batch_size: usize,
     pub eos_token_id: Option<u32>,
+    pub timings: bool,
     pub trace_output: Option<&'a Path>,
 }
 
@@ -420,6 +422,7 @@ fn run(
     prompt: &Lfm2VlPrompt,
     request: InferenceRequest<'_>,
 ) -> Result<InferenceReport> {
+    let total_started = Instant::now();
     if request.vision_batch_size == 0 {
         bail!("vision batch size must be greater than zero")
     }
@@ -428,7 +431,10 @@ fn run(
         bail!("LFM2-VL native trace requires exactly one image input")
     }
     let limits = &processor.config().vision_limits;
+    let image_load_started = Instant::now();
     let (images, image_files) = load_images(request.image_paths, limits)?;
+    let image_load_ms = image_load_started.elapsed().as_secs_f64() * 1000.0;
+    let processor_started = Instant::now();
     let processed = if images.is_empty() {
         empty_processed_batch()?
     } else {
@@ -436,9 +442,12 @@ fn run(
             .process(&images, runtime.vision_device())
             .map_err(anyhow::Error::from)?
     };
+    let processor_ms = processor_started.elapsed().as_secs_f64() * 1000.0;
+    let prompt_started = Instant::now();
     let expanded = prompt
         .expand(request.prompt, &processed)
         .map_err(anyhow::Error::from)?;
+    let prompt_ms = prompt_started.elapsed().as_secs_f64() * 1000.0;
     if expanded.input_ids.is_empty() {
         bail!("LFM2-VL inference prompt tokenized to an empty sequence")
     }
@@ -462,6 +471,7 @@ fn run(
         runtime.default_eos_source(),
         prompt.tokenizer(),
     );
+    let vision_started = Instant::now();
     let (encoded, image_trace) = if images.is_empty() {
         if request.trace_output.is_some() {
             bail!("LFM2-VL native trace requires one decoded image")
@@ -477,6 +487,7 @@ fn run(
             None,
         )
     };
+    let vision_ms = vision_started.elapsed().as_secs_f64() * 1000.0;
     let mut trace_capture = match (request.trace_output, image_trace) {
         (Some(_), Some(image)) => Some(NativeTraceCapture::new(image)),
         (Some(_), None) => bail!("LFM2-VL native trace is unavailable for the selected runtime"),
@@ -493,11 +504,15 @@ fn run(
         max_new_tokens: request.max_new_tokens,
         eos_token_id: eos.token_id,
     };
+    let first_started = Instant::now();
     let first = generate_once(runtime, &generation_inputs)?;
+    let first_generation_ms = first_started.elapsed().as_secs_f64() * 1000.0;
     if let Some(capture) = trace_capture.as_mut() {
         capture_trace(runtime, &generation_inputs, capture)?;
     }
+    let reset_started = Instant::now();
     let second = generate_once(runtime, &generation_inputs)?;
+    let reset_generation_ms = reset_started.elapsed().as_secs_f64() * 1000.0;
     if first != second {
         bail!(
             "LFM2-VL cache reset replay diverged: first generated {:?}, second generated {:?}",
@@ -539,6 +554,12 @@ fn run(
             images.first(),
             capture,
         )?;
+    }
+    if request.timings {
+        eprintln!(
+            "lfm2-vl timings_ms image_load={image_load_ms:.3} processor={processor_ms:.3} prompt={prompt_ms:.3} vision={vision_ms:.3} generation_first={first_generation_ms:.3} generation_reset={reset_generation_ms:.3} inference_total={:.3}",
+            total_started.elapsed().as_secs_f64() * 1000.0
+        );
     }
     Ok(report)
 }
@@ -1381,6 +1402,7 @@ mod tests {
                 max_new_tokens: 3,
                 vision_batch_size: 1,
                 eos_token_id: None,
+                timings: false,
                 trace_output: Some(trace_output.as_path()),
             },
         )?;
@@ -1504,6 +1526,7 @@ mod tests {
                 max_new_tokens: 3,
                 vision_batch_size: 1,
                 eos_token_id: None,
+                timings: false,
                 trace_output: None,
             },
         )?;

@@ -214,6 +214,8 @@ CAST_OP(int64_t, int64_t,  cast_i64_i64 )
 CAST_OP(int64_t, float,    cast_i64_f32)
 CAST_OP(int64_t, double,   cast_i64_f64)
 
+CAST_OP(int32_t, float,    cast_i32_f32)
+
 CAST_OP(float, uint8_t,  cast_f32_u8 )
 CAST_OP(float, uint32_t, cast_f32_u32)
 CAST_OP(float, int64_t,  cast_f32_i64 )

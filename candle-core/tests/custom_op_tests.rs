@@ -180,3 +180,12 @@ fn ug_op() -> Result<()> {
     );
     Ok(())
 }
+
+#[cfg(feature = "cuda")]
+#[test]
+fn cuda_i32_to_f32_cast() -> Result<()> {
+    let device = Device::new_cuda(0)?;
+    let values = Tensor::new(&[-3i32, 0, 4, 19], &device)?.to_dtype(DType::F32)?;
+    assert_eq!(values.to_vec1::<f32>()?, [-3., 0., 4., 19.]);
+    Ok(())
+}

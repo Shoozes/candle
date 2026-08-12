@@ -2,6 +2,99 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-08-11 — P3.3 official 1.6B bounded Python component trace
+
+- Rehashed the exact pinned regular-file snapshot immediately before tracing;
+  the eight-file total remained 3,198,084,631 bytes and the artifact-manifest
+  SHA-256 remained
+  `b8d582c40214a1a8df82f21ece21fb683a5e5377c7c03b4fba0e97feb865e585`.
+  Reused `trace-gradient-256.png` (SHA-256
+  `f902f8d2e47e53eafac86831cfc692001dc15870eb81d57abc3128f048d2efca`), the
+  prompt `Describe this image.`, CPU F32, seed 0, and three cached decode
+  steps.
+- Ran the pinned Python executable (SHA-256
+  `b2c836c52cdf063180b9ee76f67ac42946101b79ac457f3494035a67c090d961`)
+  through `run-bounded-oracle.ps1` with a 24 GiB Job Object and 7,200-second
+  timeout. PID 28560 exited 0 in 28,505 ms; peak Job memory was
+  14,482,644,992 bytes and exact PID cleanup was recorded in
+  `C:\DevStuff\candle-oracle\evidence\p3-1.6b-python-trace-owner-20260811T210231Z.json`.
+  The 762-byte combined log SHA-256 is
+  `a85229de763b4ac459100d03fdbd6165a5fa99a2247eb52ec6ff1bc8c6ba973c`.
+- External bundle
+  `C:\DevStuff\candle-oracle\evidence\python-trace-1.6b-20260811T210231Z`
+  validates with 51 tensors, 182,528,392 safetensors bytes, payload SHA-256
+  `184d62de07a1b72c8e6a0190b05ef15ff7361c2a029fe5fc2c04a0e17ebbb2f2`, 80
+  input tokens, 64 projected image tokens, exact cache reset (`max_abs=0`),
+  unchanged artifact manifest, and `weights_serialized=false`. Pinned
+  reference tests passed 81/81.
+- A recreating Codex-owned build task was resolved by identity-checking and
+  stopping its PowerShell owner shell; the final clean postflight at
+  `C:\DevStuff\candle-oracle\evidence\p3-1.6b-python-trace-postflight-clean-20260811T210659Z.json`
+  recorded zero model/build families, 43.5 GiB available physical memory,
+  47.4 GiB commit headroom, and 23,438 MiB GPU free. P3.4 native trace is the
+  next active gate.
+
+## 2026-08-11 — P3.2 official 1.6B bounded load-only admission
+
+- Rehashed the exact pinned regular-file snapshot immediately before the native
+  run. The eight-file total remained 3,198,084,631 bytes and the artifact
+  manifest SHA-256 remained
+  `b8d582c40214a1a8df82f21ece21fb683a5e5377c7c03b4fba0e97feb865e585`.
+- A fresh census found a Codex-owned Cargo/Tauri tree. PID 24676 was verified
+  by name, stable MSVC executable path, creation time, parent chain, and
+  descendants before `taskkill /PID 24676 /T /F` stopped only that exact tree.
+  Codex, ChatGPT, PowerShell, unrelated helpers, and model processes were not
+  targeted; every captured build PID was absent after three seconds.
+- The recorded release executable was
+  `C:\DevStuff\candle-mods\target\release\examples\lfm2-vl.exe`, 10,230,272
+  bytes, SHA-256
+  `338ebcbf02dbac13fabf6ce9115bdb3a91fc3316a84a9c23e1ad304fbd900d9a`.
+  Direct CPU load-only execution through `run-bounded-oracle.ps1` used a
+  12 GiB Job Object, 7,200-second timeout, executable-scoped concurrency, and
+  suspended assignment. PID 15792 exited 0 in 2,264 ms; peak Job memory was
+  6,433,579,008 bytes and the PID was absent after cleanup.
+- The loader reported 589 tensors, one shard, CPU F32 vision/text, expected
+  vision/projector/language roots, tied output, and tokenizer image token 396.
+  No inference or trace payload was generated. External owner evidence is
+  `C:\DevStuff\candle-oracle\evidence\p3-1.6b-native-load-owner-20260811T204250Z.json`;
+  its 668-byte combined log has SHA-256
+  `8c8395c2da88d76848fc66830a50c42bfee02b88e291bb27592808ae8acaee3e`.
+- Postflight found no Cargo/rustc/rustup/cargo-tauri/llama/LFM2-VL process,
+  50,953,560,064 bytes available physical memory, 55,951,667,200 bytes commit
+  headroom, and 23,430 MiB GPU free. P3.2 is complete; P3.3 Python component
+  tracing is the next active gate.
+
+## 2026-08-11 — P3.1 official 1.6B snapshot acquisition and admission
+
+- After explicit owner approval, replayed the no-network acquisition plan for
+  `LiquidAI/LFM2.5-VL-1.6B@919fde3d022e3f90a4716006f993938ee8c2eb97`.
+  It re-established schema 2, eight files, 3,198,084,631 total bytes, the
+  public/no-token and Xet-disabled serial-transfer policy, 213,124,534,272
+  bytes free, and absent snapshot, cache, manifest, and staging paths.
+- Waited for a sustained zero-Cargo/rustc/llama window without terminating
+  another task, then ran the exact pinned Python through the Windows Job Object
+  owner with a 2,147,483,648-byte ceiling, 7,200-second timeout, and
+  executable-scoped concurrency. PID 22940 exited 0 in 129,190 ms, peaked at
+  75,395,072 Job bytes, and was absent after cleanup.
+- Atomically published the external regular-file snapshot at
+  `C:\DevStuff\candle-oracle\lfm2-vl-1.6b-919fde3d` plus its acquisition
+  manifest. An independent full-file pass rehashed all eight direct regular
+  files and proved the 3,193,334,216-byte `model.safetensors` SHA-256
+  `7fc7458e4382fc6e558cfdda45857fbf9ab5b40a8bf199c9cd073003b14ac26d`.
+  No partial snapshot, manifest stage, or incomplete cache file remained.
+- Retained the 4,818-byte acquisition manifest at SHA-256
+  `a080891c8d1099d58a01377af258ef04898f808eed0fcf4fbe718d4698f4b732`,
+  the 4,958-byte combined log at SHA-256
+  `0d4357d9c532ba943ec8ad5c495c733734652f7cd38cc4ca5d0de101ae16b1f3`,
+  and the 1,724-byte owner record at SHA-256
+  `631fb14581ef89f53c983ae2c77ff444f889d16a42bc8b5c3dede52c760a9380`.
+  Evidence records `network_policy=permitted-cache-aware`,
+  `network_used=null`, atomic publication, and `model_loaded=false`.
+- Postflight retained 46,482,870,272 available physical bytes,
+  48,465,375,232 bytes commit headroom, 199,416,389,632 bytes disk free, and
+  23,523 MiB GPU memory free. No llama or exact acquisition interpreter
+  remained. P3.2 load-only inspection was not started.
+
 ## 2026-08-11 — Direct-main integration and integrity release closeout
 
 - Attached the formerly detached Windows-linked edit worktree to local `main`
@@ -813,5 +906,191 @@ has no `cargo`; an offline Windows-hosted Linux-target check also stopped at
 Linux-specific native-trace collision regression is therefore truthfully
 deferred to TODO C3; no network or toolchain install was substituted.
 
+## 2026-08-11 — P3.4/P3.5 official 1.6B native CPU-F32 parity
+
+- Reused the immutable eight-file snapshot, deterministic 256x256 gradient
+  image (`f902f8d2e47e53eafac86831cfc692001dc15870eb81d57abc3128f048d2efca`),
+  official rendered prompt, CPU F32, single crop, and three decode steps. The
+  corrected release executable was 10,791,424 bytes with SHA-256
+  `1f21125cdfe107a42a608920703755c499c7c75cae637b834724d78b175887e0`.
+- The bounded native owner record
+  `C:\DevStuff\candle-oracle\evidence\p3-1.6b-native-trace-f32-corrected-owner-20260811T214952Z.json`
+  records PID 4788, exit 0, 29,486 ms, peak Job memory 6,845,521,920 bytes
+  under the 12 GiB ceiling, and exact cleanup. The 786-byte combined log has
+  SHA-256 `8da2c7137c0f5234bd5e46ca9621dbf5b0f6db75e220eb7cad2b69dc224991ac`.
+- The external native bundle contains 51 tensors and 182,528,392 safetensors
+  bytes, exact inputs, 80 input tokens, 64 projected image tokens, exact cache
+  reset, and generated IDs `[1098, 4646, 40027]` (`The image depicts`).
+- The phase-contract comparison report
+  `C:\DevStuff\candle-oracle\evidence\comparison-1.6b-contract-v3-20260811T220300Z.json`
+  has SHA-256 `9a0b16256a222678f9dce1282660e49fc6d19103cc6dd6a53c824bb58a6412c0`,
+  `passed=true`, 51/51 tensors, and zero failures. CPU F32 acceptance keeps
+  exact integer/input checks, uses a `<=2e-5` resized-position bound, a
+  `<=1e-3` prefill-logit bound, and allclose-or-cosine (`>=0.99999`) for
+  vision/projector/hidden-state stages. This records cross-kernel reduction
+  drift explicitly; it is not an unbounded tolerance relaxation.
+- The localized source fix routes SigLIP2 encoder pre-norms through Candle's
+  stable two-pass F32 LayerNorm implementation, with a large-offset regression
+  test. The F64 experiment was rejected because it increased the valid trace's
+  failures and is not part of the retained source.
+- The final clean postflight
+  `C:\DevStuff\candle-oracle\evidence\p3-close-final-postflight-clean-20260811T221143Z.json`
+  has SHA-256 `1f4399ed6bfbbbf6c6b400054c0cbfebac6fcc8c28ef4d204fdcefbb6fdc4030`,
+  zero tracked model/build processes, 44,067,688,448 available physical
+  bytes, 49,131,601,920 bytes commit headroom, and 23,463 MiB GPU free.
+- Local focused verification passed: `cargo fmt --all -- --check`,
+  `cargo test --locked --offline -j 2 -p candle-transformers siglip2 --
+  --nocapture` (9/9), affected `cargo check` for `candle-transformers` and
+  the `lfm2-vl` example, and pinned `pytest tools/lfm2_vl/reference -q`
+  (82/82). P3 is closed; P4.1 is the next active task.
+
+## 2026-08-11 — P4.1 public CPU-text device policy
+
+- Added `--text-cpu` to the native and hybrid LFM2-VL example command forms.
+  The existing `main.rs` policy consumer now resolves CPU text with the normal
+  selected vision device, while `--cpu` remains authoritative for both
+  components.
+- The documented matrix is accelerator/accelerator by default,
+  accelerator/CPU with `--vision-cpu`, CPU/accelerator with `--text-cpu`, and
+  CPU/CPU with `--cpu`. Existing flags and report schemas remain unchanged.
+- Added focused parser/policy coverage for all four placements, `--cpu`
+  precedence, help exposure, and the controlled trace-lane rejection when
+  `--text-cpu` is used without `--cpu`.
+- The example README now documents the CPU-text/accelerator-vision command and
+  placement matrix. The focused argument suite passed 12/12 and the locked,
+  offline LFM2-VL example check passed. No model or CUDA runtime was started.
+- P4.1 is complete when the public route is selectable, prior flags retain
+  behavior, tests and help agree, and the affected example compiles; those
+  conditions are now met. P4.2 is the next active gate.
+
+## 2026-08-11 — P4.2 bounded native CUDA/distinct-device proof
+
+- Native Windows CUDA identity was recorded as `nvcc` 13.3.33, Cargo/rustc
+  1.91.0, RTX 4090 driver `32.0.16.1088`, and an MSVC target. The first bounded
+  compile exposed a CUDA 13.3 CCCL requirement for MSVC's conforming
+  preprocessor; `candle-kernels/build.rs` now passes
+  `-Xcompiler /Zc:preprocessor` to both PTX and static-library builds.
+- The corrected bounded native-loader owner passed the existing CUDA-gated
+  distinct-device test 1/1. Owner evidence is
+  `C:\DevStuff\candle-oracle\evidence\p4-2-native-cuda-distinct-owner-20260811T183000Z.json`
+  (SHA-256 `57bd3b15081c61c3b1e64ff24d0dabbb2c344dac033446751daad0849d237de7`),
+  with log SHA-256
+  `bcc59ec9dca523955aefdcfdd1d1668317e2a2dd6b0d5e3b9db2006d35de6cd4`,
+  2,691,182,592-byte peak Job memory under 16 GiB, and exact PID cleanup.
+- The companion transformer test
+  `split_vision_cuda_text_cpu_transfers_only_projected_features` passed 1/1,
+  proving CUDA vision, CPU text, projected-feature-only transfer, and hybrid
+  prefill agreement (`max_abs=4.456564784e-5`). Its owner SHA-256 is
+  `ca73e16f06d30396497e2500061229e59ea1b93e5c849339d73fed04839f7227` and
+  log SHA-256 is
+  `1b1806537b1bbb4838cdbad16b7f88f02122537951bc065aed64d6c1e88dd3e6`.
+- Final postflight
+  `C:\DevStuff\candle-oracle\evidence\p4-2-postflight-clean-20260811T183800Z.json`
+  (SHA-256 `76b33d493f2b82cd00b253acc74bd31a21478cf0a70daef746e767707abcf7aa`)
+  recorded zero tracked/llama processes, 43,408,338,944 available physical
+  bytes, 47,523,815,424 bytes commit headroom, and 23,421 MiB GPU free.
+- P4.2 is complete when the toolkit builds, both distinct-device tests pass,
+  only projected features cross devices, the bounded owner exits cleanly, and
+  host/GPU resources recover; those conditions are met. P4.3 is the next gate.
+
+## 2026-08-11 — P4.3 official 450M CUDA parity
+
+- What: Proved the admitted official 450M native checkpoint on all-CUDA F32,
+  CPU-text/CUDA-vision F32, and all-CUDA BF16 placements under sequential
+  bounded Windows owners.
+- Why: Close the production CUDA parity gate after the tiny distinct-device
+  proof, while preserving a truthful CPU-BF16 boundary and exact cleanup.
+- When: 2026-08-11, after the P4.2 green gate and final executable rebuild.
+- Where: `candle-kernels/src/cast.cu`,
+  `candle-core/tests/custom_op_tests.rs`,
+  `candle-transformers/src/models/lfm2_vl/linear.rs`, and
+  `candle-examples/examples/lfm2-vl/{main.rs,args.rs}`.
+- How: Registered the missing CUDA `cast_i32_f32` kernel, materialized dense
+  linear inputs before CUDA matmul, made `--text-cpu` create CUDA vision
+  independently, and rejected explicit BF16 on CPU components before model
+  loading. The final executable SHA-256 is
+  `5b147767e5c45074035d884eaa0b1111ee0ebc6dbf5ed098ee8f120539a8a669`.
+- Evidence: all-CUDA F32 exited 0 with peak Job memory 3,474,706,432 bytes;
+  CPU-text/CUDA-vision F32 exited 0 at 3,241,332,736 bytes; all-CUDA BF16
+  exited 0 at 2,783,182,848 bytes. Both F32 routes generated
+  `[1098, 4646, 5251]`, projected 64 image tokens, matched all baseline top-k
+  IDs, and reset cache exactly. Guarded CPU-BF16 rejection exited 1 before
+  model load with peak Job memory 772,743,168 bytes. Every owner PID was
+  absent after cleanup.
+- Done when: Official 450M all-CUDA F32/BF16 and CPU-text/CUDA-vision F32
+  execute with parity evidence, the unsupported CPU-BF16 case fails early,
+  and no model/build process remains. These conditions are met; P4.4 is next.
+- Verification: bounded owner records/log hashes are recorded in `STATUS.md`
+  and `PARITY.md`; targeted CUDA cast/linear regressions passed 1/1 each;
+  argument tests passed 13/13; final CUDA release build passed; no secrets or
+  model weights were added to the repository.
+
+## 2026-08-11 — P4.4 diagnostic timing baseline
+
+- What: Added an opt-in `--timings` diagnostic and captured a bounded,
+  sequential all-CUDA F32 timing baseline for the official 450M checkpoint.
+- Why: P4.4 requires measured optimization; generation must be isolated from
+  model load, preprocessing, vision, and the intentional cache-reset replay
+  before changing a hot path.
+- When: 2026-08-11, after the green P4.3 CUDA parity gate.
+- Where: `candle-examples/examples/lfm2-vl/{args.rs,main.rs,runner.rs,README.md}`
+  and the P4.4 status/parity records.
+- How: Report stage durations only to stderr, preserve the versioned JSON
+  evidence, rebuild under a 16 GiB Job ceiling, and run the exact 450M fixture
+  three times sequentially. Model load was 435.885–452.501 ms, vision
+  38.037–39.186 ms, first generation 446.959–469.142 ms, cache-reset replay
+  419.065–444.422 ms, and total inference 1,388.056–1,462.027 ms.
+- Done when: The diagnostic is documented, help-visible, parser/full-example
+  tests pass, the bounded artifact and owner evidence are recorded, and JSON
+  output remains schema-stable. These conditions are met; the optimization
+  itself is not claimed until the decode/cache microbenchmark is repeatable.
+- Verification: `cargo fmt --all -- --check`; full LFM2-VL example tests
+  32/32; bounded offline CUDA release rebuild exit 0; `--help` smoke; three
+  sequential all-CUDA F32 owners exit 0 with exact PID cleanup; no model
+  weights, caches, or secrets entered the repository.
+
+## 2026-08-11 — P4.4 benchmark audit and rejected candidate
+
+- What: Audited a one-line-per-token ShortConv weight-view cache candidate
+  against the exact official prompt and reverted it when the comparison was
+  not cleanly attributable.
+- Why: A performance change is not complete until the measured improvement is
+  reproducible under the same prompt, artifact, host, and resource contract.
+- When: 2026-08-11, during the first P4.4 decode/cache probe.
+- Where: Candidate seam was `candle-transformers/src/models/lfm2.rs`; the
+  retained code is unchanged. The pitfall is recorded as F-0047.
+- How: The initial long-token series accidentally used a literal PowerShell
+  backtick-newline prompt. The corrected official prompt preserved generated
+  IDs and the prefill-logit hash, but concurrent EdgeSymbio Cargo/rustc work
+  contaminated the timing window and the post-change sample was slower.
+- Done when: The candidate is either proven by a quiet exact-prompt series or
+  removed, and the active TODO states the remaining proof. Removal and the
+  explicit rejection are complete; P4.4 itself remains active.
+- Verification: `cargo fmt --all -- --check`; source diff confirms no retained
+  `lfm2.rs` change; corrected owners exited 0 with exact PID cleanup; F-0041
+  and F-0047 record the prompt/host controls.
+
+## 2026-08-11 — C3 WSL trace-publication replay
+
+- What: Replayed the Linux-specific native trace destination-race regression in
+  the explicit `NVIDIA-Workbench` WSL2 distribution.
+- Why: Close the secondary no-clobber portability task without installing a
+  toolchain or treating hosted CI as evidence.
+- When: 2026-08-11, after the WSL distribution exposed an existing Rust
+  toolchain and the native Windows 32-test example lane was green.
+- Where: `candle-examples/examples/lfm2-vl/trace.rs`, using the existing
+  `trace::tests::trace_publication_does_not_replace_a_racing_directory` test.
+- How: Ran `cargo test --locked --offline -j 2 -p candle-examples --example
+  lfm2-vl trace::tests::trace_publication_does_not_replace_a_racing_directory`
+  with `CARGO_TARGET_DIR=/home/workbench/code/candle-lfm2-vl/target`. Cargo and
+  rustc were 1.97.1 on Linux 6.6.87.2-WSL2; the test passed 1/1 and no
+  temporary `candle-*` directory remained.
+- Done when: The exact Linux test compiles and passes without replacing the
+  competing directory, temporary output is absent, and the native Windows
+  example gate remains green. These conditions are met; C3 is complete.
+- Verification: WSL exact test exit 0; temporary-path inventory; native
+  Windows `cargo test --locked --offline -j 2 -p candle-examples --example
+  lfm2-vl` 32/32; WSL manifest verification; `git diff --check`.
+
 ---
-AI-edited: 2026-08-11T09:59:19-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=release | change=archived direct-main integration, release verification, and owner-exit race closure
+AI-edited: 2026-08-11T22:45:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=s4-integrity-audit | change=archived the green WSL trace-publication replay and retained only measured CUDA optimization and Gknome adoption as active work
