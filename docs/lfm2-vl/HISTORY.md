@@ -1661,7 +1661,8 @@ deferred to TODO C3; no network or toolchain install was substituted.
 ## 2026-08-13 — Candle INT-5B.1 lower-precision timestep cast order
 
 - What: Removed the conservative F32-only SDXL `text_time` boundary while
-  preserving the reference's F32 sinusoidal projection semantics.
+  preserving the reference's F32 sinusoidal projection semantics, published
+  at `aed7f062bbfb825675efaf21c98029983312d336`.
 - Why: SnapFlash's product CUDA runtime uses F16. Repinning INT-5C to the
   prior checkpoint would either fail closed or tempt an application-owned
   duplicate/F32-UNet workaround with avoidable VRAM risk.
@@ -1677,10 +1678,10 @@ deferred to TODO C3; no network or toolchain install was substituted.
   cached workspace excluding the network-backed dataset and unavailable
   Python-3.13 binding test crates passes, and complete-workspace strict Clippy
   passes with PyO3's supported no-interpreter mode. These implementation
-  conditions are met; direct-main publication is the next state transition.
+  conditions and guarded direct-main publication are complete.
 - Boundary: No CUDA, production checkpoint, Python oracle, network, model
   process, or llama.cpp workload ran. INT-5C/D remain application integration
   and differential-parity work.
 
 ---
-AI-edited: 2026-08-13T04:34:15-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=archived the green lower-precision cast-order implementation
+AI-edited: 2026-08-13T04:50:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=archived the published lower-precision cast-order implementation

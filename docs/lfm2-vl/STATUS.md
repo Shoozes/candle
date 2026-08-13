@@ -16,6 +16,8 @@
   `95ac9ff815fbac4f252b4ef6780b5e4a7843f328`.
 - Candle INT-5B SDXL `text_time` revision:
   `ba1e8acc142c4683995e4cdbc8b1d933c81e96c6`.
+- Candle INT-5B.1 lower-precision cast-order revision:
+  `aed7f062bbfb825675efaf21c98029983312d336`.
 - SnapFlash-Server Round 4 LoRA consumer revision:
   `6e64320fe26e7c3be91262bc0dac99ce53f4c628`.
 - SnapFlash-Server Round 6 bounded-runtime implementation revision:
@@ -56,9 +58,9 @@
 
 - Product phase: coordinated three-repository integration. Rounds 1 through 7
   are published. INT-5A fail-closed admission is published in SnapFlash and
-  Candle INT-5B's generic SDXL `text_time` primitive is published. The narrow
-  INT-5B.1 lower-precision cast-order follow-up is green locally and awaiting
-  publication before INT-5C repins. No numerical ControlNet parity claim has
+  Candle INT-5B's generic SDXL `text_time` primitive and its narrow INT-5B.1
+  lower-precision cast-order follow-up are published. INT-5C is the active
+  SnapFlash integration boundary. No numerical ControlNet parity claim has
   been made.
 - The reusable hybrid constructor now lives at
   `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid`. It accepts explicit local text,
@@ -99,7 +101,7 @@
 
 ## Last Green Verification
 
-### INT-5B.1 lower-precision cast-order candidate
+### INT-5B.1 lower-precision cast-order publication gate
 
 - `cargo fmt --all -- --check`: passed on the source candidate.
 - `cargo test --offline --locked -j 2 -p candle-transformers
@@ -330,18 +332,18 @@
 
 ## Active Change Set
 
-- Active Candle files are the two Stable Diffusion source files and their
-  focused state/provenance documents for the INT-5B.1 publication checkpoint.
+- No source file is under active Candle implementation. INT-5B.1 is published;
+  the active cross-repository work belongs to SnapFlash INT-5C.
 - Models, caches, downloads, generated proof logs, Cargo output, and
   `.tools/.secrets/` remain ignored or external.
 
 ## Exact Next Task
 
-Publish the reviewed INT-5B.1 Candle cast-order checkpoint, repin SnapFlash to
-that exact implementation revision, and implement INT-5C's faithful SDXL
+Repin SnapFlash to Candle
+`aed7f062bbfb825675efaf21c98029983312d336` and implement INT-5C's faithful SDXL
 ControlNet attention graph, CLIP2 pooled projection, and time-ID policy. Do
 not generate the numerical fixture, load production weights, run CUDA, or
 promote inpainting before INT-5C is green.
 
 ---
-AI-edited: 2026-08-13T04:34:15-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=recorded the green lower-precision candidate and its exact publication handoff
+AI-edited: 2026-08-13T04:50:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=recorded the published lower-precision checkpoint and advanced active work to INT-5C

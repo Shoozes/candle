@@ -24,9 +24,8 @@ alone cannot justify a conditioned-generation or inpainting claim.
 
 ### When
 
-INT-5A and INT-5B are published. The INT-5B.1 cast-order implementation is
-green locally and must be published before SnapFlash repins. Start INT-5C only
-after that exact revision is available. Finish INT-5C/D before promoting
+INT-5A, INT-5B, and INT-5B.1 are published. Start INT-5C only after SnapFlash
+pins Candle `aed7f062bbfb825675efaf21c98029983312d336`. Finish INT-5C/D before promoting
 ControlNet-backed inpainting, enabling unattended real-weight ControlNet use,
 or claiming application-level numerical parity.
 
@@ -132,4 +131,4 @@ INT-5 requirements and must not be introduced without a scoped proposal and
 acceptance contract.
 
 ---
-AI-edited: 2026-08-13T04:34:15-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=made publication of the lower-precision checkpoint the exact INT-5C prerequisite
+AI-edited: 2026-08-13T04:50:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=recorded the published lower-precision revision as INT-5C's exact dependency
