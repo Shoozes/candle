@@ -10,6 +10,18 @@
   `c0fb3a9fe098e50d07ec1b749c77015d7bd8d9a5`.
 - EdgeSymbio Round 2 consumer revision:
   `d535a4f56f5a8e06407cb4b8f5be0df7f3121327`.
+- Candle Round 3 shared LoRA revision:
+  `37584ecd2738ba1eb4ec4c1ab218667681f54973`.
+- SnapFlash-Server Round 4 LoRA consumer revision:
+  `6e64320fe26e7c3be91262bc0dac99ce53f4c628`.
+- SnapFlash-Server Round 6 bounded-runtime implementation revision:
+  `d66c1c35158aca7b37e6e1d82e527334b209d93a`.
+- Current SnapFlash-Server `main` after its exact publication record:
+  `b83db70ba4027535e4e55f6509e6011feeead850`.
+- EdgeSymbio Round 5 LoRA consumer revision:
+  `633f774a3690df5a8a35b6cac000df4b390316d5`.
+- Current EdgeSymbio `main` after bounded proof-owner hardening:
+  `eb9c07127321bd7528786c4fa103b92f893991f5`.
 - Integration and publication branch: `main`; owner-reviewed work lands
   directly without a pull request.
 - Historical implementation checkpoint:
@@ -19,9 +31,9 @@
   `ff885586f6d44a3d9b9ac1724032cdf5f0155384`. Do not move or reuse it for the
   coordinated runtime.
 - Current LFM2-VL overlay: 150 paths, exactly 15 fork-origin modifications and
-  135 mod-owned additions. The SnapFlash-derived overlay is 8 paths (2
-  fork-origin modifications and 6 additions); the repository-wide union is
-  157 paths across both overlays.
+  135 mod-owned additions. The SnapFlash-derived overlay candidate is 9 paths
+  (3 fork-origin modifications and 6 additions); the repository-wide union is
+  158 paths across both overlays.
 
 ## Worktree Boundary
 
@@ -38,8 +50,9 @@
 
 ## Current Phase
 
-- Product phase: coordinated three-repository integration, Rounds 1 and 2
-  published; Round 3 Candle LoRA promotion implemented and locally green.
+- Product phase: coordinated three-repository integration. Rounds 1 through 6
+  are published. Round 7 Candle additional-residual contract hardening is the
+  current local candidate.
 - The reusable hybrid constructor now lives at
   `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid`. It accepts explicit local text,
   tokenizer, processor, MMProj, dtype, device, and execution-policy inputs and
@@ -53,13 +66,59 @@
 - EdgeSymbio now pins the Round 1 Candle revision and passes its bounded,
   CLI-only 450M CPU/F32 token-level proof. It remains intentionally absent from
   API, Tauri, model packs, release sweeps, and product vision claims.
-- Candle now exposes validated three-component SDXL LoRA parsing, injected
-  target resolution, canonical base/delta/merged hashes, and rollback-capable
+- EdgeSymbio's current clean `main` adds a bounded Windows Job Object proof
+  runner and deterministic small-process regressions. Its three-component live
+  model replay and Candle-375 LFM2-VL reattestation remain owner-authorized
+  runtime gates, not source-code failures or inferred green evidence.
+- Candle exposes validated three-component SDXL LoRA parsing, injected target
+  resolution, canonical base/delta/merged hashes, and rollback-capable
   `VarMapSwapTransaction` replacement/clear under a consumer-owned exclusive
-  model lease. SnapFlash-Server remains on its reviewed crates.io graph until
-  this exact Round 3 candidate is published.
+  model lease. SnapFlash-Server and EdgeSymbio now consume that exact published
+  framework revision without retaining duplicate generic transaction math.
+- The existing Candle UNet additional-residual hook is sufficient for the
+  application boundary. The current Round 7 candidate makes its down-residual
+  inventory configuration-derived and validates exact shape, dtype, and device
+  before addition; it does not claim full ControlNet numerical parity.
 
 ## Last Green Verification
+
+### Round 7 additional-residual candidate gate
+
+- `cargo fmt --all -- --check`: passed after applying canonical formatting to
+  the focused UNet change.
+- `cargo test --locked --offline -j 2 -p candle-transformers
+  stable_diffusion::unet_2d::tests --lib`: passed 6/6 exact residual-contract
+  tests.
+- `cargo test --locked --offline -j 2 -p candle-transformers`: passed 77/77
+  library, 5/5 generation, and 8/8 NMS tests; the existing unrelated Smol doc
+  test remains ignored.
+- `cargo clippy --locked --offline -j 2 -p candle-transformers --all-targets
+  -- -D warnings`: passed.
+- `PYO3_NO_PYTHON=1 cargo clippy --locked --offline -j 2 --workspace
+  --all-targets -- -D warnings`: passed the complete cached compile-only
+  workspace lane. The first local replay selected the desktop-bundled Python
+  3.12 interpreter and stopped before project compilation because the
+  unrelated `candle-pyo3` crate requires the `abi3-py313` floor; PyO3's
+  supported no-interpreter mode then compiled the same all-target graph with
+  warnings denied. The separate workspace test lane below already passed with
+  installed Python 3.13.
+- `cargo check --locked --offline -j 2 -p candle-core -p candle-nn -p
+  candle-transformers -p candle-vlm`: passed.
+- `cargo test --locked --offline -j 2 --workspace --exclude candle-datasets`:
+  passed the complete remaining native Windows workspace test and doc-test
+  lane after selecting the already-installed Python 3.13 interpreter required
+  by the unrelated PyO3 crate. The first sandboxed attempt was an environment
+  probe and failed before compilation because Python was absent from `PATH`;
+  the second sandboxed probe proved the installed interpreter was denied by
+  sandbox policy. No package installation or network access occurred.
+- The SnapFlash-derived manifest passed at 9/3/6, the LFM2-VL manifest passed
+  at 150/15/135 with 13 text and six binary fixture policies, and the root
+  overlay union passed at 158 paths, two overlays, and five shared paths.
+- The summary bank passed 25 groups; the focused residual route is 33.0 KiB
+  and defaults remain 133.8/256 KiB. Module-layout and preflight smoke gates
+  passed, and `git diff --check` is clean through the required WSL Git lane.
+- No production model, CUDA workload, Python oracle, llama.cpp process,
+  checkpoint, network dependency, or hosted runner was started.
 
 ### Round 3 SDXL LoRA promotion gate
 
@@ -158,12 +217,16 @@
 - Candle's upstream dataset smoke remains network-backed and has no local
   fixture. It is excluded only from the workspace test execution; the crate
   check and its all-target Clippy compile remain green. See F-0053.
-- SnapFlash-Server still owns duplicate LoRA parsing/math/transaction code and
-  resolves Candle from crates.io. It is intentionally unchanged until the
-  Round 3 Candle revision is cleanly published.
-- EdgeSymbio still owns a separate UNet-only LoRA transaction and has not yet
-  retained mutable maps for both SDXL text encoders. Its migration follows the
-  SnapFlash regression witness.
+- SnapFlash-Server Round 6 is published. Its Windows product lane now binds
+  body admission to the materialized buffer lifetime, accounts for complete
+  retained queue records including bounded terminal errors, rejects derived
+  structured prompts before admission, preserves the required base64-result
+  wire, and evicts whole terminal records from an independent owner. Its
+  separate Unix/WSL hostile-directory authority item remains in the SnapFlash
+  backlog and does not broaden the proven native-Windows boundary.
+- SnapFlash-Server's current ControlNet forward path still leaves text
+  `_context` unused. Nine-residual structural admission is proven, but
+  end-to-end real-weight numerical parity is not.
 - Lower-than-Q8 vision quantization, video, true text batching, generic VLM
   traits, converters, WebGPU/WASM, broad WSL replay, public signing, and LTS are
   deferred future scope, not hidden MVP promises.
@@ -173,21 +236,26 @@
 
 ## Blockers
 
-- No Candle Round 3 implementation, test, dependency, import/export, memory,
-  or focused verification blocker is known.
+- No Candle Round 7 API-design blocker is known; the existing hook is adequate.
+  Its focused, crate, required-check, workspace-test, overlay, context, layout,
+  preflight, targeted-Clippy, and full-workspace strict-Clippy gates are green.
+  The remaining Candle release gates are final documentation reconciliation,
+  a lightweight replay of the release checks, and guarded publication against
+  the exact published SnapFlash Round 6 revision above.
 - The upstream network-backed dataset test is a disclosed owner-scoped skip,
   not a Round 3 blocker and not permission to enable network verification.
-- SnapFlash-Server's only current gate is the exact published Round 3 Candle
-  revision; it must not pin an uncommitted worktree or moving branch.
-- Edge CUDA/F16, public LFM2-VL routes, and Edge LoRA migration are sequencing
-  holds, not concealed failures.
+- SnapFlash-Server has no remaining REL-6/7 publication blocker: its complete
+  local aggregate, correction audit, exact staged-scope review, guarded pushes,
+  and clean local/remote equality are recorded at the revisions above.
+- Edge CUDA/F16 and public LFM2-VL routes remain later product holds, not
+  concealed failures; Edge LoRA migration itself is complete.
 - Hosted GitHub Actions state is intentionally not a blocker or verification
   dependency.
 
 ## Active Change Set
 
-- LoRA source: `candle-transformers/src/models/stable_diffusion/lora.rs`,
-  `mutable.rs`, and their `mod.rs` exports.
+- ControlNet residual contract:
+  `candle-transformers/src/models/stable_diffusion/unet_2d.rs`.
 - Overlay proof: `docs/snapflash/MOD_MANIFEST.md`, its independent verifier,
   `docs/FORK_OVERLAYS.md`, the root union verifier, changelog, and focused
   `summary_bank.json` route.
@@ -198,15 +266,14 @@
 
 ## Exact Next Task
 
-After the complete local Candle gate and guarded publication prove local
-`main == origin/main`, pass the exact Round 3 commit to SnapFlash-Server. Pin
-all of its Candle packages to that immutable revision, replace local generic
-LoRA pair/math/transaction internals with the public Candle API, and prove
-identical targets/hashes plus base -> A -> B -> base before deleting the
-duplicate code. Keep SnapFlash filename, mapping, license, report, queue,
-inpaint, ControlNet, and API policy application-owned. Do not start Edge LoRA
-migration, ControlNet/inpainting promotion, or another model run before that
-first consumer regression is green.
+Bind SnapFlash implementation `d66c1c35158aca7b37e6e1d82e527334b209d93a`
+and proof-record head `b83db70ba4027535e4e55f6509e6011feeead850` into
+the Round 7 handoff, rerun Candle's focused residual, overlay, context, layout,
+format, and diff gates, inspect the exact staged paths, and publish Candle
+`main` through `.tools/gitpush.ps1`. Do not run a production model or CUDA
+workload. After clean local/remote equality, move REL-6/7 to `HISTORY.md`; the
+next framework proposal must begin with the differential ControlNet fixture in
+INT-5 and must not infer numerical parity from structural admission.
 
 ---
-AI-edited: 2026-08-12T16:05:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-3 | change=recorded audited LoRA proof, owner-scoped dataset skip, blockers, and exact SnapFlash handoff
+AI-edited: 2026-08-13T02:10:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=closed SnapFlash Round 6 and reduced the release gate to Candle verification and publication

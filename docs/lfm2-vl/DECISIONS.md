@@ -1101,5 +1101,43 @@ rank-2 factors and rank-2 or 1x1 rank-4 model targets only. The implementation
 is fresh Candle-native code based on behavior review; no application code was
 copied, and the unlicensed SnapFlash donor remains a behavior reference only.
 
+## D-0054: Harden Candle's Existing ControlNet Residual Hook Without Importing an Application Model
+
+Status: Accepted.
+
+Decision:
+Retain `UNet2DConditionModel::forward_with_additional_residuals` as Candle's
+generic ControlNet integration boundary. Validate the complete residual
+inventory and every tensor before the first residual is added: exact down
+count, exact shape, exact dtype, and exact device for all down residuals and
+the mid residual. Derive the expected inventory from the configured UNet
+topology with checked arithmetic. For the standard SDXL configuration of
+three down blocks and two layers per block, the exact count is nine.
+
+Do not add SnapFlash request types, ControlNet catalogs, retained-file policy,
+queues, image preprocessing, model loading, or a second ControlNet model to
+Candle. Keep the existing method signature, `None` fast path, and residual
+application order. Treat model-level numerical parity as a separate
+fixture-gated consumer task rather than inferring it from successful shape
+admission.
+
+Why:
+Candle already exposes the only framework hook SnapFlash needs. The previous
+implementation could fail late or panic when a caller supplied the stale
+13-residual inventory used by some non-SDXL descriptions, or when a residual
+matched in count but not shape, dtype, or device. Strengthening this boundary
+closes a reusable tensor-contract gap without copying application orchestration
+or creating a speculative framework abstraction.
+
+Consequences:
+Short, long, wrong-shape, wrong-dtype, and wrong-device inventories fail before
+the corresponding addition; valid inputs and the no-residual path preserve
+existing behavior. SnapFlash must independently prove that its ControlNet
+topology emits the exact nine tensors in Candle order and must retain ownership
+of input preprocessing, weight admission, resource limits, mutation
+serialization, rollback, and artifact publication. Round 7 is therefore a
+generic contract checkpoint, not a claim of full ControlNet or inpainting
+numerical parity.
+
 ---
-AI-edited: 2026-08-12T16:04:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-3 | change=accepted framework LoRA semantics with consumer-owned mapping, policy, and execution serialization
+AI-edited: 2026-08-12T21:12:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=accepted exact generic ControlNet residual admission without importing application orchestration

@@ -74,6 +74,108 @@ impl Default for UNet2DConditionModelConfig {
     }
 }
 
+fn expected_down_block_additional_residuals(
+    block_count: usize,
+    layers_per_block: usize,
+) -> Result<usize> {
+    let downsample_outputs = match block_count.checked_sub(1) {
+        Some(count) => count,
+        None => candle::bail!("UNet additional residuals require at least one down block"),
+    };
+    let resnet_outputs = match block_count.checked_mul(layers_per_block) {
+        Some(count) => count,
+        None => candle::bail!("UNet down-block residual count overflow"),
+    };
+    match 1usize
+        .checked_add(resnet_outputs)
+        .and_then(|count| count.checked_add(downsample_outputs))
+    {
+        Some(count) => Ok(count),
+        None => candle::bail!("UNet down-block residual count overflow"),
+    }
+}
+
+fn validate_down_block_additional_residual_count(expected: usize, found: usize) -> Result<()> {
+    if found != expected {
+        candle::bail!(
+            "down_block_additional_residuals count mismatch: expected {expected}, found {found}"
+        )
+    }
+    Ok(())
+}
+
+fn validate_additional_residual_tensor(
+    label: &str,
+    expected: &Tensor,
+    found: &Tensor,
+) -> Result<()> {
+    if found.dims() != expected.dims() {
+        candle::bail!(
+            "{label} shape mismatch: expected {:?}, found {:?}",
+            expected.dims(),
+            found.dims()
+        )
+    }
+    if found.dtype() != expected.dtype() {
+        candle::bail!(
+            "{label} dtype mismatch: expected {:?}, found {:?}",
+            expected.dtype(),
+            found.dtype()
+        )
+    }
+    if !found.device().same_device(expected.device()) {
+        candle::bail!(
+            "{label} device mismatch: expected {:?}, found {:?}",
+            expected.device().location(),
+            found.device().location()
+        )
+    }
+    Ok(())
+}
+
+fn add_down_block_additional_residuals(
+    down_block_res_xs: Vec<Tensor>,
+    additional_residuals: Option<&[Tensor]>,
+) -> Result<Vec<Tensor>> {
+    let Some(additional_residuals) = additional_residuals else {
+        return Ok(down_block_res_xs);
+    };
+    validate_down_block_additional_residual_count(
+        down_block_res_xs.len(),
+        additional_residuals.len(),
+    )?;
+
+    // Validate the complete inventory before allocating any full-sized sums.
+    for (index, (expected, found)) in down_block_res_xs
+        .iter()
+        .zip(additional_residuals.iter())
+        .enumerate()
+    {
+        validate_additional_residual_tensor(
+            &format!("down_block_additional_residuals[{index}]"),
+            expected,
+            found,
+        )?;
+    }
+
+    down_block_res_xs
+        .iter()
+        .zip(additional_residuals.iter())
+        .map(|(xs, residual)| xs + residual)
+        .collect()
+}
+
+fn add_mid_block_additional_residual(
+    xs: Tensor,
+    additional_residual: Option<&Tensor>,
+) -> Result<Tensor> {
+    let Some(additional_residual) = additional_residual else {
+        return Ok(xs);
+    };
+    validate_additional_residual_tensor("mid_block_additional_residual", &xs, additional_residual)?;
+    additional_residual + xs
+}
+
 #[derive(Debug)]
 pub(crate) enum UNetDownBlock {
     Basic(DownBlock2D),
@@ -314,6 +416,13 @@ impl UNet2DConditionModel {
         down_block_additional_residuals: Option<&[Tensor]>,
         mid_block_additional_residual: Option<&Tensor>,
     ) -> Result<Tensor> {
+        if let Some(additional_residuals) = down_block_additional_residuals {
+            let expected = expected_down_block_additional_residuals(
+                self.config.blocks.len(),
+                self.config.layers_per_block,
+            )?;
+            validate_down_block_additional_residual_count(expected, additional_residuals.len())?;
+        }
         let (bsize, _channels, height, width) = xs.dims4()?;
         let device = xs.device();
         let n_blocks = self.config.blocks.len();
@@ -347,28 +456,18 @@ impl UNet2DConditionModel {
             xs = _xs;
         }
 
-        let new_down_block_res_xs =
-            if let Some(down_block_additional_residuals) = down_block_additional_residuals {
-                let mut v = vec![];
-                // A previous version of this code had a bug because of the addition being made
-                // in place via += hence modifying the input of the mid block.
-                for (i, residuals) in down_block_additional_residuals.iter().enumerate() {
-                    v.push((&down_block_res_xs[i] + residuals)?)
-                }
-                v
-            } else {
-                down_block_res_xs
-            };
-        let mut down_block_res_xs = new_down_block_res_xs;
+        // A previous version of this code used in-place addition here, which modified the tensor
+        // that is also the input to the mid block.
+        let mut down_block_res_xs = add_down_block_additional_residuals(
+            down_block_res_xs,
+            down_block_additional_residuals,
+        )?;
 
         // 4. mid
         let xs = self
             .mid_block
             .forward(&xs, Some(&emb), Some(encoder_hidden_states))?;
-        let xs = match mid_block_additional_residual {
-            None => xs,
-            Some(m) => (m + xs)?,
-        };
+        let xs = add_mid_block_additional_residual(xs, mid_block_additional_residual)?;
         // 5. up
         let mut xs = xs;
         let mut upsample_size = None;
@@ -377,9 +476,22 @@ impl UNet2DConditionModel {
                 UNetUpBlock::Basic(b) => b.resnets.len(),
                 UNetUpBlock::CrossAttn(b) => b.upblock.resnets.len(),
             };
-            let res_xs = down_block_res_xs.split_off(down_block_res_xs.len() - n_resnets);
+            let split_at = match down_block_res_xs.len().checked_sub(n_resnets) {
+                Some(split_at) => split_at,
+                None => candle::bail!(
+                    "UNet skip residual inventory exhausted at up block {i}: expected {n_resnets}, found {}",
+                    down_block_res_xs.len()
+                ),
+            };
+            let res_xs = down_block_res_xs.split_off(split_at);
             if i < n_blocks - 1 && forward_upsample_size {
-                let (_, _, h, w) = down_block_res_xs.last().unwrap().dims4()?;
+                let last_tensor = match down_block_res_xs.last() {
+                    Some(last_tensor) => last_tensor,
+                    None => {
+                        candle::bail!("UNet skip residual inventory is empty before up block {i}")
+                    }
+                };
+                let (_, _, h, w) = last_tensor.dims4()?;
                 upsample_size = Some((h, w))
             }
             xs = match up_block {
@@ -397,5 +509,164 @@ impl UNet2DConditionModel {
         let xs = self.conv_norm_out.forward(&xs)?;
         let xs = nn::ops::silu(&xs)?;
         self.conv_out.forward(&xs)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candle::{DType, Device};
+
+    fn error_message<T>(result: Result<T>) -> String {
+        match result {
+            Ok(_) => panic!("expected an error"),
+            Err(error) => error.to_string(),
+        }
+    }
+
+    fn tiny_config() -> UNet2DConditionModelConfig {
+        UNet2DConditionModelConfig {
+            center_input_sample: false,
+            flip_sin_to_cos: true,
+            freq_shift: 0.,
+            blocks: vec![BlockConfig {
+                // Down/up blocks currently use the ResNet default of 32 groups.
+                out_channels: 32,
+                use_cross_attn: None,
+                attention_head_dim: 1,
+            }],
+            layers_per_block: 1,
+            downsample_padding: 1,
+            mid_block_scale_factor: 1.,
+            norm_num_groups: 1,
+            norm_eps: 1e-5,
+            cross_attention_dim: 4,
+            sliced_attention_size: None,
+            use_linear_projection: false,
+        }
+    }
+
+    #[test]
+    fn additional_residual_count_uses_checked_unet_skip_inventory() -> Result<()> {
+        assert_eq!(expected_down_block_additional_residuals(3, 2)?, 9);
+        let error = error_message(expected_down_block_additional_residuals(usize::MAX, 2));
+        assert!(error.contains("residual count overflow"), "{error}");
+        Ok(())
+    }
+
+    #[test]
+    fn additional_residual_count_rejects_short_and_long_inventories() {
+        let short = error_message(validate_down_block_additional_residual_count(9, 8));
+        assert!(short.contains("expected 9, found 8"), "{short}");
+
+        let long = error_message(validate_down_block_additional_residual_count(9, 10));
+        assert!(long.contains("expected 9, found 10"), "{long}");
+    }
+
+    #[test]
+    fn down_residual_rejects_broadcastable_shape_before_addition() -> Result<()> {
+        let device = Device::Cpu;
+        let base = vec![
+            Tensor::zeros((1, 4, 2, 2), DType::F32, &device)?,
+            Tensor::zeros((1, 4, 2, 2), DType::F32, &device)?,
+        ];
+        let additional = [
+            Tensor::zeros((1, 4, 2, 2), DType::F32, &device)?,
+            Tensor::zeros((1, 4, 1, 1), DType::F32, &device)?,
+        ];
+
+        let error = error_message(add_down_block_additional_residuals(base, Some(&additional)));
+        assert!(
+            error.contains("down_block_additional_residuals[1] shape mismatch"),
+            "{error}"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn down_residual_rejects_dtype_mismatch() -> Result<()> {
+        let device = Device::Cpu;
+        let base = vec![Tensor::zeros((1, 4, 2, 2), DType::F32, &device)?];
+        let additional = [Tensor::zeros((1, 4, 2, 2), DType::F64, &device)?];
+
+        let error = error_message(add_down_block_additional_residuals(base, Some(&additional)));
+        assert!(
+            error.contains("down_block_additional_residuals[0] dtype mismatch"),
+            "{error}"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn mid_residual_rejects_shape_mismatch() -> Result<()> {
+        let device = Device::Cpu;
+        let xs = Tensor::zeros((1, 4, 2, 2), DType::F32, &device)?;
+        let additional = Tensor::zeros((1, 4, 1, 1), DType::F32, &device)?;
+
+        let error = error_message(add_mid_block_additional_residual(xs, Some(&additional)));
+        assert!(
+            error.contains("mid_block_additional_residual shape mismatch"),
+            "{error}"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn forward_rejects_bad_counts_and_preserves_none_and_zero_behavior() -> Result<()> {
+        let device = Device::Cpu;
+        let model = UNet2DConditionModel::new(
+            candle_nn::VarBuilder::zeros(DType::F32, &device),
+            2,
+            2,
+            false,
+            tiny_config(),
+        )?;
+        let xs = Tensor::zeros((1, 2, 2, 2), DType::F32, &device)?;
+        let encoder_hidden_states = Tensor::zeros((1, 1, 4), DType::F32, &device)?;
+
+        let short_down = [Tensor::zeros((1, 32, 2, 2), DType::F32, &device)?];
+        let short_error = error_message(model.forward_with_additional_residuals(
+            &xs,
+            1.,
+            &encoder_hidden_states,
+            Some(&short_down),
+            None,
+        ));
+        assert!(short_error.contains("expected 2, found 1"), "{short_error}");
+
+        let long_down = [
+            Tensor::zeros((1, 32, 2, 2), DType::F32, &device)?,
+            Tensor::zeros((1, 32, 2, 2), DType::F32, &device)?,
+            Tensor::zeros((1, 32, 2, 2), DType::F32, &device)?,
+        ];
+        let long_error = error_message(model.forward_with_additional_residuals(
+            &xs,
+            1.,
+            &encoder_hidden_states,
+            Some(&long_down),
+            None,
+        ));
+        assert!(long_error.contains("expected 2, found 3"), "{long_error}");
+
+        let baseline = model.forward(&xs, 1., &encoder_hidden_states)?;
+        let explicit_none =
+            model.forward_with_additional_residuals(&xs, 1., &encoder_hidden_states, None, None)?;
+        let zero_down = [
+            Tensor::zeros((1, 32, 2, 2), DType::F32, &device)?,
+            Tensor::zeros((1, 32, 2, 2), DType::F32, &device)?,
+        ];
+        let zero_mid = Tensor::zeros((1, 32, 2, 2), DType::F32, &device)?;
+        let explicit_zero = model.forward_with_additional_residuals(
+            &xs,
+            1.,
+            &encoder_hidden_states,
+            Some(&zero_down),
+            Some(&zero_mid),
+        )?;
+
+        let baseline = baseline.flatten_all()?.to_vec1::<f32>()?;
+        assert_eq!(explicit_none.flatten_all()?.to_vec1::<f32>()?, baseline);
+        assert_eq!(explicit_zero.flatten_all()?.to_vec1::<f32>()?, baseline);
+        Ok(())
     }
 }

@@ -31,10 +31,17 @@ whether a particular checkout has the maintenance commit.
 Round 1 is published at `c0fb3a9fe098e50d07ec1b749c77015d7bd8d9a5` and
 promotes complete local hybrid assembly into `candle-vlm`. Round 2 is published
 in EdgeSymbio at `d535a4f56f5a8e06407cb4b8f5be0df7f3121327` with its
-separate CLI-only 450M CPU/F32 proof. Round 3 is the current Candle gate: a
-generic three-component SDXL LoRA parser, evidence contract, and rollback-
-capable mutable transaction for the UNet and both text encoders. The exact
-next consumer after Round 3 publication is SnapFlash-Server; see `STATUS.md`
+separate CLI-only 450M CPU/F32 proof. Candle Round 3, SnapFlash-Server Round 4,
+and EdgeSymbio Round 5 are published respectively at
+`37584ecd2738ba1eb4ec4c1ab218667681f54973`,
+`6e64320fe26e7c3be91262bc0dac99ce53f4c628`, and
+`633f774a3690df5a8a35b6cac000df4b390316d5`; both applications now consume
+the same generic three-component SDXL LoRA transaction. EdgeSymbio's current
+`main` is `eb9c07127321bd7528786c4fa103b92f893991f5` after a later bounded
+proof-owner tooling checkpoint. SnapFlash Round 6 is published at runtime
+implementation `d66c1c35158aca7b37e6e1d82e527334b209d93a`; its final proof-record
+`main` head is `b83db70ba4027535e4e55f6509e6011feeead850`. Round 7 is this Candle
+worktree's exact UNet additional-residual contract candidate. See `STATUS.md`
 and `TODO.md` rather than reconstructing the handoff from completed history.
 The public LFM loader returns exact consumed paths; application hashing,
 retained handles, resource leases, and proof records remain outside Candle.
@@ -168,4 +175,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-12T16:04:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-3 | change=advanced the entry point through Edge acceptance to the Candle LoRA publication gate
+AI-edited: 2026-08-13T02:10:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=recorded published SnapFlash Round 6 and retained Candle Round 7 as the active release candidate

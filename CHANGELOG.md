@@ -14,6 +14,10 @@ This documents the main changes to the `candle` crate.
 
 ### Modified
 
+- Hardened Stable Diffusion additional-residual forwarding with an exact,
+  configuration-derived down-residual count and pre-addition shape, dtype, and
+  device validation.
+
 ## v0.3.0 - 2023-10-01
 
 ### Added

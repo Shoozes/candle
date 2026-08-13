@@ -409,6 +409,15 @@
         "scripts/snapflash/verify-mod-manifest.sh"
       ]
     },
+    "feature__sdxl_controlnet_residual_contract": {
+      "description": "Generic Stable Diffusion UNet additional-residual contract with configuration-derived inventory counts and exact shape, dtype, and device validation before ControlNet addition.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/stable_diffusion/unet_2d.rs",
+        "docs/snapflash/MOD_MANIFEST.md",
+        "scripts/snapflash/verify-mod-manifest.sh"
+      ]
+    },
     "workflow__context_integrity": {
       "description": "Focused routing contract, verifier, compact current docs, backlog state, and publication inventory for future integrity passes.",
       "status": "active",

@@ -6,12 +6,14 @@ and first regression witness; EdgeSymbio remains the product acceptance owner.
 
 ## Current state
 
-The first reusable diffusion primitive is implemented: Candle now owns
-validated SDXL LoRA tensor parsing and a rollback-capable replacement
-transaction over the UNet and both text encoders. The transaction retains
-independent base tensors, computes adapter B from base rather than adapter A,
-restores exact base values, and rolls every component back if a later write
-fails under the consumer's exclusive model-execution boundary.
+Two reusable diffusion boundaries are implemented. Candle owns validated SDXL
+LoRA tensor parsing and a rollback-capable replacement transaction over the
+UNet and both text encoders. It also validates the existing UNet
+additional-residual hook as an exact, configuration-derived tensor contract
+before ControlNet values are added. The LoRA transaction retains independent
+base tensors, computes adapter B from base rather than adapter A, restores
+exact base values, and rolls every component back if a later write fails under
+the consumer's exclusive model-execution boundary.
 
 Applications still own filename and directory policy, source licensing,
 adapter catalogs, Kohya/model-family name conversion, resource admission,
@@ -22,8 +24,9 @@ production model artifact is part of this overlay.
 
 | Path | Ownership |
 | --- | --- |
-| `CHANGELOG.md` | Record the public three-component SDXL LoRA primitive. |
+| `CHANGELOG.md` | Record the public LoRA transaction and additional-residual contract. |
 | `candle-transformers/src/models/stable_diffusion/mod.rs` | Export the generic LoRA parser and mutable transaction modules. |
+| `candle-transformers/src/models/stable_diffusion/unet_2d.rs` | Fail closed on malformed additional down/mid residual inventories before ControlNet addition. |
 
 ## Overlay-owned additions
 
@@ -50,6 +53,12 @@ production model artifact is part of this overlay.
   under the `candle-sdxl-lora-tensor-f32-v1` contract. Per-target base, delta,
   and merged hashes let consumers compare the same adapter without importing
   application proof schemas into Candle.
+- `UNet2DConditionModel::forward_with_additional_residuals` preserves its
+  existing signature and `None` fast path while requiring the exact skip
+  inventory derived from the configured down blocks and layers. SDXL's three
+  blocks with two layers require nine down residuals. Every down and mid
+  residual must exactly match the receiving tensor's shape, dtype, and device;
+  broadcastable or otherwise mismatched tensors return controlled errors.
 
 ## Behavior provenance
 
@@ -71,8 +80,8 @@ production model artifact is part of this overlay.
 - Validate every component and immutable base copy before the first mutation.
 - Keep API schemas, Tauri/Axum code, queues, catalogs, licensing policy,
   filesystem resolution, resource claims, and proof JSON in applications.
-- Do not pin SnapFlash-Server to the fork until the promoted API and exact
-  integration revision exist.
+- Consumers must pin one exact published Candle revision; never a moving
+  branch or an uncommitted worktree.
 - Add source paths here only in the focused Candle promotion commit that owns
   them. Shared paths must also appear in `docs/FORK_OVERLAYS.md`.
 
@@ -90,6 +99,9 @@ Done when all of the following are true:
   duplicate/unmatched targets, non-finite strength, all-zero effect, and stale
   plans fail before an invalid state can commit.
 - BF16 1x1 convolution targets and canonical target/delta hashes are proven.
+- Short, long, broadcastable-shape, dtype-mismatched, and malformed mid
+  residuals fail before addition; `None` and exact zero residuals preserve the
+  original UNet result.
 - Focused transformer tests and strict Clippy, the independent overlay
   verifier, repository-wide overlay union, summary-bank checks, and the full
   local Candle gate pass before direct-main publication.
@@ -100,4 +112,4 @@ Models, adapters, generated images, local caches, `.tools/`, secrets, runtime
 logs, and application artifacts are not part of this overlay.
 
 ---
-AI-edited: 2026-08-12T16:05:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-3 | change=recorded generic three-component LoRA ownership, exclusive execution boundary, and completion gate
+AI-edited: 2026-08-12T20:41:11-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=registered and bounded the generic ControlNet residual contract

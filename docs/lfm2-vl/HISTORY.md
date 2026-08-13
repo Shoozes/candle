@@ -1506,5 +1506,93 @@ deferred to TODO C3; no network or toolchain install was substituted.
   CUDA workload, Python oracle, llama.cpp process, or production checkpoint was
   loaded.
 
+## 2026-08-12 — SnapFlash-Server Round 4 LoRA reconsumption
+
+- What: Pinned SnapFlash-Server's direct Candle crates to
+  `37584ecd2738ba1eb4ec4c1ab218667681f54973`, replaced its duplicate generic
+  pair parsing, delta/evidence calculation, and three-`VarMap` transaction with
+  Candle's public APIs, and published the consumer checkpoint at
+  `6e64320fe26e7c3be91262bc0dac99ce53f4c628`.
+- Why: The primary behavior donor had to prove that the generalized framework
+  boundary preserved all three SDXL components without importing application
+  paths, catalog, license, report, API, or queue policy into Candle.
+- How: Kept SnapFlash's safe adapter naming, direct/Kohya target mapping,
+  inspection reports, and engine lease; delegated immutable bases,
+  base-relative A -> B replacement, canonical hashes, stale-plan detection,
+  rollback, and exact clear to Candle. Removed the superseded local generic
+  transaction implementation after deterministic parity passed.
+- Done when: The lock contains one matching Candle graph; component-scoped
+  evidence and base -> A -> B -> base are exact; invalid later components do
+  not mutate live state; the complete local gate and guarded direct-main
+  publication are green. These conditions are met for the source/runtime
+  boundary.
+- Verification: Eight LoRA boundary/inspection tests, six transaction tests,
+  frontend 42, Node 8, Python 33, layout 930, and Rust 279 passed with one
+  intentional live-inpaint artifact test ignored. The complete local integrity
+  task exited zero. A live same-seed model replay was truthfully skipped because
+  unrelated Python workloads made the host fail the quiet-host admission rule;
+  no model, CUDA, or SnapFlash inference process was started.
+
+## 2026-08-12 — EdgeSymbio Round 5 three-component acceptance
+
+- What: Pinned all EdgeSymbio Candle crates and lock graphs to
+  `37584ecd2738ba1eb4ec4c1ab218667681f54973`, upgraded the persistent image
+  entry from UNet-only mutation to retained UNet, text-encoder-1, and
+  text-encoder-2 ownership, and published the consumer checkpoint at
+  `633f774a3690df5a8a35b6cac000df4b390316d5`.
+- Why: The product consumer needed the same framework transaction while
+  preserving its stronger retained-handle, resource-broker, pool-identity,
+  artifact-manifest, reviewed-adapter, and lease-through-inference policy.
+- How: Bound exact model/adapter handles to resident graph identity, retained
+  the model-pool lease through prompt encoding, UNet inference, decode, and
+  publication, reported source/resident/peak bytes separately, and kept live
+  runtime claims gated from deterministic source proof.
+- Done when: Both consumers resolve the same Candle revision, Edge owns no
+  duplicate generic LoRA math, all three component seams and resource/pool
+  contracts pass, and local/remote `main` are equal. These source-level
+  conditions are met.
+- Verification: Focused head-swap 14/14, resource reporting 3/3, persistent
+  SDXL 2/2, component selection 2/2, and key normalization 4/4 passed; the
+  canonical gate passed backend 823, source guard 3, API 208, both CLI suites
+  115, desktop 22, fetch 5, browser 16, and Python 111. No live model or CUDA
+  run was claimed: the available generic Job wrapper did not yet satisfy the
+  current three-component timeout/memory/PID evidence contract.
+
+## 2026-08-13 — SnapFlash-Server Round 6 bounded runtime publication
+
+- What: Published SnapFlash's single-owner generation boundary, immutable
+  retained model revisions, strict image/body admission, cancellation and
+  manifest-last completion arbitration, whole-record queue retention, and
+  Windows path authority. The runtime implementation is
+  `d66c1c35158aca7b37e6e1d82e527334b209d93a`; the later docs-only publication
+  record advanced clean `main` to
+  `b83db70ba4027535e4e55f6509e6011feeead850`.
+- Why: A shape-correct framework hook is insufficient if large request/result
+  bytes, model identity, engine mutation, cancellation, and output publication
+  can escape different owners or produce a failed queue record after a
+  completion manifest becomes visible.
+- How: Kept exact retained base/LoRA/ControlNet revisions inside the admitted
+  blocking owner; decoded and preflighted images before graph mutation; tied
+  the process-wide HTTP body permit to the materialized buffer; capped every
+  retained request/result field and terminal error; moved queue work without
+  deep-copying its payload; made TTL/byte cleanup independent; preserved the
+  required base64 image wire; rejected derived structured prompts before
+  admission; and recorded the intentional lightweight default queue-summary
+  response shape.
+- Done when: Direct, queued, and inpaint paths share one bounded owner;
+  cancellation cannot win after commit ownership; manifest-last output,
+  retained identities, panic quarantine, rollback, rooted Windows paths, body
+  lifetime, queue byte limits, and compatibility fixtures pass; guarded
+  direct-main publication leaves local and remote refs equal. These Round 6
+  Windows-product conditions are met. Unix/WSL hostile-directory authority
+  remains a separate SnapFlash backlog item rather than an inflated claim.
+- Verification: The complete local no-GPU aggregate passed frontend 42/42,
+  Node 8/8, tooling 33, layout 925/0, and Rust 353 with one intentional
+  asset-gated inpaint proof skipped. The post-publication audit correction then
+  passed queue 43/43 and body-budget 5/5 independently, strict Clippy, docs,
+  links, summary/context freshness, diff/secret scope, exact staging, guarded
+  fast-forward pushes, and clean local/remote equality. No production model,
+  CUDA, network install, hosted runner, PR, or secret inspection was used.
+
 ---
-AI-edited: 2026-08-12T16:05:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-3 | change=archived Edge acceptance, the audited LoRA implementation, and its local workspace gate
+AI-edited: 2026-08-13T02:10:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=archived the published SnapFlash Round 6 bounded-runtime checkpoint
