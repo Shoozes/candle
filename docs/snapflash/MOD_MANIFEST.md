@@ -19,6 +19,9 @@ restores exact base values, and rolls every component back if a later write
 fails under the consumer's exclusive model-execution boundary.
 Its non-default consumer test seam can now exercise that same rollback path at
 a named later component without adding the hook to normal builds.
+SnapFlash pins the published Candle seam at
+`1660f9fca8d6c8eb70937791e796203527f7be26`; its wrapper-level proof is
+published at `a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95`.
 
 Applications still own filename and directory policy, source licensing,
 adapter catalogs, Kohya/model-family name conversion, resource admission,
@@ -154,4 +157,4 @@ Models, adapters, generated images, local caches, `.tools/`, secrets, runtime
 logs, and application artifacts are not part of this overlay.
 
 ---
-AI-edited: 2026-08-13T12:09:28-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=registered the feature-gated public consumer rollback-test contract
+AI-edited: 2026-08-13T12:43:56-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=recorded the published framework and downstream consumer revisions

@@ -54,7 +54,8 @@ fail-closed official-style ControlNet admission is published at
 Its faithful INT-5C/D ControlNet graph, pinned differential fixture, and
 installed Canny/Depth proof are published at
 `b90f7c6bb76f1d73c70cd69e483fdfb1278de4ca`; current SnapFlash `main` is
-`5bcd6f87672eef67003bbbd28dc73655bf522715` after later runtime hardening.
+`a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95` after later runtime hardening and
+the REL-8 downstream rollback proof.
 
 | Order | Repository | Focused result | State / release condition |
 | --- | --- | --- | --- |
@@ -69,6 +70,8 @@ installed Canny/Depth proof are published at
 | INT-5B | Candle | Add opt-in generic SDXL pooled-text/time-ID addition conditioning | Complete and published at `ba1e8acc142c4683995e4cdbc8b1d933c81e96c6` |
 | INT-5B.1 | Candle | Match Diffusers' F32 timestep projection and lower-precision learned-MLP cast order | Complete and published at `aed7f062bbfb825675efaf21c98029983312d336` |
 | INT-5C/D | SnapFlash-Server | Consume the public conditioning hooks, implement the faithful ControlNet graph, and prove tiny differential plus installed Canny/Depth behavior | Complete and published at `b90f7c6bb76f1d73c70cd69e483fdfb1278de4ca` |
+| REL-8A | Candle | Expose deterministic named-component LoRA write failure only to opted-in consumer tests | Complete and published at `1660f9fca8d6c8eb70937791e796203527f7be26` |
+| REL-8B | SnapFlash-Server | Repin the exact six-package graph and prove later-component rollback through the application wrapper | Complete and published at `a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95` |
 
 Detailed current completion conditions live only in the owning repository's
 active TODO. This table preserves order and state without duplicating those
@@ -113,4 +116,4 @@ product policy remain outside the framework API.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-08-13T12:09:28-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=reconciled published INT-5C/D and registered the shared test-feature manifest path
+AI-edited: 2026-08-13T12:43:56-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=recorded the published framework seam and exact downstream consumer proof

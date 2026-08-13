@@ -1710,5 +1710,27 @@ deferred to TODO C3; no network or toolchain install was substituted.
   SnapFlash owns the ControlNet graph, retained revisions, application policy,
   fixtures, and live proof. No application code was copied into Candle.
 
+## 2026-08-13 — REL-8 downstream later-component rollback proof
+
+- What: Candle published a non-default `test-utils` feature with a public
+  named-component fault seam at
+  `1660f9fca8d6c8eb70937791e796203527f7be26`; SnapFlash repinned its exact
+  six-package graph and published the consumer result at
+  `a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95`.
+- Why: Candle's private tests covered late live-write rollback, but the
+  application could not independently exercise that path without copying
+  framework transaction logic.
+- How: The hook rejects an unplanned component before mutation and otherwise
+  routes into Candle's normal snapshot/write/rollback implementation.
+  SnapFlash enables it only as a dev dependency and drives text encoder 1 and
+  text encoder 2 failures through `LoraHeadSwapState`.
+- Done when: Candle's external tests pass 2/2, its internal transaction tests
+  pass 9/9, the full Candle workspace gate is green, SnapFlash `head_swap`
+  passes 7/7, its no-model aggregate passes 414/1, and both `main` branches are
+  clean and remotely equal. Those conditions are met without model, CUDA, live
+  inference, hosted CI, secret inspection, or duplicate transaction code.
+- Follow-up: SnapFlash queued inpainting is now the next ready application
+  slice; no new Candle primitive is currently required.
+
 ---
-AI-edited: 2026-08-13T12:09:28-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=archived the published SnapFlash INT-5C/D numerical and installed proof boundary
+AI-edited: 2026-08-13T12:43:56-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=archived the published framework seam and exact downstream consumer proof

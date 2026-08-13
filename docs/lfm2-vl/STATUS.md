@@ -18,8 +18,8 @@
   `ba1e8acc142c4683995e4cdbc8b1d933c81e96c6`.
 - Candle INT-5B.1 lower-precision cast-order revision:
   `aed7f062bbfb825675efaf21c98029983312d336`.
-- Current published Candle `main` before the REL-8 candidate:
-  `985bee982ae15e7fea0b1c3912ddc5dde4d5e7a0`.
+- Candle REL-8 consumer-test seam revision and current published `main`:
+  `1660f9fca8d6c8eb70937791e796203527f7be26`.
 - SnapFlash-Server Round 4 LoRA consumer revision:
   `6e64320fe26e7c3be91262bc0dac99ce53f4c628`.
 - SnapFlash-Server Round 6 bounded-runtime implementation revision:
@@ -27,7 +27,7 @@
 - SnapFlash-Server INT-5C/D faithful ControlNet implementation revision:
   `b90f7c6bb76f1d73c70cd69e483fdfb1278de4ca`.
 - Current published SnapFlash-Server `main`:
-  `5bcd6f87672eef67003bbbd28dc73655bf522715`.
+  `a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95`.
 - EdgeSymbio Round 5 LoRA consumer revision:
   `633f774a3690df5a8a35b6cac000df4b390316d5`.
 - Current EdgeSymbio `main` after bounded proof-owner hardening:
@@ -41,7 +41,7 @@
   `ff885586f6d44a3d9b9ac1724032cdf5f0155384`. Do not move or reuse it for the
   coordinated runtime.
 - Current LFM2-VL overlay: 150 paths, exactly 15 fork-origin modifications and
-  135 mod-owned additions. The active SnapFlash-derived REL-8 candidate is 12
+  135 mod-owned additions. The SnapFlash-derived overlay is 12
   paths (5 fork-origin modifications and 7 additions); the repository-wide
   union is 160 paths across both overlays with 6 registered shared paths.
 
@@ -63,9 +63,9 @@
 - Product phase: coordinated three-repository integration. Rounds 1 through 7
   and INT-5A through INT-5D are published. SnapFlash consumes Candle INT-5B.1,
   passes the pinned tiny CPU/F32 differential fixture, and retains separate
-  installed Canny/Depth CUDA F16 proof. REL-8 is the active boundary: expose
-  Candle's deterministic later-component LoRA write fault only to opted-in
-  consumer tests, then prove rollback through SnapFlash without duplicating
+  installed Canny/Depth CUDA F16 proof. REL-8 is complete and published:
+  Candle exposes its deterministic later-component LoRA write fault only to
+  opted-in consumer tests, and SnapFlash proves rollback without duplicating
   transaction logic.
 - The reusable hybrid constructor now lives at
   `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid`. It accepts explicit local text,
@@ -106,7 +106,7 @@
 
 ## Last Green Verification
 
-### REL-8 downstream rollback-test seam candidate
+### REL-8 downstream rollback-test seam publication
 
 - `cargo test --locked --offline -j 2 -p candle-transformers --features
   test-utils --test stable_diffusion_mutable_tests`: passed 2/2 public
@@ -125,8 +125,12 @@
   --exclude candle-pyo3` passed with no failures. `cargo fmt --all -- --check`,
   preflight smoke, module-layout, the SnapFlash-derived manifest at 12/5/7,
   the repository-wide overlay union at 160/two/six, the 25-group summary-bank
-  audit, and WSL-owned `git diff --check` also pass. Only Candle publication
-  and downstream SnapFlash repin/proof remain before REL-8 acceptance.
+  audit, and WSL-owned `git diff --check` also pass.
+- Candle `main` is published and remotely equal at
+  `1660f9fca8d6c8eb70937791e796203527f7be26`. SnapFlash pins that exact graph,
+  passes 7/7 focused `head_swap` tests plus its 414/1 no-model aggregate, and
+  is published/remotely equal at
+  `a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95`.
 
 ### INT-5B.1 lower-precision cast-order publication gate
 
@@ -350,27 +354,23 @@
   concealed failures; Edge LoRA migration itself is complete.
 - Hosted GitHub Actions state is intentionally not a blocker or verification
   dependency.
-- REL-8 has no implementation blocker. Candle publication, exact SnapFlash
-  repinning, downstream component-2/component-3 tests, and both local gates
-  remain its acceptance sequence.
+- REL-8 has no remaining blocker. Both repositories are published at the exact
+  revisions above, their worktrees are clean, and production builds expose no
+  injected-failure method.
 
 ## Active Change Set
 
-- REL-8 actively owns `candle-transformers/Cargo.toml`,
-  `stable_diffusion/mutable.rs`, its external integration test, the
-  SnapFlash-derived manifest/verifier, overlay registry, changelog, summary
-  route, and current state documents. No application source is copied into
-  Candle.
+- No source file is under active Candle implementation. REL-8's framework and
+  downstream application changes are published; no application source was
+  copied into Candle.
 - Models, caches, downloads, generated proof logs, Cargo output, and
   `.tools/.secrets/` remain ignored or external.
 
 ## Exact Next Task
 
-Finish Candle REL-8's full local gate and publish the reviewed candidate.
-Then repin SnapFlash to that exact revision, enable `test-utils` only for test
-builds, prove component-2/component-3 rollback through `LoraHeadSwapState`, run
-the SnapFlash integrity gate, and publish both repositories without a model or
-CUDA workload.
+No finite Candle-owned task is active. The next ready application task is
+SnapFlash queued inpainting; begin it in that repository without broadening
+Candle unless a reusable framework gap is first demonstrated.
 
 ---
-AI-edited: 2026-08-13T12:09:28-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=reconciled completed INT-5C/D and recorded the active feature-gated consumer fault seam
+AI-edited: 2026-08-13T12:43:56-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=recorded both published revisions, downstream proof, and the next application-owned task
