@@ -398,21 +398,14 @@
         "summary_bank.json"
       ]
     },
-    "feature__sdxl_lora_transaction": {
-      "description": "Generic three-component SDXL LoRA parsing, target resolution, canonical tensor evidence, immutable-base replacement, exact clear, and cross-component rollback.",
+    "feature__sdxl_diffusion_primitives": {
+      "description": "Generic SDXL framework boundaries: three-component LoRA mutation, opt-in pooled-text/time-ID addition embeddings, retained-VarBuilder construction, and exact additional-residual admission.",
       "status": "active",
       "paths": [
+        "candle-transformers/src/models/stable_diffusion/embeddings.rs",
         "candle-transformers/src/models/stable_diffusion/lora.rs",
         "candle-transformers/src/models/stable_diffusion/mutable.rs",
         "candle-transformers/src/models/stable_diffusion/mod.rs",
-        "docs/snapflash/MOD_MANIFEST.md",
-        "scripts/snapflash/verify-mod-manifest.sh"
-      ]
-    },
-    "feature__sdxl_controlnet_residual_contract": {
-      "description": "Generic Stable Diffusion UNet additional-residual contract with configuration-derived inventory counts and exact shape, dtype, and device validation before ControlNet addition.",
-      "status": "active",
-      "paths": [
         "candle-transformers/src/models/stable_diffusion/unet_2d.rs",
         "docs/snapflash/MOD_MANIFEST.md",
         "scripts/snapflash/verify-mod-manifest.sh"

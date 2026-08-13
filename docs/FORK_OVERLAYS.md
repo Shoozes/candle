@@ -10,7 +10,7 @@ integration plan.
 | Overlay | Manifest | Current boundary |
 | --- | --- | --- |
 | LFM2-VL/MMProj | `docs/lfm2-vl/MOD_MANIFEST.md` | Proven model, loader, processor, fixture, and verification work |
-| SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic three-component SDXL LoRA transaction plus exact UNet additional-residual admission |
+| SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic three-component SDXL LoRA transaction plus exact residual and opt-in `text_time` UNet conditioning |
 
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each
@@ -48,7 +48,9 @@ subsequently advanced to `eb9c07127321bd7528786c4fa103b92f893991f5` for
 bounded proof-owner tooling; that does not replace the Round 5 lineage commit.
 SnapFlash Round 6 is published with runtime implementation commit
 `d66c1c35158aca7b37e6e1d82e527334b209d93a` and final proof-record `main`
-head `b83db70ba4027535e4e55f6509e6011feeead850`.
+head `b83db70ba4027535e4e55f6509e6011feeead850`. Its later INT-5A
+fail-closed official-style ControlNet admission is published at
+`9bc58ccaef77e7ceac0ab4e75a1a4c93acc1cdff`.
 
 | Order | Repository | Focused result | State / release condition |
 | --- | --- | --- | --- |
@@ -59,6 +61,8 @@ head `b83db70ba4027535e4e55f6509e6011feeead850`.
 | 5 | EdgeSymbio | Reconsume Candle LoRA and add both SDXL text encoders | Complete and published at `633f774a3690df5a8a35b6cac000df4b390316d5` |
 | 6 | SnapFlash-Server | Adopt typed immutable runtime context, retained-file checks, and completion-last publication | Complete and published at implementation `d66c1c35158aca7b37e6e1d82e527334b209d93a`; proof-record head `b83db70ba4027535e4e55f6509e6011feeead850` |
 | 7 | Candle | Evaluate and harden the existing ControlNet residual hook | Complete and published at `95ac9ff815fbac4f252b4ef6780b5e4a7843f328`; model-level numerical parity remains the separate INT-5 fixture gate |
+| INT-5A | SnapFlash-Server | Reject unsupported official-style attention/`text_time` inventories before payload load or mutation | Complete and published at `9bc58ccaef77e7ceac0ab4e75a1a4c93acc1cdff` |
+| INT-5B | Candle | Add opt-in generic SDXL pooled-text/time-ID addition conditioning | Locally green; publish only after the complete Candle gate and exact review |
 
 Detailed current completion conditions live only in the owning repository's
 active TODO. This table preserves order and state without duplicating those
@@ -102,4 +106,4 @@ product policy remain outside the framework API.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-08-13T02:35:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=closed the seven-round integration sequence at the published Candle residual-contract commit
+AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=recorded published fail-closed admission and the local text-time checkpoint gate

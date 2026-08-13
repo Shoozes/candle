@@ -6,14 +6,17 @@ and first regression witness; EdgeSymbio remains the product acceptance owner.
 
 ## Current state
 
-Two reusable diffusion boundaries are implemented. Candle owns validated SDXL
+Three reusable diffusion boundaries are implemented. Candle owns validated SDXL
 LoRA tensor parsing and a rollback-capable replacement transaction over the
 UNet and both text encoders. It also validates the existing UNet
 additional-residual hook as an exact, configuration-derived tensor contract
-before ControlNet values are added. The LoRA transaction retains independent
-base tensors, computes adapter B from base rather than adapter A, restores
-exact base values, and rolls every component back if a later write fails under
-the consumer's exclusive model-execution boundary.
+before ControlNet values are added. Its opt-in SDXL `text_time` primitive
+projects six size/crop time IDs, concatenates them with pooled text, and adds
+the result to the scalar timestep embedding. Existing constructors and forward
+methods remain compatibility wrappers. The LoRA transaction retains
+independent base tensors, computes adapter B from base rather than adapter A,
+restores exact base values, and rolls every component back if a later write
+fails under the consumer's exclusive model-execution boundary.
 
 Applications still own filename and directory policy, source licensing,
 adapter catalogs, Kohya/model-family name conversion, resource admission,
@@ -24,9 +27,10 @@ production model artifact is part of this overlay.
 
 | Path | Ownership |
 | --- | --- |
-| `CHANGELOG.md` | Record the public LoRA transaction and additional-residual contract. |
+| `CHANGELOG.md` | Record the public LoRA, residual, and SDXL `text_time` conditioning contracts. |
+| `candle-transformers/src/models/stable_diffusion/embeddings.rs` | Implement the reusable SDXL `text_time` addition embedding and checked dimension contract. |
 | `candle-transformers/src/models/stable_diffusion/mod.rs` | Export the generic LoRA parser and mutable transaction modules. |
-| `candle-transformers/src/models/stable_diffusion/unet_2d.rs` | Fail closed on malformed additional down/mid residual inventories before ControlNet addition. |
+| `candle-transformers/src/models/stable_diffusion/unet_2d.rs` | Fail closed on malformed added-conditioning and residual inputs while preserving legacy wrappers. |
 
 ## Overlay-owned additions
 
@@ -59,6 +63,22 @@ production model artifact is part of this overlay.
   blocks with two layers require nine down residuals. Every down and mid
   residual must exactly match the receiving tensor's shape, dtype, and device;
   broadcastable or otherwise mismatched tensors return controlled errors.
+- `UNet2DConditionModel::new_with_added_conditioning` optionally loads the
+  official `add_embedding.linear_{1,2}` namespace. `forward_with_conditioning`
+  accepts explicit pooled text and time IDs alongside the existing residuals.
+  For standard SDXL it derives pooled width 1280 from projection width 2816
+  minus six 256-wide time embeddings; rank, batch, width/count, dtype, device,
+  and checked dimension contracts fail before convolution or residual work.
+- `StableDiffusionConfig::build_unet_from_vb` is the high-level opt-in route
+  for mmap or retained-buffer VarBuilders, so consumers do not duplicate the
+  private built-in UNet topology. Existing path/sharded builders call it with
+  no added conditioning and retain their behavior.
+- Existing `new`, `forward`, and `forward_with_additional_residuals` calls keep
+  their signatures and route through the structured API with no `text_time`
+  conditioning. A configured `text_time` UNet fails closed when those required
+  inputs are absent; an unconfigured UNet rejects unexpected inputs. INT-5B
+  accepts F32 only because the pinned reference performs the sinusoidal time
+  projection in F32; lower-precision execution remains closed until parity.
 
 ## Behavior provenance
 
@@ -72,6 +92,13 @@ production model artifact is part of this overlay.
   from either application. No standalone license file was present at the
   reviewed SnapFlash-Server tip, so the donor is used only as a behavioral
   reference until its owner records a code license.
+- SDXL `text_time` behavior authority: Hugging Face Diffusers tag `v0.39.0`
+  at `a3608b512ed7248499a44c61d954965ed9bdae4d`, specifically
+  `src/diffusers/models/unets/unet_2d_condition.py` blob
+  `af44f0e9d2cb003ba01bbe8f11a7988c30573359` and
+  `src/diffusers/models/embeddings.py` blob
+  `888ae58100ee8b92f111de7ff6ac72a2d81d97e8` under Apache-2.0. The Candle
+  code is a fresh implementation of the observed tensor contract.
 
 ## Promotion rules
 
@@ -102,6 +129,11 @@ Done when all of the following are true:
 - Short, long, broadcastable-shape, dtype-mismatched, and malformed mid
   residuals fail before addition; `None` and exact zero residuals preserve the
   original UNet result.
+- Official SDXL addition dimensions, malformed rank/batch/width/count/dtype/
+  device, non-F32 rejection, missing/unexpected conditioning, pooled/time
+  influence, combined zero-residual behavior, legacy wrapper equality, empty
+  blocks, and checked size arithmetic pass deterministic CPU tests before any
+  application consumer is updated.
 - Focused transformer tests and strict Clippy, the independent overlay
   verifier, repository-wide overlay union, summary-bank checks, and the full
   local Candle gate pass before direct-main publication.
@@ -112,4 +144,4 @@ Models, adapters, generated images, local caches, `.tools/`, secrets, runtime
 logs, and application artifacts are not part of this overlay.
 
 ---
-AI-edited: 2026-08-12T20:41:11-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=registered and bounded the generic ControlNet residual contract
+AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=registered the generic SDXL text-time addition-conditioning boundary

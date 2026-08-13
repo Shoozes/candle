@@ -1625,5 +1625,38 @@ deferred to TODO C3; no network or toolchain install was substituted.
   and remote equality. No model, CUDA, llama.cpp, hosted runner, PR, or secret
   inspection was used.
 
+## 2026-08-13 — INT-5A fail-closed admission and Candle INT-5B `text_time`
+
+- What: SnapFlash-Server first published fail-closed official-style
+  ControlNet admission at `9bc58ccaef77e7ceac0ab4e75a1a4c93acc1cdff`.
+  Candle then added the generic opt-in SDXL pooled-text/time-ID addition
+  embedding and one structured UNet conditioning route while retaining every
+  existing constructor and forward signature.
+- Why: Official SDXL ControlNet inventories require cross-attention and
+  `text_time`; accepting them into the previous context-free graph would be a
+  false compatibility claim. Candle's base UNet also needed the same
+  addition before SnapFlash could implement the faithful graph in INT-5C.
+- How: Locked two bounded Diffusers `v0.39.0` source blobs at commit
+  `a3608b512ed7248499a44c61d954965ed9bdae4d`; projected flattened time IDs,
+  concatenated their per-batch result with pooled text, loaded
+  `add_embedding.linear_{1,2}`, and added the projection to the scalar
+  timestep embedding. Checked dimension derivation and exact tensor contracts
+  fail before convolution. The public `StableDiffusionConfig` VarBuilder route
+  lets retained-buffer consumers opt in without duplicating its private UNet
+  topology. Non-F32 conditioning fails closed until cast-order parity. Empty
+  UNet blocks and arithmetic overflow now return errors instead of indexing or
+  wrapping.
+- Done when: Official 1280 + six-by-256 -> 2816 dimensions, pooled/time
+  influence, malformed rank/batch/width/count/dtype, missing/unexpected
+  conditioning, device mismatch, non-F32 input, empty blocks, combined
+  conditioning/residual behavior, legacy structured/default equality, and
+  the pre-existing residual contract pass deterministic CPU-F32 tests. The
+  focused source gate is green; final overlay and workspace proof is recorded
+  in `STATUS.md` before publication.
+- Boundary: No checkpoint, production weight, Python oracle, CUDA workload,
+  llama.cpp process, CLIP2 projection, application time-ID policy, or
+  ControlNet graph was added or run. Those latter graph inputs remain INT-5C;
+  numerical differential proof remains INT-5D.
+
 ---
-AI-edited: 2026-08-13T02:35:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=archived the published Candle Round 7 residual-contract checkpoint
+AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=archived fail-closed admission and the locally green Candle text-time primitive

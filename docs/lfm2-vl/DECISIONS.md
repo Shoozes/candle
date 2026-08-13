@@ -1139,5 +1139,53 @@ serialization, rollback, and artifact publication. Round 7 is therefore a
 generic contract checkpoint, not a claim of full ControlNet or inpainting
 numerical parity.
 
+## D-0055: Add SDXL `text_time` as an Opt-In UNet Conditioning Primitive
+
+Status: Accepted.
+
+Decision:
+Keep `UNet2DConditionModelConfig` source-compatible for downstream struct
+literals. Add a separate checked `SdxlTextTimeAdditionConfig`, an opt-in
+`new_with_added_conditioning` constructor, and a single
+`forward_with_conditioning` route that composes optional SDXL `text_time` and
+ControlNet residual inputs. Preserve `new`, `forward`, and
+`forward_with_additional_residuals` as wrappers with their existing
+signatures. Expose `StableDiffusionConfig::build_unet_from_vb` as the opt-in
+high-level builder so mmap and retained-buffer consumers can use the built-in
+private UNet topology without duplicating it.
+
+For SDXL `text_time`, flatten `[batch, time_id_count]`, apply the existing
+sinusoidal `Timesteps` projection, reshape to one vector per batch item,
+concatenate with `[batch, pooled_text_width]`, project through the official
+`add_embedding.linear_{1,2}` namespace, and add the result to the scalar
+timestep embedding. Derive pooled width with checked arithmetic from the
+configured projection width; reject zero/odd/overflowing dimensions and exact
+rank, batch, width/count, dtype, or device mismatches before graph execution.
+Accept only F32 for this first boundary because the pinned reference computes
+the sinusoidal time projection in F32; reject lower precision until a future
+parity test proves the cast order.
+
+Do not put prompt encoding, CLIP projection, default size/crop policy,
+ControlNet topology, application schemas, retained files, or runtime resource
+ownership in Candle. Those remain consumer work in INT-5C.
+
+Why:
+Official SDXL UNet and ControlNet checkpoints use the same pooled-text plus six
+size/crop time-ID addition. Adding cross-attention to only the application
+ControlNet would still leave the base UNet mathematically incomplete. A
+separate opt-in configuration avoids breaking every existing public
+`UNet2DConditionModelConfig` literal while one structured forward path avoids
+an expanding matrix of specialized methods.
+
+Consequences:
+Configured models fail closed without the required input, unconfigured models
+reject unexpected `text_time`, and legacy calls remain exact. The primitive
+loads no weights unless explicitly selected. Combined text-time plus zero
+ControlNet residuals preserve the conditioned result. INT-5B proves
+deterministic CPU-F32 input influence and contract validation, but does not
+claim official full-UNet numerical parity; INT-5C must supply correct CLIP2
+pooled projection, time-ID policy, attention graph, and retained application
+ownership before the INT-5D differential fixture.
+
 ---
-AI-edited: 2026-08-12T21:12:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=accepted exact generic ControlNet residual admission without importing application orchestration
+AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=accepted opt-in source-compatible SDXL text-time conditioning

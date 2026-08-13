@@ -483,14 +483,25 @@ impl StableDiffusionConfig {
     ) -> Result<unet_2d::UNet2DConditionModel> {
         let vs_unet =
             unsafe { nn::VarBuilder::from_mmaped_safetensors(&[unet_weights], dtype, device)? };
-        let unet = unet_2d::UNet2DConditionModel::new(
+        let unet = self.build_unet_from_vb(vs_unet, in_channels, use_flash_attn, None)?;
+        Ok(unet)
+    }
+
+    pub fn build_unet_from_vb(
+        &self,
+        vs_unet: nn::VarBuilder,
+        in_channels: usize,
+        use_flash_attn: bool,
+        text_time_addition_config: Option<unet_2d::SdxlTextTimeAdditionConfig>,
+    ) -> Result<unet_2d::UNet2DConditionModel> {
+        unet_2d::UNet2DConditionModel::new_with_added_conditioning(
             vs_unet,
             in_channels,
             4,
             use_flash_attn,
             self.unet.clone(),
-        )?;
-        Ok(unet)
+            text_time_addition_config,
+        )
     }
 
     pub fn build_unet_sharded<P: AsRef<std::path::Path>>(
@@ -503,13 +514,7 @@ impl StableDiffusionConfig {
     ) -> Result<unet_2d::UNet2DConditionModel> {
         let vs_unet =
             unsafe { nn::VarBuilder::from_mmaped_safetensors(unet_weight_files, dtype, device)? };
-        unet_2d::UNet2DConditionModel::new(
-            vs_unet,
-            in_channels,
-            4,
-            use_flash_attn,
-            self.unet.clone(),
-        )
+        self.build_unet_from_vb(vs_unet, in_channels, use_flash_attn, None)
     }
 
     pub fn build_scheduler(&self, n_steps: usize) -> Result<Box<dyn Scheduler>> {
@@ -526,4 +531,44 @@ pub fn build_clip_transformer<P: AsRef<std::path::Path>>(
     let vs = unsafe { nn::VarBuilder::from_mmaped_safetensors(&[clip_weights], dtype, device)? };
     let text_model = clip::ClipTextTransformer::new(vs, clip)?;
     Ok(text_model)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn high_level_varbuilder_route_constructs_opt_in_text_time_unet() -> Result<()> {
+        let device = Device::Cpu;
+        let mut config = StableDiffusionConfig::v1_5(None, Some(512), Some(512));
+        config.unet = unet_2d::UNet2DConditionModelConfig {
+            center_input_sample: false,
+            flip_sin_to_cos: true,
+            freq_shift: 0.,
+            blocks: vec![unet_2d::BlockConfig {
+                out_channels: 32,
+                use_cross_attn: None,
+                attention_head_dim: 1,
+            }],
+            layers_per_block: 1,
+            downsample_padding: 1,
+            mid_block_scale_factor: 1.,
+            norm_num_groups: 1,
+            norm_eps: 1e-5,
+            cross_attention_dim: 4,
+            sliced_attention_size: None,
+            use_linear_projection: false,
+        };
+        config.build_unet_from_vb(
+            nn::VarBuilder::zeros(DType::F32, &device),
+            2,
+            false,
+            Some(unet_2d::SdxlTextTimeAdditionConfig {
+                addition_time_embed_dim: 4,
+                projection_class_embeddings_input_dim: 10,
+                time_id_count: 2,
+            }),
+        )?;
+        Ok(())
+    }
 }

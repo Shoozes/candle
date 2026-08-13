@@ -18,8 +18,8 @@
   `6e64320fe26e7c3be91262bc0dac99ce53f4c628`.
 - SnapFlash-Server Round 6 bounded-runtime implementation revision:
   `d66c1c35158aca7b37e6e1d82e527334b209d93a`.
-- Current SnapFlash-Server `main` after its exact publication record:
-  `b83db70ba4027535e4e55f6509e6011feeead850`.
+- Current SnapFlash-Server `main` after INT-5A fail-closed admission:
+  `9bc58ccaef77e7ceac0ab4e75a1a4c93acc1cdff`.
 - EdgeSymbio Round 5 LoRA consumer revision:
   `633f774a3690df5a8a35b6cac000df4b390316d5`.
 - Current EdgeSymbio `main` after bounded proof-owner hardening:
@@ -33,9 +33,9 @@
   `ff885586f6d44a3d9b9ac1724032cdf5f0155384`. Do not move or reuse it for the
   coordinated runtime.
 - Current LFM2-VL overlay: 150 paths, exactly 15 fork-origin modifications and
-  135 mod-owned additions. The SnapFlash-derived overlay is 9 paths
-  (3 fork-origin modifications and 6 additions); the repository-wide union is
-  158 paths across both overlays.
+  135 mod-owned additions. The SnapFlash-derived overlay is 10 paths
+  (4 fork-origin modifications and 6 additions); the repository-wide union is
+  159 paths across both overlays.
 
 ## Worktree Boundary
 
@@ -53,8 +53,9 @@
 ## Current Phase
 
 - Product phase: coordinated three-repository integration. Rounds 1 through 7
-  are published. INT-5 differential ControlNet conditioning and residual
-  parity is the next fixture-gated task and has not started.
+  are published. INT-5A fail-closed admission is published in SnapFlash and
+  Candle INT-5B's generic SDXL `text_time` primitive is locally green pending
+  its guarded checkpoint. No numerical ControlNet parity claim has been made.
 - The reusable hybrid constructor now lives at
   `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid`. It accepts explicit local text,
   tokenizer, processor, MMProj, dtype, device, and execution-policy inputs and
@@ -81,8 +82,46 @@
   application boundary. Published Round 7 makes its down-residual inventory
   configuration-derived and validates exact shape, dtype, and device before
   addition; it does not claim full ControlNet numerical parity.
+- The opt-in Candle UNet conditioning route now accepts pooled text plus
+  explicit SDXL size/crop time IDs, loads the official
+  `add_embedding.linear_{1,2}` namespace, and adds its projection to the base
+  timestep embedding. Existing constructors and forward methods remain
+  compatibility wrappers; a public VarBuilder route allows retained-buffer
+  opt-in without copying the private config. The first boundary is F32-only
+  until cast-order parity. SnapFlash still owns CLIP2 pooling, time-ID policy,
+  the faithful attention graph, retained revisions, and runtime admission.
 
 ## Last Green Verification
+
+### INT-5B SDXL `text_time` candidate gate
+
+- `cargo fmt --all -- --check`: passed on the settled tree.
+- `cargo test --offline --locked -j 2 -p candle-transformers
+  stable_diffusion --lib`: passed 26/26 focused tests, including the 13 UNet
+  conditioning/residual tests and the public VarBuilder construction route.
+- `cargo test --offline --locked -j 2 -p candle-transformers`: passed 85/85
+  library, 5/5 generation, and 8/8 NMS tests; the existing unrelated Smol doc
+  test remains ignored.
+- `cargo check --offline --locked -j 2 -p candle-core -p candle-nn -p
+  candle-transformers -p candle-vlm`: passed.
+- `cargo clippy --offline --locked -j 2 -p candle-transformers --all-targets
+  -- -D warnings`: passed, followed by `PYO3_NO_PYTHON=1 cargo clippy
+  --offline --locked -j 2 --workspace --all-targets -- -D warnings` across the
+  complete cached workspace graph.
+- `PYO3_PYTHON=<installed Python 3.13> cargo test --offline --locked -j 2
+  --workspace --exclude candle-datasets`: passed every remaining native
+  Windows unit, integration, and doc-test lane. The first compile-complete
+  attempt without an interpreter failed only while linking the unrelated
+  `candle-pyo3` test target because `python3.lib` was unavailable; selecting
+  the already-installed interpreter required no package or network action.
+- The SnapFlash manifest passed at 10/4/6, the LFM2-VL manifest at 150/15/135,
+  and the cross-overlay union at 159 paths, two overlays, and five shared
+  paths. The summary bank passed 24 groups with a 126.2 KiB consolidated SDXL
+  route and 130.9/256 KiB defaults. Module-layout and `git diff --check`
+  passed.
+- No production model, checkpoint, Python oracle, CUDA workload, llama.cpp
+  process, dependency download, hosted runner, PR, or secret inspection was
+  used.
 
 ### Round 7 additional-residual publication gate
 
@@ -229,6 +268,12 @@
 - SnapFlash-Server's current ControlNet forward path still leaves text
   `_context` unused. Nine-residual structural admission is proven, but
   end-to-end real-weight numerical parity is not.
+- The installed official SDXL ControlNet inventories also require two
+  cross-attention down blocks, a cross-attention mid block, and `text_time`
+  addition embeddings. Candle now represents the reusable base-UNet addition,
+  but SnapFlash still ignores the attention families and does not yet supply
+  correct pooled CLIP2/time-ID inputs. Loading must remain fail-closed until
+  INT-5C represents them.
 - Lower-than-Q8 vision quantization, video, true text batching, generic VLM
   traits, converters, WebGPU/WASM, broad WSL replay, public signing, and LTS are
   deferred future scope, not hidden MVP promises.
@@ -238,7 +283,8 @@
 
 ## Blockers
 
-- REL-6/7 has no remaining source, test, dependency, or publication blocker.
+- REL-6/7 and INT-5A have no remaining source, test, dependency, or
+  publication blocker.
   Candle implementation `95ac9ff815fbac4f252b4ef6780b5e4a7843f328` and the
   two exact SnapFlash revisions above are published, and all three named
   worktrees were clean and equal to their remote `main` at release review.
@@ -251,19 +297,19 @@
 
 ## Active Change Set
 
-- No source file is under active implementation. Round 7 is published and
-  INT-5 has not started; `TODO.md` is the authority for that next fixture gate.
+- Candle INT-5B owns focused changes in Stable Diffusion embeddings/UNet,
+  deterministic unit tests, the SnapFlash-derived overlay manifest, and the
+  authority/state/context records. No LFM2-VL production model path changes.
 - Models, caches, downloads, generated proof logs, Cargo output, and
   `.tools/.secrets/` remain ignored or external.
 
 ## Exact Next Task
 
-Begin INT-5 with a pinned tiny deterministic differential ControlNet fixture.
-Record the official reference revision and generated tensor hashes, prove all
-nine ordered down residuals plus the mid residual and final UNet result, and
-show that changing only text context changes the conditioned result within a
-declared tolerance. Do not start production weights, CUDA, or inpainting
-promotion; structural Round 7 admission is not numerical parity.
+Complete the bounded local INT-5B overlay/workspace gate and publish its
+reviewed Candle checkpoint. Then repin SnapFlash and implement INT-5C's
+faithful SDXL ControlNet attention graph, CLIP2 pooled projection, and time-ID
+policy. Do not generate the numerical fixture, load production weights, run
+CUDA, or promote inpainting before INT-5C is green.
 
 ---
-AI-edited: 2026-08-13T02:35:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=recorded published Candle Round 7, closed REL-6/7, and advanced the exact next task to INT-5
+AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=recorded published fail-closed admission and the locally green Candle text-time primitive

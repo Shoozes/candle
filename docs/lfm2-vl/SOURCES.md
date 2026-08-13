@@ -148,6 +148,26 @@ All are locked by the Candle baseline commit `31f35b147389700ed2a178ee66a91c3cc2
 - `candle-transformers/src/models/paligemma.rs`: simpler multimodal constructor pattern.
 - `candle-transformers/src/models/siglip.rs`: fixed-grid vision baseline, not a SigLIP2 NaFlex implementation.
 
+## Diffusers SDXL Added-Conditioning Reference
+
+- Repository: `huggingface/diffusers`
+- Tag: `v0.39.0`
+- Immutable revision: `a3608b512ed7248499a44c61d954965ed9bdae4d`
+- License: Apache-2.0
+- Authority: official SDXL `text_time` tensor-flow reference for the
+  SnapFlash-derived Candle overlay; it does not supersede the LFM2-VL source
+  order above
+- Adaptation: fresh Candle-native implementation; no source block copied
+
+| Pinned path | Git blob | Purpose |
+| --- | --- | --- |
+| `src/diffusers/models/unets/unet_2d_condition.py` | `af44f0e9d2cb003ba01bbe8f11a7988c30573359` | `text_time` selection, flattened time-ID projection, pooled-text concatenation, and addition to the base timestep embedding |
+| `src/diffusers/models/embeddings.py` | `888ae58100ee8b92f111de7ff6ac72a2d81d97e8` | `Timesteps` and two-linear SiLU `TimestepEmbedding` behavior |
+
+Only these bounded source blobs and the license header were read. No model,
+checkpoint, generated tensor, CUDA runtime, or Python package was downloaded
+or executed for INT-5B.
+
 ## Locked Conflicts and Gaps
 
 - Both official configs state `max_position_embeddings: 128000`; the model cards advertise a 32,768-token context. The config value is the implementation input; production-context policy remains unresolved.
@@ -159,4 +179,4 @@ All are locked by the Candle baseline commit `31f35b147389700ed2a178ee66a91c3cc2
 - The official headers omit `clip.vision.preproc_min_tiles`, `clip.vision.preproc_max_tiles`, and `clip.vision.preproc_image_size`; pinned official `processor_config.json` values and architecture defaults remain authoritative unless an explicit processor document overrides them.
 
 ---
-AI-edited: 2026-08-11T04:51:41-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=p2-gguf-parity | change=locked the official Q4_0 text GGUF alongside the existing MMProj zero-payload authorities
+AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=locked the bounded Diffusers SDXL text-time source authority

@@ -11,12 +11,16 @@ This documents the main changes to the `candle` crate.
   quantized GGUF text with split, direct dense, or native Q8 MMProj inputs.
 - Added validated three-component SDXL LoRA parsing, canonical tensor evidence,
   and rollback-capable UNet/text-encoder replacement with exact clear.
+- Added opt-in SDXL `text_time` conditioning with pooled-text and size/crop
+  time-ID inputs while preserving the existing UNet constructors and forwards.
 
 ### Modified
 
 - Hardened Stable Diffusion additional-residual forwarding with an exact,
   configuration-derived down-residual count and pre-addition shape, dtype, and
   device validation.
+- Hardened Stable Diffusion UNet construction against empty block inventories
+  and checked timestep/upscale dimension overflow.
 
 ## v0.3.0 - 2023-10-01
 

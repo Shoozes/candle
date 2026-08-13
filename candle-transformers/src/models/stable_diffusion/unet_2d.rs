@@ -2,10 +2,11 @@
 //!
 //! The 2D Unet models take as input a noisy sample and the current diffusion
 //! timestep and return a denoised version of the input.
-use super::embeddings::{TimestepEmbedding, Timesteps};
+pub use super::embeddings::SdxlTextTimeAdditionConfig;
+use super::embeddings::{SdxlTextTimeAdditionEmbedding, TimestepEmbedding, Timesteps};
 use super::unet_2d_blocks::*;
 use crate::models::with_tracing::{conv2d, Conv2d};
-use candle::{Result, Tensor};
+use candle::{DType, DeviceLocation, Result, Tensor};
 use candle_nn as nn;
 use candle_nn::Module;
 
@@ -32,6 +33,19 @@ pub struct UNet2DConditionModelConfig {
     pub cross_attention_dim: usize,
     pub sliced_attention_size: Option<usize>,
     pub use_linear_projection: bool,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SdxlTextTimeConditioning<'a> {
+    pub pooled_text_embeds: &'a Tensor,
+    pub time_ids: &'a Tensor,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct UNet2DConditioning<'a> {
+    pub text_time: Option<SdxlTextTimeConditioning<'a>>,
+    pub down_block_additional_residuals: Option<&'a [Tensor]>,
+    pub mid_block_additional_residual: Option<&'a Tensor>,
 }
 
 impl Default for UNet2DConditionModelConfig {
@@ -133,6 +147,40 @@ fn validate_additional_residual_tensor(
     Ok(())
 }
 
+fn validate_text_time_input(
+    label: &str,
+    found: &Tensor,
+    expected_dims: &[usize],
+    sample: &Tensor,
+) -> Result<()> {
+    if found.dims() != expected_dims {
+        candle::bail!(
+            "SDXL {label} shape mismatch: expected {expected_dims:?}, found {:?}",
+            found.dims()
+        )
+    }
+    if found.dtype() != sample.dtype() {
+        candle::bail!(
+            "SDXL {label} dtype mismatch: expected {:?}, found {:?}",
+            sample.dtype(),
+            found.dtype()
+        )
+    }
+    validate_text_time_device(label, sample.device().location(), found.device().location())?;
+    Ok(())
+}
+
+fn validate_text_time_device(
+    label: &str,
+    expected: DeviceLocation,
+    found: DeviceLocation,
+) -> Result<()> {
+    if found != expected {
+        candle::bail!("SDXL {label} device mismatch: expected {expected:?}, found {found:?}")
+    }
+    Ok(())
+}
+
 fn add_down_block_additional_residuals(
     down_block_res_xs: Vec<Tensor>,
     additional_residuals: Option<&[Tensor]>,
@@ -193,6 +241,7 @@ pub struct UNet2DConditionModel {
     conv_in: Conv2d,
     time_proj: Timesteps,
     time_embedding: TimestepEmbedding,
+    text_time_addition_embedding: Option<SdxlTextTimeAdditionEmbedding>,
     down_blocks: Vec<UNetDownBlock>,
     mid_block: UNetMidBlock2DCrossAttn,
     up_blocks: Vec<UNetUpBlock>,
@@ -210,11 +259,39 @@ impl UNet2DConditionModel {
         use_flash_attn: bool,
         config: UNet2DConditionModelConfig,
     ) -> Result<Self> {
+        Self::new_with_added_conditioning(
+            vs,
+            in_channels,
+            out_channels,
+            use_flash_attn,
+            config,
+            None,
+        )
+    }
+
+    pub fn new_with_added_conditioning(
+        vs: nn::VarBuilder,
+        in_channels: usize,
+        out_channels: usize,
+        use_flash_attn: bool,
+        config: UNet2DConditionModelConfig,
+        text_time_addition_config: Option<SdxlTextTimeAdditionConfig>,
+    ) -> Result<Self> {
         let n_blocks = config.blocks.len();
-        let b_channels = config.blocks[0].out_channels;
-        let bl_channels = config.blocks.last().unwrap().out_channels;
-        let bl_attention_head_dim = config.blocks.last().unwrap().attention_head_dim;
-        let time_embed_dim = b_channels * 4;
+        let first_block = config
+            .blocks
+            .first()
+            .ok_or_else(|| candle::Error::Msg("UNet requires at least one block".into()))?;
+        let last_block = config
+            .blocks
+            .last()
+            .ok_or_else(|| candle::Error::Msg("UNet requires at least one block".into()))?;
+        let b_channels = first_block.out_channels;
+        let bl_channels = last_block.out_channels;
+        let bl_attention_head_dim = last_block.attention_head_dim;
+        let time_embed_dim = b_channels
+            .checked_mul(4)
+            .ok_or_else(|| candle::Error::Msg("UNet timestep embedding width overflow".into()))?;
         let conv_cfg = nn::Conv2dConfig {
             padding: 1,
             ..Default::default()
@@ -224,6 +301,16 @@ impl UNet2DConditionModel {
         let time_proj = Timesteps::new(b_channels, config.flip_sin_to_cos, config.freq_shift);
         let time_embedding =
             TimestepEmbedding::new(vs.pp("time_embedding"), b_channels, time_embed_dim)?;
+        let text_time_addition_embedding = match text_time_addition_config {
+            Some(addition_config) => Some(SdxlTextTimeAdditionEmbedding::new(
+                vs.clone(),
+                time_embed_dim,
+                config.flip_sin_to_cos,
+                config.freq_shift,
+                addition_config,
+            )?),
+            None => None,
+        };
 
         let vs_db = vs.pp("down_blocks");
         let down_blocks = (0..n_blocks)
@@ -388,6 +475,7 @@ impl UNet2DConditionModel {
             conv_in,
             time_proj,
             time_embedding,
+            text_time_addition_embedding,
             down_blocks,
             mid_block,
             up_blocks,
@@ -404,8 +492,12 @@ impl UNet2DConditionModel {
         timestep: f64,
         encoder_hidden_states: &Tensor,
     ) -> Result<Tensor> {
-        let _enter = self.span.enter();
-        self.forward_with_additional_residuals(xs, timestep, encoder_hidden_states, None, None)
+        self.forward_with_conditioning(
+            xs,
+            timestep,
+            encoder_hidden_states,
+            UNet2DConditioning::default(),
+        )
     }
 
     pub fn forward_with_additional_residuals(
@@ -416,7 +508,27 @@ impl UNet2DConditionModel {
         down_block_additional_residuals: Option<&[Tensor]>,
         mid_block_additional_residual: Option<&Tensor>,
     ) -> Result<Tensor> {
-        if let Some(additional_residuals) = down_block_additional_residuals {
+        self.forward_with_conditioning(
+            xs,
+            timestep,
+            encoder_hidden_states,
+            UNet2DConditioning {
+                text_time: None,
+                down_block_additional_residuals,
+                mid_block_additional_residual,
+            },
+        )
+    }
+
+    pub fn forward_with_conditioning(
+        &self,
+        xs: &Tensor,
+        timestep: f64,
+        encoder_hidden_states: &Tensor,
+        conditioning: UNet2DConditioning<'_>,
+    ) -> Result<Tensor> {
+        let _enter = self.span.enter();
+        if let Some(additional_residuals) = conditioning.down_block_additional_residuals {
             let expected = expected_down_block_additional_residuals(
                 self.config.blocks.len(),
                 self.config.layers_per_block,
@@ -426,8 +538,46 @@ impl UNet2DConditionModel {
         let (bsize, _channels, height, width) = xs.dims4()?;
         let device = xs.device();
         let n_blocks = self.config.blocks.len();
+        let text_time_conditioning = match (
+            self.text_time_addition_embedding.as_ref(),
+            conditioning.text_time,
+        ) {
+            (None, None) => None,
+            (None, Some(_)) => {
+                candle::bail!("SDXL text_time conditioning was supplied to an unconfigured UNet")
+            }
+            (Some(_), None) => {
+                candle::bail!("SDXL text_time conditioning is required by this UNet")
+            }
+            (Some(addition_embedding), Some(text_time)) => {
+                if xs.dtype() != DType::F32 {
+                    candle::bail!(
+                        "SDXL text_time conditioning currently requires F32 tensors, found {:?}",
+                        xs.dtype()
+                    )
+                }
+                let expected_pooled_width = addition_embedding.config().pooled_text_embed_dim()?;
+                validate_text_time_input(
+                    "pooled_text_embeds",
+                    text_time.pooled_text_embeds,
+                    &[bsize, expected_pooled_width],
+                    xs,
+                )?;
+                validate_text_time_input(
+                    "time_ids",
+                    text_time.time_ids,
+                    &[bsize, addition_embedding.config().time_id_count],
+                    xs,
+                )?;
+                Some((addition_embedding, text_time))
+            }
+        };
         let num_upsamplers = n_blocks - 1;
-        let default_overall_up_factor = 2usize.pow(num_upsamplers as u32);
+        let num_upsamplers = u32::try_from(num_upsamplers)
+            .map_err(|_| candle::Error::Msg("UNet upsampler count overflow".into()))?;
+        let default_overall_up_factor = 2usize
+            .checked_pow(num_upsamplers)
+            .ok_or_else(|| candle::Error::Msg("UNet overall upsample factor overflow".into()))?;
         let forward_upsample_size =
             height % default_overall_up_factor != 0 || width % default_overall_up_factor != 0;
         // 0. center input if necessary
@@ -439,7 +589,13 @@ impl UNet2DConditionModel {
         // 1. time
         let emb = (Tensor::ones(bsize, xs.dtype(), device)? * timestep)?;
         let emb = self.time_proj.forward(&emb)?;
-        let emb = self.time_embedding.forward(&emb)?;
+        let mut emb = self.time_embedding.forward(&emb)?;
+        if let Some((addition_embedding, text_time)) = text_time_conditioning {
+            let addition =
+                addition_embedding.forward(text_time.pooled_text_embeds, text_time.time_ids)?;
+            validate_additional_residual_tensor("SDXL text_time addition", &emb, &addition)?;
+            emb = (&emb + &addition)?;
+        }
         // 2. pre-process
         let xs = self.conv_in.forward(&xs)?;
         // 3. down
@@ -460,14 +616,14 @@ impl UNet2DConditionModel {
         // that is also the input to the mid block.
         let mut down_block_res_xs = add_down_block_additional_residuals(
             down_block_res_xs,
-            down_block_additional_residuals,
+            conditioning.down_block_additional_residuals,
         )?;
 
         // 4. mid
         let xs = self
             .mid_block
             .forward(&xs, Some(&emb), Some(encoder_hidden_states))?;
-        let xs = add_mid_block_additional_residual(xs, mid_block_additional_residual)?;
+        let xs = add_mid_block_additional_residual(xs, conditioning.mid_block_additional_residual)?;
         // 5. up
         let mut xs = xs;
         let mut upsample_size = None;
@@ -516,6 +672,7 @@ impl UNet2DConditionModel {
 mod tests {
     use super::*;
     use candle::{DType, Device};
+    use std::collections::HashMap;
 
     fn error_message<T>(result: Result<T>) -> String {
         match result {
@@ -544,6 +701,368 @@ mod tests {
             sliced_attention_size: None,
             use_linear_projection: false,
         }
+    }
+
+    fn tiny_text_time_config() -> SdxlTextTimeAdditionConfig {
+        SdxlTextTimeAdditionConfig {
+            addition_time_embed_dim: 4,
+            projection_class_embeddings_input_dim: 10,
+            time_id_count: 2,
+        }
+    }
+
+    fn tiny_text_time_conditioning<'a>(
+        pooled_text_embeds: &'a Tensor,
+        time_ids: &'a Tensor,
+    ) -> UNet2DConditioning<'a> {
+        UNet2DConditioning {
+            text_time: Some(SdxlTextTimeConditioning {
+                pooled_text_embeds,
+                time_ids,
+            }),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn sdxl_text_time_config_derives_official_dimensions_and_rejects_invalid_values() -> Result<()>
+    {
+        let official = SdxlTextTimeAdditionConfig {
+            addition_time_embed_dim: 256,
+            projection_class_embeddings_input_dim: 2816,
+            time_id_count: 6,
+        };
+        assert_eq!(official.pooled_text_embed_dim()?, 1280);
+
+        for (config, message) in [
+            (
+                SdxlTextTimeAdditionConfig {
+                    addition_time_embed_dim: 0,
+                    ..official
+                },
+                "greater than zero",
+            ),
+            (
+                SdxlTextTimeAdditionConfig {
+                    addition_time_embed_dim: 255,
+                    ..official
+                },
+                "must be even",
+            ),
+            (
+                SdxlTextTimeAdditionConfig {
+                    time_id_count: 0,
+                    ..official
+                },
+                "time_id_count must be greater than zero",
+            ),
+            (
+                SdxlTextTimeAdditionConfig {
+                    addition_time_embed_dim: usize::MAX - 1,
+                    time_id_count: 2,
+                    ..official
+                },
+                "width overflow",
+            ),
+            (
+                SdxlTextTimeAdditionConfig {
+                    projection_class_embeddings_input_dim: 1536,
+                    ..official
+                },
+                "pooled text embedding width must be greater than zero",
+            ),
+        ] {
+            let error = error_message(config.pooled_text_embed_dim());
+            assert!(error.contains(message), "{error}");
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn sdxl_text_time_embedding_uses_pooled_text_and_time_ids() -> Result<()> {
+        let device = Device::Cpu;
+        let config = SdxlTextTimeAdditionConfig {
+            addition_time_embed_dim: 2,
+            projection_class_embeddings_input_dim: 6,
+            time_id_count: 2,
+        };
+        let linear_1_weight = Tensor::from_vec(
+            vec![
+                1., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0.,
+                1., 0., 0.,
+            ],
+            (4, 6),
+            &device,
+        )?;
+        let linear_2_weight = Tensor::from_vec(
+            vec![
+                1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
+            ],
+            (4, 4),
+            &device,
+        )?;
+        let mut weights = HashMap::new();
+        weights.insert("add_embedding.linear_1.weight".into(), linear_1_weight);
+        weights.insert(
+            "add_embedding.linear_1.bias".into(),
+            Tensor::zeros(4, DType::F32, &device)?,
+        );
+        weights.insert("add_embedding.linear_2.weight".into(), linear_2_weight);
+        weights.insert(
+            "add_embedding.linear_2.bias".into(),
+            Tensor::zeros(4, DType::F32, &device)?,
+        );
+        let embedding = SdxlTextTimeAdditionEmbedding::new(
+            candle_nn::VarBuilder::from_tensors(weights, DType::F32, &device),
+            4,
+            true,
+            0.,
+            config,
+        )?;
+
+        let pooled = Tensor::from_slice(&[1f32, 2.], (1, 2), &device)?;
+        let changed_pooled = Tensor::from_slice(&[3f32, 2.], (1, 2), &device)?;
+        let time_ids = Tensor::from_slice(&[0f32, 0.], (1, 2), &device)?;
+        let changed_time_ids = Tensor::from_slice(&[1f32, 0.], (1, 2), &device)?;
+        let baseline = embedding
+            .forward(&pooled, &time_ids)?
+            .flatten_all()?
+            .to_vec1::<f32>()?;
+        let pooled_result = embedding
+            .forward(&changed_pooled, &time_ids)?
+            .flatten_all()?
+            .to_vec1::<f32>()?;
+        let time_result = embedding
+            .forward(&pooled, &changed_time_ids)?
+            .flatten_all()?
+            .to_vec1::<f32>()?;
+
+        assert_ne!(pooled_result, baseline);
+        assert_ne!(time_result, baseline);
+        Ok(())
+    }
+
+    #[test]
+    fn sdxl_text_time_embedding_rejects_malformed_tensor_contracts() -> Result<()> {
+        let device = Device::Cpu;
+        let config = SdxlTextTimeAdditionConfig {
+            addition_time_embed_dim: 2,
+            projection_class_embeddings_input_dim: 6,
+            time_id_count: 2,
+        };
+        let embedding = SdxlTextTimeAdditionEmbedding::new(
+            candle_nn::VarBuilder::zeros(DType::F32, &device),
+            4,
+            true,
+            0.,
+            config,
+        )?;
+        let pooled = Tensor::zeros((1, 2), DType::F32, &device)?;
+        let time_ids = Tensor::zeros((1, 2), DType::F32, &device)?;
+
+        let rank_error =
+            error_message(embedding.forward(&Tensor::zeros(2, DType::F32, &device)?, &time_ids));
+        assert!(rank_error.contains("rank 2"), "{rank_error}");
+
+        let width_error = error_message(
+            embedding.forward(&Tensor::zeros((1, 3), DType::F32, &device)?, &time_ids),
+        );
+        assert!(width_error.contains("width mismatch"), "{width_error}");
+
+        let batch_error =
+            error_message(embedding.forward(&pooled, &Tensor::zeros((2, 2), DType::F32, &device)?));
+        assert!(batch_error.contains("batch mismatch"), "{batch_error}");
+
+        let count_error =
+            error_message(embedding.forward(&pooled, &Tensor::zeros((1, 3), DType::F32, &device)?));
+        assert!(count_error.contains("count mismatch"), "{count_error}");
+
+        let dtype_error =
+            error_message(embedding.forward(&pooled, &Tensor::zeros((1, 2), DType::F64, &device)?));
+        assert!(dtype_error.contains("dtype mismatch"), "{dtype_error}");
+        Ok(())
+    }
+
+    #[test]
+    fn configured_text_time_unet_validates_before_graph_execution() -> Result<()> {
+        let device = Device::Cpu;
+        let model = UNet2DConditionModel::new_with_added_conditioning(
+            candle_nn::VarBuilder::zeros(DType::F32, &device),
+            2,
+            2,
+            false,
+            tiny_config(),
+            Some(tiny_text_time_config()),
+        )?;
+        // The sample has the wrong channel count for conv_in. Conditioning errors must win first.
+        let invalid_sample = Tensor::zeros((1, 1, 2, 2), DType::F32, &device)?;
+        let encoder_hidden_states = Tensor::zeros((1, 1, 4), DType::F32, &device)?;
+        let pooled = Tensor::zeros((1, 2), DType::F32, &device)?;
+        let wrong_pooled = Tensor::zeros((1, 3), DType::F32, &device)?;
+        let time_ids = Tensor::zeros((1, 2), DType::F32, &device)?;
+
+        let missing = error_message(model.forward(&invalid_sample, 1., &encoder_hidden_states));
+        assert!(missing.contains("conditioning is required"), "{missing}");
+
+        let wrong_shape = error_message(model.forward_with_conditioning(
+            &invalid_sample,
+            1.,
+            &encoder_hidden_states,
+            tiny_text_time_conditioning(&wrong_pooled, &time_ids),
+        ));
+        assert!(
+            wrong_shape.contains("pooled_text_embeds shape mismatch"),
+            "{wrong_shape}"
+        );
+
+        let pooled_f64 = Tensor::zeros((1, 2), DType::F64, &device)?;
+        let wrong_dtype = error_message(model.forward_with_conditioning(
+            &invalid_sample,
+            1.,
+            &encoder_hidden_states,
+            tiny_text_time_conditioning(&pooled_f64, &time_ids),
+        ));
+        assert!(
+            wrong_dtype.contains("pooled_text_embeds dtype mismatch"),
+            "{wrong_dtype}"
+        );
+
+        let valid_sample = Tensor::zeros((1, 2, 2, 2), DType::F32, &device)?;
+        model.forward_with_conditioning(
+            &valid_sample,
+            1.,
+            &encoder_hidden_states,
+            tiny_text_time_conditioning(&pooled, &time_ids),
+        )?;
+
+        let non_f32_sample = Tensor::zeros((1, 2, 2, 2), DType::F64, &device)?;
+        let pooled_f64 = Tensor::zeros((1, 2), DType::F64, &device)?;
+        let time_ids_f64 = Tensor::zeros((1, 2), DType::F64, &device)?;
+        let dtype_boundary = error_message(model.forward_with_conditioning(
+            &non_f32_sample,
+            1.,
+            &encoder_hidden_states,
+            tiny_text_time_conditioning(&pooled_f64, &time_ids_f64),
+        ));
+        assert!(
+            dtype_boundary.contains("currently requires F32"),
+            "{dtype_boundary}"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn text_time_device_contract_rejects_different_locations() -> Result<()> {
+        validate_text_time_device(
+            "pooled_text_embeds",
+            DeviceLocation::Cpu,
+            DeviceLocation::Cpu,
+        )?;
+        let error = error_message(validate_text_time_device(
+            "pooled_text_embeds",
+            DeviceLocation::Cpu,
+            DeviceLocation::Cuda { gpu_id: 0 },
+        ));
+        assert!(error.contains("device mismatch"), "{error}");
+        Ok(())
+    }
+
+    #[test]
+    fn structured_conditioning_combines_text_time_and_residuals() -> Result<()> {
+        let device = Device::Cpu;
+        let model = UNet2DConditionModel::new_with_added_conditioning(
+            candle_nn::VarBuilder::zeros(DType::F32, &device),
+            2,
+            2,
+            false,
+            tiny_config(),
+            Some(tiny_text_time_config()),
+        )?;
+        let xs = Tensor::zeros((1, 2, 2, 2), DType::F32, &device)?;
+        let encoder_hidden_states = Tensor::zeros((1, 1, 4), DType::F32, &device)?;
+        let pooled = Tensor::zeros((1, 2), DType::F32, &device)?;
+        let time_ids = Tensor::zeros((1, 2), DType::F32, &device)?;
+        let text_time = SdxlTextTimeConditioning {
+            pooled_text_embeds: &pooled,
+            time_ids: &time_ids,
+        };
+        let baseline = model.forward_with_conditioning(
+            &xs,
+            1.,
+            &encoder_hidden_states,
+            UNet2DConditioning {
+                text_time: Some(text_time),
+                ..Default::default()
+            },
+        )?;
+        let zero_down = [
+            Tensor::zeros((1, 32, 2, 2), DType::F32, &device)?,
+            Tensor::zeros((1, 32, 2, 2), DType::F32, &device)?,
+        ];
+        let zero_mid = Tensor::zeros((1, 32, 2, 2), DType::F32, &device)?;
+        let combined = model.forward_with_conditioning(
+            &xs,
+            1.,
+            &encoder_hidden_states,
+            UNet2DConditioning {
+                text_time: Some(text_time),
+                down_block_additional_residuals: Some(&zero_down),
+                mid_block_additional_residual: Some(&zero_mid),
+            },
+        )?;
+        assert_eq!(
+            combined.flatten_all()?.to_vec1::<f32>()?,
+            baseline.flatten_all()?.to_vec1::<f32>()?
+        );
+
+        let malformed_down = [Tensor::zeros((1, 32, 2, 2), DType::F32, &device)?];
+        let error = error_message(model.forward_with_conditioning(
+            &xs,
+            1.,
+            &encoder_hidden_states,
+            UNet2DConditioning {
+                text_time: Some(text_time),
+                down_block_additional_residuals: Some(&malformed_down),
+                mid_block_additional_residual: None,
+            },
+        ));
+        assert!(error.contains("expected 2, found 1"), "{error}");
+        Ok(())
+    }
+
+    #[test]
+    fn text_time_conditioning_rejects_unconfigured_unet_and_empty_blocks() -> Result<()> {
+        let device = Device::Cpu;
+        let model = UNet2DConditionModel::new(
+            candle_nn::VarBuilder::zeros(DType::F32, &device),
+            2,
+            2,
+            false,
+            tiny_config(),
+        )?;
+        let xs = Tensor::zeros((1, 2, 2, 2), DType::F32, &device)?;
+        let encoder_hidden_states = Tensor::zeros((1, 1, 4), DType::F32, &device)?;
+        let pooled = Tensor::zeros((1, 2), DType::F32, &device)?;
+        let time_ids = Tensor::zeros((1, 2), DType::F32, &device)?;
+        let error = error_message(model.forward_with_conditioning(
+            &xs,
+            1.,
+            &encoder_hidden_states,
+            tiny_text_time_conditioning(&pooled, &time_ids),
+        ));
+        assert!(error.contains("unconfigured UNet"), "{error}");
+
+        let mut empty = tiny_config();
+        empty.blocks.clear();
+        let error = error_message(UNet2DConditionModel::new(
+            candle_nn::VarBuilder::zeros(DType::F32, &device),
+            2,
+            2,
+            false,
+            empty,
+        ));
+        assert!(error.contains("requires at least one block"), "{error}");
+        Ok(())
     }
 
     #[test]
@@ -651,6 +1170,12 @@ mod tests {
         let baseline = model.forward(&xs, 1., &encoder_hidden_states)?;
         let explicit_none =
             model.forward_with_additional_residuals(&xs, 1., &encoder_hidden_states, None, None)?;
+        let structured_none = model.forward_with_conditioning(
+            &xs,
+            1.,
+            &encoder_hidden_states,
+            UNet2DConditioning::default(),
+        )?;
         let zero_down = [
             Tensor::zeros((1, 32, 2, 2), DType::F32, &device)?,
             Tensor::zeros((1, 32, 2, 2), DType::F32, &device)?,
@@ -666,6 +1191,7 @@ mod tests {
 
         let baseline = baseline.flatten_all()?.to_vec1::<f32>()?;
         assert_eq!(explicit_none.flatten_all()?.to_vec1::<f32>()?, baseline);
+        assert_eq!(structured_none.flatten_all()?.to_vec1::<f32>()?, baseline);
         assert_eq!(explicit_zero.flatten_all()?.to_vec1::<f32>()?, baseline);
         Ok(())
     }

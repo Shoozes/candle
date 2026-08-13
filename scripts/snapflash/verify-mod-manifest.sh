@@ -53,6 +53,7 @@ if [[ -s "$STALE_PATHS" ]]; then
 fi
 
 required_paths=(
+    candle-transformers/src/models/stable_diffusion/embeddings.rs
     candle-transformers/src/models/stable_diffusion/lora.rs
     candle-transformers/src/models/stable_diffusion/mutable.rs
     candle-transformers/src/models/stable_diffusion/mod.rs
@@ -87,8 +88,8 @@ while IFS= read -r path; do
     fi
 done <"$MANIFEST_PATHS"
 
-if [[ "$modified_count" -ne 3 || "$added_count" -ne 6 ]]; then
-    printf 'error: expected SnapFlash-derived overlay counts 3 modified/6 added; found %s/%s\n' \
+if [[ "$modified_count" -ne 4 || "$added_count" -ne 6 ]]; then
+    printf 'error: expected SnapFlash-derived overlay counts 4 modified/6 added; found %s/%s\n' \
         "$modified_count" "$added_count" >&2
     exit 1
 fi
