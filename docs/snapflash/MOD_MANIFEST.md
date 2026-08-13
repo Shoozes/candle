@@ -6,7 +6,7 @@ and first regression witness; EdgeSymbio remains the product acceptance owner.
 
 ## Current state
 
-Three reusable diffusion boundaries are implemented. Candle owns validated SDXL
+Four reusable diffusion boundaries are implemented. Candle owns validated SDXL
 LoRA tensor parsing and a rollback-capable replacement transaction over the
 UNet and both text encoders. It also validates the existing UNet
 additional-residual hook as an exact, configuration-derived tensor contract
@@ -17,6 +17,8 @@ methods remain compatibility wrappers. The LoRA transaction retains
 independent base tensors, computes adapter B from base rather than adapter A,
 restores exact base values, and rolls every component back if a later write
 fails under the consumer's exclusive model-execution boundary.
+Its non-default consumer test seam can now exercise that same rollback path at
+a named later component without adding the hook to normal builds.
 
 Applications still own filename and directory policy, source licensing,
 adapter catalogs, Kohya/model-family name conversion, resource admission,
@@ -28,6 +30,7 @@ production model artifact is part of this overlay.
 | Path | Ownership |
 | --- | --- |
 | `CHANGELOG.md` | Record the public LoRA, residual, and SDXL `text_time` conditioning contracts. |
+| `candle-transformers/Cargo.toml` | Keep the consumer fault hook absent from normal builds and available only through the opt-in `test-utils` feature. |
 | `candle-transformers/src/models/stable_diffusion/embeddings.rs` | Implement the reusable SDXL `text_time` addition embedding and checked dimension contract. |
 | `candle-transformers/src/models/stable_diffusion/mod.rs` | Export the generic LoRA parser and mutable transaction modules. |
 | `candle-transformers/src/models/stable_diffusion/unet_2d.rs` | Fail closed on malformed added-conditioning and residual inputs while preserving legacy wrappers. |
@@ -38,6 +41,7 @@ production model artifact is part of this overlay.
 - `docs/snapflash/MOD_MANIFEST.md`
 - `candle-transformers/src/models/stable_diffusion/lora.rs`
 - `candle-transformers/src/models/stable_diffusion/mutable.rs`
+- `candle-transformers/tests/stable_diffusion_mutable_tests.rs`
 - `scripts/snapflash/verify-mod-manifest.sh`
 - `scripts/verify-fork-overlays.sh`
 
@@ -53,6 +57,10 @@ production model artifact is part of this overlay.
   one rollback-capable operation, and clears to independent base copies. The
   consumer must hold its exclusive model execution/mutation lease throughout
   prepare and apply; Candle does not own application inference admission.
+- With the non-default `test-utils` feature, consumers may force the first
+  planned write of one named component to fail. The hook rejects components
+  with no planned writes before mutation and otherwise runs the same snapshot,
+  write, and rollback path as production `apply_plan`.
 - `canonical_lora_tensor_sha256` hashes shape plus canonical finite F32 values
   under the `candle-sdxl-lora-tensor-f32-v1` contract. Per-target base, delta,
   and merged hashes let consumers compare the same adapter without importing
@@ -146,4 +154,4 @@ Models, adapters, generated images, local caches, `.tools/`, secrets, runtime
 logs, and application artifacts are not part of this overlay.
 
 ---
-AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=registered the generic SDXL text-time addition-conditioning boundary
+AI-edited: 2026-08-13T12:09:28-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=registered the feature-gated public consumer rollback-test contract

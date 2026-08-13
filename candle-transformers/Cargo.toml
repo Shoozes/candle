@@ -28,6 +28,7 @@ tracing = { workspace = true }
 
 [features]
 default = []
+test-utils = []
 accelerate = ["dep:accelerate-src", "candle/accelerate", "candle-nn/accelerate"]
 cuda = ["candle/cuda", "candle-nn/cuda"]
 cudnn = ["candle/cudnn", "candle-nn/cudnn"]

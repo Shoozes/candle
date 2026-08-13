@@ -310,6 +310,36 @@ impl VarMapSwapTransaction {
         self.apply_plan_with_failure(plan, None)
     }
 
+    /// Applies a plan while forcing the selected component's first write to fail.
+    ///
+    /// This consumer test hook is available only with the `test-utils` feature.
+    /// It executes the normal snapshot checks, earlier component writes, and
+    /// production rollback path. A component without a planned write is
+    /// rejected before any mutation.
+    #[cfg(feature = "test-utils")]
+    pub fn apply_plan_with_injected_component_failure(
+        &mut self,
+        plan: LoraApplyPlan,
+        component: SdxlLoraComponent,
+    ) -> Result<LoraApplyStats> {
+        let component_index = component.index();
+        if plan.components[component_index].updates.is_empty() {
+            candle::bail!(
+                "cannot inject SDXL LoRA {} failure because the component has no planned writes",
+                component.as_str()
+            )
+        }
+        let fail_after_writes = plan.components[..component_index].iter().try_fold(
+            0usize,
+            |count, component_plan| {
+                count
+                    .checked_add(component_plan.updates.len())
+                    .ok_or_else(|| candle::Error::msg("SDXL LoRA injected-write counter overflow"))
+            },
+        )?;
+        self.apply_plan_with_failure(plan, Some(fail_after_writes))
+    }
+
     pub fn swap_adapter<'a>(
         &mut self,
         lora_tensors: impl IntoIterator<Item = (&'a String, &'a Tensor)>,

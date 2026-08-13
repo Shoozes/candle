@@ -53,11 +53,13 @@ if [[ -s "$STALE_PATHS" ]]; then
 fi
 
 required_paths=(
+    candle-transformers/Cargo.toml
     candle-transformers/src/models/stable_diffusion/embeddings.rs
     candle-transformers/src/models/stable_diffusion/lora.rs
     candle-transformers/src/models/stable_diffusion/mutable.rs
     candle-transformers/src/models/stable_diffusion/mod.rs
     candle-transformers/src/models/stable_diffusion/unet_2d.rs
+    candle-transformers/tests/stable_diffusion_mutable_tests.rs
 )
 for path in "${required_paths[@]}"; do
     if ! grep -Fxq "$path" "$MANIFEST_PATHS"; then
@@ -88,8 +90,8 @@ while IFS= read -r path; do
     fi
 done <"$MANIFEST_PATHS"
 
-if [[ "$modified_count" -ne 4 || "$added_count" -ne 6 ]]; then
-    printf 'error: expected SnapFlash-derived overlay counts 4 modified/6 added; found %s/%s\n' \
+if [[ "$modified_count" -ne 5 || "$added_count" -ne 7 ]]; then
+    printf 'error: expected SnapFlash-derived overlay counts 5 modified/7 added; found %s/%s\n' \
         "$modified_count" "$added_count" >&2
     exit 1
 fi

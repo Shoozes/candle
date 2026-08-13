@@ -399,14 +399,16 @@
       ]
     },
     "feature__sdxl_diffusion_primitives": {
-      "description": "Generic SDXL framework boundaries: three-component LoRA mutation, opt-in pooled-text/time-ID addition embeddings with pinned lower-precision cast order, retained-VarBuilder construction, and exact additional-residual admission.",
+      "description": "Generic SDXL framework boundaries: three-component LoRA mutation with a feature-gated downstream rollback-test seam, opt-in pooled-text/time-ID addition embeddings with pinned lower-precision cast order, retained-VarBuilder construction, and exact additional-residual admission.",
       "status": "active",
       "paths": [
+        "candle-transformers/Cargo.toml",
         "candle-transformers/src/models/stable_diffusion/embeddings.rs",
         "candle-transformers/src/models/stable_diffusion/lora.rs",
         "candle-transformers/src/models/stable_diffusion/mutable.rs",
         "candle-transformers/src/models/stable_diffusion/mod.rs",
         "candle-transformers/src/models/stable_diffusion/unet_2d.rs",
+        "candle-transformers/tests/stable_diffusion_mutable_tests.rs",
         "docs/snapflash/MOD_MANIFEST.md",
         "scripts/snapflash/verify-mod-manifest.sh"
       ]

@@ -1683,5 +1683,32 @@ deferred to TODO C3; no network or toolchain install was substituted.
   process, or llama.cpp workload ran. INT-5C/D remain application integration
   and differential-parity work.
 
+## 2026-08-13 — SnapFlash INT-5C/D faithful ControlNet parity
+
+- What: SnapFlash-Server repinned Candle
+  `aed7f062bbfb825675efaf21c98029983312d336`, replaced its context-free
+  ControlNet approximation with the exact supported cross-attention and
+  `text_time` graph, added CLIP2 EOS pooling/projection and six SDXL time IDs,
+  and published the combined INT-5C/D result at
+  `b90f7c6bb76f1d73c70cd69e483fdfb1278de4ca`.
+- Why: Exact tensor names and nine residual shapes did not prove numerical
+  conditioning or correct classifier-free guidance. Both the ControlNet and
+  public Candle UNet needed the same pooled/text/time context, with positive
+  and negative branches evaluated independently.
+- How: Retained config-plus-weight revisions drive strict official topology;
+  a pinned Diffusers `v0.38.0` test-only oracle supplies 260 ControlNet and 496
+  UNet tensors plus every nine-down/mid/final expected tensor; production
+  admission remains strict and separate from the tiny fixture seam.
+- Done when: Scale 0/0.5/1, two contexts, all residuals, mid, final controlled
+  UNet output, exact discrete timing, malformed topology, revision rollback,
+  and intentional perturbation failure pass. The SnapFlash no-model aggregate
+  passed, then installed Canny and Depth each passed a separate owned CUDA F16
+  same-seed run with non-inert output, no severe clipping, and complete process
+  and GPU release. Those conditions are met; absent OpenPose/Scribble/Normal
+  assets remain separate application gates.
+- Boundary: Candle owns generic UNet conditioning and residual admission;
+  SnapFlash owns the ControlNet graph, retained revisions, application policy,
+  fixtures, and live proof. No application code was copied into Candle.
+
 ---
-AI-edited: 2026-08-13T04:50:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=archived the published lower-precision cast-order implementation
+AI-edited: 2026-08-13T12:09:28-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=archived the published SnapFlash INT-5C/D numerical and installed proof boundary

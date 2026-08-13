@@ -11,6 +11,9 @@ This documents the main changes to the `candle` crate.
   quantized GGUF text with split, direct dense, or native Q8 MMProj inputs.
 - Added validated three-component SDXL LoRA parsing, canonical tensor evidence,
   and rollback-capable UNet/text-encoder replacement with exact clear.
+- Added a feature-gated SDXL LoRA consumer test hook that deterministically
+  exercises component-2/component-3 write-failure rollback without exposing
+  mutable transaction internals in normal builds.
 - Added opt-in SDXL `text_time` conditioning with pooled-text and size/crop
   time-ID inputs while preserving the existing UNet constructors and forwards.
 

@@ -4,118 +4,75 @@ Only incomplete work belongs here. Completed implementation and proof belong
 in `HISTORY.md`; recurring hazards belong in `FAILURE_LOG.md`. All required
 verification is local. Do not invoke, inspect, or depend on hosted CI.
 
-## INT-5 — Prove differential ControlNet conditioning and residual parity
+## REL-8 — Prove downstream later-component LoRA write rollback
 
 ### What
 
-Create a pinned tiny deterministic ControlNet fixture that proves the ordered
-nine SDXL down residuals, the mid residual, text-conditioning influence, and
-the final Candle UNet result against the pinned reference implementation.
-Repin SnapFlash to the published Candle INT-5B.1 lower-precision checkpoint
-and consume its public residual and `text_time` hooks without copying
-framework tensor checks.
+Expose Candle's existing deterministic SDXL transaction fault only through a
+non-default consumer-test feature, then prove from SnapFlash that failures at
+the first write of text encoder 1 or text encoder 2 restore every prior live
+tensor and preserve the active adapter.
 
 ### Why
 
-INT-5A/B prove fail-closed topology admission and the reusable base-UNet
-addition input, not numerical equivalence. SnapFlash's current ControlNet
-forward path still leaves text `_context` unused, so shape-correct tensors
-alone cannot justify a conditioned-generation or inpainting claim.
+Candle already proves its private rollback path, but downstream consumers
+cannot invoke that failure deterministically. Copying transaction logic into
+SnapFlash would create the drift this shared primitive was designed to remove.
 
 ### When
 
-INT-5A, INT-5B, and INT-5B.1 are published. Start INT-5C only after SnapFlash
-pins Candle `aed7f062bbfb825675efaf21c98029983312d336`. Finish INT-5C/D before promoting
-ControlNet-backed inpainting, enabling unattended real-weight ControlNet use,
-or claiming application-level numerical parity.
+After INT-5C/D publication and before accepting a future Candle transaction
+upgrade as independently downstream fault-injection-proven. This does not
+require or authorize a model, CUDA, or live inference run.
 
 ### Where
 
-- A new tiny generated fixture under Candle's SnapFlash-derived test boundary,
-  with revision, package versions, dtype, device, seed, tensor inventory,
-  shapes, and hashes recorded in its manifest.
-- Candle Stable Diffusion residual tests and SnapFlash's ControlNet model,
-  loader, dependency pin, deterministic tests, proof docs, and focused
-  summary-bank route.
+- Candle `candle-transformers/Cargo.toml`,
+  `stable_diffusion/mutable.rs`, and its external integration test.
+- SnapFlash `source/src-tauri/Cargo.toml`, `Cargo.lock`,
+  `engine/loader/head_swap.rs`, focused tests, current docs, and context route.
 
 ### How
 
-Complete the remaining tasks in order. INT-5A/B are archived in `HISTORY.md`.
-
-1. **INT-5C — faithful SnapFlash ControlNet graph.**
-   - What: consume the official down-block types, transformer depths,
-     cross-attention context, and `text_time` conditioning, plus correct SDXL
-     pooled/penultimate CLIP outputs and time IDs.
-   - Why: `_context` is presently unused and the installed attention/addition
-     weights are ignored.
-   - When: only after SnapFlash pins the Candle INT-5B.1 checkpoint.
-   - Where: SnapFlash ControlNet, prompt conditioning, loader, sampling, and
-     deterministic generated-weight tests.
-   - How: reuse Candle's public Stable Diffusion blocks, keep the exact
-     nine-plus-mid order, validate configuration and tensor coverage, and
-     preserve retained revision/rollback ownership.
-   - Done when: two contexts produce distinct residuals, every official
-     required tensor is graph-owned, no checkpoint tensor family is silently
-     ignored, and an injected replacement failure restores the prior resident
-     revision.
-2. **INT-5D — pinned differential fixture and publication.**
-   - What: generate only tiny deterministic tensors from the pinned official
-     Diffusers source and compare all nine residuals, the mid residual, and the
-     final Candle UNet output.
-   - Why: source completeness and shape checks are not numerical parity.
-   - When: after INT-5B/C are green; before any production-weight or CUDA run.
-   - Where: a small generated fixture and manifest in the SnapFlash-derived
-     Candle overlay, the reference exporter/verifier, and SnapFlash consumers.
-   - How: record revision, packages, dtype, device, seed, shapes, and hashes;
-     test zero strength, nonzero strength, two contexts, and exact start/end
-     timing boundaries within declared F32 tolerances.
-   - Done when: both repositories pass their focused and complete local gates,
-     SnapFlash pins the published Candle result, and reviewed `main` revisions
-     are published without production weights, images, CUDA, or live models.
+- [x] Add Candle's non-default `test-utils` feature and one public method that
+  injects failure at the selected component's first planned write while using
+  the production snapshot/write/rollback path.
+- [x] Add an external Candle integration test for text encoder 1, text encoder
+  2, and the no-planned-write fail-before-mutation case.
+- [ ] Publish the exact Candle revision after its full local and overlay gates.
+- [ ] Repin SnapFlash and enable `test-utils` only for dev/test builds.
+- [ ] Add SnapFlash component-2/component-3 tests that preserve every tensor,
+  transaction revision/target inventory, and application `active_adapter`.
+- [ ] Pass both repositories' focused and complete local gates, publish
+  reviewed `main`, and move this item to `HISTORY.md`.
 
 ### Current blockers
 
-- The official source is now identified: Diffusers tag `v0.39.0` peels to
-  `a3608b512ed7248499a44c61d954965ed9bdae4d`; the two INT-5B behavior blobs
-  are pinned, but the later tiny exporter, resolved package lock, tensor
-  bundle, and manifest do not exist yet.
-- The installed official Canny/Depth layouts require cross-attention and SDXL
-  `text_time` addition embeddings. Candle now owns the generic addition
-  primitive plus the pinned lower-precision cast order, but SnapFlash still
-  lacks the faithful cross-attention graph, CLIP2 pooled projection, and
-  time-ID policy. INT-5A continues to fail closed until INT-5C replaces that
-  incomplete path.
-- Production weights, CUDA, and live inpainting are intentionally outside this
-  first deterministic slice. They are later evidence gates, not permission to
-  broaden INT-5.
+- None in source. Publication and downstream pinning are ordered external Git
+  steps; production weights and CUDA are outside this test-only slice.
 
 ### Done when
 
-- The fixture manifest pins its reference repository/revision, environment,
-  generated inputs, tensor inventory, dtype/device, seed, and hashes.
-- SnapFlash emits exactly nine ordered down residuals plus one mid residual;
-  each shape/value and the final Candle UNet result matches the pinned
-  reference within documented tolerances.
-- Two different text contexts produce the expected distinct conditioned
-  residuals/output; `_context` is no longer unused or falsely documented.
-- Zero-control and timing boundary cases are exact, malformed topology fails
-  before mutation/allocation, and the prior resident ControlNet restores after
-  injected failure.
-- Both repositories pass focused and complete local gates with no production
-  model run, then publish reviewed direct-`main` checkpoints.
+- Candle exposes no failure hook in default builds; opted-in tests can name a
+  component and deterministically reach the production rollback path.
+- Candle and SnapFlash both prove text-encoder-1 and text-encoder-2 failure
+  restores every prior tensor, transaction state, and active adapter.
+- Both exact pins, focused/full local gates, context/overlay checks, reviewed
+  direct-main commits, and remote equality are green without duplicate
+  transaction code, production weights, CUDA, or live inference.
 
 ### Verification
 
-- Pinned reference fixture generator and manifest verifier.
-- Candle fixture-driven residual and final-forward tests.
-- SnapFlash exact residual inventory/value/context/timing and transactional
-  loader tests through the published Candle revision.
-- Locked/offline format, check, strict Clippy, library/integrity, context,
-  overlay, diff, staged-path, and guarded publication gates in both repos.
+- Candle feature-enabled external test plus the existing private transaction
+  suite.
+- SnapFlash focused `head_swap` consumer tests through the published revision.
+- Locked/offline format, check, warnings-denied Clippy, library/integrity,
+  context, overlay, diff, staged-path, and guarded publication gates.
 
 ## Sequencing holds
 
-- ControlNet-backed inpainting promotion waits for INT-5.
+- Queued inpainting is application-owned and may proceed only after REL-8 is
+  closed or is deliberately sequenced around the exact dependency pin.
 - Optional LFM2-VL captioning in SnapFlash waits for the diffusion runtime and
   numerical ControlNet boundary; it must use Candle's public hybrid loader and
   an application-owned retained/resource/proof contract.
@@ -131,4 +88,4 @@ INT-5 requirements and must not be introduced without a scoped proposal and
 acceptance contract.
 
 ---
-AI-edited: 2026-08-13T04:50:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=recorded the published lower-precision revision as INT-5C's exact dependency
+AI-edited: 2026-08-13T12:09:28-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=archived completed INT-5C/D and made the public consumer rollback seam executable

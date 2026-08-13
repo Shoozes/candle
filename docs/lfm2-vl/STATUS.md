@@ -18,12 +18,16 @@
   `ba1e8acc142c4683995e4cdbc8b1d933c81e96c6`.
 - Candle INT-5B.1 lower-precision cast-order revision:
   `aed7f062bbfb825675efaf21c98029983312d336`.
+- Current published Candle `main` before the REL-8 candidate:
+  `985bee982ae15e7fea0b1c3912ddc5dde4d5e7a0`.
 - SnapFlash-Server Round 4 LoRA consumer revision:
   `6e64320fe26e7c3be91262bc0dac99ce53f4c628`.
 - SnapFlash-Server Round 6 bounded-runtime implementation revision:
   `d66c1c35158aca7b37e6e1d82e527334b209d93a`.
-- Current SnapFlash-Server `main` after INT-5A fail-closed admission:
-  `9bc58ccaef77e7ceac0ab4e75a1a4c93acc1cdff`.
+- SnapFlash-Server INT-5C/D faithful ControlNet implementation revision:
+  `b90f7c6bb76f1d73c70cd69e483fdfb1278de4ca`.
+- Current published SnapFlash-Server `main`:
+  `5bcd6f87672eef67003bbbd28dc73655bf522715`.
 - EdgeSymbio Round 5 LoRA consumer revision:
   `633f774a3690df5a8a35b6cac000df4b390316d5`.
 - Current EdgeSymbio `main` after bounded proof-owner hardening:
@@ -37,9 +41,9 @@
   `ff885586f6d44a3d9b9ac1724032cdf5f0155384`. Do not move or reuse it for the
   coordinated runtime.
 - Current LFM2-VL overlay: 150 paths, exactly 15 fork-origin modifications and
-  135 mod-owned additions. The SnapFlash-derived overlay is 10 paths
-  (4 fork-origin modifications and 6 additions); the repository-wide union is
-  159 paths across both overlays.
+  135 mod-owned additions. The active SnapFlash-derived REL-8 candidate is 12
+  paths (5 fork-origin modifications and 7 additions); the repository-wide
+  union is 160 paths across both overlays with 6 registered shared paths.
 
 ## Worktree Boundary
 
@@ -57,11 +61,12 @@
 ## Current Phase
 
 - Product phase: coordinated three-repository integration. Rounds 1 through 7
-  are published. INT-5A fail-closed admission is published in SnapFlash and
-  Candle INT-5B's generic SDXL `text_time` primitive and its narrow INT-5B.1
-  lower-precision cast-order follow-up are published. INT-5C is the active
-  SnapFlash integration boundary. No numerical ControlNet parity claim has
-  been made.
+  and INT-5A through INT-5D are published. SnapFlash consumes Candle INT-5B.1,
+  passes the pinned tiny CPU/F32 differential fixture, and retains separate
+  installed Canny/Depth CUDA F16 proof. REL-8 is the active boundary: expose
+  Candle's deterministic later-component LoRA write fault only to opted-in
+  consumer tests, then prove rollback through SnapFlash without duplicating
+  transaction logic.
 - The reusable hybrid constructor now lives at
   `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid`. It accepts explicit local text,
   tokenizer, processor, MMProj, dtype, device, and execution-policy inputs and
@@ -95,11 +100,33 @@
   compatibility wrappers; a public VarBuilder route allows retained-buffer
   opt-in without copying the private config. The base and addition sinusoidal
   projections now stay F32 and cast only before their learned MLPs, matching
-  the pinned reference for F32, F16, and BF16 model tensors. SnapFlash still
-  owns CLIP2 pooling, time-ID policy, the faithful attention graph, retained
-  revisions, and runtime admission.
+  the pinned reference for F32, F16, and BF16 model tensors. SnapFlash owns and
+  now proves CLIP2 pooling, time-ID policy, the faithful attention graph,
+  retained revisions, and runtime admission.
 
 ## Last Green Verification
+
+### REL-8 downstream rollback-test seam candidate
+
+- `cargo test --locked --offline -j 2 -p candle-transformers --features
+  test-utils --test stable_diffusion_mutable_tests`: passed 2/2 public
+  consumer-contract tests. Named failures at text encoder 1 and text encoder 2
+  restore every prior write, preserve revision/active targets, and a component
+  with no planned writes rejects before mutation.
+- `cargo test --locked --offline -j 2 -p candle-transformers
+  stable_diffusion::mutable --lib`: passed the existing 9/9 internal
+  transaction tests.
+- `cargo check --locked --offline -j 2 -p candle-core -p candle-nn -p
+  candle-transformers -p candle-vlm`, warnings-denied
+  `cargo clippy --locked --offline -j 2 -p candle-transformers --features
+  test-utils --all-targets`, and the feature-enabled `candle-transformers`
+  suite passed.
+- `cargo test --locked --offline -j 2 --workspace --exclude candle-datasets
+  --exclude candle-pyo3` passed with no failures. `cargo fmt --all -- --check`,
+  preflight smoke, module-layout, the SnapFlash-derived manifest at 12/5/7,
+  the repository-wide overlay union at 160/two/six, the 25-group summary-bank
+  audit, and WSL-owned `git diff --check` also pass. Only Candle publication
+  and downstream SnapFlash repin/proof remain before REL-8 acceptance.
 
 ### INT-5B.1 lower-precision cast-order publication gate
 
@@ -300,15 +327,9 @@
   wire, and evicts whole terminal records from an independent owner. Its
   separate Unix/WSL hostile-directory authority item remains in the SnapFlash
   backlog and does not broaden the proven native-Windows boundary.
-- SnapFlash-Server's current ControlNet forward path still leaves text
-  `_context` unused. Nine-residual structural admission is proven, but
-  end-to-end real-weight numerical parity is not.
-- The installed official SDXL ControlNet inventories also require two
-  cross-attention down blocks, a cross-attention mid block, and `text_time`
-  addition embeddings. Candle now represents the reusable base-UNet addition,
-  but SnapFlash still ignores the attention families and does not yet supply
-  correct pooled CLIP2/time-ID inputs. Loading must remain fail-closed until
-  INT-5C represents them.
+- SnapFlash's faithful ControlNet graph and tiny differential fixture are
+  published. OpenPose, Scribble, and Normal remain separately asset-gated;
+  Canny/Depth proof cannot be generalized to those absent composite revisions.
 - Lower-than-Q8 vision quantization, video, true text batching, generic VLM
   traits, converters, WebGPU/WASM, broad WSL replay, public signing, and LTS are
   deferred future scope, not hidden MVP promises.
@@ -318,8 +339,8 @@
 
 ## Blockers
 
-- REL-6/7 and INT-5A/B have no remaining source, test, dependency, or
-  publication blocker.
+- REL-6/7 and INT-5A through INT-5D have no remaining source, test, dependency,
+  or publication blocker.
   Candle implementations `95ac9ff815fbac4f252b4ef6780b5e4a7843f328` and
   `ba1e8acc142c4683995e4cdbc8b1d933c81e96c6` plus the exact SnapFlash
   revisions above are published.
@@ -329,21 +350,27 @@
   concealed failures; Edge LoRA migration itself is complete.
 - Hosted GitHub Actions state is intentionally not a blocker or verification
   dependency.
+- REL-8 has no implementation blocker. Candle publication, exact SnapFlash
+  repinning, downstream component-2/component-3 tests, and both local gates
+  remain its acceptance sequence.
 
 ## Active Change Set
 
-- No source file is under active Candle implementation. INT-5B.1 is published;
-  the active cross-repository work belongs to SnapFlash INT-5C.
+- REL-8 actively owns `candle-transformers/Cargo.toml`,
+  `stable_diffusion/mutable.rs`, its external integration test, the
+  SnapFlash-derived manifest/verifier, overlay registry, changelog, summary
+  route, and current state documents. No application source is copied into
+  Candle.
 - Models, caches, downloads, generated proof logs, Cargo output, and
   `.tools/.secrets/` remain ignored or external.
 
 ## Exact Next Task
 
-Repin SnapFlash to Candle
-`aed7f062bbfb825675efaf21c98029983312d336` and implement INT-5C's faithful SDXL
-ControlNet attention graph, CLIP2 pooled projection, and time-ID policy. Do
-not generate the numerical fixture, load production weights, run CUDA, or
-promote inpainting before INT-5C is green.
+Finish Candle REL-8's full local gate and publish the reviewed candidate.
+Then repin SnapFlash to that exact revision, enable `test-utils` only for test
+builds, prove component-2/component-3 rollback through `LoraHeadSwapState`, run
+the SnapFlash integrity gate, and publish both repositories without a model or
+CUDA workload.
 
 ---
-AI-edited: 2026-08-13T04:50:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=recorded the published lower-precision checkpoint and advanced active work to INT-5C
+AI-edited: 2026-08-13T12:09:28-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=reconciled completed INT-5C/D and recorded the active feature-gated consumer fault seam
