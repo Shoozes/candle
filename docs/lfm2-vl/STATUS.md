@@ -20,8 +20,8 @@
   `aed7f062bbfb825675efaf21c98029983312d336`.
 - Candle REL-8 consumer-test seam revision:
   `1660f9fca8d6c8eb70937791e796203527f7be26`.
-- Current published Candle `main` before this worktree change:
-  `54f8147513d6aff9659924558c5f000116dbeaf4`.
+- Repository-integrity error-boundary implementation revision:
+  `1877c8500f4f07f0e4851103cf9cfc54d98c411f`.
 - SnapFlash-Server Round 4 LoRA consumer revision:
   `6e64320fe26e7c3be91262bc0dac99ce53f4c628`.
 - SnapFlash-Server Round 6 bounded-runtime implementation revision:
@@ -74,8 +74,9 @@
   `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid`. It accepts explicit local text,
   tokenizer, processor, MMProj, dtype, device, and execution-policy inputs and
   returns the paired model, processor, prompt, and exact consumed-file list.
-  The current worktree hardens its fail-fast boundary by validating bounded
-  tokenizer and processor bytes before opening either model payload.
+  The repository-integrity revision hardens its fail-fast boundary by
+  validating bounded tokenizer and processor bytes before opening either model
+  payload.
 - The example is a thin CLI/reporting adapter. Candle performs no discovery,
   download, hidden fallback, retained-handle admission, hashing, resource
   leasing, or product-proof publication.
@@ -111,7 +112,7 @@
 
 ## Last Green Verification
 
-### Public hybrid metadata preflight worktree gate
+### Public hybrid metadata preflight release gate
 
 - `cargo test --locked --offline -j 2 -p candle-vlm lfm2_vl::loading
   --lib`: passed 8/8 focused tests after the final exact-size reader change.
@@ -132,7 +133,8 @@
   161 paths, two overlays, and six shared paths. The 24-group summary bank,
   module-layout verifier, formatting, and WSL-owned diff check passed.
 - No model, CUDA, checkpoint, network, Python oracle, llama.cpp workload,
-  hosted runner, secret inspection, commit, or publication was used.
+  hosted runner, or secret inspection was used. The reviewed implementation
+  and proof state are committed at `1877c8500f4f07f0e4851103cf9cfc54d98c411f`.
 - The companion unsupported-feature regression
   `stable_diffusion::attention::tests::flash_attention_without_feature_returns_an_error`
   passed. The complete transformer crate passed 89/89 library tests plus its
@@ -391,30 +393,25 @@
   revisions above, their worktrees are clean, and production builds expose no
   injected-failure method.
 - The bounded hybrid metadata implementation has no known source or local
-  verification blocker. This release is explicitly authorized for a scoped
-  commit and guarded direct-main publication through `.tools/gitpush.ps1`.
+  verification blocker. Its scoped implementation commit is complete; guarded
+  direct-main publication through `.tools/gitpush.ps1` is authorized.
 
 ## Active Change Set
 
-- `candle-vlm/src/lfm2_vl/loading.rs` owns the bounded metadata reader, pre-model
-  load ordering, and focused regressions.
-- `candle-transformers/src/models/stable_diffusion/attention.rs` replaces the
-  feature-disabled panic stub with a controlled error and focused regression;
-  `scripts/snapflash/verify-mod-manifest.sh` registers that fork-owned path.
-- `candle-vlm/README.md`, `docs/lfm2-vl/{START_HERE,STATUS,TODO,HISTORY}.md`,
-  `docs/FORK_OVERLAYS.md`, `docs/snapflash/MOD_MANIFEST.md`, and
-  `summary_bank.json` reconcile the public contract and current repository
-  state without copying application source into Candle.
+- No source file remains under active implementation. The bounded metadata
+  reader and stable-diffusion unsupported-feature error are committed together
+  at `1877c8500f4f07f0e4851103cf9cfc54d98c411f`.
+- This documentation-only successor clears the worktree boundary and records
+  the exact implementation revision before guarded publication.
 - Models, caches, downloads, generated proof logs, Cargo output, and
   `.tools/.secrets/` remain ignored or external.
 
 ## Exact Next Task
 
-No finite Candle-owned implementation task remains. This release is complete
-when the two proven error-boundary fixes are committed on `main`, the guarded
-helper confirms remote `main` equals local `HEAD`, and the active change set is
-cleared. Afterward, add no task unless a concrete reusable framework gap
-supplies its owner, files, completion condition, and verification command.
+No finite Candle-owned implementation task remains. The release condition is
+exact local/remote `main` equality confirmed by `.tools/gitpush.ps1`; once it
+is met, wait for a concrete reusable framework gap with an owner, files,
+completion condition, and verification command.
 
 ---
-AI-edited: 2026-08-13T13:36:16-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-hardening | change=recorded current heads, both completed local proofs, and publication-only next step
+AI-edited: 2026-08-13T14:04:40-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-release | change=recorded the exact implementation revision and cleared active source work

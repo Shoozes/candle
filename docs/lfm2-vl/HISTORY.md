@@ -1768,6 +1768,9 @@ deferred to TODO C3; no network or toolchain install was substituted.
   passes 89/89 library tests plus integration/doc lanes, strict transformer
   Clippy passes, and the selected native workspace suite remains green. Those
   conditions are met; no flash-attention kernel, CUDA, or model was loaded.
+- Release: both error-boundary fixes and their reviewed proof/state updates are
+  committed at `1877c8500f4f07f0e4851103cf9cfc54d98c411f`; a documentation-only
+  successor records the cleared active-work boundary before guarded push.
 
 ---
-AI-edited: 2026-08-13T13:36:16-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-hardening | change=archived bounded loader admission and fail-safe unsupported flash attention
+AI-edited: 2026-08-13T14:04:40-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-release | change=recorded the exact implementation commit and documentation closeout

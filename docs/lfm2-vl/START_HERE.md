@@ -43,11 +43,10 @@ implementation `d66c1c35158aca7b37e6e1d82e527334b209d93a`; its final proof-recor
 `main` head is `b83db70ba4027535e4e55f6509e6011feeead850`. Candle Round 7 is published
 at `95ac9ff815fbac4f252b4ef6780b5e4a7843f328`. INT-5C/D and REL-8 are complete;
 SnapFlash later published queued inpainting at current `main`
-`aa7f0a5059d9a03838f3229671b68930156d8cb8`. Current Candle `main` is
-`54f81475` after documentation-only closeout. The active local closeout covers
-two bounded error paths: tokenizer/processor metadata must fail before either
-large model payload is opened, and unsupported stable-diffusion flash attention
-must return an error rather than panic. See `STATUS.md` and `TODO.md` rather
+`aa7f0a5059d9a03838f3229671b68930156d8cb8`. Candle's bounded metadata and
+unsupported flash-attention error paths are implemented at
+`1877c8500f4f07f0e4851103cf9cfc54d98c411f`; live Git refs remain the authority
+for any later documentation successor. See `STATUS.md` and `TODO.md` rather
 than reconstructing the handoff from completed history.
 The public LFM loader returns exact consumed paths; application hashing,
 retained handles, resource leases, and proof records remain outside Candle.
@@ -181,4 +180,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-13T13:36:16-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-hardening | change=replaced the completed INT-5 handoff with the current bounded-error closeout
+AI-edited: 2026-08-13T14:04:40-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-release | change=recorded the exact bounded-error implementation revision

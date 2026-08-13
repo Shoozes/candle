@@ -56,9 +56,10 @@ installed Canny/Depth proof are published at
 `b90f7c6bb76f1d73c70cd69e483fdfb1278de4ca`. Its REL-8 rollback proof remains
 published at `a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95`; current SnapFlash `main` is
 `aa7f0a5059d9a03838f3229671b68930156d8cb8` after the additive queued-inpainting
-follow-on. Current Candle `main` is `54f81475` after documentation-only
-closeout; the table keeps each exact lineage proof revision rather than
-relabeling later heads as the original acceptance point.
+follow-on. Candle's repository-integrity error-boundary implementation is
+`1877c8500f4f07f0e4851103cf9cfc54d98c411f`; the table keeps each exact lineage
+proof revision rather than relabeling later heads as the original acceptance
+point.
 
 | Order | Repository | Focused result | State / release condition |
 | --- | --- | --- | --- |
@@ -119,4 +120,4 @@ product policy remain outside the framework API.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-08-13T13:36:16-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-hardening | change=distinguished current heads and registered controlled unsupported flash attention
+AI-edited: 2026-08-13T14:04:40-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-release | change=recorded the exact bounded-error implementation revision
