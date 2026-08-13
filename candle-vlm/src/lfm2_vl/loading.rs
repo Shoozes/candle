@@ -16,6 +16,7 @@ use std::str::FromStr;
 use tokenizers::Tokenizer;
 
 const MAX_PROCESSOR_CONFIG_BYTES: u64 = 16 * 1024 * 1024;
+const MAX_TOKENIZER_BYTES: u64 = 512 * 1024 * 1024;
 
 /// Local source for the vision tower and multimodal projector.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -105,6 +106,18 @@ pub fn load_lfm2_vl_hybrid(options: Lfm2VlHybridLoadOptions<'_>) -> Result<Loade
         options.vision_dtype,
     )?;
 
+    // Parse small public metadata before opening either large model payload.
+    let tokenizer = load_tokenizer(options.tokenizer)?;
+    let tokenizer_image_token_id =
+        Lfm2VlSpecialTokens::resolve(&tokenizer, None, 0, false)?.image_token_id;
+    let processor_patch = options
+        .processor_config
+        .map(|path| {
+            let json = read_processor_config(path)?;
+            ProcessorConfigPatch::from_json(&json)
+        })
+        .transpose()?;
+
     let mut text_file = File::open(options.text_gguf).map_err(|error| {
         candle::Error::Msg(format!(
             "cannot open text GGUF {}: {error}",
@@ -114,15 +127,6 @@ pub fn load_lfm2_vl_hybrid(options: Lfm2VlHybridLoadOptions<'_>) -> Result<Loade
     let content =
         gguf_file::Content::read(&mut text_file).map_err(|err| err.with_path(options.text_gguf))?;
     let text = ModelWeights::from_gguf(content, &mut text_file, options.text_device)?;
-
-    let tokenizer = Tokenizer::from_file(options.tokenizer).map_err(|error| {
-        candle::Error::Msg(format!(
-            "cannot load tokenizer {}: {error}",
-            options.tokenizer.display()
-        ))
-    })?;
-    let tokenizer_image_token_id =
-        Lfm2VlSpecialTokens::resolve(&tokenizer, None, 0, false)?.image_token_id;
 
     let mmproj = match options.mmproj {
         Lfm2VlMmprojSource::SplitDirectory(path) => {
@@ -156,13 +160,6 @@ pub fn load_lfm2_vl_hybrid(options: Lfm2VlHybridLoadOptions<'_>) -> Result<Loade
         },
     };
 
-    let processor_patch = options
-        .processor_config
-        .map(|path| {
-            let json = read_processor_config(path)?;
-            ProcessorConfigPatch::from_json(&json)
-        })
-        .transpose()?;
     let processor_config = Lfm2VlProcessorConfig::from_mmproj_metadata_with_processor(
         &mmproj.metadata,
         processor_patch.as_ref(),
@@ -258,53 +255,63 @@ fn mmproj_load_plan(
 }
 
 fn read_processor_config(path: &Path) -> Result<String> {
-    let file = File::open(path).map_err(|error| {
-        candle::Error::Msg(format!(
-            "cannot open processor config {}: {error}",
-            path.display()
-        ))
-    })?;
-    let declared = file
-        .metadata()
-        .map_err(|error| {
-            candle::Error::Msg(format!(
-                "cannot read processor config metadata {}: {error}",
-                path.display()
-            ))
-        })?
-        .len();
-    if declared > MAX_PROCESSOR_CONFIG_BYTES {
-        candle::bail!(
-            "processor config {} is {declared} bytes, exceeding {MAX_PROCESSOR_CONFIG_BYTES}",
-            path.display()
-        )
-    }
-    let capacity = usize::try_from(declared)
-        .map_err(|_| candle::Error::Msg("processor config length does not fit usize".into()))?;
-    let mut bytes = Vec::new();
-    bytes
-        .try_reserve_exact(capacity)
-        .map_err(|_| candle::Error::Msg("processor config allocation failed".into()))?;
-    file.take(MAX_PROCESSOR_CONFIG_BYTES + 1)
-        .read_to_end(&mut bytes)
-        .map_err(|error| {
-            candle::Error::Msg(format!(
-                "cannot read processor config {}: {error}",
-                path.display()
-            ))
-        })?;
-    if bytes.len() as u64 > MAX_PROCESSOR_CONFIG_BYTES {
-        candle::bail!(
-            "processor config {} grew beyond {MAX_PROCESSOR_CONFIG_BYTES} bytes while reading",
-            path.display()
-        )
-    }
+    let bytes = read_bounded_bytes(path, "processor config", MAX_PROCESSOR_CONFIG_BYTES)?;
     String::from_utf8(bytes).map_err(|error| {
         candle::Error::Msg(format!(
             "processor config {} is not UTF-8: {error}",
             path.display()
         ))
     })
+}
+
+fn load_tokenizer(path: &Path) -> Result<Tokenizer> {
+    let bytes = read_bounded_bytes(path, "tokenizer", MAX_TOKENIZER_BYTES)?;
+    Tokenizer::from_bytes(&bytes).map_err(|error| {
+        candle::Error::Msg(format!("cannot load tokenizer {}: {error}", path.display()))
+    })
+}
+
+fn read_bounded_bytes(path: &Path, label: &str, max_bytes: u64) -> Result<Vec<u8>> {
+    let file = File::open(path).map_err(|error| {
+        candle::Error::Msg(format!("cannot open {label} {}: {error}", path.display()))
+    })?;
+    let declared = file
+        .metadata()
+        .map_err(|error| {
+            candle::Error::Msg(format!(
+                "cannot read {label} metadata {}: {error}",
+                path.display()
+            ))
+        })?
+        .len();
+    if declared == 0 || declared > max_bytes {
+        candle::bail!(
+            "{label} {} is {declared} bytes, outside 1..={max_bytes}",
+            path.display()
+        )
+    }
+    let capacity = usize::try_from(declared)
+        .map_err(|_| candle::Error::Msg(format!("{label} length does not fit usize")))?;
+    let mut bytes = Vec::new();
+    bytes
+        .try_reserve_exact(capacity)
+        .map_err(|_| candle::Error::Msg(format!("{label} allocation failed")))?;
+    bytes.resize(capacity, 0);
+    let mut file = file;
+    file.read_exact(&mut bytes).map_err(|error| {
+        candle::Error::Msg(format!("cannot read {label} {}: {error}", path.display()))
+    })?;
+    let mut trailing = [0u8; 1];
+    if file.read(&mut trailing).map_err(|error| {
+        candle::Error::Msg(format!(
+            "cannot finish reading {label} {}: {error}",
+            path.display()
+        ))
+    })? != 0
+    {
+        candle::bail!("{label} {} changed while it was read", path.display())
+    }
+    Ok(bytes)
 }
 
 #[cfg(test)]
@@ -421,6 +428,63 @@ mod tests {
             .err()
             .expect("invalid Q8 dtype must fail");
         assert!(error.to_string().contains("requires F32 activations"));
+    }
+
+    #[test]
+    fn malformed_metadata_fails_before_the_text_model_is_opened() {
+        let device = Device::Cpu;
+        let loader = repository_fixture("lfm2_vl_loader_tiny");
+        let tokenizer = loader.join("tokenizer.json");
+        let non_json = loader.join("text.gguf");
+        let missing_text = loader.join("missing-text.gguf");
+        let missing_mmproj = loader.join("missing-mmproj.gguf");
+
+        let bad_tokenizer = load_lfm2_vl_hybrid(Lfm2VlHybridLoadOptions {
+            text_gguf: &missing_text,
+            mmproj: Lfm2VlMmprojSource::GgufFile(&missing_mmproj),
+            tokenizer: &non_json,
+            processor_config: None,
+            mmproj_execution: Lfm2VlMmprojExecution::Dense,
+            vision_dtype: DType::F32,
+            vision_device: &device,
+            text_device: &device,
+        })
+        .err()
+        .expect("malformed tokenizer must fail");
+        assert!(bad_tokenizer.to_string().contains("cannot load tokenizer"));
+        assert!(!bad_tokenizer.to_string().contains("text GGUF"));
+
+        let bad_processor = load_lfm2_vl_hybrid(Lfm2VlHybridLoadOptions {
+            text_gguf: &missing_text,
+            mmproj: Lfm2VlMmprojSource::GgufFile(&missing_mmproj),
+            tokenizer: &tokenizer,
+            processor_config: Some(&non_json),
+            mmproj_execution: Lfm2VlMmprojExecution::Dense,
+            vision_dtype: DType::F32,
+            vision_device: &device,
+            text_device: &device,
+        })
+        .err()
+        .expect("malformed processor config must fail");
+        assert!(bad_processor.to_string().contains("processor config"));
+        assert!(!bad_processor.to_string().contains("text GGUF"));
+    }
+
+    #[test]
+    fn metadata_reader_accepts_the_exact_bound_and_rejects_one_byte_over() -> Result<()> {
+        let tokenizer = repository_fixture("lfm2_vl_loader_tiny/tokenizer.json");
+        let bytes = std::fs::metadata(&tokenizer)
+            .map_err(|error| candle::Error::Msg(error.to_string()))?
+            .len();
+        assert_eq!(
+            read_bounded_bytes(&tokenizer, "tokenizer", bytes)?.len() as u64,
+            bytes
+        );
+        let error = read_bounded_bytes(&tokenizer, "tokenizer", bytes - 1)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("outside 1..="));
+        Ok(())
     }
 
     #[test]

@@ -105,7 +105,7 @@
       ]
     },
     "workflow__hybrid_consumer_loading": {
-      "description": "Public local-only LFM2-VL hybrid assembly, requested MMProj execution policy, exact consumed-file inventory, thin example adaptation, and deterministic split/direct loader fixtures.",
+      "description": "Public local-only LFM2-VL hybrid assembly, bounded fail-fast tokenizer/processor preflight before model payloads, requested MMProj execution policy, exact consumed-file inventory, thin example adaptation, and deterministic split/direct loader fixtures.",
       "status": "active",
       "paths": [
         "candle-vlm/Cargo.toml",
@@ -399,10 +399,11 @@
       ]
     },
     "feature__sdxl_diffusion_primitives": {
-      "description": "Generic SDXL framework boundaries: three-component LoRA mutation with a feature-gated downstream rollback-test seam, opt-in pooled-text/time-ID addition embeddings with pinned lower-precision cast order, retained-VarBuilder construction, and exact additional-residual admission.",
+      "description": "Generic SDXL framework boundaries: three-component LoRA mutation with a feature-gated downstream rollback-test seam, controlled unsupported flash-attention errors, opt-in pooled-text/time-ID addition embeddings with pinned lower-precision cast order, retained-VarBuilder construction, and exact additional-residual admission.",
       "status": "active",
       "paths": [
         "candle-transformers/Cargo.toml",
+        "candle-transformers/src/models/stable_diffusion/attention.rs",
         "candle-transformers/src/models/stable_diffusion/embeddings.rs",
         "candle-transformers/src/models/stable_diffusion/lora.rs",
         "candle-transformers/src/models/stable_diffusion/mutable.rs",

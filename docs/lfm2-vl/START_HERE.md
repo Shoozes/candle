@@ -41,10 +41,14 @@ the same generic three-component SDXL LoRA transaction. EdgeSymbio's current
 proof-owner tooling checkpoint. SnapFlash Round 6 is published at runtime
 implementation `d66c1c35158aca7b37e6e1d82e527334b209d93a`; its final proof-record
 `main` head is `b83db70ba4027535e4e55f6509e6011feeead850`. Candle Round 7 is published
-at `95ac9ff815fbac4f252b4ef6780b5e4a7843f328`. The active gate is now INT-5's
-tiny differential ControlNet fixture; structural residual admission is not
-numerical parity. See `STATUS.md` and `TODO.md` rather than reconstructing the
-handoff from completed history.
+at `95ac9ff815fbac4f252b4ef6780b5e4a7843f328`. INT-5C/D and REL-8 are complete;
+SnapFlash later published queued inpainting at current `main`
+`aa7f0a5059d9a03838f3229671b68930156d8cb8`. Current Candle `main` is
+`54f81475` after documentation-only closeout. The active local closeout covers
+two bounded error paths: tokenizer/processor metadata must fail before either
+large model payload is opened, and unsupported stable-diffusion flash attention
+must return an error rather than panic. See `STATUS.md` and `TODO.md` rather
+than reconstructing the handoff from completed history.
 The public LFM loader returns exact consumed paths; application hashing,
 retained handles, resource leases, and proof records remain outside Candle.
 Native Windows is the product and release-proof platform; WSL2/Linux is a
@@ -177,4 +181,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-13T02:35:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=recorded published Candle Round 7 and advanced the entry point to INT-5
+AI-edited: 2026-08-13T13:36:16-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-hardening | change=replaced the completed INT-5 handoff with the current bounded-error closeout

@@ -18,8 +18,10 @@
   `ba1e8acc142c4683995e4cdbc8b1d933c81e96c6`.
 - Candle INT-5B.1 lower-precision cast-order revision:
   `aed7f062bbfb825675efaf21c98029983312d336`.
-- Candle REL-8 consumer-test seam revision and current published `main`:
+- Candle REL-8 consumer-test seam revision:
   `1660f9fca8d6c8eb70937791e796203527f7be26`.
+- Current published Candle `main` before this worktree change:
+  `54f8147513d6aff9659924558c5f000116dbeaf4`.
 - SnapFlash-Server Round 4 LoRA consumer revision:
   `6e64320fe26e7c3be91262bc0dac99ce53f4c628`.
 - SnapFlash-Server Round 6 bounded-runtime implementation revision:
@@ -27,7 +29,7 @@
 - SnapFlash-Server INT-5C/D faithful ControlNet implementation revision:
   `b90f7c6bb76f1d73c70cd69e483fdfb1278de4ca`.
 - Current published SnapFlash-Server `main`:
-  `a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95`.
+  `aa7f0a5059d9a03838f3229671b68930156d8cb8`.
 - EdgeSymbio Round 5 LoRA consumer revision:
   `633f774a3690df5a8a35b6cac000df4b390316d5`.
 - Current EdgeSymbio `main` after bounded proof-owner hardening:
@@ -41,9 +43,9 @@
   `ff885586f6d44a3d9b9ac1724032cdf5f0155384`. Do not move or reuse it for the
   coordinated runtime.
 - Current LFM2-VL overlay: 150 paths, exactly 15 fork-origin modifications and
-  135 mod-owned additions. The SnapFlash-derived overlay is 12
-  paths (5 fork-origin modifications and 7 additions); the repository-wide
-  union is 160 paths across both overlays with 6 registered shared paths.
+  135 mod-owned additions. The SnapFlash-derived overlay is 13
+  paths (6 fork-origin modifications and 7 additions); the repository-wide
+  union is 161 paths across both overlays with 6 registered shared paths.
 
 ## Worktree Boundary
 
@@ -66,11 +68,14 @@
   installed Canny/Depth CUDA F16 proof. REL-8 is complete and published:
   Candle exposes its deterministic later-component LoRA write fault only to
   opted-in consumer tests, and SnapFlash proves rollback without duplicating
-  transaction logic.
+  transaction logic. SnapFlash's subsequent queued-inpainting follow-on is
+  also published and remains application-owned.
 - The reusable hybrid constructor now lives at
   `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid`. It accepts explicit local text,
   tokenizer, processor, MMProj, dtype, device, and execution-policy inputs and
   returns the paired model, processor, prompt, and exact consumed-file list.
+  The current worktree hardens its fail-fast boundary by validating bounded
+  tokenizer and processor bytes before opening either model payload.
 - The example is a thin CLI/reporting adapter. Candle performs no discovery,
   download, hidden fallback, retained-handle admission, hashing, resource
   leasing, or product-proof publication.
@@ -105,6 +110,34 @@
   retained revisions, and runtime admission.
 
 ## Last Green Verification
+
+### Public hybrid metadata preflight worktree gate
+
+- `cargo test --locked --offline -j 2 -p candle-vlm lfm2_vl::loading
+  --lib`: passed 8/8 focused tests after the final exact-size reader change.
+- The regressions prove malformed tokenizer and processor inputs win over
+  deliberately missing model paths, exact byte ceilings are accepted, and one
+  byte over is rejected. Existing split dense, direct dense GGUF, and direct
+  Q8_0 GGUF construction remains green.
+- `cargo test --locked --offline -j 2 -p candle-vlm`: passed 37/37 library
+  tests and doc tests. `cargo test --locked --offline -j 2 -p
+  candle-examples --example lfm2-vl`: passed 32/32.
+- The affected core/NN/transformer/VLM/example check passed. Warnings-denied
+  Clippy passed for `candle-vlm --all-targets` and the public example.
+- `cargo test --locked --offline -j 2 --workspace --exclude candle-datasets
+  --exclude candle-pyo3`: passed every selected native Windows unit,
+  integration, and doc-test lane. The two exclusions preserve the existing
+  documented network-backed dataset and owner-Python boundaries.
+- Both overlay manifests passed at 150/15/135 and 13/6/7; their union passed at
+  161 paths, two overlays, and six shared paths. The 24-group summary bank,
+  module-layout verifier, formatting, and WSL-owned diff check passed.
+- No model, CUDA, checkpoint, network, Python oracle, llama.cpp workload,
+  hosted runner, secret inspection, commit, or publication was used.
+- The companion unsupported-feature regression
+  `stable_diffusion::attention::tests::flash_attention_without_feature_returns_an_error`
+  passed. The complete transformer crate passed 89/89 library tests plus its
+  integration/doc lanes, strict transformer Clippy passed, and the cached
+  workspace suite was replayed green after the shared-source edit.
 
 ### REL-8 downstream rollback-test seam publication
 
@@ -357,20 +390,31 @@
 - REL-8 has no remaining blocker. Both repositories are published at the exact
   revisions above, their worktrees are clean, and production builds expose no
   injected-failure method.
+- The bounded hybrid metadata implementation has no known source or local
+  verification blocker. This release is explicitly authorized for a scoped
+  commit and guarded direct-main publication through `.tools/gitpush.ps1`.
 
 ## Active Change Set
 
-- No source file is under active Candle implementation. REL-8's framework and
-  downstream application changes are published; no application source was
-  copied into Candle.
+- `candle-vlm/src/lfm2_vl/loading.rs` owns the bounded metadata reader, pre-model
+  load ordering, and focused regressions.
+- `candle-transformers/src/models/stable_diffusion/attention.rs` replaces the
+  feature-disabled panic stub with a controlled error and focused regression;
+  `scripts/snapflash/verify-mod-manifest.sh` registers that fork-owned path.
+- `candle-vlm/README.md`, `docs/lfm2-vl/{START_HERE,STATUS,TODO,HISTORY}.md`,
+  `docs/FORK_OVERLAYS.md`, `docs/snapflash/MOD_MANIFEST.md`, and
+  `summary_bank.json` reconcile the public contract and current repository
+  state without copying application source into Candle.
 - Models, caches, downloads, generated proof logs, Cargo output, and
   `.tools/.secrets/` remain ignored or external.
 
 ## Exact Next Task
 
-No finite Candle-owned task is active. The next ready application task is
-SnapFlash queued inpainting; begin it in that repository without broadening
-Candle unless a reusable framework gap is first demonstrated.
+No finite Candle-owned implementation task remains. This release is complete
+when the two proven error-boundary fixes are committed on `main`, the guarded
+helper confirms remote `main` equals local `HEAD`, and the active change set is
+cleared. Afterward, add no task unless a concrete reusable framework gap
+supplies its owner, files, completion condition, and verification command.
 
 ---
-AI-edited: 2026-08-13T12:43:56-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=recorded both published revisions, downstream proof, and the next application-owned task
+AI-edited: 2026-08-13T13:36:16-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-hardening | change=recorded current heads, both completed local proofs, and publication-only next step

@@ -1729,8 +1729,45 @@ deferred to TODO C3; no network or toolchain install was substituted.
   passes 7/7, its no-model aggregate passes 414/1, and both `main` branches are
   clean and remotely equal. Those conditions are met without model, CUDA, live
   inference, hosted CI, secret inspection, or duplicate transaction code.
-- Follow-up: SnapFlash queued inpainting is now the next ready application
-  slice; no new Candle primitive is currently required.
+- Follow-up: SnapFlash queued inpainting was subsequently completed and
+  published at `aa7f0a5059d9a03838f3229671b68930156d8cb8`; no new Candle primitive was
+  required.
+
+## 2026-08-13 — Public hybrid metadata preflight hardened
+
+- What: The public hybrid loader now reads the tokenizer through a 512 MiB
+  ceiling and optional processor config through a 16 MiB ceiling, then parses
+  both before opening the text GGUF or MMProj payload.
+- Why: The previous order could load a large quantized text model before
+  reporting malformed or oversized local metadata.
+- How: One exact-size bounded reader owns open, size validation, fallible
+  allocation, complete-read, and concurrent-growth checks. The tokenizer now
+  uses `Tokenizer::from_bytes`, eliminating the separate unbounded path read.
+- Done when: malformed tokenizer and processor fixtures fail before deliberately
+  missing model paths, exact limits pass, one-byte-over limits fail, and the
+  existing split, direct dense, and direct Q8 construction fixtures remain
+  green. The focused loader suite passes 8/8, the full `candle-vlm` suite passes
+  37/37, the public example passes 32/32, affected checks and warnings-denied
+  Clippy pass, and the cached workspace suite excluding only the documented
+  network/Python lanes passes without failures. Both overlay manifests, their
+  union, the 24-group summary bank, module layout, formatting, and diff checks
+  are green. No model, CUDA, network, Python oracle, or llama.cpp workload ran.
+
+## 2026-08-13 — Unsupported stable-diffusion flash attention fails safely
+
+- What: A stable-diffusion build without the `flash-attn` feature now returns a
+  controlled error if a caller requests that path instead of reaching
+  `unimplemented!()` during forward execution.
+- Why: The public configuration accepted the runtime choice, so an unsupported
+  build/runtime pairing could panic on caller-controlled policy.
+- Where: `candle-transformers/src/models/stable_diffusion/attention.rs`, owned
+  by the SnapFlash-derived Candle overlay for this focused safety change.
+- How: The feature-disabled helper now uses `candle::bail!`, mirroring the
+  already-proven LFM2 behavior, with one no-feature regression.
+- Done when: the focused regression passes, the complete transformer crate
+  passes 89/89 library tests plus integration/doc lanes, strict transformer
+  Clippy passes, and the selected native workspace suite remains green. Those
+  conditions are met; no flash-attention kernel, CUDA, or model was loaded.
 
 ---
-AI-edited: 2026-08-13T12:43:56-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=archived the published framework seam and exact downstream consumer proof
+AI-edited: 2026-08-13T13:36:16-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-hardening | change=archived bounded loader admission and fail-safe unsupported flash attention

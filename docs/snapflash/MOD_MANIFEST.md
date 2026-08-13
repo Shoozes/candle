@@ -21,7 +21,10 @@ Its non-default consumer test seam can now exercise that same rollback path at
 a named later component without adding the hook to normal builds.
 SnapFlash pins the published Candle seam at
 `1660f9fca8d6c8eb70937791e796203527f7be26`; its wrapper-level proof is
-published at `a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95`.
+published at `a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95`. The application subsequently
+published queued inpainting at current `main`
+`aa7f0a5059d9a03838f3229671b68930156d8cb8`; that application-owned follow-on
+does not change this framework overlay's proof boundary.
 
 Applications still own filename and directory policy, source licensing,
 adapter catalogs, Kohya/model-family name conversion, resource admission,
@@ -34,6 +37,7 @@ production model artifact is part of this overlay.
 | --- | --- |
 | `CHANGELOG.md` | Record the public LoRA, residual, and SDXL `text_time` conditioning contracts. |
 | `candle-transformers/Cargo.toml` | Keep the consumer fault hook absent from normal builds and available only through the opt-in `test-utils` feature. |
+| `candle-transformers/src/models/stable_diffusion/attention.rs` | Return a controlled error when flash attention is requested without its build feature. |
 | `candle-transformers/src/models/stable_diffusion/embeddings.rs` | Implement the reusable SDXL `text_time` addition embedding and checked dimension contract. |
 | `candle-transformers/src/models/stable_diffusion/mod.rs` | Export the generic LoRA parser and mutable transaction modules. |
 | `candle-transformers/src/models/stable_diffusion/unet_2d.rs` | Fail closed on malformed added-conditioning and residual inputs while preserving legacy wrappers. |
@@ -91,6 +95,8 @@ production model artifact is part of this overlay.
   weightless base and addition timestep projections run in F32, then cast only
   at the learned embedding boundary, matching the pinned Diffusers order for
   F32, F16, and BF16 model tensors.
+- Requesting stable-diffusion flash attention from a build without the
+  `flash-attn` feature returns a controlled error rather than panicking.
 
 ## Behavior provenance
 
@@ -157,4 +163,4 @@ Models, adapters, generated images, local caches, `.tools/`, secrets, runtime
 logs, and application artifacts are not part of this overlay.
 
 ---
-AI-edited: 2026-08-13T12:43:56-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=recorded the published framework and downstream consumer revisions
+AI-edited: 2026-08-13T13:36:16-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-hardening | change=registered controlled unsupported flash attention and distinguished downstream heads

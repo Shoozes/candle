@@ -74,7 +74,9 @@ fn flash_attn(
 
 #[cfg(not(feature = "flash-attn"))]
 fn flash_attn(_: &Tensor, _: &Tensor, _: &Tensor, _: f32, _: bool) -> Result<Tensor> {
-    unimplemented!("compile with '--features flash-attn'")
+    candle::bail!(
+        "stable-diffusion flash attention was requested, but candle-transformers was built without the 'flash-attn' feature"
+    )
 }
 
 #[derive(Debug)]
@@ -557,5 +559,20 @@ impl Module for AttentionBlock {
             .t()?
             .reshape((batch, channel, height, width))?;
         (xs + residual)? / self.config.rescale_output_factor
+    }
+}
+
+#[cfg(all(test, not(feature = "flash-attn")))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn flash_attention_without_feature_returns_an_error() -> Result<()> {
+        let tensor = Tensor::zeros((1, 1, 1, 1), DType::F32, &candle::Device::Cpu)?;
+        let error = flash_attn(&tensor, &tensor, &tensor, 1.0, false).unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("built without the 'flash-attn' feature"));
+        Ok(())
     }
 }

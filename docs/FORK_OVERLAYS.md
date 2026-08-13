@@ -10,7 +10,7 @@ integration plan.
 | Overlay | Manifest | Current boundary |
 | --- | --- | --- |
 | LFM2-VL/MMProj | `docs/lfm2-vl/MOD_MANIFEST.md` | Proven model, loader, processor, fixture, and verification work |
-| SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic three-component SDXL LoRA transaction plus exact residual and opt-in `text_time` UNet conditioning |
+| SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic three-component SDXL LoRA transaction, controlled unsupported flash-attention failure, and exact residual/opt-in `text_time` UNet conditioning |
 
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each
@@ -53,9 +53,12 @@ fail-closed official-style ControlNet admission is published at
 `9bc58ccaef77e7ceac0ab4e75a1a4c93acc1cdff`.
 Its faithful INT-5C/D ControlNet graph, pinned differential fixture, and
 installed Canny/Depth proof are published at
-`b90f7c6bb76f1d73c70cd69e483fdfb1278de4ca`; current SnapFlash `main` is
-`a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95` after later runtime hardening and
-the REL-8 downstream rollback proof.
+`b90f7c6bb76f1d73c70cd69e483fdfb1278de4ca`. Its REL-8 rollback proof remains
+published at `a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95`; current SnapFlash `main` is
+`aa7f0a5059d9a03838f3229671b68930156d8cb8` after the additive queued-inpainting
+follow-on. Current Candle `main` is `54f81475` after documentation-only
+closeout; the table keeps each exact lineage proof revision rather than
+relabeling later heads as the original acceptance point.
 
 | Order | Repository | Focused result | State / release condition |
 | --- | --- | --- | --- |
@@ -116,4 +119,4 @@ product policy remain outside the framework API.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-08-13T12:43:56-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=rel-8-downstream-rollback | change=recorded the published framework seam and exact downstream consumer proof
+AI-edited: 2026-08-13T13:36:16-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-hardening | change=distinguished current heads and registered controlled unsupported flash attention

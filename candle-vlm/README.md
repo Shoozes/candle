@@ -65,6 +65,14 @@ remain responsible for hashing, retained handles, resource admission, and
 proof/report policy. The loader performs no discovery, download, or text-only
 fallback.
 
+Small metadata is validated before either model payload is opened. The
+tokenizer is read through a 512 MiB ceiling and the optional processor config
+through a 16 MiB ceiling; empty, oversized, malformed, or size-changing files
+return controlled errors. These ceilings bound local metadata admission, not
+model weights. Applications still own retained-handle and identity policy. The
+returned inventory remains the authority for the exact files an application
+must retain and identify.
+
 ## Example
 
 Run the detailed example from the repository root:
@@ -78,4 +86,4 @@ for checkpoint preparation, native and GGUF/MMProj forms, device placement,
 bounded inference, JSON evidence, and local verification commands.
 
 ---
-AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=hybrid-loader-promotion | change=documented the public local-only hybrid loader and application ownership boundary
+AI-edited: 2026-08-13T13:36:16-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=hybrid-loader-hardening | change=documented bounded fail-fast tokenizer and processor admission
