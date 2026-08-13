@@ -56,9 +56,10 @@
 
 - Product phase: coordinated three-repository integration. Rounds 1 through 7
   are published. INT-5A fail-closed admission is published in SnapFlash and
-  Candle INT-5B's generic SDXL `text_time` primitive is published. INT-5C is
-  the active application integration boundary. No numerical ControlNet parity
-  claim has been made.
+  Candle INT-5B's generic SDXL `text_time` primitive is published. The narrow
+  INT-5B.1 lower-precision cast-order follow-up is green locally and awaiting
+  publication before INT-5C repins. No numerical ControlNet parity claim has
+  been made.
 - The reusable hybrid constructor now lives at
   `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid`. It accepts explicit local text,
   tokenizer, processor, MMProj, dtype, device, and execution-policy inputs and
@@ -90,11 +91,40 @@
   `add_embedding.linear_{1,2}` namespace, and adds its projection to the base
   timestep embedding. Existing constructors and forward methods remain
   compatibility wrappers; a public VarBuilder route allows retained-buffer
-  opt-in without copying the private config. The first boundary is F32-only
-  until cast-order parity. SnapFlash still owns CLIP2 pooling, time-ID policy,
-  the faithful attention graph, retained revisions, and runtime admission.
+  opt-in without copying the private config. The base and addition sinusoidal
+  projections now stay F32 and cast only before their learned MLPs, matching
+  the pinned reference for F32, F16, and BF16 model tensors. SnapFlash still
+  owns CLIP2 pooling, time-ID policy, the faithful attention graph, retained
+  revisions, and runtime admission.
 
 ## Last Green Verification
+
+### INT-5B.1 lower-precision cast-order candidate
+
+- `cargo fmt --all -- --check`: passed on the source candidate.
+- `cargo test --offline --locked -j 2 -p candle-transformers
+  stable_diffusion --lib`: passed 29/29 focused tests. The complete tiny F16
+  configured UNet executes on native Windows CPU; the F16 projection matches
+  the F32-before-cast reference and differs from projecting in F16; F16 and
+  BF16 addition inputs reach the learned MLP boundary in model dtype.
+- `cargo test --offline --locked -j 2 -p candle-transformers`: passed 88/88
+  library, 5/5 generation, and 8/8 NMS tests; the unrelated Smol doc test
+  remains ignored.
+- `cargo check --offline --locked -j 2 -p candle-core -p candle-nn -p
+  candle-transformers -p candle-vlm`: passed.
+- `cargo clippy --offline --locked -j 2 -p candle-transformers --all-targets
+  -- -D warnings`: passed.
+- `cargo test --offline --locked -j 2 --workspace --exclude
+  candle-datasets --exclude candle-pyo3`: passed across the remaining cached
+  native Windows workspace. The first complete-workspace attempt failed only
+  because no system Python is currently registered; the bundled Codex Python
+  is 3.12 while `candle-pyo3` requires the `abi3-py313` minimum. No package or
+  network action was taken to replace the missing owner environment.
+- `PYO3_NO_PYTHON=1 cargo clippy --offline --locked -j 2 --workspace
+  --all-targets -- -D warnings`: passed across the complete cached workspace.
+- Actual BF16 matrix execution is not claimed because the Windows CPU backend
+  reports that dtype unsupported for matmul. No CUDA, model, checkpoint,
+  Python oracle, network, or llama.cpp workload ran.
 
 ### INT-5B SDXL `text_time` publication gate
 
@@ -300,18 +330,18 @@
 
 ## Active Change Set
 
-- No source file is under active Candle implementation. INT-5B is published;
-  the active cross-repository work belongs to SnapFlash INT-5C.
+- Active Candle files are the two Stable Diffusion source files and their
+  focused state/provenance documents for the INT-5B.1 publication checkpoint.
 - Models, caches, downloads, generated proof logs, Cargo output, and
   `.tools/.secrets/` remain ignored or external.
 
 ## Exact Next Task
 
-Repin SnapFlash to Candle
-`ba1e8acc142c4683995e4cdbc8b1d933c81e96c6` and implement INT-5C's faithful
-SDXL ControlNet attention graph, CLIP2 pooled projection, and time-ID policy.
-Do not generate the numerical fixture, load production weights, run CUDA, or
+Publish the reviewed INT-5B.1 Candle cast-order checkpoint, repin SnapFlash to
+that exact implementation revision, and implement INT-5C's faithful SDXL
+ControlNet attention graph, CLIP2 pooled projection, and time-ID policy. Do
+not generate the numerical fixture, load production weights, run CUDA, or
 promote inpainting before INT-5C is green.
 
 ---
-AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=recorded the published text-time checkpoint and advanced the exact next task to INT-5C
+AI-edited: 2026-08-13T04:34:15-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=recorded the green lower-precision candidate and its exact publication handoff

@@ -63,6 +63,7 @@ fail-closed official-style ControlNet admission is published at
 | 7 | Candle | Evaluate and harden the existing ControlNet residual hook | Complete and published at `95ac9ff815fbac4f252b4ef6780b5e4a7843f328`; model-level numerical parity remains the separate INT-5 fixture gate |
 | INT-5A | SnapFlash-Server | Reject unsupported official-style attention/`text_time` inventories before payload load or mutation | Complete and published at `9bc58ccaef77e7ceac0ab4e75a1a4c93acc1cdff` |
 | INT-5B | Candle | Add opt-in generic SDXL pooled-text/time-ID addition conditioning | Complete and published at `ba1e8acc142c4683995e4cdbc8b1d933c81e96c6` |
+| INT-5B.1 | Candle | Match Diffusers' F32 timestep projection and lower-precision learned-MLP cast order | Complete locally; publication is required before SnapFlash INT-5C repins |
 
 Detailed current completion conditions live only in the owning repository's
 active TODO. This table preserves order and state without duplicating those

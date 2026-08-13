@@ -11,8 +11,9 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 Create a pinned tiny deterministic ControlNet fixture that proves the ordered
 nine SDXL down residuals, the mid residual, text-conditioning influence, and
 the final Candle UNet result against the pinned reference implementation.
-Repin SnapFlash to the published Candle INT-5B checkpoint and consume its
-public residual and `text_time` hooks without copying framework tensor checks.
+Repin SnapFlash to the published Candle INT-5B.1 lower-precision checkpoint
+and consume its public residual and `text_time` hooks without copying
+framework tensor checks.
 
 ### Why
 
@@ -23,9 +24,9 @@ alone cannot justify a conditioned-generation or inpainting claim.
 
 ### When
 
-INT-5A is published and INT-5B is published at
-`ba1e8acc142c4683995e4cdbc8b1d933c81e96c6`. Start INT-5C only after
-SnapFlash pins that checkpoint. Finish INT-5C/D before promoting
+INT-5A and INT-5B are published. The INT-5B.1 cast-order implementation is
+green locally and must be published before SnapFlash repins. Start INT-5C only
+after that exact revision is available. Finish INT-5C/D before promoting
 ControlNet-backed inpainting, enabling unattended real-weight ControlNet use,
 or claiming application-level numerical parity.
 
@@ -48,7 +49,7 @@ Complete the remaining tasks in order. INT-5A/B are archived in `HISTORY.md`.
      pooled/penultimate CLIP outputs and time IDs.
    - Why: `_context` is presently unused and the installed attention/addition
      weights are ignored.
-   - When: only after SnapFlash pins the Candle INT-5B checkpoint.
+   - When: only after SnapFlash pins the Candle INT-5B.1 checkpoint.
    - Where: SnapFlash ControlNet, prompt conditioning, loader, sampling, and
      deterministic generated-weight tests.
    - How: reuse Candle's public Stable Diffusion blocks, keep the exact
@@ -81,9 +82,10 @@ Complete the remaining tasks in order. INT-5A/B are archived in `HISTORY.md`.
   bundle, and manifest do not exist yet.
 - The installed official Canny/Depth layouts require cross-attention and SDXL
   `text_time` addition embeddings. Candle now owns the generic addition
-  primitive, but SnapFlash still lacks the faithful cross-attention graph,
-  CLIP2 pooled projection, and time-ID policy. INT-5A continues to fail closed
-  until INT-5C replaces that incomplete path.
+  primitive plus the pinned lower-precision cast order, but SnapFlash still
+  lacks the faithful cross-attention graph, CLIP2 pooled projection, and
+  time-ID policy. INT-5A continues to fail closed until INT-5C replaces that
+  incomplete path.
 - Production weights, CUDA, and live inpainting are intentionally outside this
   first deterministic slice. They are later evidence gates, not permission to
   broaden INT-5.
@@ -130,4 +132,4 @@ INT-5 requirements and must not be introduced without a scoped proposal and
 acceptance contract.
 
 ---
-AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=retired completed A/B prerequisites and advanced the active backlog to faithful SnapFlash graph integration
+AI-edited: 2026-08-13T04:34:15-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=made publication of the lower-precision checkpoint the exact INT-5C prerequisite

@@ -77,6 +77,15 @@ impl SdxlTextTimeAdditionEmbedding {
     }
 
     pub fn forward(&self, pooled_text_embeds: &Tensor, time_ids: &Tensor) -> Result<Tensor> {
+        let add_embeds = self.prepare_add_embedding_input(pooled_text_embeds, time_ids)?;
+        self.add_embedding.forward(&add_embeds)
+    }
+
+    pub(super) fn prepare_add_embedding_input(
+        &self,
+        pooled_text_embeds: &Tensor,
+        time_ids: &Tensor,
+    ) -> Result<Tensor> {
         if pooled_text_embeds.rank() != 2 {
             candle::bail!(
                 "SDXL pooled_text_embeds must have rank 2, found rank {}",
@@ -123,15 +132,26 @@ impl SdxlTextTimeAdditionEmbedding {
             )
         }
 
-        let time_embeds = self.time_proj.forward(&time_ids.flatten_all()?)?;
+        let model_dtype = pooled_text_embeds.dtype();
+        match model_dtype {
+            candle::DType::F32 | candle::DType::F16 | candle::DType::BF16 => {}
+            dtype => candle::bail!(
+                "SDXL text_time conditioning requires F32, F16, or BF16 tensors, found {dtype:?}"
+            ),
+        }
+
+        // Diffusers computes the weightless sinusoidal projection in F32, then
+        // casts the combined input to the model dtype before the learned MLP.
+        let time_ids = time_ids.flatten_all()?.to_dtype(candle::DType::F32)?;
+        let time_embeds = self.time_proj.forward(&time_ids)?;
         let time_embed_width = self
             .config
             .addition_time_embed_dim
             .checked_mul(self.config.time_id_count)
             .ok_or_else(|| candle::Error::Msg("SDXL time embedding width overflow".into()))?;
         let time_embeds = time_embeds.reshape((batch_size, time_embed_width))?;
-        let add_embeds = Tensor::cat(&[pooled_text_embeds, &time_embeds], D::Minus1)?;
-        self.add_embedding.forward(&add_embeds)
+        let pooled_text_embeds = pooled_text_embeds.to_dtype(candle::DType::F32)?;
+        Tensor::cat(&[&pooled_text_embeds, &time_embeds], D::Minus1)?.to_dtype(model_dtype)
     }
 }
 

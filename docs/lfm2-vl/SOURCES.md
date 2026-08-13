@@ -161,12 +161,12 @@ All are locked by the Candle baseline commit `31f35b147389700ed2a178ee66a91c3cc2
 
 | Pinned path | Git blob | Purpose |
 | --- | --- | --- |
-| `src/diffusers/models/unets/unet_2d_condition.py` | `af44f0e9d2cb003ba01bbe8f11a7988c30573359` | `text_time` selection, flattened time-ID projection, pooled-text concatenation, and addition to the base timestep embedding |
+| `src/diffusers/models/unets/unet_2d_condition.py` | `af44f0e9d2cb003ba01bbe8f11a7988c30573359` | `text_time` selection, flattened F32 time-ID projection, pooled-text concatenation, cast to the model embedding dtype before the learned MLP, and addition to the base timestep embedding |
 | `src/diffusers/models/embeddings.py` | `888ae58100ee8b92f111de7ff6ac72a2d81d97e8` | `Timesteps` and two-linear SiLU `TimestepEmbedding` behavior |
 
 Only these bounded source blobs and the license header were read. No model,
 checkpoint, generated tensor, CUDA runtime, or Python package was downloaded
-or executed for INT-5B.
+or executed for INT-5B or its lower-precision cast-order follow-up.
 
 ## Locked Conflicts and Gaps
 
@@ -179,4 +179,4 @@ or executed for INT-5B.
 - The official headers omit `clip.vision.preproc_min_tiles`, `clip.vision.preproc_max_tiles`, and `clip.vision.preproc_image_size`; pinned official `processor_config.json` values and architecture defaults remain authoritative unless an explicit processor document overrides them.
 
 ---
-AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=locked the bounded Diffusers SDXL text-time source authority
+AI-edited: 2026-08-13T04:34:15-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=recorded the pinned lower-precision cast-order authority

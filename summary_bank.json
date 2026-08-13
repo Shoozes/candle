@@ -399,7 +399,7 @@
       ]
     },
     "feature__sdxl_diffusion_primitives": {
-      "description": "Generic SDXL framework boundaries: three-component LoRA mutation, opt-in pooled-text/time-ID addition embeddings, retained-VarBuilder construction, and exact additional-residual admission.",
+      "description": "Generic SDXL framework boundaries: three-component LoRA mutation, opt-in pooled-text/time-ID addition embeddings with pinned lower-precision cast order, retained-VarBuilder construction, and exact additional-residual admission.",
       "status": "active",
       "paths": [
         "candle-transformers/src/models/stable_diffusion/embeddings.rs",

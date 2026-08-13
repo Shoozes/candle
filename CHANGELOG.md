@@ -21,6 +21,9 @@ This documents the main changes to the `candle` crate.
   device validation.
 - Hardened Stable Diffusion UNet construction against empty block inventories
   and checked timestep/upscale dimension overflow.
+- Matched Diffusers' lower-precision SDXL timestep cast order by keeping
+  sinusoidal projections in F32 and casting only before learned embedding
+  layers; configured `text_time` UNets now accept F16 and BF16 model tensors.
 
 ## v0.3.0 - 2023-10-01
 

@@ -1187,5 +1187,33 @@ claim official full-UNet numerical parity; INT-5C must supply correct CLIP2
 pooled projection, time-ID policy, attention graph, and retained application
 ownership before the INT-5D differential fixture.
 
+## D-0056: Preserve F32 Timestep Projection Before Lower-Precision SDXL MLPs
+
+Status: Accepted.
+
+Decision:
+For both the base UNet timestep and SDXL `text_time` size/crop IDs, construct
+and evaluate the weightless sinusoidal projection in F32. Cast the projected
+base timestep to the sample dtype immediately before `time_embedding`. For
+`text_time`, concatenate the F32 time projection with pooled text promoted to
+F32, then cast that combined vector to the pooled/model dtype immediately
+before `add_embedding`. Accept F32, F16, and BF16 model tensors; reject other
+dtypes before graph execution.
+
+Why:
+Pinned Diffusers states that `Timesteps` always returns F32 and explicitly
+casts only at each learned embedding boundary. INT-5B's conservative F32-only
+guard prevented SnapFlash's normal CUDA/F16 runtime from consuming the public
+hook. Loading the complete diffusion graph as F32 on CUDA would instead raise
+peak VRAM and repeat application-specific workaround logic.
+
+Consequences:
+F32 behavior is preserved. Native Windows CPU tests execute the complete tiny
+F16 configured UNet and prove that F16 and BF16 addition inputs reach the
+learned MLP in the requested model dtype. Windows CPU cannot execute BF16
+matrix multiplication, so actual BF16 kernel execution remains an explicit
+CUDA/hardware proof rather than an inferred claim. SnapFlash may pin the
+resulting Candle checkpoint for INT-5C without duplicating timestep math.
+
 ---
-AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=accepted opt-in source-compatible SDXL text-time conditioning
+AI-edited: 2026-08-13T04:34:15-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=accepted pinned Diffusers lower-precision timestep cast order

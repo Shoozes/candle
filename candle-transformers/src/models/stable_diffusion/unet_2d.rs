@@ -550,11 +550,11 @@ impl UNet2DConditionModel {
                 candle::bail!("SDXL text_time conditioning is required by this UNet")
             }
             (Some(addition_embedding), Some(text_time)) => {
-                if xs.dtype() != DType::F32 {
-                    candle::bail!(
-                        "SDXL text_time conditioning currently requires F32 tensors, found {:?}",
-                        xs.dtype()
-                    )
+                match xs.dtype() {
+                    DType::F32 | DType::F16 | DType::BF16 => {}
+                    dtype => candle::bail!(
+                        "SDXL text_time conditioning requires F32, F16, or BF16 tensors, found {dtype:?}"
+                    ),
                 }
                 let expected_pooled_width = addition_embedding.config().pooled_text_embed_dim()?;
                 validate_text_time_input(
@@ -587,8 +587,8 @@ impl UNet2DConditionModel {
             xs.clone()
         };
         // 1. time
-        let emb = (Tensor::ones(bsize, xs.dtype(), device)? * timestep)?;
-        let emb = self.time_proj.forward(&emb)?;
+        let emb = (Tensor::ones(bsize, DType::F32, device)? * timestep)?;
+        let emb = self.time_proj.forward(&emb)?.to_dtype(xs.dtype())?;
         let mut emb = self.time_embedding.forward(&emb)?;
         if let Some((addition_embedding, text_time)) = text_time_conditioning {
             let addition =
@@ -843,6 +843,87 @@ mod tests {
     }
 
     #[test]
+    fn sdxl_text_time_embedding_prepares_lower_precision_model_dtypes() -> Result<()> {
+        let device = Device::Cpu;
+        let config = SdxlTextTimeAdditionConfig {
+            addition_time_embed_dim: 2,
+            projection_class_embeddings_input_dim: 6,
+            time_id_count: 2,
+        };
+        for dtype in [DType::F16, DType::BF16] {
+            let embedding = SdxlTextTimeAdditionEmbedding::new(
+                candle_nn::VarBuilder::zeros(dtype, &device),
+                4,
+                true,
+                0.,
+                config,
+            )?;
+            let pooled = Tensor::zeros((1, 2), dtype, &device)?;
+            let time_ids =
+                Tensor::from_slice(&[1024f32, 768.], (1, 2), &device)?.to_dtype(dtype)?;
+            let result = embedding.prepare_add_embedding_input(&pooled, &time_ids)?;
+            assert_eq!(result.dtype(), dtype);
+            assert_eq!(result.dims(), &[1, 6]);
+        }
+
+        let unsupported = Tensor::zeros((1, 2), DType::F64, &device)?;
+        let embedding = SdxlTextTimeAdditionEmbedding::new(
+            candle_nn::VarBuilder::zeros(DType::F64, &device),
+            4,
+            true,
+            0.,
+            config,
+        )?;
+        let error = error_message(embedding.forward(&unsupported, &unsupported));
+        assert!(error.contains("requires F32, F16, or BF16"), "{error}");
+        Ok(())
+    }
+
+    #[test]
+    fn sdxl_text_time_f16_projection_matches_f32_reference_before_cast() -> Result<()> {
+        let device = Device::Cpu;
+        let dtype = DType::F16;
+        let config = SdxlTextTimeAdditionConfig {
+            addition_time_embed_dim: 4,
+            projection_class_embeddings_input_dim: 10,
+            time_id_count: 2,
+        };
+        let embedding = SdxlTextTimeAdditionEmbedding::new(
+            candle_nn::VarBuilder::zeros(dtype, &device),
+            4,
+            true,
+            0.,
+            config,
+        )?;
+        let pooled = Tensor::zeros((1, 2), dtype, &device)?;
+        let time_ids = Tensor::from_slice(&[1024f32, 768.], (1, 2), &device)?.to_dtype(dtype)?;
+        let prepared = embedding.prepare_add_embedding_input(&pooled, &time_ids)?;
+        let actual = prepared.narrow(1, 2, 8)?.to_dtype(DType::F32)?;
+
+        let projection = Timesteps::new(4, true, 0.);
+        let flattened = time_ids.flatten_all()?;
+        let expected = projection
+            .forward(&flattened.to_dtype(DType::F32)?)?
+            .reshape((1, 8))?
+            .to_dtype(dtype)?
+            .to_dtype(DType::F32)?;
+        assert_eq!(
+            actual.flatten_all()?.to_vec1::<f32>()?,
+            expected.flatten_all()?.to_vec1::<f32>()?
+        );
+
+        let lower_precision_first = projection
+            .forward(&flattened)?
+            .reshape((1, 8))?
+            .to_dtype(DType::F32)?;
+        assert_ne!(
+            actual.flatten_all()?.to_vec1::<f32>()?,
+            lower_precision_first.flatten_all()?.to_vec1::<f32>()?
+        );
+        Ok(())
+    }
+
+    #[test]
     fn sdxl_text_time_embedding_rejects_malformed_tensor_contracts() -> Result<()> {
         let device = Device::Cpu;
         let config = SdxlTextTimeAdditionConfig {
@@ -945,9 +1026,36 @@ mod tests {
             tiny_text_time_conditioning(&pooled_f64, &time_ids_f64),
         ));
         assert!(
-            dtype_boundary.contains("currently requires F32"),
+            dtype_boundary.contains("requires F32, F16, or BF16"),
             "{dtype_boundary}"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn configured_text_time_unet_runs_f16_after_f32_projection() -> Result<()> {
+        let device = Device::Cpu;
+        let dtype = DType::F16;
+        let model = UNet2DConditionModel::new_with_added_conditioning(
+            candle_nn::VarBuilder::zeros(dtype, &device),
+            2,
+            2,
+            false,
+            tiny_config(),
+            Some(tiny_text_time_config()),
+        )?;
+        let sample = Tensor::zeros((1, 2, 2, 2), dtype, &device)?;
+        let encoder_hidden_states = Tensor::zeros((1, 1, 4), dtype, &device)?;
+        let pooled = Tensor::zeros((1, 2), dtype, &device)?;
+        let time_ids = Tensor::from_slice(&[1024f32, 768.], (1, 2), &device)?.to_dtype(dtype)?;
+        let result = model.forward_with_conditioning(
+            &sample,
+            1.,
+            &encoder_hidden_states,
+            tiny_text_time_conditioning(&pooled, &time_ids),
+        )?;
+        assert_eq!(result.dtype(), dtype);
+        assert_eq!(result.dims(), sample.dims());
         Ok(())
     }
 

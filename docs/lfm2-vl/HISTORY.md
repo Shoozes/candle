@@ -1658,5 +1658,29 @@ deferred to TODO C3; no network or toolchain install was substituted.
   ControlNet graph was added or run. Those latter graph inputs remain INT-5C;
   numerical differential proof remains INT-5D.
 
+## 2026-08-13 — Candle INT-5B.1 lower-precision timestep cast order
+
+- What: Removed the conservative F32-only SDXL `text_time` boundary while
+  preserving the reference's F32 sinusoidal projection semantics.
+- Why: SnapFlash's product CUDA runtime uses F16. Repinning INT-5C to the
+  prior checkpoint would either fail closed or tempt an application-owned
+  duplicate/F32-UNet workaround with avoidable VRAM risk.
+- How: Base timesteps now project in F32 and cast immediately before the
+  learned base embedding. Addition time IDs project in F32, concatenate with
+  pooled text in F32, and cast only before `add_embedding`. F32, F16, and BF16
+  model tensors are accepted; other dtypes fail before graph execution.
+- Done when: The native Windows CPU gate passes 29 focused tests, the full
+  transformer crate passes 88/88 library plus 5/5 generation and 8/8 NMS,
+  affected crate checks and strict transformer Clippy pass, F16 executes the
+  complete tiny configured UNet, and BF16 reaches the learned MLP boundary in
+  BF16 without claiming an unavailable Windows CPU BF16 matmul kernel. The
+  cached workspace excluding the network-backed dataset and unavailable
+  Python-3.13 binding test crates passes, and complete-workspace strict Clippy
+  passes with PyO3's supported no-interpreter mode. These implementation
+  conditions are met; direct-main publication is the next state transition.
+- Boundary: No CUDA, production checkpoint, Python oracle, network, model
+  process, or llama.cpp workload ran. INT-5C/D remain application integration
+  and differential-parity work.
+
 ---
-AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=archived the published fail-closed admission and Candle text-time checkpoints
+AI-edited: 2026-08-13T04:34:15-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=archived the green lower-precision cast-order implementation

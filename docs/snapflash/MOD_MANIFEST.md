@@ -76,9 +76,10 @@ production model artifact is part of this overlay.
 - Existing `new`, `forward`, and `forward_with_additional_residuals` calls keep
   their signatures and route through the structured API with no `text_time`
   conditioning. A configured `text_time` UNet fails closed when those required
-  inputs are absent; an unconfigured UNet rejects unexpected inputs. INT-5B
-  accepts F32 only because the pinned reference performs the sinusoidal time
-  projection in F32; lower-precision execution remains closed until parity.
+  inputs are absent; an unconfigured UNet rejects unexpected inputs. The
+  weightless base and addition timestep projections run in F32, then cast only
+  at the learned embedding boundary, matching the pinned Diffusers order for
+  F32, F16, and BF16 model tensors.
 
 ## Behavior provenance
 
@@ -130,10 +131,11 @@ Done when all of the following are true:
   residuals fail before addition; `None` and exact zero residuals preserve the
   original UNet result.
 - Official SDXL addition dimensions, malformed rank/batch/width/count/dtype/
-  device, non-F32 rejection, missing/unexpected conditioning, pooled/time
-  influence, combined zero-residual behavior, legacy wrapper equality, empty
-  blocks, and checked size arithmetic pass deterministic CPU tests before any
-  application consumer is updated.
+  device, unsupported-dtype rejection, F16/BF16 cast-boundary behavior,
+  missing/unexpected conditioning, pooled/time influence, combined
+  zero-residual behavior, legacy wrapper equality, empty blocks, and checked
+  size arithmetic pass deterministic CPU tests before any application
+  consumer is updated.
 - Focused transformer tests and strict Clippy, the independent overlay
   verifier, repository-wide overlay union, summary-bank checks, and the full
   local Candle gate pass before direct-main publication.
