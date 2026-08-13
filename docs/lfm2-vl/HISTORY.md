@@ -1594,5 +1594,36 @@ deferred to TODO C3; no network or toolchain install was substituted.
   fast-forward pushes, and clean local/remote equality. No production model,
   CUDA, network install, hosted runner, PR, or secret inspection was used.
 
+## 2026-08-13 — Candle Round 7 exact additional-residual admission
+
+- What: Hardened the existing Stable Diffusion UNet ControlNet hook and
+  published it at `95ac9ff815fbac4f252b4ef6780b5e4a7843f328` after SnapFlash
+  Round 6 supplied its exact runtime and proof-record identities.
+- Why: The hook previously depended on zip/add behavior that could accept the
+  wrong inventory until a late failure, permit broadcasting, or panic after a
+  caller supplied a stale non-SDXL residual count. Candle needed a generic
+  tensor contract without importing application ControlNet, queue, path, or
+  resource policy.
+- How: Derived the exact skip inventory with checked arithmetic from the UNet
+  block/layer configuration; validated the complete down inventory before any
+  full-sized sum; required exact shape, dtype, and device for every down and
+  mid residual; retained the public signature, ordering, and `None` fast path;
+  and added deterministic short/long/broadcast/dtype/mid/zero regressions.
+- Done when: SDXL's three blocks by two layers require exactly nine down
+  residuals; malformed tensors fail with controlled errors before addition;
+  `None` and exact zero residuals preserve the baseline; both overlay manifests
+  and their union are exact; direct-main publication is a reviewed
+  fast-forward. These structural Round 7 conditions are met. Numerical
+  ControlNet conditioning remains INT-5 rather than an inferred claim.
+- Verification: Focused residual tests passed 6/6; the full transformer crate
+  passed 77/77 library, 5/5 generation, and 8/8 NMS tests; required crate
+  checks, targeted and complete strict Clippy, and the model-free workspace
+  tests passed with only the recorded network-backed dataset owner excluded.
+  The final lightweight replay passed format, 6/6, summary bank 25 groups,
+  module layout, preflight smoke, manifests 150/15/135 and 9/3/6, overlay union
+  158/two/five, diff review, exact 11-path staging, guarded helper publication,
+  and remote equality. No model, CUDA, llama.cpp, hosted runner, PR, or secret
+  inspection was used.
+
 ---
-AI-edited: 2026-08-13T02:10:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=archived the published SnapFlash Round 6 bounded-runtime checkpoint
+AI-edited: 2026-08-13T02:35:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=archived the published Candle Round 7 residual-contract checkpoint

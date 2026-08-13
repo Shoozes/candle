@@ -12,6 +12,8 @@
   `d535a4f56f5a8e06407cb4b8f5be0df7f3121327`.
 - Candle Round 3 shared LoRA revision:
   `37584ecd2738ba1eb4ec4c1ab218667681f54973`.
+- Candle Round 7 exact residual-contract revision:
+  `95ac9ff815fbac4f252b4ef6780b5e4a7843f328`.
 - SnapFlash-Server Round 4 LoRA consumer revision:
   `6e64320fe26e7c3be91262bc0dac99ce53f4c628`.
 - SnapFlash-Server Round 6 bounded-runtime implementation revision:
@@ -31,7 +33,7 @@
   `ff885586f6d44a3d9b9ac1724032cdf5f0155384`. Do not move or reuse it for the
   coordinated runtime.
 - Current LFM2-VL overlay: 150 paths, exactly 15 fork-origin modifications and
-  135 mod-owned additions. The SnapFlash-derived overlay candidate is 9 paths
+  135 mod-owned additions. The SnapFlash-derived overlay is 9 paths
   (3 fork-origin modifications and 6 additions); the repository-wide union is
   158 paths across both overlays.
 
@@ -50,9 +52,9 @@
 
 ## Current Phase
 
-- Product phase: coordinated three-repository integration. Rounds 1 through 6
-  are published. Round 7 Candle additional-residual contract hardening is the
-  current local candidate.
+- Product phase: coordinated three-repository integration. Rounds 1 through 7
+  are published. INT-5 differential ControlNet conditioning and residual
+  parity is the next fixture-gated task and has not started.
 - The reusable hybrid constructor now lives at
   `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid`. It accepts explicit local text,
   tokenizer, processor, MMProj, dtype, device, and execution-policy inputs and
@@ -76,13 +78,13 @@
   model lease. SnapFlash-Server and EdgeSymbio now consume that exact published
   framework revision without retaining duplicate generic transaction math.
 - The existing Candle UNet additional-residual hook is sufficient for the
-  application boundary. The current Round 7 candidate makes its down-residual
-  inventory configuration-derived and validates exact shape, dtype, and device
-  before addition; it does not claim full ControlNet numerical parity.
+  application boundary. Published Round 7 makes its down-residual inventory
+  configuration-derived and validates exact shape, dtype, and device before
+  addition; it does not claim full ControlNet numerical parity.
 
 ## Last Green Verification
 
-### Round 7 additional-residual candidate gate
+### Round 7 additional-residual publication gate
 
 - `cargo fmt --all -- --check`: passed after applying canonical formatting to
   the focused UNet change.
@@ -236,17 +238,12 @@
 
 ## Blockers
 
-- No Candle Round 7 API-design blocker is known; the existing hook is adequate.
-  Its focused, crate, required-check, workspace-test, overlay, context, layout,
-  preflight, targeted-Clippy, and full-workspace strict-Clippy gates are green.
-  The remaining Candle release gates are final documentation reconciliation,
-  a lightweight replay of the release checks, and guarded publication against
-  the exact published SnapFlash Round 6 revision above.
+- REL-6/7 has no remaining source, test, dependency, or publication blocker.
+  Candle implementation `95ac9ff815fbac4f252b4ef6780b5e4a7843f328` and the
+  two exact SnapFlash revisions above are published, and all three named
+  worktrees were clean and equal to their remote `main` at release review.
 - The upstream network-backed dataset test is a disclosed owner-scoped skip,
   not a Round 3 blocker and not permission to enable network verification.
-- SnapFlash-Server has no remaining REL-6/7 publication blocker: its complete
-  local aggregate, correction audit, exact staged-scope review, guarded pushes,
-  and clean local/remote equality are recorded at the revisions above.
 - Edge CUDA/F16 and public LFM2-VL routes remain later product holds, not
   concealed failures; Edge LoRA migration itself is complete.
 - Hosted GitHub Actions state is intentionally not a blocker or verification
@@ -254,26 +251,19 @@
 
 ## Active Change Set
 
-- ControlNet residual contract:
-  `candle-transformers/src/models/stable_diffusion/unet_2d.rs`.
-- Overlay proof: `docs/snapflash/MOD_MANIFEST.md`, its independent verifier,
-  `docs/FORK_OVERLAYS.md`, the root union verifier, changelog, and focused
-  `summary_bank.json` route.
-- Current-state records: this file, `TODO.md`, `HISTORY.md`, `DECISIONS.md`,
-  `START_HERE.md`, and F-0053 in `FAILURE_LOG.md`.
+- No source file is under active implementation. Round 7 is published and
+  INT-5 has not started; `TODO.md` is the authority for that next fixture gate.
 - Models, caches, downloads, generated proof logs, Cargo output, and
   `.tools/.secrets/` remain ignored or external.
 
 ## Exact Next Task
 
-Bind SnapFlash implementation `d66c1c35158aca7b37e6e1d82e527334b209d93a`
-and proof-record head `b83db70ba4027535e4e55f6509e6011feeead850` into
-the Round 7 handoff, rerun Candle's focused residual, overlay, context, layout,
-format, and diff gates, inspect the exact staged paths, and publish Candle
-`main` through `.tools/gitpush.ps1`. Do not run a production model or CUDA
-workload. After clean local/remote equality, move REL-6/7 to `HISTORY.md`; the
-next framework proposal must begin with the differential ControlNet fixture in
-INT-5 and must not infer numerical parity from structural admission.
+Begin INT-5 with a pinned tiny deterministic differential ControlNet fixture.
+Record the official reference revision and generated tensor hashes, prove all
+nine ordered down residuals plus the mid residual and final UNet result, and
+show that changing only text context changes the conditioned result within a
+declared tolerance. Do not start production weights, CUDA, or inpainting
+promotion; structural Round 7 admission is not numerical parity.
 
 ---
-AI-edited: 2026-08-13T02:10:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=closed SnapFlash Round 6 and reduced the release gate to Candle verification and publication
+AI-edited: 2026-08-13T02:35:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=recorded published Candle Round 7, closed REL-6/7, and advanced the exact next task to INT-5

@@ -58,7 +58,7 @@ head `b83db70ba4027535e4e55f6509e6011feeead850`.
 | 4 | SnapFlash-Server | Reconsume Candle LoRA and delete duplicate tensor/transaction code | Complete and published at `6e64320fe26e7c3be91262bc0dac99ce53f4c628` |
 | 5 | EdgeSymbio | Reconsume Candle LoRA and add both SDXL text encoders | Complete and published at `633f774a3690df5a8a35b6cac000df4b390316d5` |
 | 6 | SnapFlash-Server | Adopt typed immutable runtime context, retained-file checks, and completion-last publication | Complete and published at implementation `d66c1c35158aca7b37e6e1d82e527334b209d93a`; proof-record head `b83db70ba4027535e4e55f6509e6011feeead850` |
-| 7 | Candle | Evaluate and harden the existing ControlNet residual hook | Current candidate; exact inventory/tensor admission is implemented, while model-level numerical parity remains a separate fixture-gated task |
+| 7 | Candle | Evaluate and harden the existing ControlNet residual hook | Complete and published at `95ac9ff815fbac4f252b4ef6780b5e4a7843f328`; model-level numerical parity remains the separate INT-5 fixture gate |
 
 Detailed current completion conditions live only in the owning repository's
 active TODO. This table preserves order and state without duplicating those
@@ -102,4 +102,4 @@ product policy remain outside the framework API.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-08-13T02:10:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=recorded the published SnapFlash Round 6 implementation and proof-record head
+AI-edited: 2026-08-13T02:35:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-7 | change=closed the seven-round integration sequence at the published Candle residual-contract commit
