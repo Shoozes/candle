@@ -62,7 +62,7 @@ fail-closed official-style ControlNet admission is published at
 | 6 | SnapFlash-Server | Adopt typed immutable runtime context, retained-file checks, and completion-last publication | Complete and published at implementation `d66c1c35158aca7b37e6e1d82e527334b209d93a`; proof-record head `b83db70ba4027535e4e55f6509e6011feeead850` |
 | 7 | Candle | Evaluate and harden the existing ControlNet residual hook | Complete and published at `95ac9ff815fbac4f252b4ef6780b5e4a7843f328`; model-level numerical parity remains the separate INT-5 fixture gate |
 | INT-5A | SnapFlash-Server | Reject unsupported official-style attention/`text_time` inventories before payload load or mutation | Complete and published at `9bc58ccaef77e7ceac0ab4e75a1a4c93acc1cdff` |
-| INT-5B | Candle | Add opt-in generic SDXL pooled-text/time-ID addition conditioning | Locally green; publish only after the complete Candle gate and exact review |
+| INT-5B | Candle | Add opt-in generic SDXL pooled-text/time-ID addition conditioning | Complete and published at `ba1e8acc142c4683995e4cdbc8b1d933c81e96c6` |
 
 Detailed current completion conditions live only in the owning repository's
 active TODO. This table preserves order and state without duplicating those
@@ -106,4 +106,4 @@ product policy remain outside the framework API.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=recorded published fail-closed admission and the local text-time checkpoint gate
+AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=recorded the published text-time checkpoint and next integration boundary

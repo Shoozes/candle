@@ -1631,7 +1631,8 @@ deferred to TODO C3; no network or toolchain install was substituted.
   ControlNet admission at `9bc58ccaef77e7ceac0ab4e75a1a4c93acc1cdff`.
   Candle then added the generic opt-in SDXL pooled-text/time-ID addition
   embedding and one structured UNet conditioning route while retaining every
-  existing constructor and forward signature.
+  existing constructor and forward signature, published at
+  `ba1e8acc142c4683995e4cdbc8b1d933c81e96c6`.
 - Why: Official SDXL ControlNet inventories require cross-attention and
   `text_time`; accepting them into the previous context-free graph would be a
   false compatibility claim. Candle's base UNet also needed the same
@@ -1651,12 +1652,11 @@ deferred to TODO C3; no network or toolchain install was substituted.
   conditioning, device mismatch, non-F32 input, empty blocks, combined
   conditioning/residual behavior, legacy structured/default equality, and
   the pre-existing residual contract pass deterministic CPU-F32 tests. The
-  focused source gate is green; final overlay and workspace proof is recorded
-  in `STATUS.md` before publication.
+  complete overlay and workspace gate is green and recorded in `STATUS.md`.
 - Boundary: No checkpoint, production weight, Python oracle, CUDA workload,
   llama.cpp process, CLIP2 projection, application time-ID policy, or
   ControlNet graph was added or run. Those latter graph inputs remain INT-5C;
   numerical differential proof remains INT-5D.
 
 ---
-AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=archived fail-closed admission and the locally green Candle text-time primitive
+AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=archived the published fail-closed admission and Candle text-time checkpoints

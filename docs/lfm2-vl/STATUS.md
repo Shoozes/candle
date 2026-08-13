@@ -14,6 +14,8 @@
   `37584ecd2738ba1eb4ec4c1ab218667681f54973`.
 - Candle Round 7 exact residual-contract revision:
   `95ac9ff815fbac4f252b4ef6780b5e4a7843f328`.
+- Candle INT-5B SDXL `text_time` revision:
+  `ba1e8acc142c4683995e4cdbc8b1d933c81e96c6`.
 - SnapFlash-Server Round 4 LoRA consumer revision:
   `6e64320fe26e7c3be91262bc0dac99ce53f4c628`.
 - SnapFlash-Server Round 6 bounded-runtime implementation revision:
@@ -54,8 +56,9 @@
 
 - Product phase: coordinated three-repository integration. Rounds 1 through 7
   are published. INT-5A fail-closed admission is published in SnapFlash and
-  Candle INT-5B's generic SDXL `text_time` primitive is locally green pending
-  its guarded checkpoint. No numerical ControlNet parity claim has been made.
+  Candle INT-5B's generic SDXL `text_time` primitive is published. INT-5C is
+  the active application integration boundary. No numerical ControlNet parity
+  claim has been made.
 - The reusable hybrid constructor now lives at
   `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid`. It accepts explicit local text,
   tokenizer, processor, MMProj, dtype, device, and execution-policy inputs and
@@ -93,7 +96,7 @@
 
 ## Last Green Verification
 
-### INT-5B SDXL `text_time` candidate gate
+### INT-5B SDXL `text_time` publication gate
 
 - `cargo fmt --all -- --check`: passed on the settled tree.
 - `cargo test --offline --locked -j 2 -p candle-transformers
@@ -117,7 +120,7 @@
 - The SnapFlash manifest passed at 10/4/6, the LFM2-VL manifest at 150/15/135,
   and the cross-overlay union at 159 paths, two overlays, and five shared
   paths. The summary bank passed 24 groups with a 126.2 KiB consolidated SDXL
-  route and 130.9/256 KiB defaults. Module-layout and `git diff --check`
+  route and 130.8/256 KiB defaults. Module-layout and `git diff --check`
   passed.
 - No production model, checkpoint, Python oracle, CUDA workload, llama.cpp
   process, dependency download, hosted runner, PR, or secret inspection was
@@ -283,11 +286,11 @@
 
 ## Blockers
 
-- REL-6/7 and INT-5A have no remaining source, test, dependency, or
+- REL-6/7 and INT-5A/B have no remaining source, test, dependency, or
   publication blocker.
-  Candle implementation `95ac9ff815fbac4f252b4ef6780b5e4a7843f328` and the
-  two exact SnapFlash revisions above are published, and all three named
-  worktrees were clean and equal to their remote `main` at release review.
+  Candle implementations `95ac9ff815fbac4f252b4ef6780b5e4a7843f328` and
+  `ba1e8acc142c4683995e4cdbc8b1d933c81e96c6` plus the exact SnapFlash
+  revisions above are published.
 - The upstream network-backed dataset test is a disclosed owner-scoped skip,
   not a Round 3 blocker and not permission to enable network verification.
 - Edge CUDA/F16 and public LFM2-VL routes remain later product holds, not
@@ -297,19 +300,18 @@
 
 ## Active Change Set
 
-- Candle INT-5B owns focused changes in Stable Diffusion embeddings/UNet,
-  deterministic unit tests, the SnapFlash-derived overlay manifest, and the
-  authority/state/context records. No LFM2-VL production model path changes.
+- No source file is under active Candle implementation. INT-5B is published;
+  the active cross-repository work belongs to SnapFlash INT-5C.
 - Models, caches, downloads, generated proof logs, Cargo output, and
   `.tools/.secrets/` remain ignored or external.
 
 ## Exact Next Task
 
-Complete the bounded local INT-5B overlay/workspace gate and publish its
-reviewed Candle checkpoint. Then repin SnapFlash and implement INT-5C's
-faithful SDXL ControlNet attention graph, CLIP2 pooled projection, and time-ID
-policy. Do not generate the numerical fixture, load production weights, run
-CUDA, or promote inpainting before INT-5C is green.
+Repin SnapFlash to Candle
+`ba1e8acc142c4683995e4cdbc8b1d933c81e96c6` and implement INT-5C's faithful
+SDXL ControlNet attention graph, CLIP2 pooled projection, and time-ID policy.
+Do not generate the numerical fixture, load production weights, run CUDA, or
+promote inpainting before INT-5C is green.
 
 ---
-AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=recorded published fail-closed admission and the locally green Candle text-time primitive
+AI-edited: 2026-08-13T04:25:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b | change=recorded the published text-time checkpoint and advanced the exact next task to INT-5C

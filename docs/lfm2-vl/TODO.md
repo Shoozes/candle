@@ -23,10 +23,11 @@ alone cannot justify a conditioned-generation or inpainting claim.
 
 ### When
 
-INT-5A is published and INT-5B is locally green pending its guarded Candle
-checkpoint. Start INT-5C only after SnapFlash pins that checkpoint. Finish
-INT-5C/D before promoting ControlNet-backed inpainting, enabling unattended
-real-weight ControlNet use, or claiming application-level numerical parity.
+INT-5A is published and INT-5B is published at
+`ba1e8acc142c4683995e4cdbc8b1d933c81e96c6`. Start INT-5C only after
+SnapFlash pins that checkpoint. Finish INT-5C/D before promoting
+ControlNet-backed inpainting, enabling unattended real-weight ControlNet use,
+or claiming application-level numerical parity.
 
 ### Where
 
