@@ -66,7 +66,7 @@
 - `summary_bank.json` now separates the active linked-worktree hazard from the
   archived Gknome attempt, routes newly found upstream VAE/runtime panic work,
   and trims the publication route from 227.8 KiB to 101.7 KiB. The default
-  orientation route is 127.1/256 KiB.
+  orientation route is 126.9/256 KiB.
 - `START_HERE.md` and `docs/FORK_OVERLAYS.md` no longer repeat completed
   lineage and parity narratives. This file holds current truth; `TODO.md`
   holds only active or explicitly deferred work; `HISTORY.md` holds completed

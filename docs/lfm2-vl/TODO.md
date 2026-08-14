@@ -21,10 +21,6 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 - How:
   - Completed source, lock/toolchain, acceptance, verifier, and receipt work is
     recorded in `HISTORY.md`; do not duplicate that evidence here.
-  - [x] Create scoped commit
-    `e2c6565d2970de7a9e507b7759a608d3a2c827e7`, replay the clean-head local
-    gate, publish through the guarded helper, and confirm local/remote `main`
-    equality.
   - [ ] Create and publish the annotated tag, emit the external identity
     receipt, create and verify the release assets, and apply the separately
     owner-managed immutability rules without moving the old tag.
