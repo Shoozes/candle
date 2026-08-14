@@ -1772,5 +1772,93 @@ deferred to TODO C3; no network or toolchain install was substituted.
   committed at `1877c8500f4f07f0e4851103cf9cfc54d98c411f`; a documentation-only
   successor records the cleared active-work boundary before guarded push.
 
+## 2026-08-13 — Combined-overlay 0.2.0 reproducibility closeout
+
+- What: Tracked the root Cargo lock, pinned Rust 1.97.1 with Clippy/Rustfmt,
+  pinned every portability-workflow action to an exact commit, required locked
+  workflow commands, froze the combined release contract, and registered the
+  shared release inputs in both overlay manifests and their union.
+- Why: A maintained framework fork consumed by exact downstream revisions
+  needs a reconstructible compiler and dependency graph. Floating toolchain
+  drift had already introduced a new warnings-denied lint without a source
+  behavior change.
+- How: Generated the root lock offline from the cached graph, recorded its
+  SHA-256, replaced the equivalent LoRA name sort with `sort_by_key`, updated
+  the manifest/context verifiers, and kept hosted CI explicitly non-authoritative.
+- Done when: Formatting, focused LoRA tests, transformer/VLM/example suites,
+  rollback tests, selected workspace tests, complete cached workspace check and
+  warnings-denied all-target Clippy, summary/layout, both overlay manifests,
+  their union, and diff checks pass. Those local conditions are met at parent
+  `dca9849584e377cebc1da40de966d050733f3bbf` with lock SHA-256
+  `9b7aa15899ae8acf7b1a09b951ddba2f16462137eee2fed0db863a9d84707175`.
+- Boundary: No model, CUDA workload, network acquisition, hosted runner,
+  commit, push, tag, release, or repository-rule mutation occurred. Immutable
+  publication remains an explicit owner-authorized follow-up.
+
+## 2026-08-13 — Combined-overlay external identity gate
+
+- Added `scripts/release/write-candle-overlays-receipt.ps1` as the final
+  fail-closed identity gate after owner-authorized branch and annotated-tag
+  publication. It requires a clean expected `main` commit/tree, exact local/remote
+  branch and tag objects, the unchanged historical MVP tag, pinned Windows
+  Rust/Cargo versions, the root lock hash, and all three overlay verifiers.
+- The receipt is path-free, written atomically to an existing directory outside
+  the repository, and never overwrites an existing file. It records the commit,
+  tree, public refs, input hashes, toolchain, and 156/20/167 inventories without
+  claiming hosted CI or model execution.
+- Corrected the ignored owner publisher's tag allowlist so it can publish the
+  frozen `candle-overlays-mvp-*` namespace while retaining the existing
+  `lfm2-vl-mvp-*` namespace. No token was read and no network, commit, push,
+  tag, release, or repository-rule mutation occurred.
+- PowerShell 7 and 5.1 parsing passed. Windows PowerShell 5.1 exercised the
+  real dirty-tree refusal and no-BOM writer and emitted no receipt. Both
+  overlay manifests, the 167/2/13 union, summary bank, module layout,
+  formatting, and WSL diff checks passed.
+- Added a hermetic no-network suite that drives the full successful receipt
+  path with process-local command doubles, validates every retained identity
+  and path-free field, rejects overwrite before Git inspection, rejects a
+  remote-main mismatch without output, and proves temporary cleanup. The
+  production script remains fail-closed and has no dependency-injection flag.
+
+## 2026-08-13 — Repository integrity and state consolidation
+
+- What: Reviewed the complete owned overlay and repository state, consolidated
+  current truth into `STATUS.md`, shortened duplicated orientation and lineage
+  prose, added a root fork entry point, and reorganized `summary_bank.json`
+  into 30 bounded feature, issue, and workflow groups.
+- Why: Release-closeout evidence had accumulated in several progress files,
+  while the active linked-worktree boundary and newly found upstream runtime
+  hazards were either mixed with historical work or not independently routed.
+- How: Archived the completed Gknome route with a required archive note, added
+  focused linked-worktree, VAE, runtime-stub, and safetensors issue groups,
+  enforced archive-note presence in the verifier, removed a false nonexistent
+  safetensors-test route, and kept every group below the 256 KiB context cap.
+  Shared Q8 MMProj policy validation now has one helper used at parse and
+  runtime resolution boundaries; its regression also covers manually mutated
+  argument states. A stale attention TODO now documents the real contiguous
+  layout invariant.
+- Audit result: No broken owned Rust import/export, production LFM2-VL stub,
+  incomplete release feature, unsafe run-timing sequence, or untracked model
+  dependency was found. Externally reachable upstream panic/stub families are
+  retained as separately scoped post-release tasks with What/Why/When/Where/
+  How/Done-when/Verification contracts. This includes separately routed core
+  integer-unary/dummy-backend panics and accepted unsupported example modes;
+  generic optimization comments and test-only sentinels were not promoted
+  without a measured production trigger.
+- Verification: The LFM2-VL example passed 32/32, focused LoRA parsing passed
+  3/3, disabled-feature attention passed 1/1, release-receipt tests passed
+  22/22 in each PowerShell engine, format/check/strict-Clippy passed, and the
+  selected offline workspace unit/integration/doc suite passed excluding only
+  `candle-datasets` and `candle-pyo3`. Both excluded crates remain covered by
+  workspace check and Clippy. Summary-bank validation passed in both
+  PowerShell engines at 30 groups and 127.3 KiB default context; module layout,
+  Markdown targets across 18/18 state files, both manifests, the 167-path
+  union, and diff checks passed.
+- Environment boundary: Production model/cache inputs were intentionally
+  absent after operator cleanup, `candle-datasets` requires live HTTP, and
+  `candle-pyo3` tests require a Python 3.13 import library unavailable in the
+  cleaned environment. No download, model/CUDA replay, hosted CI, tag, release,
+  ruleset mutation, or secret inspection was used.
+
 ---
-AI-edited: 2026-08-13T14:04:40-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-release | change=recorded the exact implementation commit and documentation closeout
+AI-edited: 2026-08-13T20:08:58-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=archived the repository audit, context consolidation, bounded fixes, verification, and environment limits

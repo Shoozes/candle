@@ -141,6 +141,10 @@ impl Args {
                 "--mmproj-execution q8 requires --dtype f32; resolved vision dtype is {vision_dtype:?}"
             )
         }
+        self.validate_mmproj_source()
+    }
+
+    fn validate_mmproj_source(&self) -> Result<()> {
         if self.mmproj_execution == MmprojExecutionArg::Q8 {
             match &self.source {
                 ModelSource::NativeDirectory(_) => {
@@ -447,25 +451,7 @@ where
         vision_cpu,
         inference,
     };
-    if args.mmproj_execution == MmprojExecutionArg::Q8 {
-        match &args.source {
-            ModelSource::NativeDirectory(_) => {
-                bail!("--mmproj-execution q8 is unavailable for native safetensors")
-            }
-            ModelSource::Hybrid {
-                mmproj: MmprojArg::SplitDirectory(_),
-                ..
-            } => {
-                bail!(
-                    "--mmproj-execution q8 requires --mmproj-file; split MMProj bundles are dense"
-                )
-            }
-            ModelSource::Hybrid {
-                mmproj: MmprojArg::GgufFile(_),
-                ..
-            } => {}
-        }
-    }
+    args.validate_mmproj_source()?;
     if let Some(inference) = &args.inference {
         if inference.trace_output.is_some()
             && !matches!(args.source, ModelSource::NativeDirectory(_))
@@ -700,6 +686,18 @@ mod tests {
         args.validate_execution(DType::F32)?;
         assert!(args.validate_execution(DType::BF16).is_err());
         assert!(args.validate_execution(DType::F16).is_err());
+
+        let mut native = args.clone();
+        native.source = ModelSource::NativeDirectory(PathBuf::from("checkpoint"));
+        assert!(native.validate_execution(DType::F32).is_err());
+
+        let mut split = args;
+        split.source = ModelSource::Hybrid {
+            text_gguf: PathBuf::from("text.gguf"),
+            mmproj: MmprojArg::SplitDirectory(PathBuf::from("mmproj")),
+            tokenizer: PathBuf::from("tokenizer.json"),
+        };
+        assert!(split.validate_execution(DType::F32).is_err());
         Ok(())
     }
 

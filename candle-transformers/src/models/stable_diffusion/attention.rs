@@ -547,8 +547,8 @@ impl Module for AttentionBlock {
         let attention_scores = (query_states * scale)?.matmul(&(key_states.t()? * scale)?)?;
         let attention_probs = nn::ops::softmax(&attention_scores, D::Minus1)?;
 
-        // TODO: revert the call to force_contiguous once the three matmul kernels have been
-        // adapted to handle layout with some dims set to 1.
+        // Materialize the transposed output before flattening because current
+        // matmul kernels reject singleton-stride layouts at this boundary.
         let xs = attention_probs.matmul(&value_states)?;
         let xs = xs.to_dtype(in_dtype)?;
         let xs = xs.transpose(1, 2)?.contiguous()?;

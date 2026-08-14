@@ -7,7 +7,7 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 - Model and compatibility baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Current publication baseline: Candle main at `6f74e7c390c717f8fd34f23ce02aceb058173370`, the exact `origin/main` tip integrated before this direct-main release.
 - Historical mod checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`; that branch is retained as evidence, not used as a second publication line.
-- Current `main` LFM2-VL overlay: 150 paths, exactly 15 fork-origin modifications and 135 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL.
+- Current release-candidate LFM2-VL overlay: 156 paths, exactly 16 fork-origin modifications and 140 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL.
 - A **fork-origin modification** is a path that exists in the current publication baseline and is intentionally changed by this mod.
 - A **mod-owned addition** is a path absent from the current publication baseline and created for this project.
 - “Mod-owned” describes repository provenance, not third-party authorship. External source and license provenance remains authoritative in `SOURCES.md` and `LICENSE_NOTES.md`.
@@ -15,12 +15,13 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 
 ## Fork-Origin Files Intentionally Modified
 
-Exactly these fifteen baseline files contain LFM2-VL changes:
+Exactly these sixteen baseline files contain LFM2-VL or combined-release changes:
 
 | Path | LFM2-VL reason |
 | --- | --- |
 | `.github/workflows/ci_cuda.yaml` | Limit the inherited private AWS CUDA runner job to the upstream repository so fork pull requests skip instead of failing before checkout. |
-| `.gitignore` | Exclude local reference environments, caches, downloads, production models, and generated artifacts. |
+| `.github/workflows/rust-ci.yml` | Pin the release compiler and action revisions and require the tracked lock for the portability matrix. |
+| `.gitignore` | Track the release lock while excluding local reference environments, caches, downloads, production models, and generated artifacts. |
 | `CHANGELOG.md` | Record the reusable public LFM2-VL hybrid loader; this shared path is registered in `docs/FORK_OVERLAYS.md`. |
 | `README.md` | Add the discoverable LFM2.5-VL example and support-boundary entry for this fork. |
 | `Cargo.toml` | Register the new `candle-vlm` workspace crate and its shared dependencies. |
@@ -149,6 +150,14 @@ No other file from the integrated Candle publication baseline is part of the mod
 - `scripts/lfm2-vl/verify-module-layout.py`
 - `scripts/lfm2-vl/verify-summary-bank.ps1`
 
+### Combined-release reproducibility
+
+- `Cargo.lock`
+- `rust-toolchain.toml`
+- `docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md`
+- `scripts/release/test-write-candle-overlays-receipt.ps1`
+- `scripts/release/write-candle-overlays-receipt.ps1`
+
 ### Committed deterministic fixtures
 
 - `tests/fixtures/lfm2_vl_tiny/README.md`
@@ -199,7 +208,6 @@ No other file from the integrated Candle publication baseline is part of the mod
 ## Never Publish From the Local Worktree
 
 - `.tools/` and every descendant, including secret material.
-- The ignored verifier-only `Cargo.lock` unless the repository policy is explicitly changed.
 - `.venv/`, `artifacts/`, `downloads/`, `models/`, Hugging Face caches, or generated reference outputs.
 - Production model weights, authentication material, or ad hoc local logs.
 
@@ -210,4 +218,4 @@ commands are prohibited. The LFM2-VL verifier remains independently runnable
 and does not absorb unfinished diffusion paths.
 
 ---
-AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=hybrid-loader-promotion | change=added public loader and deterministic loader fixtures to the isolated LFM2-VL overlay
+AI-edited: 2026-08-13T19:14:09-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=release-closeout | change=registered the fail-closed receipt generator and hermetic contract suite in the combined release overlay

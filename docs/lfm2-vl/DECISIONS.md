@@ -93,7 +93,7 @@ Only Linux-home verification worktree evidence may be recorded as green. Cargo c
 
 ## D-0008: Local Verification Lockfile
 
-Status: Accepted
+Status: Superseded by D-0057
 
 Decision:
 Keep `Cargo.lock` ignored and local to each verification lane. Require it for every `--locked` check and record its SHA-256 with the retained proof.
@@ -806,7 +806,7 @@ a secondary TODO until a local WSL Rust toolchain is available.
 
 ## D-0043: Use One Owner-Reviewed Direct-Main Publication Line
 
-Status: Accepted
+Status: Accepted; combined-release tag namespace extended by D-0058
 
 Decision:
 Use `main` in `Shoozes/candle` as the single integration and publication
@@ -1215,5 +1215,64 @@ matrix multiplication, so actual BF16 kernel execution remains an explicit
 CUDA/hardware proof rather than an inferred claim. SnapFlash may pin the
 resulting Candle checkpoint for INT-5C without duplicating timestep math.
 
+## D-0057: Pin the Combined-Overlay Release Toolchain and Dependency Graph
+
+Status: Accepted.
+
+Decision:
+Track the root `Cargo.lock` for this maintained fork and pin Rust 1.97.1 with
+the minimal `clippy` and `rustfmt` components in `rust-toolchain.toml`. Require
+`--locked` for the check, test, and Clippy commands in the required Rust
+workflow, and pin every action used by that workflow to a reviewed commit.
+The local native-Windows gate remains the release authority; the checked-in
+workflow is a portability contract and does not authorize or substitute
+hosted execution.
+
+Why:
+The fork is an exact runtime dependency with workspace examples, fixtures,
+and two independently verified overlays. A floating compiler introduced a
+new warnings-denied failure without any source change, while an ignored lock
+allows a clean clone to resolve a different graph. Upstream library convention
+is less important here than reconstructing one immutable fork snapshot.
+
+Consequences:
+Fresh release lanes install the pinned compiler and consume the committed lock
+without updating it. Downstream crates still resolve their own lockfiles; this
+does not impose Candle's workspace lock on consumers. Dependency changes must
+update and review `Cargo.lock` explicitly. D-0008 is superseded, and release
+proof must record the compiler, Cargo version, lock hash, platform lane,
+upstream base, and both overlay inventories.
+
+## D-0058: Bind Combined-Overlay Publication With an External Identity Receipt
+
+Status: Accepted.
+
+Decision:
+Extend D-0043's guarded tag policy with the
+`candle-overlays-mvp-X.Y.Z` namespace while retaining the historical
+`lfm2-vl-mvp-X.Y.Z` namespace and the prohibition on moving an existing tag.
+For the combined 0.2.0 snapshot, publish reviewed `main` first, create and
+publish one annotated `candle-overlays-mvp-0.2.0` tag at that exact commit,
+then generate a no-overwrite JSON identity receipt outside the repository.
+The generator must require an operator-supplied commit and tree, exact
+local/remote main and annotated-tag objects, the unchanged historical tag,
+the pinned Windows toolchain and lock hash, and all frozen overlay inventory
+counts before writing.
+
+Why:
+The prior helper and policy admitted only the first LFM2-VL tag family, so the
+new combined release contract was not executable. A receipt committed after
+tagging would be self-referential and would move the source identity it claims
+to record. An external receipt can instead bind the already-public immutable
+refs and checked-in contract without another source commit.
+
+Consequences:
+The receipt performs public remote-ref reads only after explicit publication
+authority and never stages, commits, pushes, tags, creates a release, or reads
+the operator token. Dirty trees, wrong output locations, missing or lightweight
+tags, mismatched refs, toolchain/lock drift, inventory drift, and existing
+receipt targets fail without output. The hosted release must attach the
+checked-in contract and external receipt only after their identities agree.
+
 ---
-AI-edited: 2026-08-13T04:34:15-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=accepted pinned Diffusers lower-precision timestep cast order
+AI-edited: 2026-08-13T19:14:09-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=release-closeout | change=accepted the combined tag namespace and external immutable identity receipt ordering

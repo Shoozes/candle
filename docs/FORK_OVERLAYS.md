@@ -17,6 +17,12 @@ baseline-to-current path to belong to at least one registered manifest. Each
 overlay-specific verifier may validate only its own paths, so unfinished work
 in one overlay cannot silently become release evidence for another.
 
+The `candle-overlays-mvp-0.2.0` closeout admits only build or verification
+fixes, reproducibility and packaging changes, release metadata, distribution
+security fixes, and documentation corrections that reflect actual behavior.
+Its exact scope and non-goals are frozen in
+`docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md`.
+
 ## Dependency direction
 
 The permanent direction is:
@@ -36,30 +42,9 @@ Candle implementation -> EdgeSymbio integration -> optional SnapFlash use
 
 ## Coordinated progress
 
-The reusable loader parent is Candle
-`c0fb3a9fe098e50d07ec1b749c77015d7bd8d9a5`. EdgeSymbio Round 2 is published
-at `d535a4f56f5a8e06407cb4b8f5be0df7f3121327`; it pins that Candle revision and
-passes the bounded 450M CPU/F32 token-level proof. Candle's shared LoRA
-transaction is published at `37584ecd2738ba1eb4ec4c1ab218667681f54973`.
-SnapFlash-Server reconsumes it at `6e64320fe26e7c3be91262bc0dac99ce53f4c628`,
-and EdgeSymbio's three-component acceptance is published at
-`633f774a3690df5a8a35b6cac000df4b390316d5`. EdgeSymbio's current `main`
-subsequently advanced to `eb9c07127321bd7528786c4fa103b92f893991f5` for
-bounded proof-owner tooling; that does not replace the Round 5 lineage commit.
-SnapFlash Round 6 is published with runtime implementation commit
-`d66c1c35158aca7b37e6e1d82e527334b209d93a` and final proof-record `main`
-head `b83db70ba4027535e4e55f6509e6011feeead850`. Its later INT-5A
-fail-closed official-style ControlNet admission is published at
-`9bc58ccaef77e7ceac0ab4e75a1a4c93acc1cdff`.
-Its faithful INT-5C/D ControlNet graph, pinned differential fixture, and
-installed Canny/Depth proof are published at
-`b90f7c6bb76f1d73c70cd69e483fdfb1278de4ca`. Its REL-8 rollback proof remains
-published at `a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95`; current SnapFlash `main` is
-`aa7f0a5059d9a03838f3229671b68930156d8cb8` after the additive queued-inpainting
-follow-on. Candle's repository-integrity error-boundary implementation is
-`1877c8500f4f07f0e4851103cf9cfc54d98c411f`; the table keeps each exact lineage
-proof revision rather than relabeling later heads as the original acceptance
-point.
+The table is the concise cross-repository lineage map. Detailed implementation
+and verification narratives live in each repository's history/proof records;
+later branch heads do not relabel the acceptance revision shown here.
 
 | Order | Repository | Focused result | State / release condition |
 | --- | --- | --- | --- |
@@ -94,12 +79,19 @@ it. Every change to such a path must state which overlay owns each hunk and
 must pass both affected focused gates plus the repository-wide overlay gate.
 
 <!-- shared-paths:start -->
+- `.github/workflows/rust-ci.yml`
+- `.gitignore`
+- `Cargo.lock`
 - `Cargo.toml`
 - `CHANGELOG.md`
 - `candle-examples/Cargo.toml`
 - `candle-transformers/Cargo.toml`
 - `candle-transformers/src/models/mod.rs`
 - `candle-transformers/src/models/stable_diffusion/mod.rs`
+- `docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md`
+- `rust-toolchain.toml`
+- `scripts/release/test-write-candle-overlays-receipt.ps1`
+- `scripts/release/write-candle-overlays-receipt.ps1`
 <!-- shared-paths:end -->
 
 Shared registration permits coexistence; it does not let one overlay claim
@@ -120,4 +112,4 @@ product policy remain outside the framework API.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-08-13T14:04:40-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-release | change=recorded the exact bounded-error implementation revision
+AI-edited: 2026-08-13T20:08:58-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=kept the overlay map concise and delegated detailed evidence to owned histories

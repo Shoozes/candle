@@ -15,64 +15,24 @@ This is the live execution entry point for the Candle 0.11 LFM2.5-VL/MMProj exte
 
 ## Current Gate
 
-Phases 1 through 7 are checkpointed. `feat/lfm2-vl-mmproj` at
-`c9b60f0b906fa8fe70423295e2e1164648a8fa53` is the historical implementation
-checkpoint; owner-reviewed integration now lands directly on
-`Shoozes/candle:main` without a PR. The current release preserves Candle main
-through upstream base `6f74e7c390c717f8fd34f23ce02aceb058173370`.
-Annotated tag `lfm2-vl-mvp-0.1.0` is the immutable first-MVP snapshot at
-`ff885586f6d44a3d9b9ac1724032cdf5f0155384`. `main` may advance through
-reviewed maintenance commits; do not move or reuse that tag. The tag and the
-then-current `main` peeled to the same commit when the snapshot was published.
-Post-snapshot maintenance makes hash-pinned fixture bytes portable across
-Windows Git newline settings. Its clean native `core.autocrlf=true` proof and
-direct-main release gate are green. Use live Git refs, not prose, to confirm
-whether a particular checkout has the maintenance commit.
-Round 1 is published at `c0fb3a9fe098e50d07ec1b749c77015d7bd8d9a5` and
-promotes complete local hybrid assembly into `candle-vlm`. Round 2 is published
-in EdgeSymbio at `d535a4f56f5a8e06407cb4b8f5be0df7f3121327` with its
-separate CLI-only 450M CPU/F32 proof. Candle Round 3, SnapFlash-Server Round 4,
-and EdgeSymbio Round 5 are published respectively at
-`37584ecd2738ba1eb4ec4c1ab218667681f54973`,
-`6e64320fe26e7c3be91262bc0dac99ce53f4c628`, and
-`633f774a3690df5a8a35b6cac000df4b390316d5`; both applications now consume
-the same generic three-component SDXL LoRA transaction. EdgeSymbio's current
-`main` is `eb9c07127321bd7528786c4fa103b92f893991f5` after a later bounded
-proof-owner tooling checkpoint. SnapFlash Round 6 is published at runtime
-implementation `d66c1c35158aca7b37e6e1d82e527334b209d93a`; its final proof-record
-`main` head is `b83db70ba4027535e4e55f6509e6011feeead850`. Candle Round 7 is published
-at `95ac9ff815fbac4f252b4ef6780b5e4a7843f328`. INT-5C/D and REL-8 are complete;
-SnapFlash later published queued inpainting at current `main`
-`aa7f0a5059d9a03838f3229671b68930156d8cb8`. Candle's bounded metadata and
-unsupported flash-attention error paths are implemented at
-`1877c8500f4f07f0e4851103cf9cfc54d98c411f`; live Git refs remain the authority
-for any later documentation successor. See `STATUS.md` and `TODO.md` rather
-than reconstructing the handoff from completed history.
-The public LFM loader returns exact consumed paths; application hashing,
-retained handles, resource leases, and proof records remain outside Candle.
-Native Windows is the product and release-proof platform; WSL2/Linux is a
-secondary portability replay. NR-5B official 450M native Windows CPU-F32
-component parity, P2 official-base GGUF same-artifact decoded-output
-comparison, and P3 official 1.6B native CPU-F32 component parity are green.
-The admitted 3,198,084,631-byte regular snapshot, config/tokenizer/processor
-contract, 589-tensor inventory, Python/native load-only proofs, 51-tensor
-Python/native traces, exact reset, phase-specific comparison, and bounded
-cleanup all pass. The project has a first feature-complete MVP snapshot, not
-LTS: P4.1's minimal `--text-cpu` route, P4.2's smallest native
-CUDA/distinct-device fixture, P4.3's initial official 450M CUDA parity, and
-P4.5's complete CPU/CPU F32, all-CUDA F32/BF16/F16, and both mixed F32 routes
-are green. P4.4 is closed as a synchronized end-to-end diagnostic; PERF-1 has
-a stable isolated generation baseline, and no speculative optimization is
-retained. The Edge proof matched exact generated IDs, decoded text,
-preprocessing, image span, stop reason, and cache-reset replay. Its cross-linked
-executable's prefill hash differed from the standalone Candle executable with
-no identified source, dependency, or feature drift; this is retained as a
-non-bitwise observation, not a fabricated equality or an active Round 3
-blocker. Lower-bit work and the optional WSL replay remain deferred.
-Explicit BF16 and F16 on a resolved CPU component are rejected before model
-load because the CPU matmul backend does not support those dtypes. Every future
-production run still requires a fresh snapshot/executable rehash, reviewed Job
-ceiling, and preflight.
+The LFM2-VL implementation phases and the coordinated Candle/SnapFlash
+framework primitives are complete. Their detailed lineage and proof belong in
+`HISTORY.md`, `PARITY.md`, and `docs/FORK_OVERLAYS.md`; do not copy those
+snapshots back into this entry point.
+
+The active tree is the uncommitted combined-overlay 0.2.0 candidate based on
+`origin/main` at `dca9849584e377cebc1da40de966d050733f3bbf`. Its tracked
+lock/toolchain, local verification contract, overlay inventories, and external
+identity-receipt gate are implemented. The only active product task is the
+owner-authorized clean-head publication sequence in `TODO.md`.
+
+Annotated tag `lfm2-vl-mvp-0.1.0` remains the immutable first-MVP snapshot at
+`ff885586f6d44a3d9b9ac1724032cdf5f0155384`; never move or reuse it. The new
+candidate uses the distinct `candle-overlays-mvp-0.2.0` namespace. Native
+Windows/MSVC is release authority and WSL2/Linux is a secondary replay.
+Production models and caches are external inputs and are currently absent
+after operator cleanup; retained hash-bound parity remains valid, but no new
+model run or download is implied.
 
 ## One-Task Contract
 
@@ -154,7 +114,9 @@ for building or using the fork on Windows.
   not stage, commit, merge, delete refs, or force-push. Its optional guarded
   tag mode runs only after remote `main` equals local `HEAD` and publishes one
   annotated `lfm2-vl-mvp-X.Y.Z` tag that peels to that exact commit.
-- Keep `.tools/.secrets/`, the ignored `Cargo.lock`, models, caches, downloads, artifacts, and local logs out of publication.
+- Track the root `Cargo.lock` and `rust-toolchain.toml` as release inputs; keep
+  `.tools/.secrets/`, models, caches, downloads, artifacts, and local logs out
+  of publication.
 - Stage only paths authorized by the affected overlay manifest and the root
   union verifier; never use broad staging.
 - Keep committed LFM2-VL fixture JSON and Markdown LF-stable and fixture
@@ -180,4 +142,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-13T14:04:40-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-release | change=recorded the exact bounded-error implementation revision
+AI-edited: 2026-08-13T20:08:58-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=consolidated current orientation and removed duplicated release history

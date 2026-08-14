@@ -357,30 +357,89 @@
       ]
     },
     "issue__gknome_adoption_and_linked_git": {
-      "description": "Current checkout's WSL-owned linked-main Git boundary plus Gknome's blocked mature-repository authority, context-bank, and runtime-inventory integration; neither is a product-platform requirement.",
+      "description": "Archived context for the rejected Gknome adoption attempt and its former coupling to this checkout's linked-worktree investigation.",
+      "status": "archived",
+      "_archive_note": "Retained for historical lookup; current Git ownership is routed separately and Gknome adoption is outside the product backlog.",
+      "paths": [
+        "docs/lfm2-vl/HISTORY.md",
+        "docs/lfm2-vl/history/BOOTSTRAP_AND_PHASE_GUIDE.md"
+      ]
+    },
+    "issue__linked_worktree_git_boundary": {
+      "description": "Active Windows edit-folder and WSL-owned Git boundary, including safe status/publication commands and the recurring linked-worktree failure mode.",
       "status": "active",
       "paths": [
         "AGENTS.md",
         "docs/lfm2-vl/START_HERE.md",
         "docs/lfm2-vl/TODO.md",
-        "docs/lfm2-vl/FAILURE_LOG.md",
-        "docs/lfm2-vl/MOD_MANIFEST.md"
+        "docs/lfm2-vl/FAILURE_LOG.md"
+      ]
+    },
+    "issue__stable_diffusion_public_input_panics": {
+      "description": "Deferred upstream safety slice for malformed public VAE configuration or latent distribution inputs that can still reach unchecked indexing or unwraps.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/stable_diffusion/vae.rs",
+        "docs/snapflash/MOD_MANIFEST.md"
+      ]
+    },
+    "issue__upstream_runtime_stub_panics": {
+      "description": "Post-release slices for externally reachable model or ONNX branches that still panic through todo! instead of implementing the contract or returning a controlled error.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/vit.rs",
+        "candle-transformers/src/models/snac.rs",
+        "candle-transformers/src/models/segment_anything/image_encoder.rs",
+        "candle-transformers/src/models/debertav2.rs",
+        "candle-onnx/src/eval.rs",
+        "docs/lfm2-vl/TODO.md"
+      ]
+    },
+    "issue__fallible_safetensors_serialization": {
+      "description": "Post-release Candle-core safety boundary for propagating device-to-host tensor serialization failures instead of unwrapping inside the safetensors View adapter.",
+      "status": "active",
+      "paths": [
+        "candle-core/src/safetensors.rs"
+      ]
+    },
+    "issue__core_runtime_panic_boundaries": {
+      "description": "Post-release Candle-core API work for rejecting unsupported integer unary dispatch and eliminating constructible disabled-backend storage states that expose panicking trait methods.",
+      "status": "active",
+      "paths": [
+        "candle-core/src/op.rs",
+        "candle-core/src/cpu_backend/mod.rs",
+        "candle-core/src/dummy_cuda_backend.rs",
+        "candle-core/src/dummy_metal_backend.rs"
+      ]
+    },
+    "issue__example_runtime_stubs": {
+      "description": "Post-release user-facing example slices for rejecting accepted-but-unsupported CLI combinations before downloads or implementing them from pinned references.",
+      "status": "active",
+      "paths": [
+        "candle-examples/examples/flux/main.rs",
+        "candle-examples/examples/llava/main.rs",
+        "candle-examples/examples/musicgen/musicgen_model.rs",
+        "candle-examples/examples/whisper/main.rs",
+        "candle-examples/examples/whisper-microphone/main.rs"
       ]
     },
     "workflow__publication_provenance": {
-      "description": "Direct-main policy, upstream integration base, fork-versus-mod file ownership, source/license provenance, publication exclusions, and local/remote verification contract.",
+      "description": "Pinned compiler and dependency graph, direct-main policy, upstream integration base, fork-versus-mod ownership, release scope, publication exclusions, and local/remote verification contract.",
       "status": "active",
       "paths": [
+        ".github/workflows/rust-ci.yml",
         ".gitattributes",
         ".gitignore",
-        "README.md",
         "AGENTS.md",
+        "rust-toolchain.toml",
+        "docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md",
         "docs/lfm2-vl/START_HERE.md",
         "docs/lfm2-vl/STATUS.md",
         "docs/lfm2-vl/MOD_MANIFEST.md",
         "docs/lfm2-vl/SOURCES.md",
         "docs/lfm2-vl/LICENSE_NOTES.md",
-        "docs/lfm2-vl/DECISIONS.md",
+        "scripts/release/test-write-candle-overlays-receipt.ps1",
+        "scripts/release/write-candle-overlays-receipt.ps1",
         "scripts/lfm2-vl/verify-mod-manifest.sh"
       ]
     },
@@ -391,8 +450,11 @@
         "AGENTS.md",
         "CHANGELOG.md",
         "docs/FORK_OVERLAYS.md",
+        "docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md",
         "docs/snapflash/MOD_MANIFEST.md",
         "scripts/lfm2-vl/verify-mod-manifest.sh",
+        "scripts/release/test-write-candle-overlays-receipt.ps1",
+        "scripts/release/write-candle-overlays-receipt.ps1",
         "scripts/snapflash/verify-mod-manifest.sh",
         "scripts/verify-fork-overlays.sh",
         "summary_bank.json"

@@ -31,10 +31,17 @@ adapter catalogs, Kohya/model-family name conversion, resource admission,
 request/report schemas, and live-generation proof. No application code or
 production model artifact is part of this overlay.
 
+The combined Candle snapshot shares its tracked lock, pinned compiler,
+portability workflow, ignore policy, and release contract with the LFM2-VL
+overlay. These files make the exact fork candidate reproducible; they do not
+move SnapFlash's separately proven Candle pin.
+
 ## Fork-origin files intentionally modified
 
 | Path | Ownership |
 | --- | --- |
+| `.github/workflows/rust-ci.yml` | Pin the compiler and action revisions and require locked portability commands for the combined snapshot. |
+| `.gitignore` | Track the release lock while preserving local/runtime exclusions. |
 | `CHANGELOG.md` | Record the public LoRA, residual, and SDXL `text_time` conditioning contracts. |
 | `candle-transformers/Cargo.toml` | Keep the consumer fault hook absent from normal builds and available only through the opt-in `test-utils` feature. |
 | `candle-transformers/src/models/stable_diffusion/attention.rs` | Return a controlled error when flash attention is requested without its build feature. |
@@ -44,11 +51,16 @@ production model artifact is part of this overlay.
 
 ## Overlay-owned additions
 
+- `Cargo.lock`
+- `rust-toolchain.toml`
+- `docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md`
 - `docs/FORK_OVERLAYS.md`
 - `docs/snapflash/MOD_MANIFEST.md`
 - `candle-transformers/src/models/stable_diffusion/lora.rs`
 - `candle-transformers/src/models/stable_diffusion/mutable.rs`
 - `candle-transformers/tests/stable_diffusion_mutable_tests.rs`
+- `scripts/release/test-write-candle-overlays-receipt.ps1`
+- `scripts/release/write-candle-overlays-receipt.ps1`
 - `scripts/snapflash/verify-mod-manifest.sh`
 - `scripts/verify-fork-overlays.sh`
 
@@ -163,4 +175,4 @@ Models, adapters, generated images, local caches, `.tools/`, secrets, runtime
 logs, and application artifacts are not part of this overlay.
 
 ---
-AI-edited: 2026-08-13T13:36:16-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-hardening | change=registered controlled unsupported flash attention and distinguished downstream heads
+AI-edited: 2026-08-13T19:14:09-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=release-closeout | change=registered the shared receipt gate and tests without moving the consumer pin

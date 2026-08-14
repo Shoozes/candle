@@ -69,7 +69,7 @@ if [[ -s "$UNDECLARED_DUPLICATES" ]]; then
     exit 1
 fi
 
-if grep -E '^(Cargo\.lock|\.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$UNION_PATHS"; then
+if grep -E '^(\.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$UNION_PATHS"; then
     printf 'error: overlay manifests contain a prohibited local/runtime path\n' >&2
     exit 1
 fi

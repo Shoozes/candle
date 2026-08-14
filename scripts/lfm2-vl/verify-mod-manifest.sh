@@ -98,7 +98,7 @@ sed -n \
     -e 's/^- `\([^`]*\)`$/\1/p' \
     "$MANIFEST" | LC_ALL=C sort -u >"$MANIFEST_PATHS"
 
-if grep -E '^(Cargo\.lock|\.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$MANIFEST_PATHS"; then
+if grep -E '^(\.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$MANIFEST_PATHS"; then
     printf 'error: LFM2-VL manifest contains a prohibited local/runtime path\n' >&2
     exit 1
 fi
@@ -120,13 +120,13 @@ while IFS= read -r path; do
     fi
 done <"$MANIFEST_PATHS"
 
-if [[ "$modified_count" -ne 15 ]]; then
-    printf 'error: expected exactly 15 LFM2-VL fork-origin modifications, found %s\n' "$modified_count" >&2
+if [[ "$modified_count" -ne 16 ]]; then
+    printf 'error: expected exactly 16 LFM2-VL fork-origin modifications, found %s\n' "$modified_count" >&2
     exit 1
 fi
 
-if [[ "$added_count" -ne 135 ]]; then
-    printf 'error: expected exactly 135 LFM2-VL additions, found %s\n' "$added_count" >&2
+if [[ "$added_count" -ne 140 ]]; then
+    printf 'error: expected exactly 140 LFM2-VL additions, found %s\n' "$added_count" >&2
     exit 1
 fi
 

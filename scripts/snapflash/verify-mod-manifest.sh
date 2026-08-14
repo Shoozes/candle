@@ -40,7 +40,7 @@ sed -n \
     -e 's/^- `\([^`]*\)`$/\1/p' \
     "$MANIFEST" | LC_ALL=C sort -u >"$MANIFEST_PATHS"
 
-if grep -E '^(Cargo\.lock|\.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$MANIFEST_PATHS"; then
+if grep -E '^(\.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$MANIFEST_PATHS"; then
     printf 'error: SnapFlash-derived manifest contains a prohibited local/runtime path\n' >&2
     exit 1
 fi
@@ -91,8 +91,8 @@ while IFS= read -r path; do
     fi
 done <"$MANIFEST_PATHS"
 
-if [[ "$modified_count" -ne 6 || "$added_count" -ne 7 ]]; then
-    printf 'error: expected SnapFlash-derived overlay counts 6 modified/7 added; found %s/%s\n' \
+if [[ "$modified_count" -ne 8 || "$added_count" -ne 12 ]]; then
+    printf 'error: expected SnapFlash-derived overlay counts 8 modified/12 added; found %s/%s\n' \
         "$modified_count" "$added_count" >&2
     exit 1
 fi

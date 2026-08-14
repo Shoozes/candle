@@ -1,417 +1,137 @@
-# LFM2.5-VL Status
+# LFM2.5-VL Current Status
 
-## Baseline and Publication
+## Release Identity
 
-- Model and compatibility baseline: Candle 0.11.0 at
+- Compatibility baseline: Candle 0.11.0 at
   `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Upstream integration base: Candle main at
   `6f74e7c390c717f8fd34f23ce02aceb058173370`.
-- Round 1 public-loader revision:
-  `c0fb3a9fe098e50d07ec1b749c77015d7bd8d9a5`.
-- EdgeSymbio Round 2 consumer revision:
-  `d535a4f56f5a8e06407cb4b8f5be0df7f3121327`.
-- Candle Round 3 shared LoRA revision:
-  `37584ecd2738ba1eb4ec4c1ab218667681f54973`.
-- Candle Round 7 exact residual-contract revision:
-  `95ac9ff815fbac4f252b4ef6780b5e4a7843f328`.
-- Candle INT-5B SDXL `text_time` revision:
-  `ba1e8acc142c4683995e4cdbc8b1d933c81e96c6`.
-- Candle INT-5B.1 lower-precision cast-order revision:
-  `aed7f062bbfb825675efaf21c98029983312d336`.
-- Candle REL-8 consumer-test seam revision:
-  `1660f9fca8d6c8eb70937791e796203527f7be26`.
-- Repository-integrity error-boundary implementation revision:
-  `1877c8500f4f07f0e4851103cf9cfc54d98c411f`.
-- SnapFlash-Server Round 4 LoRA consumer revision:
-  `6e64320fe26e7c3be91262bc0dac99ce53f4c628`.
-- SnapFlash-Server Round 6 bounded-runtime implementation revision:
-  `d66c1c35158aca7b37e6e1d82e527334b209d93a`.
-- SnapFlash-Server INT-5C/D faithful ControlNet implementation revision:
-  `b90f7c6bb76f1d73c70cd69e483fdfb1278de4ca`.
-- Current published SnapFlash-Server `main`:
-  `aa7f0a5059d9a03838f3229671b68930156d8cb8`.
-- EdgeSymbio Round 5 LoRA consumer revision:
-  `633f774a3690df5a8a35b6cac000df4b390316d5`.
-- Current EdgeSymbio `main` after bounded proof-owner hardening:
-  `eb9c07127321bd7528786c4fa103b92f893991f5`.
-- Integration and publication branch: `main`; owner-reviewed work lands
-  directly without a pull request.
-- Historical implementation checkpoint:
-  `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on
-  `feat/lfm2-vl-mmproj`.
-- Immutable first-MVP snapshot: annotated tag `lfm2-vl-mvp-0.1.0` peels to
-  `ff885586f6d44a3d9b9ac1724032cdf5f0155384`. Do not move or reuse it for the
-  coordinated runtime.
-- Current LFM2-VL overlay: 150 paths, exactly 15 fork-origin modifications and
-  135 mod-owned additions. The SnapFlash-derived overlay is 13
-  paths (6 fork-origin modifications and 7 additions); the repository-wide
-  union is 161 paths across both overlays with 6 registered shared paths.
+- Current combined-overlay candidate parent and `origin/main`:
+  `dca9849584e377cebc1da40de966d050733f3bbf`.
+- Immutable first-MVP tag: `lfm2-vl-mvp-0.1.0` peels to
+  `ff885586f6d44a3d9b9ac1724032cdf5f0155384`; never move or reuse it.
+- Proposed combined tag: `candle-overlays-mvp-0.2.0`. It does not yet exist
+  and no hosted release is claimed.
+- Exact published round/repository lineage lives in `docs/FORK_OVERLAYS.md`;
+  completed implementation and proof narratives live in `HISTORY.md` and
+  `PARITY.md`.
 
-## Worktree Boundary
+## Worktree And Authority
 
-- Native Windows/MSVC is the product and primary proof lane; WSL2/Linux is a
-  secondary portability replay.
 - `C:\DevStuff\candle-mods` is a WSL-owned linked worktree attached to local
-  `main`. Use `NVIDIA-Workbench` WSL Git for status, staging, commits, and
-  revision checks.
-- Owner-reviewed work lands directly on `main`. Broad staging, force-push,
-  implicit merge/rebase, hosted-CI evidence, PR creation, and secret inspection
-  remain prohibited.
-- `.tools/gitpush.ps1` is the only authorized publication path. It may publish
-  an already-reviewed fast-forward `main`; it must not stage or commit.
+  `main`. Use the `NVIDIA-Workbench` WSL Git backend for status, revision,
+  staging, commit, merge, and publication checks.
+- Native Windows/MSVC is the product and release-proof lane. WSL2/Linux is a
+  secondary portability replay, not the product platform.
+- The owner authorized a scoped commit and guarded direct push to `main` for
+  this source candidate on 2026-08-13. That authorization does not include an
+  annotated tag, hosted release, repository-rule change, secret inspection,
+  or hosted-CI invocation.
+- Models, caches, downloads, generated proof, Cargo output, and
+  `.tools/.secrets/` remain ignored or external. Operator disk cleanup removed
+  the local model/cache inputs; do not reconstruct or download them implicitly.
 
-## Current Phase
+## Current Product State
 
-- Product phase: coordinated three-repository integration. Rounds 1 through 7
-  and INT-5A through INT-5D are published. SnapFlash consumes Candle INT-5B.1,
-  passes the pinned tiny CPU/F32 differential fixture, and retains separate
-  installed Canny/Depth CUDA F16 proof. REL-8 is complete and published:
-  Candle exposes its deterministic later-component LoRA write fault only to
-  opted-in consumer tests, and SnapFlash proves rollback without duplicating
-  transaction logic. SnapFlash's subsequent queued-inpainting follow-on is
-  also published and remains application-owned.
-- The reusable hybrid constructor now lives at
-  `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid`. It accepts explicit local text,
-  tokenizer, processor, MMProj, dtype, device, and execution-policy inputs and
-  returns the paired model, processor, prompt, and exact consumed-file list.
-  The repository-integrity revision hardens its fail-fast boundary by
-  validating bounded tokenizer and processor bytes before opening either model
-  payload.
-- The example is a thin CLI/reporting adapter. Candle performs no discovery,
-  download, hidden fallback, retained-handle admission, hashing, resource
-  leasing, or product-proof publication.
-- Independent LFM2-VL and SnapFlash-derived manifests plus focused and union
-  verifiers prevent one overlay from silently claiming another overlay's files
-  or proof.
-- EdgeSymbio now pins the Round 1 Candle revision and passes its bounded,
-  CLI-only 450M CPU/F32 token-level proof. It remains intentionally absent from
-  API, Tauri, model packs, release sweeps, and product vision claims.
-- EdgeSymbio's current clean `main` adds a bounded Windows Job Object proof
-  runner and deterministic small-process regressions. Its three-component live
-  model replay and Candle-375 LFM2-VL reattestation remain owner-authorized
-  runtime gates, not source-code failures or inferred green evidence.
-- Candle exposes validated three-component SDXL LoRA parsing, injected target
-  resolution, canonical base/delta/merged hashes, and rollback-capable
-  `VarMapSwapTransaction` replacement/clear under a consumer-owned exclusive
-  model lease. SnapFlash-Server and EdgeSymbio now consume that exact published
-  framework revision without retaining duplicate generic transaction math.
-- The existing Candle UNet additional-residual hook is sufficient for the
-  application boundary. Published Round 7 makes its down-residual inventory
-  configuration-derived and validates exact shape, dtype, and device before
-  addition; it does not claim full ControlNet numerical parity.
-- The opt-in Candle UNet conditioning route now accepts pooled text plus
-  explicit SDXL size/crop time IDs, loads the official
-  `add_embedding.linear_{1,2}` namespace, and adds its projection to the base
-  timestep embedding. Existing constructors and forward methods remain
-  compatibility wrappers; a public VarBuilder route allows retained-buffer
-  opt-in without copying the private config. The base and addition sinusoidal
-  projections now stay F32 and cast only before their learned MLPs, matching
-  the pinned reference for F32, F16, and BF16 model tensors. SnapFlash owns and
-  now proves CLIP2 pooling, time-ID policy, the faithful attention graph,
-  retained revisions, and runtime admission.
+- LFM2.5 text configuration, embedding prefill, cached decode, and reset are
+  config-driven and compatibility-preserving.
+- SigLIP2 NaFlex, image preprocessing, crop/thumbnail metadata, prompt
+  expansion, pixel unshuffle/projector, and multi-image feature insertion are
+  implemented with checked limits and controlled malformed-input errors.
+- Native safetensors, quantized GGUF text plus split dense MMProj, direct GGUF
+  MMProj, and CPU-F32 native Q8_0 MMProj execution are implemented.
+- `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid` is the public local-only hybrid
+  assembly boundary. The example remains a thin CLI/reporting adapter; Candle
+  performs no discovery, download, retained-handle admission, resource lease,
+  or application proof publication.
+- Generic SDXL framework additions cover three-component LoRA transactions,
+  exact residual admission, opt-in pooled-text/time-ID conditioning,
+  lower-precision cast order, and a consumer-test-only rollback seam.
+- The LFM2-VL overlay contains 156 paths (16 fork modifications, 140
+  additions). The SnapFlash-derived overlay contains 20 paths (8
+  modifications, 12 additions). Their registered union is 167 paths with 13
+  shared paths.
 
-## Last Green Verification
+## Latest Integrity Review
 
-### Public hybrid metadata preflight release gate
+- No missing LFM2-VL module export, broken example import, production stub, or
+  incomplete owned feature was found. The public example test binary compiles
+  and exercises the reexport surface.
+- Q8 MMProj source-policy validation now has one implementation shared by
+  parse-time and resolved-runtime checks; focused tests cover valid GGUF/F32
+  and invalid native, split, BF16, and F16 combinations.
+- The stale SDXL attention TODO was replaced with the actual contiguous-layout
+  invariant; no speculative kernel optimization was introduced.
+- `summary_bank.json` now separates the active linked-worktree hazard from the
+  archived Gknome attempt, routes newly found upstream VAE/runtime panic work,
+  and trims the publication route from 227.8 KiB to 101.8 KiB. The default
+  orientation route is 127.3/256 KiB.
+- `START_HERE.md` and `docs/FORK_OVERLAYS.md` no longer repeat completed
+  lineage and parity narratives. This file holds current truth; `TODO.md`
+  holds only active or explicitly deferred work; `HISTORY.md` holds completed
+  detail.
+- A repository-wide incomplete-logic scan found additional upstream
+  `todo!`/`unimplemented!` and unchecked serialization/configuration paths.
+  They are shaped in `TODO.md` as post-0.2.0, one-subsystem-at-a-time work so
+  the frozen candidate is not silently widened.
 
-- `cargo test --locked --offline -j 2 -p candle-vlm lfm2_vl::loading
-  --lib`: passed 8/8 focused tests after the final exact-size reader change.
-- The regressions prove malformed tokenizer and processor inputs win over
-  deliberately missing model paths, exact byte ceilings are accepted, and one
-  byte over is rejected. Existing split dense, direct dense GGUF, and direct
-  Q8_0 GGUF construction remains green.
-- `cargo test --locked --offline -j 2 -p candle-vlm`: passed 37/37 library
-  tests and doc tests. `cargo test --locked --offline -j 2 -p
-  candle-examples --example lfm2-vl`: passed 32/32.
-- The affected core/NN/transformer/VLM/example check passed. Warnings-denied
-  Clippy passed for `candle-vlm --all-targets` and the public example.
-- `cargo test --locked --offline -j 2 --workspace --exclude candle-datasets
-  --exclude candle-pyo3`: passed every selected native Windows unit,
-  integration, and doc-test lane. The two exclusions preserve the existing
-  documented network-backed dataset and owner-Python boundaries.
-- Both overlay manifests passed at 150/15/135 and 13/6/7; their union passed at
-  161 paths, two overlays, and six shared paths. The 24-group summary bank,
-  module-layout verifier, formatting, and WSL-owned diff check passed.
-- No model, CUDA, checkpoint, network, Python oracle, llama.cpp workload,
-  hosted runner, or secret inspection was used. The reviewed implementation
-  and proof state are committed at `1877c8500f4f07f0e4851103cf9cfc54d98c411f`.
-- The companion unsupported-feature regression
-  `stable_diffusion::attention::tests::flash_attention_without_feature_returns_an_error`
-  passed. The complete transformer crate passed 89/89 library tests plus its
-  integration/doc lanes, strict transformer Clippy passed, and the cached
-  workspace suite was replayed green after the shared-source edit.
-
-### REL-8 downstream rollback-test seam publication
-
-- `cargo test --locked --offline -j 2 -p candle-transformers --features
-  test-utils --test stable_diffusion_mutable_tests`: passed 2/2 public
-  consumer-contract tests. Named failures at text encoder 1 and text encoder 2
-  restore every prior write, preserve revision/active targets, and a component
-  with no planned writes rejects before mutation.
-- `cargo test --locked --offline -j 2 -p candle-transformers
-  stable_diffusion::mutable --lib`: passed the existing 9/9 internal
-  transaction tests.
-- `cargo check --locked --offline -j 2 -p candle-core -p candle-nn -p
-  candle-transformers -p candle-vlm`, warnings-denied
-  `cargo clippy --locked --offline -j 2 -p candle-transformers --features
-  test-utils --all-targets`, and the feature-enabled `candle-transformers`
-  suite passed.
-- `cargo test --locked --offline -j 2 --workspace --exclude candle-datasets
-  --exclude candle-pyo3` passed with no failures. `cargo fmt --all -- --check`,
-  preflight smoke, module-layout, the SnapFlash-derived manifest at 12/5/7,
-  the repository-wide overlay union at 160/two/six, the 25-group summary-bank
-  audit, and WSL-owned `git diff --check` also pass.
-- Candle `main` is published and remotely equal at
-  `1660f9fca8d6c8eb70937791e796203527f7be26`. SnapFlash pins that exact graph,
-  passes 7/7 focused `head_swap` tests plus its 414/1 no-model aggregate, and
-  is published/remotely equal at
-  `a6eaffb3f4ffdc465192dd293c61ed0ae7a4ca95`.
-
-### INT-5B.1 lower-precision cast-order publication gate
-
-- `cargo fmt --all -- --check`: passed on the source candidate.
-- `cargo test --offline --locked -j 2 -p candle-transformers
-  stable_diffusion --lib`: passed 29/29 focused tests. The complete tiny F16
-  configured UNet executes on native Windows CPU; the F16 projection matches
-  the F32-before-cast reference and differs from projecting in F16; F16 and
-  BF16 addition inputs reach the learned MLP boundary in model dtype.
-- `cargo test --offline --locked -j 2 -p candle-transformers`: passed 88/88
-  library, 5/5 generation, and 8/8 NMS tests; the unrelated Smol doc test
-  remains ignored.
-- `cargo check --offline --locked -j 2 -p candle-core -p candle-nn -p
-  candle-transformers -p candle-vlm`: passed.
-- `cargo clippy --offline --locked -j 2 -p candle-transformers --all-targets
-  -- -D warnings`: passed.
-- `cargo test --offline --locked -j 2 --workspace --exclude
-  candle-datasets --exclude candle-pyo3`: passed across the remaining cached
-  native Windows workspace. The first complete-workspace attempt failed only
-  because no system Python is currently registered; the bundled Codex Python
-  is 3.12 while `candle-pyo3` requires the `abi3-py313` minimum. No package or
-  network action was taken to replace the missing owner environment.
-- `PYO3_NO_PYTHON=1 cargo clippy --offline --locked -j 2 --workspace
-  --all-targets -- -D warnings`: passed across the complete cached workspace.
-- Actual BF16 matrix execution is not claimed because the Windows CPU backend
-  reports that dtype unsupported for matmul. No CUDA, model, checkpoint,
-  Python oracle, network, or llama.cpp workload ran.
-
-### INT-5B SDXL `text_time` publication gate
-
-- `cargo fmt --all -- --check`: passed on the settled tree.
-- `cargo test --offline --locked -j 2 -p candle-transformers
-  stable_diffusion --lib`: passed 26/26 focused tests, including the 13 UNet
-  conditioning/residual tests and the public VarBuilder construction route.
-- `cargo test --offline --locked -j 2 -p candle-transformers`: passed 85/85
-  library, 5/5 generation, and 8/8 NMS tests; the existing unrelated Smol doc
-  test remains ignored.
-- `cargo check --offline --locked -j 2 -p candle-core -p candle-nn -p
-  candle-transformers -p candle-vlm`: passed.
-- `cargo clippy --offline --locked -j 2 -p candle-transformers --all-targets
-  -- -D warnings`: passed, followed by `PYO3_NO_PYTHON=1 cargo clippy
-  --offline --locked -j 2 --workspace --all-targets -- -D warnings` across the
-  complete cached workspace graph.
-- `PYO3_PYTHON=<installed Python 3.13> cargo test --offline --locked -j 2
-  --workspace --exclude candle-datasets`: passed every remaining native
-  Windows unit, integration, and doc-test lane. The first compile-complete
-  attempt without an interpreter failed only while linking the unrelated
-  `candle-pyo3` test target because `python3.lib` was unavailable; selecting
-  the already-installed interpreter required no package or network action.
-- The SnapFlash manifest passed at 10/4/6, the LFM2-VL manifest at 150/15/135,
-  and the cross-overlay union at 159 paths, two overlays, and five shared
-  paths. The summary bank passed 24 groups with a 126.2 KiB consolidated SDXL
-  route and 130.8/256 KiB defaults. Module-layout and `git diff --check`
-  passed.
-- No production model, checkpoint, Python oracle, CUDA workload, llama.cpp
-  process, dependency download, hosted runner, PR, or secret inspection was
-  used.
-
-### Round 7 additional-residual publication gate
-
-- `cargo fmt --all -- --check`: passed after applying canonical formatting to
-  the focused UNet change.
-- `cargo test --locked --offline -j 2 -p candle-transformers
-  stable_diffusion::unet_2d::tests --lib`: passed 6/6 exact residual-contract
-  tests.
-- `cargo test --locked --offline -j 2 -p candle-transformers`: passed 77/77
-  library, 5/5 generation, and 8/8 NMS tests; the existing unrelated Smol doc
-  test remains ignored.
-- `cargo clippy --locked --offline -j 2 -p candle-transformers --all-targets
-  -- -D warnings`: passed.
-- `PYO3_NO_PYTHON=1 cargo clippy --locked --offline -j 2 --workspace
-  --all-targets -- -D warnings`: passed the complete cached compile-only
-  workspace lane. The first local replay selected the desktop-bundled Python
-  3.12 interpreter and stopped before project compilation because the
-  unrelated `candle-pyo3` crate requires the `abi3-py313` floor; PyO3's
-  supported no-interpreter mode then compiled the same all-target graph with
-  warnings denied. The separate workspace test lane below already passed with
-  installed Python 3.13.
-- `cargo check --locked --offline -j 2 -p candle-core -p candle-nn -p
-  candle-transformers -p candle-vlm`: passed.
-- `cargo test --locked --offline -j 2 --workspace --exclude candle-datasets`:
-  passed the complete remaining native Windows workspace test and doc-test
-  lane after selecting the already-installed Python 3.13 interpreter required
-  by the unrelated PyO3 crate. The first sandboxed attempt was an environment
-  probe and failed before compilation because Python was absent from `PATH`;
-  the second sandboxed probe proved the installed interpreter was denied by
-  sandbox policy. No package installation or network access occurred.
-- The SnapFlash-derived manifest passed at 9/3/6, the LFM2-VL manifest passed
-  at 150/15/135 with 13 text and six binary fixture policies, and the root
-  overlay union passed at 158 paths, two overlays, and five shared paths.
-- The summary bank passed 25 groups; the focused residual route is 33.0 KiB
-  and defaults remain 133.8/256 KiB. Module-layout and preflight smoke gates
-  passed, and `git diff --check` is clean through the required WSL Git lane.
-- No production model, CUDA workload, Python oracle, llama.cpp process,
-  checkpoint, network dependency, or hosted runner was started.
-
-### Round 3 SDXL LoRA promotion gate
-
-- `cargo fmt --all -- --check`: passed after the focused implementation.
-- `cargo test --locked --offline -j 2 -p candle-transformers
-  stable_diffusion`: passed 12/12 focused LoRA tests, including fail-before-
-  write revision exhaustion.
-- `cargo test --locked --offline -j 2 -p candle-transformers`: passed 71/71
-  library, 5/5 generation, and 8/8 NMS tests; one unrelated doc test remains
-  intentionally ignored.
-- `cargo clippy --locked --offline -j 2 -p candle-transformers --all-targets --
-  -D warnings`: passed.
-- `bash scripts/snapflash/verify-mod-manifest.sh`: passed at 8 total paths, 2
-  fork modifications, and 6 additions.
-- `bash scripts/verify-fork-overlays.sh`: passed at 157 union paths, two
-  overlays, and five registered shared paths.
-- `scripts/lfm2-vl/verify-summary-bank.ps1`: passed 24 groups; the focused
-  LoRA transaction route is 72.2 KiB and defaults remain 121.9/256 KiB.
-- `cargo test --locked --offline -j 2 --workspace --exclude
-  candle-datasets`: passed every remaining workspace unit, integration, and
-  doc-test lane on native Windows. `cargo check --locked --offline -p
-  candle-datasets` passed, and strict full-workspace/all-target Clippy passed
-  with `-D warnings`.
-- The unexcluded workspace attempt and focused dataset replay both stopped only
-  because the pre-existing `candle-datasets::hub::tests::test_dataset` performs
-  live HTTP even under Cargo offline mode and `HF_HUB_OFFLINE=1`; F-0053 records
-  the exact owner-scoped skip. No network access was granted.
-- No model, CUDA workload, Python oracle, llama.cpp process, checkpoint, or
-  network dependency was loaded.
-
-### Round 1 public-loader release gate
+## Current Verification
 
 - `cargo fmt --all -- --check`: passed.
-- `cargo test --locked --offline -j 2 -p candle-vlm`: passed, 35/35 unit tests
-  plus doc tests.
-- `cargo test --locked --offline -j 2 -p candle-examples --example lfm2-vl`:
-  passed, 32/32.
-- Strict targeted Clippy passed for `candle-vlm --all-targets` and the
-  `lfm2-vl` example with `-D warnings`.
-- `cargo test --locked --offline -j 2 --workspace`: passed on native Windows,
-  including core, NN, transformer 59/59, VLM 35/35, WASM, Python-binding build,
+- The complete `lfm2-vl` example suite passed 32/32, including the 17 focused
+  argument-policy cases. Focused LoRA parser tests passed 3/3 and the
+  disabled-feature attention regression passed 1/1.
+- `PYO3_NO_PYTHON=1 cargo check --locked --offline -j 2 --workspace`: passed.
+- `PYO3_NO_PYTHON=1 cargo clippy --locked --offline -j 2 --workspace
+  --all-targets -- -D warnings`: passed.
+- Summary-bank validation passed under PowerShell 7 and 5.1 for 30 groups; a
+  temporary negative fixture proved archived groups without `_archive_note`
+  are rejected.
+- Module layout passed for every registered include-based split using the
+  bundled read-only Python runtime.
+- Both overlay manifests and the repository union passed at 156/20/167 with
+  13 shared paths.
+- Local Markdown targets across project/fork/LFM2-VL docs passed 18/18 files.
+- `PYO3_NO_PYTHON=1 cargo test --locked --offline -j 2 --workspace --exclude
+  candle-datasets --exclude candle-pyo3` passed all selected unit,
   integration, and doc-test lanes.
-- `cargo clippy --locked --offline -j 2 --workspace --all-targets -- -D
-  warnings`: passed.
-- The workspace-wide commands selected the already-installed Python 3.13
-  interpreter because the unrelated `candle-pyo3` ABI3 feature rejects the
-  bundled Python 3.12 interpreter. No Python package installation or network
-  access occurred.
-- Public-loader fixtures prove split dense, direct dense GGUF, and direct Q8_0
-  GGUF construction. Their four generated inputs are size/hash pinned and
-  contain no production checkpoint bytes.
-- The LFM2-VL manifest verifier passes at 150/15/135 with 13 text and six
-  binary fixture files. The root overlay verifier passes at 153 paths, two
-  overlays, and five registered shared paths. The summary bank passes with 23
-  groups.
-- No production checkpoint, Python oracle, llama.cpp process, CUDA inference,
-  dependency download, or concurrent large-model run was started.
+- Release-receipt contract tests passed 22/22 assertions under PowerShell 7
+  and 22/22 under Windows PowerShell 5.1.
+- `git diff --check` and the complete manifest diff inspection passed.
 
-### Retained production evidence
+## Gaps And Blockers
 
-- Admitted 450M model: `LiquidAI/LFM2.5-VL-450M` at revision
-  `fc6221ca597f3315e4f82fc2df606783267b34ba`; artifact-manifest SHA-256
-  `659c8421530586b6cc28c094cfcdc69719ea8626f2abc0efd9eec4ac2a68a984`.
-- Six bounded 450M routes remain green: CPU/CPU F32, all-CUDA F32/BF16/F16,
-  CPU-text/CUDA-vision F32, and CUDA-text/CPU-vision F32. Each produced exact
-  IDs `[1098, 4646, 5251]`, reset cache, exited zero, and released its PID.
-- Official 1.6B native Windows CPU-F32 parity remains green at 51/51 tensors;
-  comparison SHA-256 is
-  `9a0b16256a222678f9dce1282660e49fc6d19103cc6dd6a53c824bb58a6412c0`.
-- Detailed production commands, thresholds, and evidence identities live in
-  `PARITY.md` and `HISTORY.md`; they are not duplicated here.
-
-## Proven Behavior
-
-- Config-driven LFM2.5 text, embedding prefill, cached decode, and reset.
-- SigLIP2 NaFlex, pixel unshuffle/projector, composite native model, checked
-  raw-image processing, prompt expansion, and multi-image feature insertion.
-- Native safetensors, quantized GGUF text plus split dense MMProj, direct GGUF
-  MMProj, CPU-F32 native Q8_0 execution, strict inventory/provenance checks,
-  and controlled malformed-input errors.
-- Public local-only hybrid assembly with exact consumed-file inventory and
-  deterministic construction tests for every supported hybrid form.
-- Deterministic native/hybrid evidence, official 450M and 1.6B CPU parity,
-  complete advertised 450M placement/dtype parity, and official GGUF
-  same-artifact decoded-output agreement with pinned llama.cpp.
-- Kill-on-close Windows Job containment, timeout/memory enforcement, exact PID
-  cleanup, quiet-host admission, and no-clobber evidence publication.
-
-## Known Gaps and Conflicts
-
-- EdgeSymbio's token-level CPU/F32 proof matches exact generated IDs, text,
-  image geometry, spans, stop reason, and in-process cache replay. Its observed
-  prefill-logits hash differs from the standalone Candle executable; no
-  source/dependency/feature drift was found, so this remains a recorded
-  non-bitwise observation rather than a falsely explained numerical claim.
-- Candle's upstream dataset smoke remains network-backed and has no local
-  fixture. It is excluded only from the workspace test execution; the crate
-  check and its all-target Clippy compile remain green. See F-0053.
-- SnapFlash-Server Round 6 is published. Its Windows product lane now binds
-  body admission to the materialized buffer lifetime, accounts for complete
-  retained queue records including bounded terminal errors, rejects derived
-  structured prompts before admission, preserves the required base64-result
-  wire, and evicts whole terminal records from an independent owner. Its
-  separate Unix/WSL hostile-directory authority item remains in the SnapFlash
-  backlog and does not broaden the proven native-Windows boundary.
-- SnapFlash's faithful ControlNet graph and tiny differential fixture are
-  published. OpenPose, Scribble, and Normal remain separately asset-gated;
-  Canny/Depth proof cannot be generalized to those absent composite revisions.
+- The combined-overlay implementation has no known owned source or local-check
+  blocker for the authorized direct `main` source publication. A clean-head
+  replay remains required before push.
+- Production model inputs are absent after operator cleanup. Existing retained
+  hash-bound parity remains historical evidence; no new live model/CUDA claim
+  is made in this task.
+- The upstream `candle-datasets` runtime test performs live HTTP even under
+  Cargo offline mode. It remains an owner-scoped skip; crate check and Clippy
+  still cover its source.
+- `candle-pyo3` tests cannot link in the cleaned local environment: the system
+  Python launcher has no registered interpreter, the bundled Python is 3.12
+  while the crate requires `abi3-py313`, and interpreter-free test linking
+  cannot find `python3.lib`. Workspace check and warnings-denied Clippy cover
+  the crate with `PYO3_NO_PYTHON=1`; its runtime tests remain an explicit
+  environment skip rather than a source failure.
 - Lower-than-Q8 vision quantization, video, true text batching, generic VLM
-  traits, converters, WebGPU/WASM, broad WSL replay, public signing, and LTS are
-  deferred future scope, not hidden MVP promises.
-- The prior llama.cpp residency incident required a host restart. Exact cause
-  remains unproven; `FAILURE_LOG.md` F-0008 containment is mandatory for every
-  future model run.
-
-## Blockers
-
-- REL-6/7 and INT-5A through INT-5D have no remaining source, test, dependency,
-  or publication blocker.
-  Candle implementations `95ac9ff815fbac4f252b4ef6780b5e4a7843f328` and
-  `ba1e8acc142c4683995e4cdbc8b1d933c81e96c6` plus the exact SnapFlash
-  revisions above are published.
-- The upstream network-backed dataset test is a disclosed owner-scoped skip,
-  not a Round 3 blocker and not permission to enable network verification.
-- Edge CUDA/F16 and public LFM2-VL routes remain later product holds, not
-  concealed failures; Edge LoRA migration itself is complete.
-- Hosted GitHub Actions state is intentionally not a blocker or verification
-  dependency.
-- REL-8 has no remaining blocker. Both repositories are published at the exact
-  revisions above, their worktrees are clean, and production builds expose no
-  injected-failure method.
-- The bounded hybrid metadata implementation has no known source or local
-  verification blocker. Its scoped implementation commit is complete; guarded
-  direct-main publication through `.tools/gitpush.ps1` is authorized.
-
-## Active Change Set
-
-- No source file remains under active implementation. The bounded metadata
-  reader and stable-diffusion unsupported-feature error are committed together
-  at `1877c8500f4f07f0e4851103cf9cfc54d98c411f`.
-- This documentation-only successor clears the worktree boundary and records
-  the exact implementation revision before guarded publication.
-- Models, caches, downloads, generated proof logs, Cargo output, and
-  `.tools/.secrets/` remain ignored or external.
+  traits, WebGPU/WASM, public signing, and LTS are deferred product scope.
+- Reachable panic/stub candidates outside both frozen overlays are not hidden:
+  disabled-feature model attention, stable-diffusion VAE input assumptions,
+  selected model/operator and example stub branches, core dtype/dummy-backend
+  panics, and fallible safetensors serialization have explicit post-release
+  tasks in `TODO.md`.
 
 ## Exact Next Task
 
-No finite Candle-owned implementation task remains. The release condition is
-exact local/remote `main` equality confirmed by `.tools/gitpush.ps1`; once it
-is met, wait for a concrete reusable framework gap with an owner, files,
-completion condition, and verification command.
+Complete the owner-authorized scoped source commit, replay the complete local
+gate from its clean exact head, and publish reviewed `main` through
+`.tools/gitpush.ps1`. Annotated tag `candle-overlays-mvp-0.2.0`, external
+identity receipt, hosted release, and repository immutability remain separate
+owner actions. After source publication, begin only one explicitly selected
+post-release safety task from `TODO.md`; do not combine those families.
 
 ---
-AI-edited: 2026-08-13T14:04:40-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity-release | change=recorded the exact implementation revision and cleared active source work
+AI-edited: 2026-08-13T20:08:58-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=reconciled full local verification, explicit environment skips, and owner-authorized source publication boundary

@@ -108,6 +108,9 @@ foreach ($groupName in @($bank.groups.Keys | Sort-Object)) {
     if ($group.status -notin @("active", "archived")) {
         Fail-SummaryBank "group '$groupName' has invalid status '$($group.status)'"
     }
+    if ($group.status -eq "archived" -and [string]::IsNullOrWhiteSpace([string]$group._archive_note)) {
+        Fail-SummaryBank "archived group '$groupName' needs an _archive_note"
+    }
     $paths = @($group.paths)
     if ($paths.Count -eq 0) {
         Fail-SummaryBank "group '$groupName' has no paths"
@@ -136,9 +139,6 @@ foreach ($groupName in @($bank.groups.Keys | Sort-Object)) {
             if ($normalized -eq $forbidden -or $normalized.StartsWith("$forbidden/", [StringComparison]::OrdinalIgnoreCase)) {
                 Fail-SummaryBank "group '$groupName' routes excluded path '$relative'"
             }
-        }
-        if ($normalized -ieq "Cargo.lock") {
-            Fail-SummaryBank "group '$groupName' routes the ignored verifier-only Cargo.lock"
         }
         if (-not $seen.Add($normalized)) {
             Fail-SummaryBank "group '$groupName' repeats '$normalized'"

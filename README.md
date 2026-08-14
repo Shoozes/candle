@@ -14,6 +14,17 @@ and ease of use. Try our online demos:
 [Segment
 Anything](https://huggingface.co/spaces/radames/candle-segment-anything-wasm).
 
+## Shoozes fork scope
+
+This maintained fork adds the LFM2.5-VL/MMProj and generic SDXL diffusion
+overlays described in [`docs/FORK_OVERLAYS.md`](./docs/FORK_OVERLAYS.md).
+Start repository work from
+[`docs/lfm2-vl/START_HERE.md`](./docs/lfm2-vl/START_HERE.md); current truth and
+remaining work live in [`STATUS.md`](./docs/lfm2-vl/STATUS.md) and
+[`TODO.md`](./docs/lfm2-vl/TODO.md). Model weights, caches, runtime evidence,
+and downloads are external inputs and are never part of normal source setup or
+publication.
+
 ## Get started
 
 Make sure that you have [`candle-core`](https://github.com/huggingface/candle/tree/main/candle-core) correctly installed as described in [**Installation**](https://huggingface.github.io/candle/guide/installation.html).
@@ -450,3 +461,6 @@ If you encounter an error like this one `called `Result::unwrap()` on an `Err` v
 `c:\Windows\System32\nvcuda.dll` -> `cuda.dll`
 `c:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin\cublas64_12.dll` -> `cublas.dll`
 `c:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin\curand64_10.dll` -> `curand.dll`
+
+---
+AI-edited: 2026-08-13T20:08:58-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=added the maintained-fork orientation and external-artifact boundary

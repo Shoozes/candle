@@ -206,7 +206,7 @@ pub fn parse_sdxl_lora_pairs<'a>(
     if tensors.is_empty() {
         candle::bail!("SDXL LoRA adapter contains no tensors")
     }
-    tensors.sort_by(|(left, _), (right, _)| left.cmp(right));
+    tensors.sort_by_key(|(left, _)| *left);
 
     let mut pending = BTreeMap::<(SdxlLoraComponent, String), PendingPair>::new();
     for (name, tensor) in tensors {
