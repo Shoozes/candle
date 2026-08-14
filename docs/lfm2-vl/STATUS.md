@@ -6,8 +6,9 @@
   `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Upstream integration base: Candle main at
   `6f74e7c390c717f8fd34f23ce02aceb058173370`.
-- Current combined-overlay candidate parent and `origin/main`:
-  `dca9849584e377cebc1da40de966d050733f3bbf`.
+- Published combined-overlay source checkpoint and verified remote `main`:
+  `e2c6565d2970de7a9e507b7759a608d3a2c827e7`, tree
+  `18c1600fe0278754c697c83cbc6113cb69ab39bc`.
 - Immutable first-MVP tag: `lfm2-vl-mvp-0.1.0` peels to
   `ff885586f6d44a3d9b9ac1724032cdf5f0155384`; never move or reuse it.
 - Proposed combined tag: `candle-overlays-mvp-0.2.0`. It does not yet exist
@@ -23,10 +24,10 @@
   staging, commit, merge, and publication checks.
 - Native Windows/MSVC is the product and release-proof lane. WSL2/Linux is a
   secondary portability replay, not the product platform.
-- The owner authorized a scoped commit and guarded direct push to `main` for
-  this source candidate on 2026-08-13. That authorization does not include an
-  annotated tag, hosted release, repository-rule change, secret inspection,
-  or hosted-CI invocation.
+- The guarded helper published and remotely verified the source checkpoint on
+  2026-08-13. This documentation-only state reconciliation is its direct
+  fast-forward successor. No annotated tag, hosted release, repository-rule
+  change, secret inspection, or hosted-CI invocation was authorized or used.
 - Models, caches, downloads, generated proof, Cargo output, and
   `.tools/.secrets/` remain ignored or external. Operator disk cleanup removed
   the local model/cache inputs; do not reconstruct or download them implicitly.
@@ -64,8 +65,8 @@
   invariant; no speculative kernel optimization was introduced.
 - `summary_bank.json` now separates the active linked-worktree hazard from the
   archived Gknome attempt, routes newly found upstream VAE/runtime panic work,
-  and trims the publication route from 227.8 KiB to 101.8 KiB. The default
-  orientation route is 127.3/256 KiB.
+  and trims the publication route from 227.8 KiB to 101.7 KiB. The default
+  orientation route is 127.1/256 KiB.
 - `START_HERE.md` and `docs/FORK_OVERLAYS.md` no longer repeat completed
   lineage and parity narratives. This file holds current truth; `TODO.md`
   holds only active or explicitly deferred work; `HISTORY.md` holds completed
@@ -102,8 +103,7 @@
 ## Gaps And Blockers
 
 - The combined-overlay implementation has no known owned source or local-check
-  blocker for the authorized direct `main` source publication. A clean-head
-  replay remains required before push.
+  blocker. The authorized source publication is complete.
 - Production model inputs are absent after operator cleanup. Existing retained
   hash-bound parity remains historical evidence; no new live model/CUDA claim
   is made in this task.
@@ -126,12 +126,11 @@
 
 ## Exact Next Task
 
-Complete the owner-authorized scoped source commit, replay the complete local
-gate from its clean exact head, and publish reviewed `main` through
-`.tools/gitpush.ps1`. Annotated tag `candle-overlays-mvp-0.2.0`, external
-identity receipt, hosted release, and repository immutability remain separate
-owner actions. After source publication, begin only one explicitly selected
-post-release safety task from `TODO.md`; do not combine those families.
+With separate explicit owner authority, create and publish annotated tag
+`candle-overlays-mvp-0.2.0`, emit the external identity receipt, create the
+matching hosted release, and apply owner-selected immutability rules. Without
+that authority, begin only one selected post-release safety task from
+`TODO.md`; do not combine those families.
 
 ---
-AI-edited: 2026-08-13T20:08:58-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=reconciled full local verification, explicit environment skips, and owner-authorized source publication boundary
+AI-edited: 2026-08-13T20:21:47-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=recorded the clean-head verified source checkpoint, remote equality, and remaining immutable-release boundary

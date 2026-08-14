@@ -20,11 +20,12 @@ framework primitives are complete. Their detailed lineage and proof belong in
 `HISTORY.md`, `PARITY.md`, and `docs/FORK_OVERLAYS.md`; do not copy those
 snapshots back into this entry point.
 
-The active tree is the uncommitted combined-overlay 0.2.0 candidate based on
-`origin/main` at `dca9849584e377cebc1da40de966d050733f3bbf`. Its tracked
-lock/toolchain, local verification contract, overlay inventories, and external
-identity-receipt gate are implemented. The only active product task is the
-owner-authorized clean-head publication sequence in `TODO.md`.
+The combined-overlay 0.2.0 source checkpoint was clean-head verified and
+published to `origin/main` at
+`e2c6565d2970de7a9e507b7759a608d3a2c827e7`. Its tracked lock/toolchain,
+local verification contract, overlay inventories, and external
+identity-receipt gate are implemented. The remaining release work is the
+separately authorized immutable tag/receipt/release sequence in `TODO.md`.
 
 Annotated tag `lfm2-vl-mvp-0.1.0` remains the immutable first-MVP snapshot at
 `ff885586f6d44a3d9b9ac1724032cdf5f0155384`; never move or reuse it. The new
@@ -142,4 +143,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-13T20:08:58-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=consolidated current orientation and removed duplicated release history
+AI-edited: 2026-08-13T20:21:47-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=recorded the clean verified and remotely equal combined-overlay source checkpoint

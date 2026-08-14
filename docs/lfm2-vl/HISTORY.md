@@ -1851,7 +1851,7 @@ deferred to TODO C3; no network or toolchain install was substituted.
   selected offline workspace unit/integration/doc suite passed excluding only
   `candle-datasets` and `candle-pyo3`. Both excluded crates remain covered by
   workspace check and Clippy. Summary-bank validation passed in both
-  PowerShell engines at 30 groups and 127.3 KiB default context; module layout,
+  PowerShell engines at 30 groups and 127.1 KiB default context; module layout,
   Markdown targets across 18/18 state files, both manifests, the 167-path
   union, and diff checks passed.
 - Environment boundary: Production model/cache inputs were intentionally
@@ -1860,5 +1860,22 @@ deferred to TODO C3; no network or toolchain install was substituted.
   cleaned environment. No download, model/CUDA replay, hosted CI, tag, release,
   ruleset mutation, or secret inspection was used.
 
+## 2026-08-13 — Combined-overlay source checkpoint published to main
+
+- What: Committed the reviewed release-closeout and integrity candidate as
+  `e2c6565d2970de7a9e507b7759a608d3a2c827e7` (tree
+  `18c1600fe0278754c697c83cbc6113cb69ab39bc`), replayed the local gate from
+  that clean exact head, and published it directly to `Shoozes/candle:main`.
+- Verification: Clean-head format, locked offline workspace check, strict
+  all-target Clippy, selected workspace unit/integration/doc tests, LFM2-VL
+  32/32, LoRA 3/3, attention 1/1, summary/layout, 22/22 receipt assertions in
+  each PowerShell engine, both manifests, and the 167-path union passed. The
+  guarded publisher dry run proved a one-commit fast forward, then the real
+  push verified remote `main` at the exact commit.
+- Boundary: The helper owned credential handling; no secret was inspected or
+  staged. No PR, force push, hosted CI, model/CUDA run, tag, release, or
+  repository-rule mutation occurred. This state-record update is the
+  documentation-only fast-forward successor.
+
 ---
-AI-edited: 2026-08-13T20:08:58-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=archived the repository audit, context consolidation, bounded fixes, verification, and environment limits
+AI-edited: 2026-08-13T20:21:47-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=archived the verified direct-main source checkpoint and exact remaining release boundary

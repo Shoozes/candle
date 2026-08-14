@@ -8,22 +8,21 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ### [ ] Publish the immutable combined-overlay 0.2.0 snapshot
 
-- What: Commit the proven reproducibility/release boundary, replay local proof
-  from the clean exact head, publish `main`, create annotated tag
-  `candle-overlays-mvp-0.2.0`, attach the source contract and external receipt,
-  and apply owner-selected branch/tag protection.
-- Why: The source candidate and local gates are complete, but a dirty worktree
-  and candidate document cannot identify or protect an immutable release.
-- When: Commit and direct `main` push are owner-authorized as of 2026-08-13.
-  Tag, hosted release, and repository-rule changes still require separate
-  explicit authorization.
+- What: Create annotated tag `candle-overlays-mvp-0.2.0`, attach the source
+  contract and external receipt, and apply owner-selected branch/tag
+  protection to the already-published source checkpoint.
+- Why: Local and remote `main` now agree, but a moving branch alone does not
+  identify or protect an immutable release.
+- When: Only after separate explicit authorization for the tag, hosted
+  release, and repository-rule changes.
 - Where: Root lock/toolchain/workflow, both overlay manifests and verifiers,
   `docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md`, local `main`, `origin/main`, and
   the hosted `candle-overlays-mvp-0.2.0` release.
 - How:
   - Completed source, lock/toolchain, acceptance, verifier, and receipt work is
     recorded in `HISTORY.md`; do not duplicate that evidence here.
-  - [ ] Create the owner-authorized scoped commit, replay the clean-head local
+  - [x] Create scoped commit
+    `e2c6565d2970de7a9e507b7759a608d3a2c827e7`, replay the clean-head local
     gate, publish through the guarded helper, and confirm local/remote `main`
     equality.
   - [ ] Create and publish the annotated tag, emit the external identity
@@ -187,4 +186,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-08-13T20:08:58-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=deduplicated completed release evidence and shaped remaining core and example runtime panic boundaries
+AI-edited: 2026-08-13T20:21:47-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=completed direct-main source publication and retained only the separately authorized immutable-release step
