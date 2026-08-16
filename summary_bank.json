@@ -206,8 +206,7 @@
         "tools/lfm2_vl/reference/verify_environment.py",
         "tools/lfm2_vl/reference/requirements-reference.in",
         "tools/lfm2_vl/reference/requirements-reference.txt",
-        "tools/lfm2_vl/reference/requirements-reference-windows.txt",
-        "docs/lfm2-vl/FAILURE_LOG.md"
+        "tools/lfm2_vl/reference/requirements-reference-windows.txt"
       ]
     },
     "workflow__gguf_artifact_inspection": {
@@ -370,9 +369,18 @@
       "status": "active",
       "paths": [
         "AGENTS.md",
-        "docs/lfm2-vl/START_HERE.md",
+        "docs/lfm2-vl/START_HERE.md"
+      ]
+    },
+    "issue__lfm2_config_compatibility": {
+      "description": "Post-release LFM2 public configuration boundary: preserve legacy callers while preventing malformed external configuration from reaching the infallible conversion API.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/lfm2/config.rs",
+        "candle-transformers/src/models/lfm2.rs",
+        "candle-examples/examples/lfm2/main.rs",
         "docs/lfm2-vl/TODO.md",
-        "docs/lfm2-vl/FAILURE_LOG.md"
+        "docs/lfm2-vl/DECISIONS.md"
       ]
     },
     "issue__stable_diffusion_public_input_panics": {

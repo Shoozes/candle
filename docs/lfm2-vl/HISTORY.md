@@ -2,6 +2,46 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-08-16 — Closing-session verification and publication boundary
+
+- Replayed the focused closeout checks: `candle-vlm` 37/37, the LFM2
+  transformer slice 35/35, the `lfm2-vl` example 32/32, summary-bank
+  validation, and bundled module-layout validation all passed.
+- Verified with the elevated read-only WSL lane that `main` and `origin/main`
+  both resolve to `b4e1aacf4c531fe6e6e1844e4c74451ecef02fed`.
+- Invoked `.tools/gitpush.ps1 -DryRun -Yes` through its required WSL Git path.
+  The helper correctly refused publication because the five reviewed
+  documentation/context files remain uncommitted. No token was read directly,
+  and no staging, commit, or push was performed.
+- Process cleanup found no running Candle, LFM2, Cargo, or Rust compiler
+  processes to terminate.
+
+## 2026-08-16 — Repository integrity revalidation and context-route rebalance
+
+- Revalidated the current owned LFM2-VL/SnapFlash source boundary with native
+  Windows formatting, locked offline crate/example checks, focused tests,
+  summary-bank validation, bundled module-layout verification, Markdown target
+  checks, release-receipt tests, preflight smoke, and bounded-oracle smoke.
+- Confirmed the public `candle-vlm` and transformer/example export surfaces
+  compile and that the frozen LFM2-VL feature path has no production stubs or
+  broken imports. Kept the legacy infallible `Lfm2Config::into_config` boundary
+  unchanged under decision D-0059 and routed it as a post-release
+  compatibility task because changing its public contract requires a separate
+  compatibility decision.
+- Added the focused `issue__lfm2_config_compatibility` summary-bank group and
+  removed the large recurring failure log from two routes that already contain
+  their operational owners. The dedicated oracle-containment route still keeps
+  the failure log for incident work.
+- Environment boundary: the current shell has no `python` command, so the
+  module-layout check used the bundled session Python explicitly. Git status,
+  diff, and the WSL replay were unavailable because this linked worktree points
+  at a Linux `.git` path that the managed environment cannot resolve. No source
+  publication or destructive Git action occurred.
+- Verification: `candle-vlm` 37/37, LFM2 transformer slice 35/35, LFM2-VL
+  example 32/32, release receipt 22/22, summary bank 31 groups, module layout,
+  Markdown targets 18/18, formatting, affected crate/example checks,
+  preflight smoke, and bounded-oracle smoke passed.
+
 ## 2026-08-11 — P3.3 official 1.6B bounded Python component trace
 
 - Rehashed the exact pinned regular-file snapshot immediately before tracing;

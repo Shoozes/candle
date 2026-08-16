@@ -32,6 +32,33 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   summary/layout/overlay verifiers, `git diff --check`, clean status, guarded
   remote equality, and annotated-tag peel/asset comparison.
 
+### Conditional LFM2 configuration compatibility boundary
+
+- What: Remove or constrain the legacy public `Lfm2Config::into_config` panic
+  path while preserving compatibility for existing LFM2 integrations.
+- Why: `try_into_config` already returns actionable validation errors, but the
+  older infallible conversion still panics when malformed external
+  configuration is passed through it. That is an owned API edge case, not a
+  reason to change the frozen release contract silently.
+- When: After combined-overlay 0.2.0 publication, as an independently
+  reviewed LFM2 text-compatibility slice.
+- Where: `candle-transformers/src/models/lfm2/config.rs`, its focused tests,
+  and the LFM2 example/config callers in
+  `candle-examples/examples/lfm2/main.rs`.
+- How: Inventory downstream callers, add a regression that proves malformed
+  configuration is rejected through the supported fallible path, then choose
+  the smallest compatibility-preserving migration: deprecate and isolate the
+  infallible method, or version the public signature only with an explicit
+  compatibility decision. Do not weaken dimension validation or silently
+  coerce malformed values.
+- Done when: No externally supplied malformed LFM2 configuration can reach an
+  unhandled panic through the supported public/example path, existing valid
+  text-only LFM2 behavior remains unchanged, and the compatibility choice is
+  documented in `DECISIONS.md`.
+- Verification: Focused malformed-config and text-example tests, locked
+  offline checks for `candle-transformers` and `candle-examples`, strict
+  Clippy, formatting, and an updated exact `into_config` caller inventory.
+
 ## Sequencing holds
 
 - Optional LFM2-VL captioning in SnapFlash waits for the diffusion runtime and

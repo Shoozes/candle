@@ -1274,5 +1274,30 @@ tags, mismatched refs, toolchain/lock drift, inventory drift, and existing
 receipt targets fail without output. The hosted release must attach the
 checked-in contract and external receipt only after their identities agree.
 
+## D-0059: Preserve the Legacy LFM2 Configuration Conversion Contract Until Versioned Migration
+
+Status: Accepted for the frozen 0.2.0 boundary; migration deferred.
+
+Decision:
+Keep the public `Lfm2Config::into_config` signature available for existing
+text-only LFM2 integrations in the combined-overlay snapshot. All in-tree
+callers that load external configuration use the fallible
+`Lfm2Config::try_into_config` path. A future removal, deprecation, or signature
+change for the infallible method must be a separately versioned compatibility
+slice rather than an incidental hardening edit.
+
+Why:
+Malformed external configuration can still panic when an integration calls the
+legacy infallible method, but changing its public return type would silently
+break downstream callers during a frozen release closeout. The safe API already
+exists, and the current LFM2 example uses it; the remaining work is caller
+inventory and an explicit compatibility migration decision.
+
+Consequences:
+The panic boundary is tracked in `TODO.md` and must not be presented as a
+general malformed-input guarantee for direct legacy callers. New or maintained
+in-tree paths must validate through `try_into_config`, preserve valid
+text-only behavior, and add a regression before any future public API change.
+
 ---
-AI-edited: 2026-08-13T19:14:09-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=release-closeout | change=accepted the combined tag namespace and external immutable identity receipt ordering
+AI-edited: 2026-08-16T00:13:52-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=recorded the frozen LFM2 configuration compatibility boundary
