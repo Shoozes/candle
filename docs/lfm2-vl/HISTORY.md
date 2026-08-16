@@ -10,9 +10,11 @@ This file preserves completed implementation and verification evidence. Any pres
 - Verified with the elevated read-only WSL lane that `main` and `origin/main`
   both resolve to `b4e1aacf4c531fe6e6e1844e4c74451ecef02fed`.
 - Invoked `.tools/gitpush.ps1 -DryRun -Yes` through its required WSL Git path.
-  The helper correctly refused publication because the five reviewed
-  documentation/context files remain uncommitted. No token was read directly,
-  and no staging, commit, or push was performed.
+  The first attempt correctly refused publication because the five reviewed
+  documentation/context files were uncommitted. After explicit closeout
+  authorization, those files were committed as
+  `725799329a077e81c5fdbf3275f865f7eac456f3`; the guarded helper then pushed
+  and verified `origin/main` at that exact head. No token was read directly.
 - Process cleanup found no running Candle, LFM2, Cargo, or Rust compiler
   processes to terminate.
 

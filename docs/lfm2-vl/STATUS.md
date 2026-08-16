@@ -131,9 +131,9 @@
 ## Gaps And Blockers
 
 - The combined-overlay implementation has no known owned source or local-check
-  blocker. The last committed source publication is complete; this closeout
-  pass has five reviewed documentation/context edits pending explicit
-  stage/commit authorization.
+  blocker. The reviewed documentation/context closeout was committed as
+  `725799329a077e81c5fdbf3275f865f7eac456f3` and published directly to
+  `origin/main` through the guarded publisher.
 - Production model inputs are absent after operator cleanup. Existing retained
   hash-bound parity remains historical evidence; no new live model/CUDA claim
   is made in this task.
@@ -156,21 +156,21 @@
 - The initial integrity pass could not run Git status/diff or the WSL replay
   because the managed environment denied WSL enumeration and the checkout's
   `.git` pointer targets a Linux worktree path. An elevated read-only retry
-  reached the linked worktree: `main` and `origin/main` both resolve to
-  `b4e1aacf4c531fe6e6e1844e4c74451ecef02fed`, while the five reviewed files
-  remain modified. The guarded `gitpush.ps1 -DryRun -Yes` therefore refused
-  the dirty worktree before any fetch, staging, commit, or push.
+  reached the linked worktree and confirmed the pre-publication head at
+  `b4e1aacf4c531fe6e6e1844e4c74451ecef02fed`. The guarded publisher first
+  refused the dirty worktree, then passed after the reviewed five-file commit;
+  the direct push and remote-head verification completed at
+  `725799329a077e81c5fdbf3275f865f7eac456f3`. No active publication blocker
+  remains, and no related Candle/LFM2/Cargo/Rust process was running at
+  closeout.
 
 ## Exact Next Task
 
-After explicit commit authorization, review and commit the five listed
-documentation/context edits, rerun the guarded publisher, and publish only if
-`main` remains clean and no longer behind `origin/main`. If publication is
-already complete, report that state without a redundant push. With separate
-explicit owner authority, the later release task is to create and publish the
-annotated tag `candle-overlays-mvp-0.2.0`, emit the external identity receipt,
-create the matching hosted release, and apply owner-selected immutability
-rules; do not combine those families.
+With separate explicit owner authority, the next release task is to create and
+publish the annotated tag `candle-overlays-mvp-0.2.0`, emit the external
+identity receipt, create the matching hosted release, and apply owner-selected
+immutability rules. Do not combine those families with the post-release safety
+tasks in `TODO.md`.
 
 ---
-AI-edited: 2026-08-16T00:20:34-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=closing-session | change=recorded focused verification, exact main parity, and the guarded publisher dirty-worktree blocker
+AI-edited: 2026-08-16T00:24:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=closing-session | change=recorded the verified direct-main publication and clean closeout state
