@@ -41,8 +41,17 @@ fn run(
     }
     let model_inputs = inspect_input_paths(request.model_inputs)?;
     if request.trace_output.is_some() && request.image_paths.len() != 1 {
-        bail!("LFM2-VL native trace requires exactly one image input")
+        bail!("LFM2-VL bounded evidence requires exactly one image input")
     }
+    let trace_mode = if request.trace_output.is_some() {
+        Some(runtime.trace_mode().ok_or_else(|| {
+            anyhow::anyhow!(
+                "LFM2-VL bounded evidence is unavailable for this runtime; direct GGUF or native loading is required"
+            )
+        })?)
+    } else {
+        None
+    };
     let limits = &processor.config().vision_limits;
     let image_load_started = Instant::now();
     let (images, image_files) = load_images(request.image_paths, limits)?;
@@ -96,10 +105,10 @@ fn run(
     let vision_started = Instant::now();
     let (encoded, image_trace) = if images.is_empty() {
         if request.trace_output.is_some() {
-            bail!("LFM2-VL native trace requires one decoded image")
+            bail!("LFM2-VL bounded evidence requires one decoded image")
         }
         (None, None)
-    } else if request.trace_output.is_some() {
+    } else if matches!(trace_mode, Some(TraceMode::Native)) {
         let (encoded, trace) =
             runtime.encode_images_with_trace(&processed, request.vision_batch_size, limits)?;
         (Some(encoded), trace)
@@ -113,10 +122,27 @@ fn run(
         runtime.synchronize_devices()?;
     }
     let vision_ms = vision_started.elapsed().as_secs_f64() * 1000.0;
-    let mut trace_capture = match (request.trace_output, image_trace) {
-        (Some(_), Some(image)) => Some(NativeTraceCapture::new(image)),
-        (Some(_), None) => bail!("LFM2-VL native trace is unavailable for the selected runtime"),
-        (None, _) => None,
+    let mut native_trace_capture = match (request.trace_output, trace_mode, image_trace) {
+        (Some(_), Some(TraceMode::Native), Some(image)) => {
+            Some(NativeTraceCapture::new(image))
+        }
+        (Some(_), Some(TraceMode::Native), None) => {
+            bail!("LFM2-VL native trace is unavailable for the selected runtime")
+        }
+        _ => None,
+    };
+    let mut hybrid_trace_capture = match (request.trace_output, trace_mode, encoded.as_ref()) {
+        (Some(_), Some(TraceMode::Hybrid { execution, q8_tensor_count }), Some(encoded)) => {
+            Some(HybridTraceCapture::new(
+                &encoded.embeddings,
+                execution,
+                q8_tensor_count,
+            ))
+        }
+        (Some(_), Some(TraceMode::Hybrid { .. }), None) => {
+            bail!("LFM2-VL hybrid evidence requires encoded image features")
+        }
+        _ => None,
     };
     let input_ids =
         Tensor::new(expanded.input_ids.as_slice(), runtime.text_device())?.unsqueeze(0)?;
@@ -138,8 +164,11 @@ fn run(
         runtime.synchronize_devices()?;
     }
     let first_generation_ms = first_started.elapsed().as_secs_f64() * 1000.0;
-    if let Some(capture) = trace_capture.as_mut() {
+    if let Some(capture) = native_trace_capture.as_mut() {
         capture_trace(runtime, &generation_inputs, capture)?;
+    }
+    if let Some(capture) = hybrid_trace_capture.as_mut() {
+        capture_hybrid_trace(runtime, &generation_inputs, capture)?;
     }
     if request.timings {
         runtime.synchronize_devices()?;
@@ -200,16 +229,29 @@ fn run(
         cache_reset_exact: true,
     };
     if let Some(output) = request.trace_output {
-        let capture = trace_capture
-            .ok_or_else(|| anyhow::anyhow!("LFM2-VL native trace capture was not initialized"))?;
-        trace::write_native_trace(
-            output,
-            &report,
-            &processed,
-            &input_ids,
-            images.first(),
-            capture,
-        )?;
+        match (trace_mode, native_trace_capture, hybrid_trace_capture) {
+            (Some(TraceMode::Native), Some(capture), None) => trace::write_native_trace(
+                output,
+                &report,
+                &processed,
+                &input_ids,
+                images.first(),
+                capture,
+            )?,
+            (
+                Some(TraceMode::Hybrid { .. }),
+                None,
+                Some(capture),
+            ) => trace::write_hybrid_trace(
+                output,
+                &report,
+                &processed,
+                &input_ids,
+                images.first(),
+                capture,
+            )?,
+            _ => bail!("LFM2-VL bounded evidence capture was not initialized"),
+        }
     }
     if request.timings {
         runtime.synchronize_devices()?;

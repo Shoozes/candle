@@ -22,6 +22,7 @@ import manifest
 import production_trace
 import verify_environment
 from compare_traces import (
+    compare_hybrid_traces,
     REQUIRED_TENSORS,
     _validate_artifact_identity,
     compare_traces,
@@ -33,6 +34,7 @@ from manifest import (
     REFERENCE_PYTHON_PINS,
     load_reference_lock,
     model_entry,
+    remote_code_admission,
     reference_package_pins,
 )
 from tensor_dump import validate_bundle, write_tensor_bundle
@@ -133,6 +135,23 @@ def _synthetic_artifact_contract():
     return artifact, model_inputs
 
 
+def _synthetic_hybrid_tensors(torch, *, offset: float = 0.0):
+    tensors = {
+        "input.decode_token_ids": torch.tensor([[1, 2, 3]], dtype=torch.int64),
+        "input.image_rgb_u8": torch.zeros((2, 2, 3), dtype=torch.uint8),
+        "input.attention_mask": torch.ones((1, 8), dtype=torch.int64),
+        "input.input_ids": torch.tensor([[1, 3, 3, 2, 4, 5, 6, 7]], dtype=torch.int64),
+        "input.pixel_attention_mask": torch.ones((1, 4), dtype=torch.int64),
+        "input.pixel_values": torch.ones((1, 4, 3), dtype=torch.float32),
+        "input.projector_crop_ranges": torch.tensor([[0, 4]], dtype=torch.int64),
+        "input.spatial_shapes": torch.tensor([[2, 2]], dtype=torch.int64),
+        "stage.projector.output": torch.ones((4, 6), dtype=torch.float32) + offset,
+        "stage.language.prefill_logits": torch.ones((1, 8, 4), dtype=torch.float32) + offset,
+        "stage.language.decode_logits": torch.ones((1, 3, 4), dtype=torch.float32) + offset,
+    }
+    return tensors
+
+
 def test_config_only_uses_lock_without_heavy_imports():
     summary_450 = inspect_config(model="450m")
     summary_16 = inspect_config(model="1.6b")
@@ -142,6 +161,66 @@ def test_config_only_uses_lock_without_heavy_imports():
     assert summary_16["projector"]["input_size"] == 4608
     assert summary_450["image_token_id"] == 396
     assert summary_450["model_revision"] != summary_16["model_revision"]
+
+
+def test_3b_lock_alias_and_checkpoint_contract_are_explicit():
+    summary = inspect_config(model="3b")
+    assert summary["model_id"] == "LiquidAI/LFM2.5-VL-3B"
+    assert summary["text"]["hidden_size"] == 2048
+    assert summary["text"]["vocab_size"] == 128000
+    assert summary["text"]["num_hidden_layers"] == 30
+    assert summary["text"]["max_position_embeddings"] == 128000
+    assert summary["text"]["eos_token_id"] == 124900
+    assert summary["vision"]["hidden_size"] == 1152
+    assert summary["vision"]["num_hidden_layers"] == 27
+    assert summary["projector"]["input_size"] == 4608
+    assert summary["image_token_id"] == 124907
+    entry = model_entry(load_reference_lock(), "3b")
+    assert entry["remote_code_policy"]["trust_remote_code"] is False
+    assert entry["remote_code_policy"]["files"] == []
+    assert entry["memory_bounds"]["max_input_tokens"] == 4096
+    assert entry["safetensors_header"]["tensor_records"] == 707
+
+
+def test_config_only_validates_local_3b_config_and_processor_contract(tmp_path: Path):
+    entry = model_entry(load_reference_lock(), "3b")
+    locked = entry["source_confirmed_config"]
+    config_path = tmp_path / "config.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "architectures": [locked["architecture"]],
+                "model_type": locked["model_type"],
+                "image_token_id": locked["image_token_id"],
+                "downsample_factor": locked["downsample_factor"],
+                "projector_hidden_size": locked["projector_hidden_size"],
+                "projector_hidden_act": locked["projector_hidden_act"],
+                "projector_bias": locked["projector_bias"],
+                "projector_use_layernorm": locked["projector_use_layernorm"],
+                "text_config": locked["text"],
+                "vision_config": locked["vision"],
+                "tie_word_embeddings": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    processor_path = tmp_path / "processor_config.json"
+    processor_path.write_text(
+        json.dumps({"image_processor": locked["processor"]}), encoding="utf-8"
+    )
+    summary = inspect_config(
+        model="3b",
+        config_path=config_path,
+        processor_config_path=processor_path,
+    )
+    assert summary["locked_values_validated"] is True
+    assert summary["processor"]["min_tiles"] == 1
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8").replace('"hidden_size": 2048', '"hidden_size": 1024'),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="does not match the locked checkpoint"):
+        inspect_config(model="3b", config_path=config_path)
 
 
 def test_config_only_rejects_non_json_weight_like_input(tmp_path: Path):
@@ -273,6 +352,65 @@ def test_artifact_manifest_records_pinned_regular_files_without_loading_weights(
     output = tmp_path / "artifact.json"
     inspect_artifact.write_artifact_manifest(output, artifact, overwrite=False)
     assert output.is_file()
+
+
+def test_artifact_manifest_rejects_unlocked_model_python_code(tmp_path: Path):
+    lock = load_reference_lock()
+    entry = model_entry(lock, "450m")
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    names = [item["path"] for item in entry["files"]]
+    names.append(entry["safetensors_header"]["file"])
+    for name in names:
+        (snapshot / name).write_bytes(f"{name}\n".encode("utf-8"))
+    nested = snapshot / "nested"
+    nested.mkdir()
+    (nested / "modeling_lfm2_vl.py").write_text("# unpinned\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="unlisted Python code"):
+        inspect_artifact.build_artifact_manifest("450m", snapshot)
+
+
+def test_remote_code_admission_requires_exact_hash_bound_code_files():
+    entry = {
+        "id": "LiquidAI/LFM2.5-VL-3B",
+        "revision": "r",
+        "files": [
+            {
+                "path": "modeling_lfm2_vl.py",
+                "purpose": "model-provided Python code",
+                "bytes": 7,
+                "sha256": "a" * 64,
+            }
+        ],
+        "remote_code_policy": {
+            "trust_remote_code": True,
+            "files": ["modeling_lfm2_vl.py"],
+        },
+    }
+    artifact = {
+        "model_id": entry["id"],
+        "revision": entry["revision"],
+        "files": [
+            {
+                "path": "modeling_lfm2_vl.py",
+                "purpose": "model-provided Python code",
+                "bytes": 7,
+                "sha256": "a" * 64,
+                "regular_file": True,
+            }
+        ],
+    }
+    assert remote_code_admission(entry, artifact) is True
+    artifact["files"].append(
+        {
+            "path": "cache_only.py",
+            "bytes": 1,
+            "sha256": "b" * 64,
+            "regular_file": True,
+        }
+    )
+    with pytest.raises(ValueError, match="unlisted model Python"):
+        remote_code_admission(entry, artifact)
 
 
 def test_artifact_manifest_no_clobber_is_atomic_against_a_racing_writer(
@@ -434,8 +572,26 @@ def test_trace_loaders_use_external_snapshot_and_never_download(tmp_path: Path, 
     )
     assert calls["model"][0] == str(snapshot)
     assert calls["model"][1]["local_files_only"] is True
+    assert calls["model"][1]["trust_remote_code"] is False
     assert calls["processor"][0] == str(snapshot)
     assert calls["processor"][1]["local_files_only"] is True
+    assert calls["processor"][1]["trust_remote_code"] is False
+    with pytest.raises(ValueError, match="external artifact manifest"):
+        production_trace.load_trace_model(
+            "LiquidAI/LFM2.5-VL-3B",
+            "revision",
+            allow_download=False,
+            model_dir=snapshot,
+            trust_remote_code=True,
+        )
+    with pytest.raises(ValueError, match="external artifact manifest"):
+        production_trace.load_trace_processor(
+            "LiquidAI/LFM2.5-VL-3B",
+            "revision",
+            allow_download=False,
+            model_dir=snapshot,
+            trust_remote_code=True,
+        )
     with pytest.raises(ValueError, match="--allow-download"):
         production_trace.load_trace_model(
             "LiquidAI/LFM2.5-VL-450M",
@@ -784,6 +940,74 @@ def test_trace_comparator_uses_cpu_f32_phase_contract(tmp_path: Path):
     assert by_name["stage.language.hidden_states"]["kind"] == "cosine_or_allclose"
     assert by_name["stage.language.prefill_logits"]["kind"] == "max_abs"
     assert by_name["stage.language.prefill_logits"]["allowed_max_abs"] == 1.0e-3
+
+
+def test_hybrid_comparator_requires_direct_q8_and_shared_inputs(tmp_path: Path):
+    torch = pytest.importorskip("torch")
+    pytest.importorskip("safetensors")
+    base_metadata = {
+        "schema_version": 1,
+        "mode": "hybrid-trace",
+        "source_image_sha256": "a" * 64,
+        "prompt": "rendered prompt",
+        "max_new_tokens": 3,
+        "dtype": "float32",
+        "device": "cpu",
+        "weights_serialized": False,
+        "cache_reset_exact": True,
+        "model_inputs_reverified": True,
+        "generation": {"generated_ids": [1, 2, 3]},
+    }
+    shared_inputs = [
+        {"path": "text.gguf", "bytes": 10, "sha256": "1" * 64, "kind": "file"},
+        {"path": "tokenizer.json", "bytes": 11, "sha256": "2" * 64, "kind": "file"},
+        {"path": "processor_config.json", "bytes": 12, "sha256": "3" * 64, "kind": "file"},
+    ]
+    dense = tmp_path / "dense"
+    q8 = tmp_path / "q8"
+    write_tensor_bundle(
+        dense,
+        _synthetic_hybrid_tensors(torch),
+        {
+            **base_metadata,
+            "execution_mode": "dense-dequantized",
+            "q8_tensor_count": 0,
+            "model_inputs": [
+                *shared_inputs,
+                {"path": "mmproj-dense.gguf", "bytes": 13, "sha256": "4" * 64, "kind": "file"},
+            ],
+        },
+        {"schema_version": 1, "mode": "hybrid-trace", "weights_serialized": False},
+        overwrite=False,
+    )
+    write_tensor_bundle(
+        q8,
+        _synthetic_hybrid_tensors(torch, offset=1.0e-3),
+        {
+            **base_metadata,
+            "execution_mode": "q8_0-native",
+            "q8_tensor_count": 14,
+            "model_inputs": [
+                *shared_inputs,
+                {"path": "mmproj-q8.gguf", "bytes": 14, "sha256": "5" * 64, "kind": "file"},
+            ],
+        },
+        {"schema_version": 1, "mode": "hybrid-trace", "weights_serialized": False},
+        overwrite=False,
+    )
+    report = compare_hybrid_traces(dense, q8)
+    assert report["passed"] is True
+    assert report["q8_execution"] == "q8_0-native"
+    assert report["q8_tensor_count"] == 14
+
+    bad_metadata = json.loads((q8 / "metadata.json").read_text(encoding="utf-8"))
+    bad_metadata["q8_tensor_count"] = 0
+    (q8 / "metadata.json").write_text(json.dumps(bad_metadata), encoding="utf-8")
+    q8_manifest = json.loads((q8 / "manifest.json").read_text(encoding="utf-8"))
+    q8_manifest["metadata_sha256"] = manifest.sha256_file(q8 / "metadata.json")
+    (q8 / "manifest.json").write_text(json.dumps(q8_manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="without retained Q8"):
+        compare_hybrid_traces(dense, q8)
 
 
 def test_trace_artifact_identity_requires_matching_native_inputs():

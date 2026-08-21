@@ -13,6 +13,7 @@ try:
         load_reference_lock,
         model_entry,
         normalized_model_summary,
+        validate_summary_against_lock,
         write_json,
     )
 except ImportError:  # pragma: no cover - direct script execution
@@ -20,6 +21,7 @@ except ImportError:  # pragma: no cover - direct script execution
         load_reference_lock,
         model_entry,
         normalized_model_summary,
+        validate_summary_against_lock,
         write_json,
     )
 
@@ -177,6 +179,9 @@ def inspect_config(
             else "reference-lock"
         ),
     )
+    if config_path or processor_config_path:
+        validate_summary_against_lock(entry, summary)
+        summary["locked_values_validated"] = True
     if tokenizer is not None:
         summary["image_marker_tokens"] = _image_marker_summary(
             tokenizer,
@@ -191,7 +196,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--model",
         default="450m",
-        help="pinned model alias (450m or 1.6b) or full LiquidAI model ID",
+        help="pinned model alias (450m, 1.6b, or 3b) or full LiquidAI model ID",
     )
     parser.add_argument("--config", type=Path, help="optional local config.json")
     parser.add_argument(

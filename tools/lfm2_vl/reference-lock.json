@@ -674,6 +674,292 @@
       }
     },
     {
+      "id": "LiquidAI/LFM2.5-VL-3B",
+      "repository": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B",
+      "observed_ref": "main",
+      "revision": "5a414ead75d45db003906d06fb62bd5b6846cec0",
+      "revision_url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B/tree/5a414ead75d45db003906d06fb62bd5b6846cec0",
+      "authority_level": "official-checkpoint-config-processor-tokenizer-and-tensor-header",
+      "license": {
+        "model_card_tag": "other",
+        "identifier": "LFM Open License v1.0",
+        "path": "LICENSE",
+        "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B/resolve/5a414ead75d45db003906d06fb62bd5b6846cec0/LICENSE"
+      },
+      "adaptation": {
+        "mode": "reference-artifacts-only",
+        "production_artifacts_may_be_committed": false
+      },
+      "remote_code_policy": {
+        "trust_remote_code": false,
+        "files": [],
+        "reason": "The exact snapshot has an empty auto_map and no model-provided Python files; reject cache-only or moving-branch code."
+      },
+      "memory_bounds": {
+        "snapshot_bytes": 6264993989,
+        "minimum_free_bytes": 34359738368,
+        "maximum_cpu_f32_working_set_bytes": 51539607552,
+        "max_input_tokens": 4096,
+        "max_image_patches": 1024,
+        "max_new_tokens": 32
+      },
+      "files": [
+        {
+          "path": "config.json",
+          "purpose": "Official 3B composite text, vision, projector, and token-ID config",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B/resolve/5a414ead75d45db003906d06fb62bd5b6846cec0/config.json",
+          "bytes": 5095,
+          "sha256": "6df51b8c578a828a310f3605fb74e1fc07fc96bb30edc41d215b92147875a2dc"
+        },
+        {
+          "path": "processor_config.json",
+          "purpose": "Official 3B image tiling, normalization, patch, and token-budget config",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B/resolve/5a414ead75d45db003906d06fb62bd5b6846cec0/processor_config.json",
+          "bytes": 828,
+          "sha256": "ec549d27ef491d90a40fdd457fb618544c245771ceb1f3f84ff651bcd33e619d"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "purpose": "Official 3B tokenizer special-token and behavior config",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B/resolve/5a414ead75d45db003906d06fb62bd5b6846cec0/tokenizer_config.json",
+          "bytes": 507,
+          "sha256": "ef6770d12dd9ac58d334e979bf160c5cdfd41f13d205fd5d5516857645feb0ea"
+        },
+        {
+          "path": "tokenizer.json",
+          "purpose": "Pinned 3B tokenizer vocabulary and multimodal marker IDs",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B/resolve/5a414ead75d45db003906d06fb62bd5b6846cec0/tokenizer.json",
+          "bytes": 17905750,
+          "sha256": "8096ecb9f54599d756c8de728a598a340bc1e43c0deb77ddd62456c38349fcee"
+        },
+        {
+          "path": "chat_template.jinja",
+          "purpose": "Official 3B multimodal chat-template and media-marker placement",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B/resolve/5a414ead75d45db003906d06fb62bd5b6846cec0/chat_template.jinja",
+          "bytes": 5436,
+          "sha256": "86f4770449a4797c9b4212d110b0cc70fb993c1ce960095bcfb12eea22f61cca"
+        },
+        {
+          "path": "generation_config.json",
+          "purpose": "Official 3B generation-token defaults",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B/resolve/5a414ead75d45db003906d06fb62bd5b6846cec0/generation_config.json",
+          "bytes": 327,
+          "sha256": "5d182b864215c89c89f6e4e1ee4426ccba2ac954388d941359cb9a32855ab99f"
+        },
+        {
+          "path": "LICENSE",
+          "purpose": "Model-artifact license",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B/resolve/5a414ead75d45db003906d06fb62bd5b6846cec0/LICENSE",
+          "bytes": 10574,
+          "sha256": "30adf9d6478191fb87f2424f63ba0728598335aaf99cd2848ef17e8e545fe94b"
+        }
+      ],
+      "file_url_prefix": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B/resolve/5a414ead75d45db003906d06fb62bd5b6846cec0/",
+      "absent_files": [
+        ".gitattributes",
+        "README.md",
+        "special_tokens_map.json",
+        "tokenizer.model",
+        "vocab.json",
+        "modeling_*.py"
+      ],
+      "safetensors_header": {
+        "file": "model.safetensors",
+        "ranges_read": [
+          "bytes=0-7",
+          "bytes=8-97695"
+        ],
+        "header_bytes": 97696,
+        "tensor_records": 707,
+        "tensor_payload_bytes_read": 0,
+        "tensor_inventory_canonicalization": "UTF-8 lines sorted by tensor name: name\\tdtype\\tcomma-separated-shape\\n",
+        "tensor_inventory_sha256": "e3283ed03ea93608145b2b426ba9eb5205f419272275484841c54aabdafe6b80",
+        "declared_file_bytes": 6247065472,
+        "sha256": "8413ba08bc7490552f3cf7611809927a825067e4375f7c39dfcb74df95301908"
+      },
+      "acquisition": {
+        "schema_version": 1,
+        "source": "pinned-resolve-head",
+        "observed_at_utc": "2026-08-21T00:00:00Z",
+        "token_policy": "public-no-token",
+        "snapshot_bytes": 6264993989,
+        "minimum_free_bytes": 34359738368,
+        "files": [
+          {
+            "path": "config.json",
+            "bytes": 5095,
+            "identity": {"kind": "git-blob-sha1", "value": "37927d5a86f0a10db4e120cf37bb753c4caf1a4e"}
+          },
+          {
+            "path": "processor_config.json",
+            "bytes": 828,
+            "identity": {"kind": "git-blob-sha1", "value": "f793bba8c2d3dfe451ec31eb1ffa3cadf358c59b"}
+          },
+          {
+            "path": "tokenizer_config.json",
+            "bytes": 507,
+            "identity": {"kind": "git-blob-sha1", "value": "ce0731a98d90502591ad7b190fa3688c8c308fee"}
+          },
+          {
+            "path": "tokenizer.json",
+            "bytes": 17905750,
+            "identity": {"kind": "sha256", "value": "8096ecb9f54599d756c8de728a598a340bc1e43c0deb77ddd62456c38349fcee"}
+          },
+          {
+            "path": "chat_template.jinja",
+            "bytes": 5436,
+            "identity": {"kind": "git-blob-sha1", "value": "38eec85cfdbc6610bd269ad611330fd86cdf0db3"}
+          },
+          {
+            "path": "generation_config.json",
+            "bytes": 327,
+            "identity": {"kind": "git-blob-sha1", "value": "61231acdeead35c72480166bd21cd89c4666da3d"}
+          },
+          {
+            "path": "LICENSE",
+            "bytes": 10574,
+            "identity": {"kind": "git-blob-sha1", "value": "2a513f17eb4b8008fb100349fd2b7551d009fed0"}
+          },
+          {
+            "path": "model.safetensors",
+            "bytes": 6247065472,
+            "identity": {"kind": "sha256", "value": "8413ba08bc7490552f3cf7611809927a825067e4375f7c39dfcb74df95301908"}
+          }
+        ]
+      },
+      "source_confirmed_config": {
+        "architecture": "Lfm2VlForConditionalGeneration",
+        "model_type": "lfm2_vl",
+        "image_token_id": 124907,
+        "downsample_factor": 2,
+        "projector_hidden_size": 2048,
+        "projector_hidden_act": "gelu",
+        "projector_bias": true,
+        "projector_use_layernorm": false,
+        "text": {
+          "model_type": "lfm2",
+          "hidden_size": 2048,
+          "vocab_size": 128000,
+          "num_hidden_layers": 30,
+          "num_attention_heads": 32,
+          "num_key_value_heads": 8,
+          "intermediate_size": 10752,
+          "block_ff_dim": 10752,
+          "block_auto_adjust_ff_dim": false,
+          "block_ffn_dim_multiplier": 1.0,
+          "block_multiple_of": 256,
+          "conv_L_cache": 3,
+          "max_position_embeddings": 128000,
+          "layer_types": [
+            "conv", "conv", "full_attention", "conv", "conv", "full_attention",
+            "conv", "conv", "conv", "full_attention", "conv", "conv", "conv",
+            "full_attention", "conv", "conv", "conv", "full_attention", "conv",
+            "conv", "conv", "full_attention", "conv", "conv", "conv", "full_attention",
+            "conv", "conv", "full_attention", "conv"
+          ],
+          "eos_token_id": 124900
+        },
+        "vision": {
+          "model_type": "siglip2_vision_model",
+          "hidden_size": 1152,
+          "intermediate_size": 4304,
+          "num_hidden_layers": 27,
+          "num_attention_heads": 16,
+          "num_channels": 3,
+          "patch_size": 16,
+          "num_patches": 256
+        },
+        "processor": {
+          "type": "Lfm2VlImageProcessorFast",
+          "tile_size": 512,
+          "min_tiles": 1,
+          "max_tiles": 10,
+          "min_image_tokens": 64,
+          "max_image_tokens": 256,
+          "max_num_patches": 1024,
+          "use_thumbnail": true,
+          "image_mean": [0.5, 0.5, 0.5],
+          "image_std": [0.5, 0.5, 0.5]
+        },
+        "special_token_ids": {
+          "bos": 124894,
+          "eos": 124900,
+          "pad": 124893
+        }
+      },
+      "tokenizer_contract": {
+        "image": 124907,
+        "thumbnail": 125008,
+        "image_start": 125009,
+        "image_end": 125010,
+        "row_column_range": [124908, 125007]
+      },
+      "derived_and_header_confirmed": {
+        "effective_ffn_size": 10752,
+        "projector_input_size": 4608,
+        "tied_output_embedding": true
+      }
+    },
+    {
+      "id": "LiquidAI/LFM2.5-VL-3B-GGUF",
+      "repository": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF",
+      "observed_ref": "main",
+      "revision": "3e0e828198e2abb75a957ad823f5d691c13f0f28",
+      "revision_url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF/tree/3e0e828198e2abb75a957ad823f5d691c13f0f28",
+      "authority_level": "official-gguf-text-and-q8-mmproj-file-identity",
+      "format": "gguf",
+      "license": {
+        "model_card_tag": "other",
+        "identifier": "LFM Open License v1.0",
+        "path": "LICENSE",
+        "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF/resolve/3e0e828198e2abb75a957ad823f5d691c13f0f28/LICENSE"
+      },
+      "adaptation": {
+        "mode": "full-file-identity-only",
+        "production_artifacts_may_be_committed": false,
+        "tensor_payload_bytes_read_for_retained_evidence": 0
+      },
+      "pairing_contract": {
+        "vision_hidden_size": 1152,
+        "vision_layer_count": 27,
+        "patch_size": 16,
+        "projector_input_size": 4608,
+        "projector_output_size": 2048,
+        "q8_mmproj_required_dtype": "Q8_0",
+        "text_file_for_bounded_proof": "LFM2.5-VL-3B-Q4_K_M.gguf"
+      },
+      "files": [
+        {
+          "path": "LFM2.5-VL-3B-Q4_K_M.gguf",
+          "purpose": "Official quantized text GGUF paired with the direct MMProj proof",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF/resolve/3e0e828198e2abb75a957ad823f5d691c13f0f28/LFM2.5-VL-3B-Q4_K_M.gguf",
+          "bytes": 1674454240,
+          "sha256": "83c18dfba02c75769cdd63f73e37c343400e82d434ff1b14bcc1cb02fcf2f5f2"
+        },
+        {
+          "path": "mmproj-LFM2.5-VL-3B-F16.gguf",
+          "purpose": "Official dense/dequantized direct MMProj comparison input",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF/resolve/3e0e828198e2abb75a957ad823f5d691c13f0f28/mmproj-LFM2.5-VL-3B-F16.gguf",
+          "bytes": 853993088,
+          "sha256": "6f912eb9fcef619b31c9afff7662a222da9ce6db89327eb465dbafd2fb6a2d7c"
+        },
+        {
+          "path": "mmproj-LFM2.5-VL-3B-Q8_0.gguf",
+          "purpose": "Official Q8_0 direct MMProj execution input",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF/resolve/3e0e828198e2abb75a957ad823f5d691c13f0f28/mmproj-LFM2.5-VL-3B-Q8_0.gguf",
+          "bytes": 583109120,
+          "sha256": "8ba27050dc88737db66b856d3b74e0e6cf54bee35fa4d9d9808f69ee556bbd43"
+        },
+        {
+          "path": "LICENSE",
+          "purpose": "GGUF repository license",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF/resolve/3e0e828198e2abb75a957ad823f5d691c13f0f28/LICENSE",
+          "bytes": 10574,
+          "sha256": "30adf9d6478191fb87f2424f63ba0728598335aaf99cd2848ef17e8e545fe94b"
+        }
+      ]
+    },
+    {
       "id": "LiquidAI/LFM2.5-VL-450M-GGUF",
       "repository": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF",
       "observed_ref": "main",

@@ -350,8 +350,7 @@
         "tools/export_lfm2_vl_mmproj.py",
         "candle-examples/examples/lfm2-vl/trace.rs",
         "tools/lfm2_vl/reference/test_gguf_header.py",
-        "tools/lfm2_vl/reference/test_mmproj_exporter.py",
-        "docs/lfm2-vl/DECISIONS.md"
+        "tools/lfm2_vl/reference/test_mmproj_exporter.py"
       ]
     },
     "issue__gknome_adoption_and_linked_git": {
@@ -380,6 +379,13 @@
         "candle-examples/examples/lfm2/main.rs",
         "docs/lfm2-vl/TODO.md",
         "docs/lfm2-vl/DECISIONS.md"
+      ]
+    },
+    "issue__3b_q8_proof_gap": {
+      "description": "Active production-proof route for the immutable LFM2.5-VL-3B native checkpoint and official 400M SigLIP2 direct-GGUF Q8_0 MMProj; fixture evidence is green while external receipts remain gated.",
+      "status": "active",
+      "paths": [
+        "tools/lfm2_vl/reference/test_reference_tools.py"
       ]
     },
     "issue__stable_diffusion_public_input_panics": {

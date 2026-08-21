@@ -124,6 +124,37 @@ fn capture_trace(
     Ok(())
 }
 
+fn capture_hybrid_trace(
+    runtime: &mut impl Runtime,
+    inputs: &GenerationInputs<'_>,
+    capture: &mut HybridTraceCapture,
+) -> Result<()> {
+    runtime.reset()?;
+    let prefill = runtime.prefill(inputs.input_ids, inputs.image_spans, inputs.encoded_images)?;
+    let mut next = last_logits(&prefill)?.argmax(0)?.to_scalar::<u32>()?;
+    capture.prefill_logits = Some(prefill);
+    capture
+        .decode_input_ids
+        .try_reserve_exact(inputs.max_new_tokens)
+        .map_err(|_| anyhow::anyhow!("allocating hybrid evidence decode input IDs"))?;
+    capture
+        .decode_logits
+        .try_reserve_exact(inputs.max_new_tokens)
+        .map_err(|_| anyhow::anyhow!("allocating hybrid evidence decode logits"))?;
+    for step in 0..inputs.max_new_tokens {
+        let input_position = inputs
+            .prompt_len
+            .checked_add(step)
+            .ok_or_else(|| anyhow::anyhow!("LFM2-VL hybrid evidence decode position overflow"))?;
+        let decode_ids = Tensor::new(&[next], runtime.text_device())?.unsqueeze(0)?;
+        let decode = runtime.decode(&decode_ids, input_position)?;
+        next = last_logits(&decode)?.argmax(0)?.to_scalar::<u32>()?;
+        capture.decode_input_ids.push(decode_ids);
+        capture.decode_logits.push(decode);
+    }
+    Ok(())
+}
+
 fn last_logits(logits: &Tensor) -> Result<Tensor> {
     match logits.rank() {
         3 => {

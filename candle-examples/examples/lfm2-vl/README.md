@@ -79,7 +79,7 @@ cargo run --locked --offline -p candle-examples --example lfm2-vl --release -- \
   --text-cpu
 ```
 
-For an official native component-parity lane, add `--trace-output <external-directory>` to a native `--cpu` run. The trace requires one image, explicit CPU/F32 execution, and at most 32 generated tokens; tiled or multi-crop inputs fail closed. It hashes every consumed model input before inference, hashes them again after deterministic replay, and refuses evidence output if they changed. The external directory contains `tensors.safetensors`, `metadata.json`, and `manifest.json` with exact input IDs/attention masks, processor, vision, projector, merge, prefill, and exactly aligned cached-decode tensors. Publication is atomic and no-clobber on Windows and Linux, so a destination that appears during the run is preserved. The trace never writes model weights or repository artifacts.
+For an official native component-parity lane, add `--trace-output <external-directory>` to a native `--cpu` run. The trace requires one image, explicit CPU/F32 execution, and at most 32 generated tokens; tiled or multi-crop inputs fail closed. It hashes every consumed model input before inference, hashes them again after deterministic replay, and refuses evidence output if they changed. The native external directory contains `tensors.safetensors`, `metadata.json`, and `manifest.json` with exact input IDs/attention masks, processor, all vision stages, projector, merge, prefill, and exactly aligned cached-decode tensors. A direct-GGUF run with `--mmproj-file` publishes a separate `hybrid-trace` bundle with projected image embeddings, prefill/decode logits, execution mode, retained Q8 tensor count, input identities, and cache-reset results; split MMProj is rejected for this evidence mode. Publication is atomic and no-clobber on Windows and Linux, so a destination that appears during the run is preserved. The trace never writes model weights or repository artifacts.
 
 When replaying a Python oracle trace, pass the exact `prompt` value from the oracle's `metadata.json` to this native command. That value is the official rendered chat-template text containing `<image>`; the Python command's original user-text `--prompt` is not token-equivalent.
 
@@ -105,12 +105,16 @@ When replaying a Python oracle trace, pass the exact `prompt` value from the ora
 
 Production evidence covers unmodified native 450M/1.6B CPU-F32 checkpoints,
 the complete native 450M matrix above, and same-artifact GGUF/MMProj decoded
-output. Deterministic tiny fixtures additionally protect split/direct MMProj,
-native Q8_0, malformed inputs, prompt expansion, and cache behavior. Lower-bit
-vision execution, video, true text batching, WebGPU, and a generic VLM layer
-are unsupported/deferred rather than implicit release promises.
+output. The 3B native and official 400M Q8_0 MMProj paths are architecturally
+supported and now have bounded proof tooling, but remain Gated until their
+external artifact manifests, production traces, dense/Q8 comparison receipt,
+and cleanup evidence are present. Deterministic tiny fixtures additionally
+protect split/direct MMProj, native Q8_0, malformed inputs, prompt expansion,
+and cache behavior. Lower-bit vision execution, video, true text batching,
+WebGPU, and a generic VLM layer are unsupported/deferred rather than implicit
+release promises.
 
 For production parity, follow `docs/lfm2-vl/START_HERE.md`: record a host/GPU/PID census, run the 450M CPU-F32 gate first, serialize large-model work, and verify cleanup before another run. Never invoke a llama.cpp oracle directly; use the bounded owner described in `docs/lfm2-vl/FAILURE_LOG.md` F-0008.
 
 ---
-AI-edited: 2026-08-12T12:42:54-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=hybrid-loader-promotion | change=made the example boundary explicit after public loader promotion
+AI-edited: 2026-08-21T12:40:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-3b-q8-proof-gap | change=documented separate native and direct-GGUF hybrid evidence contracts

@@ -169,6 +169,29 @@ def _required_files(entry: Mapping[str, Any], root: Path) -> tuple[list[str], se
     return sorted(names), weight_names
 
 
+def _validate_snapshot_code_inventory(entry: Mapping[str, Any], root: Path) -> None:
+    """Reject direct model Python files that are not explicitly hash-locked."""
+
+    policy = entry.get("remote_code_policy", {})
+    locked_code = {
+        name
+        for name in policy.get("files", [])
+        if isinstance(name, str)
+    } if isinstance(policy, Mapping) else set()
+    try:
+        for candidate in root.rglob("*"):
+            if candidate.suffix.lower() != ".py":
+                continue
+            relative_name = candidate.relative_to(root).as_posix()
+            if candidate.is_symlink() or not candidate.is_file() or relative_name not in locked_code:
+                raise ValueError(
+                    "model snapshot contains unlisted Python code; refusing "
+                    f"cache-only or moving code: {relative_name}"
+                )
+    except OSError as exc:
+        raise ValueError(f"could not inspect model snapshot code inventory: {root}") from exc
+
+
 def build_artifact_manifest(model: str, model_dir: Path) -> dict[str, Any]:
     """Hash the pinned local files required by ``model`` without loading them."""
 
@@ -185,6 +208,7 @@ def build_artifact_manifest(model: str, model_dir: Path) -> dict[str, Any]:
 
     lock = load_reference_lock()
     entry = model_entry(lock, model)
+    _validate_snapshot_code_inventory(entry, root)
     names, weight_names = _required_files(entry, root)
     purposes = {
         str(item["path"]): str(item.get("purpose", ""))
@@ -282,7 +306,11 @@ def write_artifact_manifest(path: Path, value: Mapping[str, Any], *, overwrite: 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model", default="450m")
+    parser.add_argument(
+        "--model",
+        default="450m",
+        help="pinned model alias (450m, 1.6b, or 3b) or full LiquidAI model ID",
+    )
     parser.add_argument("--model-dir", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--overwrite", action="store_true")

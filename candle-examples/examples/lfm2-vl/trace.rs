@@ -3,7 +3,8 @@
 use anyhow::{bail, Context, Result};
 use candle::{DType, Device, Tensor};
 use candle_transformers::models::lfm2_vl::{
-    Lfm2VlDecodeTrace, Lfm2VlImageTrace, Lfm2VlPrefillTrace, ProcessedVisionBatch,
+    GgufMmprojExecution, Lfm2VlDecodeTrace, Lfm2VlImageTrace, Lfm2VlPrefillTrace,
+    ProcessedVisionBatch,
 };
 use image::DynamicImage;
 use serde_json::{json, Map, Value};
@@ -17,6 +18,7 @@ use super::runner::InferenceReport;
 
 const TRACE_FORMAT: &str = "lfm2-vl-reference-bundle";
 const TRACE_MODE: &str = "native-trace";
+const HYBRID_TRACE_MODE: &str = "hybrid-trace";
 const TRACE_SCHEMA_VERSION: u32 = 1;
 
 #[cfg(target_os = "linux")]
@@ -76,6 +78,32 @@ pub struct NativeTraceCapture {
     pub prefill: Option<Lfm2VlPrefillTrace>,
     pub decode_input_ids: Vec<Tensor>,
     pub decode: Vec<Lfm2VlDecodeTrace>,
+}
+
+pub struct HybridTraceCapture {
+    pub projected_image_embeddings: Tensor,
+    pub prefill_logits: Option<Tensor>,
+    pub decode_input_ids: Vec<Tensor>,
+    pub decode_logits: Vec<Tensor>,
+    pub execution: GgufMmprojExecution,
+    pub q8_tensor_count: usize,
+}
+
+impl HybridTraceCapture {
+    pub fn new(
+        projected_image_embeddings: &Tensor,
+        execution: GgufMmprojExecution,
+        q8_tensor_count: usize,
+    ) -> Self {
+        Self {
+            projected_image_embeddings: projected_image_embeddings.clone(),
+            prefill_logits: None,
+            decode_input_ids: Vec::new(),
+            decode_logits: Vec::new(),
+            execution,
+            q8_tensor_count,
+        }
+    }
 }
 
 impl NativeTraceCapture {
@@ -208,6 +236,7 @@ pub fn write_native_trace(
         &metadata_bytes,
         tensor_inventory,
         report,
+        TRACE_MODE,
     );
     match result {
         Ok(()) => {
@@ -223,6 +252,167 @@ pub fn write_native_trace(
             let _ = fs::remove_dir_all(&staging);
             Err(error)
         }
+    }
+}
+
+pub fn write_hybrid_trace(
+    output: &Path,
+    report: &InferenceReport,
+    processed: &ProcessedVisionBatch,
+    input_ids: &Tensor,
+    image: Option<&DynamicImage>,
+    capture: HybridTraceCapture,
+) -> Result<()> {
+    let output = resolve_output(output)?;
+    let image = image.ok_or_else(|| anyhow::anyhow!("hybrid trace requires a decoded image"))?;
+    let execution = capture.execution;
+    let q8_tensor_count = capture.q8_tensor_count;
+    if execution == GgufMmprojExecution::Q8_0 && q8_tensor_count == 0 {
+        bail!("native Q8 hybrid evidence reported zero retained Q8 tensors")
+    }
+    if execution == GgufMmprojExecution::DenseCompatibility && q8_tensor_count != 0 {
+        bail!("dense hybrid evidence reported retained Q8 tensors")
+    }
+    let prefill_logits = capture
+        .prefill_logits
+        .ok_or_else(|| anyhow::anyhow!("hybrid trace did not capture prefill logits"))?;
+    if capture.decode_input_ids.len() != capture.decode_logits.len() {
+        bail!(
+            "hybrid trace decode input/logit count mismatch: {} versus {}",
+            capture.decode_input_ids.len(),
+            capture.decode_logits.len()
+        )
+    }
+
+    let cpu = Device::Cpu;
+    let mut tensors = BTreeMap::<String, Tensor>::new();
+    tensors.insert(
+        "input.pixel_values".to_owned(),
+        cpu_f32(&processed.pixel_values)?,
+    );
+    tensors.insert(
+        "input.pixel_attention_mask".to_owned(),
+        cpu_i32(&processed.pixel_attention_mask)?,
+    );
+    tensors.insert(
+        "input.spatial_shapes".to_owned(),
+        cpu_i64(&processed.spatial_shapes)?,
+    );
+    tensors.insert("input.input_ids".to_owned(), cpu_i64(input_ids)?);
+    let (batch_size, sequence_length) = input_ids.dims2()?;
+    tensors.insert(
+        "input.attention_mask".to_owned(),
+        Tensor::ones((batch_size, sequence_length), DType::I64, &cpu)?,
+    );
+    let valid_patches = capture.projected_image_embeddings.dim(0)?;
+    tensors.insert(
+        "input.projector_crop_ranges".to_owned(),
+        Tensor::from_vec(
+            vec![
+                0i64,
+                i64::try_from(valid_patches)
+                    .context("hybrid evidence projected token count exceeds i64")?,
+            ],
+            (1usize, 2usize),
+            &cpu,
+        )?,
+    );
+    let rgb = image.to_rgb8();
+    let (width, height) = rgb.dimensions();
+    tensors.insert(
+        "input.image_rgb_u8".to_owned(),
+        Tensor::from_vec(
+            rgb.into_raw(),
+            (height as usize, width as usize, 3usize),
+            &cpu,
+        )?,
+    );
+    tensors.insert(
+        "stage.projector.output".to_owned(),
+        cpu_f32(&capture.projected_image_embeddings)?,
+    );
+    tensors.insert(
+        "stage.language.prefill_logits".to_owned(),
+        cpu_f32(&prefill_logits)?,
+    );
+    tensors.insert(
+        "input.decode_token_ids".to_owned(),
+        stack_decode_ids(&capture.decode_input_ids, &cpu)?,
+    );
+    let vocab = *prefill_logits
+        .dims()
+        .last()
+        .ok_or_else(|| anyhow::anyhow!("hybrid evidence prefill logits have no vocabulary"))?;
+    tensors.insert(
+        "stage.language.decode_logits".to_owned(),
+        stack_raw_decode_logits(&capture.decode_logits, &cpu, vocab)?,
+    );
+
+    let execution_name = hybrid_execution_name(execution);
+    let metadata = json!({
+        "schema_version": TRACE_SCHEMA_VERSION,
+        "mode": HYBRID_TRACE_MODE,
+        "device": "cpu",
+        "dtype": "float32",
+        "seed": 0,
+        "weights_serialized": false,
+        "model_inputs_reverified": true,
+        "execution_mode": execution_name,
+        "q8_tensor_count": q8_tensor_count,
+        "backend": report.backend,
+        "model_inputs": report.model_inputs,
+        "prompt": report.prompt,
+        "expanded_prompt": report.expanded_prompt,
+        "input_ids": report.input_ids,
+        "image_files": report.image_files,
+        "processed_images": report.processed_images,
+        "processed_crops": report.processed_crops,
+        "image_spans": report.image_spans,
+        "context_length": report.context_length,
+        "vision_batch_size": report.vision_batch_size,
+        "max_new_tokens": report.max_new_tokens,
+        "generation": report.generation,
+        "cache_reset_exact": report.cache_reset_exact,
+        "trace_contract": {
+            "cpu_f32_only": true,
+            "direct_gguf_only": true,
+            "max_input_tokens": 4096,
+            "max_image_patches": 1024,
+            "max_new_tokens": 32,
+        },
+    });
+    let metadata_bytes = json_bytes(&metadata)?;
+    let tensor_inventory = tensor_inventory(&tensors)?;
+    let staging = create_staging_dir(&output)?;
+    let result = write_staging(
+        &staging,
+        &tensors,
+        &metadata_bytes,
+        tensor_inventory,
+        report,
+        HYBRID_TRACE_MODE,
+    );
+    match result {
+        Ok(()) => {
+            if let Err(error) = rename_directory_no_replace(&staging, &output) {
+                let _ = fs::remove_dir_all(&staging);
+                return Err(error).with_context(|| {
+                    format!("publishing hybrid trace directory {}", output.display())
+                });
+            }
+            Ok(())
+        }
+        Err(error) => {
+            let _ = fs::remove_dir_all(&staging);
+            Err(error)
+        }
+    }
+}
+
+fn hybrid_execution_name(execution: GgufMmprojExecution) -> &'static str {
+    match execution {
+        GgufMmprojExecution::DenseCompatibility => "dense-dequantized",
+        GgufMmprojExecution::Q8_0 => "q8_0-native",
     }
 }
 
@@ -340,6 +530,32 @@ fn stack_decode_logits(
     Tensor::cat(&refs, 1).map_err(anyhow::Error::from)
 }
 
+fn stack_raw_decode_logits(
+    logits: &[Tensor],
+    device: &Device,
+    vocab_size: usize,
+) -> Result<Tensor> {
+    if logits.is_empty() {
+        return Tensor::zeros((1usize, 0usize, vocab_size), DType::F32, device)
+            .map_err(anyhow::Error::from);
+    }
+    let mut values = Vec::new();
+    values
+        .try_reserve_exact(logits.len())
+        .map_err(|_| anyhow::anyhow!("hybrid trace decode-logit allocation failed"))?;
+    for logits in logits {
+        let value = cpu_f32(logits)?;
+        let value = match value.rank() {
+            2 => value.unsqueeze(1)?,
+            3 => value,
+            rank => bail!("hybrid trace decode logits rank {rank} is unsupported"),
+        };
+        values.push(value);
+    }
+    let refs: Vec<&Tensor> = values.iter().collect();
+    Tensor::cat(&refs, 1).map_err(anyhow::Error::from)
+}
+
 fn cpu_f32(tensor: &Tensor) -> Result<Tensor> {
     tensor
         .to_device(&Device::Cpu)?
@@ -416,6 +632,7 @@ fn write_staging(
     metadata_bytes: &[u8],
     tensor_inventory: Map<String, Value>,
     report: &InferenceReport,
+    mode: &str,
 ) -> Result<()> {
     let tensor_path = staging.join("tensors.safetensors");
     let metadata_path = staging.join("metadata.json");
@@ -426,14 +643,18 @@ fn write_staging(
         .collect();
     candle::safetensors::save(&tensor_map, &tensor_path)
         .map_err(anyhow::Error::from)
-        .context("writing native trace tensors")?;
-    fs::write(&metadata_path, metadata_bytes)
-        .with_context(|| format!("writing native trace metadata {}", metadata_path.display()))?;
+        .context("writing LFM2-VL evidence tensors")?;
+    fs::write(&metadata_path, metadata_bytes).with_context(|| {
+        format!(
+            "writing LFM2-VL evidence metadata {}",
+            metadata_path.display()
+        )
+    })?;
     let tensor_sha256 = sha256_file(&tensor_path)?;
     let metadata_sha256 = sha256_file(&metadata_path)?;
     let manifest = json!({
         "format": TRACE_FORMAT,
-        "mode": TRACE_MODE,
+        "mode": mode,
         "schema_version": TRACE_SCHEMA_VERSION,
         "device": "cpu",
         "dtype": "float32",
@@ -447,8 +668,12 @@ fn write_staging(
         "tensor_inventory": tensor_inventory,
         "backend": report.backend,
     });
-    fs::write(&manifest_path, json_bytes(&manifest)?)
-        .with_context(|| format!("writing native trace manifest {}", manifest_path.display()))?;
+    fs::write(&manifest_path, json_bytes(&manifest)?).with_context(|| {
+        format!(
+            "writing LFM2-VL evidence manifest {}",
+            manifest_path.display()
+        )
+    })?;
     Ok(())
 }
 

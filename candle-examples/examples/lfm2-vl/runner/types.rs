@@ -11,6 +11,15 @@ pub struct InferenceRequest<'a> {
     pub trace_output: Option<&'a Path>,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum TraceMode {
+    Native,
+    Hybrid {
+        execution: GgufMmprojExecution,
+        q8_tensor_count: usize,
+    },
+}
+
 #[derive(Debug, Serialize)]
 pub struct InferenceReport {
     pub contract: &'static str,

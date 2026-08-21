@@ -1329,5 +1329,38 @@ guarantee. A future major API release may remove or change the method after a
 downstream migration window. No dimension coercion or silent text-only
 fallback is introduced.
 
+## D-0061: Keep 3B Remote Code Hash-Bound and Treat the Pinned Config as Authority
+
+Status: Accepted for the 3B production-proof gate.
+
+Decision:
+Lock `LiquidAI/LFM2.5-VL-3B` at
+`5a414ead75d45db003906d06fb62bd5b6846cec0`, inventory every required native
+file and its full-file identity, and allow `trust_remote_code` only when the
+same immutable entry names every model-provided Python file and the external
+artifact manifest re-proves each byte count and SHA-256. The current snapshot
+has an empty `auto_map` and no model Python file, so its policy remains
+`trust_remote_code=false`; unlisted Python files are rejected rather than
+loaded from a cache or moving branch. Lock the official direct-GGUF repository
+at `3e0e828198e2abb75a957ad823f5d691c13f0f28` with separate dense F16 and Q8_0
+MMProj identities.
+
+Why:
+The current model card says `trust_remote_code=true` and advertises a 32,768
+context, while the exact checkpoint config contains no remote-code file,
+empty `auto_map`, and 128,000 text positions. The pinned config and artifact
+inventory are safer executable authorities than a moving card claim. The
+conflict must remain visible until a pinned oracle environment and native 3B
+receipt prove the intended runtime contract.
+
+Consequences:
+Config-only inspection validates the actual 3B dimensions: 30 text layers,
+2,048 text width, 128,000 vocabulary, 27 vision layers, 1,152 vision width,
+16-pixel patches, 4,608 projector input, image token 124,907, and the
+processor/tokenizer marker contract. Production 3B inference remains gated
+until the external snapshot and compatible pinned Transformers runtime are
+available. The hybrid example publishes a separate direct-GGUF receipt so
+Q8 retention cannot be confused with the native trace schema.
+
 ---
-AI-edited: 2026-08-20T20:34:39-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-config-compatibility | change=recorded the deprecated legacy conversion compatibility migration
+AI-edited: 2026-08-21T12:40:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-3b-q8-proof-gap | change=recorded the hash-bound 3B remote-code and pinned-config authority decision

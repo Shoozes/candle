@@ -1,4 +1,7 @@
 trait Runtime {
+    fn trace_mode(&self) -> Option<TraceMode> {
+        None
+    }
     fn context_length(&self) -> usize;
     fn default_eos_token_id(&self) -> Option<u32>;
     fn default_eos_source(&self) -> &'static str;
@@ -71,6 +74,10 @@ impl<'a> NativeRuntime<'a> {
 }
 
 impl Runtime for NativeRuntime<'_> {
+    fn trace_mode(&self) -> Option<TraceMode> {
+        Some(TraceMode::Native)
+    }
+
     fn context_length(&self) -> usize {
         self.text_config.max_position_embeddings
     }
@@ -171,6 +178,16 @@ struct HybridRuntime<'a> {
 }
 
 impl Runtime for HybridRuntime<'_> {
+    fn trace_mode(&self) -> Option<TraceMode> {
+        self.model
+            .mmproj()
+            .gguf_execution()
+            .map(|execution| TraceMode::Hybrid {
+                execution,
+                q8_tensor_count: self.model.mmproj().native_quantized_tensor_count(),
+            })
+    }
+
     fn context_length(&self) -> usize {
         self.model.context_length()
     }

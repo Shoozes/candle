@@ -4,8 +4,9 @@ use anyhow::{bail, Context, Result};
 use candle::{DType, Device, IndexOp, Tensor};
 use candle_transformers::models::lfm2;
 use candle_transformers::models::lfm2_vl::{
-    CropKind, EncodedImages, ImageTokenSpan, Lfm2VlDecodeTrace, Lfm2VlImageTrace, Lfm2VlModel,
-    Lfm2VlPrefillTrace, ProcessedVisionBatch, QuantizedLfm2VlModel, VisionLimits,
+    CropKind, EncodedImages, GgufMmprojExecution, ImageTokenSpan, Lfm2VlDecodeTrace,
+    Lfm2VlImageTrace, Lfm2VlModel, Lfm2VlPrefillTrace, ProcessedVisionBatch, QuantizedLfm2VlModel,
+    VisionLimits,
 };
 use candle_vlm::lfm2_vl::{ExpandedPrompt, Lfm2VlProcessor, Lfm2VlPrompt};
 use image::{DynamicImage, GenericImageView, ImageReader};
@@ -17,7 +18,7 @@ use std::io::{Cursor, Read};
 use std::path::{Path, PathBuf};
 use tokenizers::Tokenizer;
 
-use super::trace::{self, NativeTraceCapture};
+use super::trace::{self, HybridTraceCapture, NativeTraceCapture};
 
 const CONTRACT: &str = "candle-lfm2-vl-inference-v1";
 const MAX_COMPRESSED_IMAGE_BYTES: u64 = 256 * 1024 * 1024;
@@ -535,6 +536,77 @@ mod tests {
             .any(|input| input.path.ends_with("mmproj.safetensors")));
         let json = serde_json::to_string(&report)?;
         assert_eq!(json.lines().count(), 1);
+        Ok(())
+    }
+
+    #[test]
+    fn direct_q8_fixture_publishes_hybrid_evidence_and_retains_q8_selection() -> Result<()> {
+        let device = Device::Cpu;
+        let fixture_root =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../tests/fixtures/lfm2_vl_loader_tiny");
+        let text_path = fixture_root.join("text.gguf");
+        let mmproj_path = fixture_root.join("mmproj-q8.gguf");
+        let tokenizer_path = fixture_root.join("tokenizer.json");
+        let processor_config = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../tests/fixtures/lfm2_vl_mmproj_tiny/processor_config.json");
+        let mut loaded = loading::load_hybrid(HybridLoadOptions {
+            text_gguf: &text_path,
+            mmproj: MmprojInput::GgufFile(&mmproj_path),
+            tokenizer: &tokenizer_path,
+            processor_config: Some(&processor_config),
+            mmproj_execution: MmprojExecutionArg::Q8,
+            vision_dtype: DType::F32,
+            vision_device: &device,
+            text_device: &device,
+        })?;
+        assert_eq!(
+            loaded.model.mmproj().gguf_execution(),
+            Some(GgufMmprojExecution::Q8_0)
+        );
+        assert!(loaded.model.mmproj().native_quantized_tensor_count() > 0);
+
+        let dir = TestDir::new()?;
+        let image_path = dir.path().join("fixture.png");
+        let pixels = RgbImage::from_fn(8, 4, |x, y| {
+            Rgb([(x * 17) as u8, (y * 41) as u8, ((x + y) * 13) as u8])
+        });
+        DynamicImage::ImageRgb8(pixels).save_with_format(&image_path, ImageFormat::Png)?;
+        let trace_output = dir.path().join("hybrid-trace");
+        let image_paths = vec![image_path];
+        let report = run_hybrid(
+            &mut loaded.model,
+            &loaded.processor,
+            &loaded.prompt,
+            InferenceRequest {
+                backend: "hybrid-gguf-q8-fixture",
+                model_inputs: &loaded.consumed_files,
+                prompt: "<image> hello",
+                image_paths: &image_paths,
+                max_new_tokens: 3,
+                vision_batch_size: 1,
+                eos_token_id: None,
+                timings: false,
+                benchmark_generation: false,
+                trace_output: Some(trace_output.as_path()),
+            },
+        )?;
+        assert!(report.cache_reset_exact);
+        let metadata: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
+            trace_output.join("metadata.json"),
+        )?)?;
+        assert_eq!(metadata["mode"], "hybrid-trace");
+        assert_eq!(metadata["execution_mode"], "q8_0-native");
+        assert!(metadata["q8_tensor_count"].as_u64().unwrap_or(0) > 0);
+        assert_eq!(metadata["cache_reset_exact"], true);
+        let manifest: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
+            trace_output.join("manifest.json"),
+        )?)?;
+        assert_eq!(manifest["mode"], "hybrid-trace");
+        let tensors = candle::safetensors::load(trace_output.join("tensors.safetensors"), &device)?;
+        assert!(tensors.contains_key("stage.projector.output"));
+        assert!(tensors.contains_key("stage.language.prefill_logits"));
+        assert!(tensors.contains_key("stage.language.decode_logits"));
+        assert_eq!(tensors["input.decode_token_ids"].dims(), [1, 3]);
         Ok(())
     }
 

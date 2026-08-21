@@ -2,9 +2,17 @@
 
 ## Lock Boundary
 
-The source lock was taken at `2026-08-10T02:56:01Z` and extended with official GGUF-header evidence at `2026-08-10T10:57:28Z`. Every moving branch or model `main` reference below is resolved to an immutable commit. Production tensor payloads and complete GGUF files were not downloaded.
+The source lock was taken at `2026-08-10T02:56:01Z`, extended with official
+GGUF-header evidence at `2026-08-10T10:57:28Z`, and extended with the pinned
+3B/GGUF identities on `2026-08-21`. Every moving branch or model `main`
+reference below is resolved to an immutable commit. Production tensor payloads
+and complete GGUF files were not downloaded.
 
-The two official safetensors files and two official 450M MMProj GGUF files were inspected only through the bounded header ranges documented in `TENSOR_MAP.md`. This exposed tensor names, dtypes, shapes, metadata, and byte offsets without retaining any tensor payload bytes.
+The two previously inspected official safetensors files and two official 450M
+MMProj GGUF files were inspected only through the bounded header ranges
+documented in `TENSOR_MAP.md`. The 3B native and official 3B-GGUF entries add
+immutable file identities and config/header inventory facts without retaining
+production tensor payload bytes.
 
 The machine-readable inventory is `tools/lfm2_vl/reference-lock.json`. It is the authority for exact paths and URLs; this document records the reasoning and adaptation boundary.
 
@@ -52,6 +60,7 @@ Both model repositories identify their artifacts as LFM Open License v1.0. They 
 | --- | --- | --- | --- |
 | `LiquidAI/LFM2.5-VL-450M` | [`fc6221ca597f3315e4f82fc2df606783267b34ba`](https://huggingface.co/LiquidAI/LFM2.5-VL-450M/tree/fc6221ca597f3315e4f82fc2df606783267b34ba) | `config.json`, `processor_config.json`, `tokenizer_config.json`, `tokenizer.json`, `chat_template.jinja`, `generation_config.json`, `LICENSE` | `special_tokens_map.json` |
 | `LiquidAI/LFM2.5-VL-1.6B` | [`919fde3d022e3f90a4716006f993938ee8c2eb97`](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B/tree/919fde3d022e3f90a4716006f993938ee8c2eb97) | `config.json`, `processor_config.json`, `tokenizer_config.json`, `tokenizer.json`, `chat_template.jinja`, `generation_config.json`, `LICENSE` | `special_tokens_map.json` |
+| `LiquidAI/LFM2.5-VL-3B` | [`5a414ead75d45db003906d06fb62bd5b6846cec0`](https://huggingface.co/LiquidAI/LFM2.5-VL-3B/tree/5a414ead75d45db003906d06fb62bd5b6846cec0) | `config.json`, `processor_config.json`, `tokenizer_config.json`, `tokenizer.json`, `chat_template.jinja`, `generation_config.json`, `LICENSE`, `model.safetensors` | No model-provided `.py` file; `auto_map` is empty and `trust_remote_code` is disabled for this exact snapshot |
 
 There is no separate tokenizer model or vocabulary file in either pinned tree. Direct immutable URLs for every present file are in `reference-lock.json`.
 
@@ -63,6 +72,23 @@ The official text-GGUF and direct-MMProj authority is `LiquidAI/LFM2.5-VL-450M-G
 | `mmproj-LFM2.5-VL-450m-Q8_0.gguf` | 102,815,168 | `7a4f0f1e168d52b70a03f2773f0f20b9f65d1692f8e973aa0cf9ecee25e43d1c` | Q8_0 74; F32 127 |
 
 Both headers are GGUF v3 with 32 metadata records, 201 tensor records, tensor-name-set SHA-256 `45e3f6cf0b51dc9f5e458b8af3375d368cc59daff70b79e2938c7490a94df828`, and 32-byte alignment. Exact metadata, absent preprocessing keys, shapes, and URLs are machine-locked in `reference-lock.json`.
+
+The native 3B proof also locks the official direct-GGUF repository
+`LiquidAI/LFM2.5-VL-3B-GGUF` at immutable revision
+[`3e0e828198e2abb75a957ad823f5d691c13f0f28`](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF/tree/3e0e828198e2abb75a957ad823f5d691c13f0f28). Its exact full-file identities are
+machine-locked and no payload is retained in this repository:
+
+| File | Declared bytes | Full-file SHA-256 | Role |
+| --- | ---: | --- | --- |
+| `LFM2.5-VL-3B-Q4_K_M.gguf` | 1,674,454,240 | `83c18dfba02c75769cdd63f73e37c343400e82d434ff1b14bcc1cb02fcf2f5f2` | Official quantized text |
+| `mmproj-LFM2.5-VL-3B-F16.gguf` | 853,993,088 | `6f912eb9fcef619b31c9afff7662a222da9ce6db89327eb465dbafd2fb6a2d7c` | Dense/dequantized comparison lane |
+| `mmproj-LFM2.5-VL-3B-Q8_0.gguf` | 583,109,120 | `8ba27050dc88737db66b856d3b74e0e6cf54bee35fa4d9d9808f69ee556bbd43` | Direct native-Q8 comparison lane |
+| `LICENSE` | 10,574 | `30adf9d6478191fb87f2424f63ba0728598335aaf99cd2848ef17e8e545fe94b` | License text |
+
+These artifacts are proof inputs only. The direct-GGUF comparison must use the
+same text GGUF, tokenizer, processor policy, prompt, image, and decode settings
+for dense and Q8 runs; the Q8 receipt must report a positive retained Q8 tensor
+count and `q8_0-native` execution rather than silent dequantization.
 
 The same immutable revision contains the official `LFM2.5-VL-450M-Q4_0.gguf` text artifact. The pre-existing local regular blob is 219,311,264 bytes with full-file SHA-256 `6d2757dd0f0b98aea7dc90477bb5b3a0df1089be85ef92943f8cecb05121ccbf`. Its bounded inspection hashes exactly bytes `0-2388127`: header-prefix SHA-256 `bdb33b992b136a77b4d807b84319a7daa43ebac15144e6336c0d9b9ef1e8ed2e`, 39 metadata records, 148 tensors, and zero tensor payload bytes read by the inspector. Sequential full-file hashing decoded no tensor and confirmed that physical size equals the declared tensor extent. Exact architecture, tokenizer, chat-template, tensor-name, and dtype facts are machine-locked in `reference-lock.json`.
 

@@ -8,9 +8,9 @@
   `6f74e7c390c717f8fd34f23ce02aceb058173370`.
 - Published combined-overlay source checkpoint: `e2c6565d2970de7a9e507b7759a608d3a2c827e7`,
   tree `18c1600fe0278754c697c83cbc6113cb69ab39bc`.
-- Last verified app/source `main` head: `53b2f3b3a1e7a9e49126a57213c3abb74a65c698`,
-  tree `b431e817325e8f3c12da30c4c3c34b9dfe7f5cfc`; the WSL replay and this
-  follow-up state record are source-neutral documentation work.
+- Last verified app/source `main` head before this proof-gap slice:
+  `226f8be21cb955efbbd65254db479ddd0a9504b2`; this task adds the bounded
+  3B/Q8 proof contract on top of that clean head.
 - Immutable first-MVP tag: `lfm2-vl-mvp-0.1.0` peels to
   `ff885586f6d44a3d9b9ac1724032cdf5f0155384`; never move or reuse it.
 - Proposed combined tag: `candle-overlays-mvp-0.2.0`. It does not yet exist
@@ -30,9 +30,11 @@
   2026-08-13 and the closeout commits above directly on `main` in this
   session. No annotated tag, hosted release, repository-rule change, secret
   inspection, or hosted-CI invocation is included.
-- Current active local slice: none. The LFM2 compatibility implementation,
-  tests, TODO/history/decision/status updates, README command correction, and
-  summary-bank cleanup are committed in the closeout head above.
+- Current active local slice: close the 3B native and official 400M Q8 MMProj
+  production-proof gap. Reference locking, config-only validation, hash-bound
+  remote-code admission, direct-GGUF hybrid evidence, Q8 retention checks, and
+  deterministic fixture tests are implemented locally; production receipts are
+  still external and not present in this repository.
 - Models, caches, downloads, generated proof, Cargo output, and
   `.tools/.secrets/` remain ignored or external. Operator disk cleanup removed
   the local model/cache inputs; do not reconstruct or download them implicitly.
@@ -48,6 +50,14 @@
   implemented with checked limits and controlled malformed-input errors.
 - Native safetensors, quantized GGUF text plus split dense MMProj, direct GGUF
   MMProj, and CPU-F32 native Q8_0 MMProj execution are implemented.
+- The architecture supports the 3B shape contract and the official 400M Q8_0
+  MMProj path, but neither is a production-support claim yet. The 3B lock is
+  `5a414ead75d45db003906d06fb62bd5b6846cec0`; the official GGUF lock is
+  `3e0e828198e2abb75a957ad823f5d691c13f0f28`.
+- Native trace publication remains unchanged. Direct-GGUF evidence is a
+  separate `hybrid-trace` bundle containing projected image embeddings,
+  prefill/decode logits, input identities, execution mode, Q8 tensor count,
+  and exact cache-reset evidence.
 - `candle_vlm::lfm2_vl::load_lfm2_vl_hybrid` is the public local-only hybrid
   assembly boundary. The example remains a thin CLI/reporting adapter; Candle
   performs no discovery, download, retained-handle admission, resource lease,
@@ -60,7 +70,7 @@
   modifications, 12 additions). Their registered union is 167 paths with 13
   shared paths.
 
-## Latest Integrity Review (2026-08-20)
+## Latest Integrity Review (2026-08-21)
 
 - No missing LFM2-VL module export, broken example import, production stub, or
   incomplete owned feature was found. The public example test binary compiles
@@ -89,6 +99,13 @@
   `issue__lfm2_config_compatibility` route. The large failure log is no longer
   repeated in the reference-environment or linked-worktree groups; the
   dedicated containment route remains the owner for that history.
+- The 3B/Q8 proof slice adds immutable native and official GGUF repository
+  entries, exact 3B config/tokenizer/processor checks, bounded custom-code
+  admission, direct-GGUF hybrid evidence, dense-versus-native-Q8 comparison,
+  and fixture regressions. The current official 3B snapshot has no model
+  Python files and an empty `auto_map`, so `trust_remote_code` remains false;
+  the model-card custom-code/context claims are recorded as a source conflict
+  rather than silently accepted.
 - A repository-wide incomplete-logic scan found additional upstream
   `todo!`/`unimplemented!` and unchecked serialization/configuration paths.
   They are shaped in `TODO.md` as post-0.2.0, one-subsystem-at-a-time work so
@@ -105,7 +122,7 @@
   `lfm2-vl` examples passed.
 - Focused tests passed: `candle-vlm` 37/37,
   `candle-transformers --lib lfm2` 36/36, and `candle-examples --example
-  lfm2-vl` 32/32.
+  lfm2-vl` 33/33.
 - The closing-session rerun also passed the locked/offline checks for all four
   affected libraries and all three LFM2 examples, workspace warnings-denied
   Clippy, and the workspace unit/integration/doc-test lane excluding the
@@ -116,6 +133,14 @@
   crate/example checks, module-layout, diff gates, and the mod manifest.
   The verifier-only Cargo.lock SHA-256 was
   `9b7aa15899ae8acf7b1a09b951ddba2f16462137eee2fed0db863a9d84707175`.
+- 2026-08-21 focused proof-gap checks passed: Python reference tools `36 passed,
+  4 skipped`; `cargo test --locked --offline -j 2 -p candle-examples
+  --example lfm2-vl` passed `33/33`, including direct-Q8 hybrid evidence,
+  retained Q8 selection, and exact cache-reset replay. No production model,
+  GGUF, oracle trace, or model code was loaded.
+- The warnings-denied Windows example Clippy lane passed after reducing the
+  hybrid evidence writer boundary; the final WSL replay also passed the locked
+  format/check/layout/diff/mod-manifest gate from `16:36:17Z` to `16:36:54Z`.
 - Summary-bank validation passed for 31 groups with a 129.8 KiB default
   union; the Python 3.13 module-layout verifier passed all registered splits.
 - Both overlay manifests and the repository union passed at 156/20/167 with
@@ -130,13 +155,19 @@
 
 ## Gaps And Blockers
 
-- The combined-overlay implementation has no known owned source or local-check
-  blocker. The last verified app/source closeout head is
-  `53b2f3b3a1e7a9e49126a57213c3abb74a65c698`; the WSL documentation update
-  does not alter application source.
-- Production model inputs are absent after operator cleanup. Existing retained
-  hash-bound parity remains historical evidence; no new live model/CUDA claim
-  is made in this task.
+- The local implementation and focused checks have no known owned blocker. The
+  clean starting head was `226f8be21cb955efbbd65254db479ddd0a9504b2`.
+- Production model inputs are absent after operator cleanup. The locked 3B
+  native snapshot requires 6,264,993,989 bytes and the official GGUF entry
+  contains a 1,674,454,240-byte text file plus 853,993,088-byte F16 and
+  583,109,120-byte Q8_0 MMProj files. No download is implicit. Native 3B and
+  official 400M Q8 production claims remain Gated until their external
+  manifests, bounded oracle traces, Candle receipts, and cleanup evidence
+  exist.
+- The current 3B model card advertises custom code and 32,768 context, but the
+  pinned config has no `auto_map`/Python code and 128,000 text positions. A
+  compatible pinned Transformers/oracle environment must resolve this before
+  native inference is admitted; the lock currently follows the exact snapshot.
 - The upstream `candle-datasets` runtime test performs live HTTP even under
   Cargo offline mode. It remains an owner-scoped skip; crate check and Clippy
   still cover its source.
@@ -162,11 +193,14 @@
 
 ## Exact Next Task
 
-With separate explicit owner authority, the next release task is to create and
-publish the annotated tag `candle-overlays-mvp-0.2.0`, emit the external
-identity receipt, create the matching hosted release, and apply owner-selected
-immutability rules. Do not combine those families with the post-release safety
-tasks in `TODO.md`.
+Acquire the exact locked 3B native snapshot and official 3B-GGUF text/F16/Q8_0
+MMProj files only through the guarded external path, build artifact manifests,
+run the pinned CPU-F32 oracle/Candle native trace and dense-versus-Q8 hybrid
+comparison, then update the production rows only if every receipt and cleanup
+condition is green. If acquisition or the pinned oracle remains unavailable,
+leave the status Gated and retain the explicit blocker. The separate
+`candle-overlays-mvp-0.2.0` publication task remains deferred until its own
+authorization.
 
 ---
-AI-edited: 2026-08-20T21:17:10-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=wsl-toolchain-replay | change=recorded the successful pinned Linux toolchain and portable baseline replay
+AI-edited: 2026-08-21T12:40:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-3b-q8-proof-gap | change=recorded the bounded 3B and direct-Q8 proof contract and its gated production status

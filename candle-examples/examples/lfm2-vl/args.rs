@@ -14,7 +14,7 @@ const MAX_VISION_BATCH_SIZE: usize = 64;
 const MAX_PROMPT_BYTES: usize = 1024 * 1024;
 const MAX_TRACE_NEW_TOKENS: usize = 32;
 
-pub const USAGE: &str = "usage: lfm2-vl --model-dir <hf-checkpoint-dir> [--processor-config <override.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n       lfm2-vl --model-file <text.gguf> (--mmproj-file <mmproj.gguf> | --mmproj-dir <split-dir>) --tokenizer <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense|q8>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n       lfm2-vl <text.gguf> <split-mmproj-dir> <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n\ninference: --prompt <text> [--image <path>]... [--max-new-tokens <0..1024>] [--vision-batch-size <1..64>] [--eos-token-id <u32>] [--json] [--timings | --benchmark-generation] [--trace-output <external-dir>]\nEach image requires one literal <image> sentinel in the prompt. Without --prompt the command remains load-and-report only. --timings writes synchronized end-to-end stage durations to stderr. --benchmark-generation runs a fixed 10-warm-up/30-measurement direct prefill/decode benchmark and writes a separate JSON record to stderr without changing inference JSON. --trace-output is a native CPU/F32, single-crop parity lane and requires --cpu, one image, and at most 32 generated tokens.";
+pub const USAGE: &str = "usage: lfm2-vl --model-dir <hf-checkpoint-dir> [--processor-config <override.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n       lfm2-vl --model-file <text.gguf> (--mmproj-file <mmproj.gguf> | --mmproj-dir <split-dir>) --tokenizer <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense|q8>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n       lfm2-vl <text.gguf> <split-mmproj-dir> <tokenizer.json> [--processor-config <processor_config.json>] [--dtype <f32|bf16|f16>] [--mmproj-execution <auto|dense>] [--cpu] [--text-cpu] [--vision-cpu] [inference]\n\ninference: --prompt <text> [--image <path>]... [--max-new-tokens <0..1024>] [--vision-batch-size <1..64>] [--eos-token-id <u32>] [--json] [--timings | --benchmark-generation] [--trace-output <external-dir>]\nEach image requires one literal <image> sentinel in the prompt. Without --prompt the command remains load-and-report only. --timings writes synchronized end-to-end stage durations to stderr. --benchmark-generation runs a fixed 10-warm-up/30-measurement direct prefill/decode benchmark and writes a separate JSON record to stderr without changing inference JSON. --trace-output is a bounded CPU/F32, single-crop parity lane for native safetensors or direct-GGUF MMProj loading; it requires --cpu, one image, and at most 32 generated tokens.";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MmprojArg {
@@ -454,9 +454,16 @@ where
     args.validate_mmproj_source()?;
     if let Some(inference) = &args.inference {
         if inference.trace_output.is_some()
-            && !matches!(args.source, ModelSource::NativeDirectory(_))
+            && !matches!(
+                &args.source,
+                ModelSource::NativeDirectory(_)
+                    | ModelSource::Hybrid {
+                        mmproj: MmprojArg::GgufFile(_),
+                        ..
+                    }
+            )
         {
-            bail!("--trace-output is supported only with native safetensors loading")
+            bail!("--trace-output requires native safetensors or direct GGUF MMProj loading")
         }
     }
     Ok(ParseOutcome::Run(Box::new(args)))
@@ -902,7 +909,7 @@ mod tests {
     }
 
     #[test]
-    fn trace_output_is_bounded_and_native_cpu_only() -> Result<()> {
+    fn trace_output_is_bounded_for_native_and_direct_gguf_cpu() -> Result<()> {
         let args = run(&[
             "--model-dir",
             "checkpoint",
@@ -938,6 +945,22 @@ mod tests {
             "text.gguf",
             "--mmproj-file",
             "mmproj.gguf",
+            "--tokenizer",
+            "tokenizer.json",
+            "--cpu",
+            "--prompt",
+            "<image>",
+            "--image",
+            "image.png",
+            "--trace-output",
+            "trace",
+        ])
+        .is_ok());
+        assert!(parse(&[
+            "--model-file",
+            "text.gguf",
+            "--mmproj-dir",
+            "mmproj",
             "--tokenizer",
             "tokenizer.json",
             "--cpu",

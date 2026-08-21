@@ -32,6 +32,54 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   summary/layout/overlay verifiers, `git diff --check`, clean status, guarded
   remote equality, and annotated-tag peel/asset comparison.
 
+### [ ] Close the native 3B and official 400M Q8 MMProj production proof gap
+
+- What: Acquire and verify the immutable `LiquidAI/LFM2.5-VL-3B` native
+  snapshot and the official `LiquidAI/LFM2.5-VL-3B-GGUF` text/F16/Q8_0 MMProj
+  artifacts, then produce the bounded native and hybrid evidence receipts.
+- Why: Candle now has the config-driven architecture, direct-GGUF Q8
+  execution, hash-bound artifact admission, and fixture regressions, but
+  architecture support is not production compatibility evidence.
+- When: The next owner-authorized production proof lane, after the locked
+  external artifacts and compatible pinned oracle environment are available;
+  CPU-F32 is first and CUDA is out of scope.
+- Where: `tools/lfm2_vl/reference-lock.json`, the reference manifest/inspect/
+  acquire/trace/comparator tools, `candle-examples/examples/lfm2-vl/`, and the
+  external snapshot, artifact manifests, traces, and receipts. Never place
+  weights, caches, model code, or generated evidence in this repository.
+- How:
+  - [x] Lock the native 3B files, official GGUF text/F16/Q8_0 files, sizes,
+    hashes, memory bounds, tokenizer markers, processor limits, and config
+    dimensions.
+  - [x] Admit model-provided Python only for an exact locked snapshot after
+    every code file is listed and rehashed; reject moving-branch, cache-only,
+    and unlisted code. The current pinned snapshot has no such files.
+  - [x] Validate actual 3B config values without loading weights and preserve
+    the existing native trace schema.
+  - [x] Publish a separate direct-GGUF `hybrid-trace` bundle with projected
+    image embeddings, prefill/decode logits, input identities, execution mode,
+    Q8 tensor count, generated IDs, and cache-reset evidence.
+  - [ ] Acquire the external artifacts through the guarded owner path, create
+    hash-only manifests, and revalidate every consumed file after inference.
+  - [ ] Run the 3B native CPU-F32 oracle/Candle comparison through processor,
+    prompt expansion, all 27 vision layers, post-layernorm, projector, merge,
+    prefill, cached decode, generated IDs, cache reset, and cleanup.
+  - [ ] Run identical-input dense/dequantized versus native-Q8 direct-GGUF
+    comparisons and prove the resolved path retains Q8 tensors rather than
+    silently dequantizing.
+- Done when: Both external artifact manifests match the lock; all required
+  component tensors, logits, generated IDs, input hashes, cache-reset replay,
+  and cleanup checks pass at their documented tolerances; the hybrid receipt
+  reports `dense-dequantized` versus `q8_0-native` with a positive retained Q8
+  tensor count; no production claim remains without its receipt; and the
+  native/Q8 rows in `STATUS.md` and `PARITY.md` are updated from Gated only
+  after that evidence exists.
+- Verification: `python -m pytest -q tools/lfm2_vl/reference`, focused
+  `candle-transformers`, `candle-vlm`, and `lfm2-vl` example tests, locked
+  native Windows/MSVC checks, WSL `scripts/lfm2-vl/verify-baseline.sh`,
+  summary-bank/mod-manifest/overlay verifiers, `cargo fmt --all -- --check`,
+  `git diff --check`, and the bounded external oracle/Candle receipt audit.
+
 ## Sequencing holds
 
 - Optional LFM2-VL captioning in SnapFlash waits for the diffusion runtime and
@@ -182,4 +230,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-08-20T20:34:39-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-config-compatibility | change=removed the completed compatibility item after deprecating the legacy infallible conversion
+AI-edited: 2026-08-21T12:40:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-3b-q8-proof-gap | change=added the gated native-3B and direct-Q8 production proof contract

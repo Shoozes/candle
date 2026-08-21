@@ -619,7 +619,11 @@ def acquire_snapshot(
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model", default="1.6b")
+    parser.add_argument(
+        "--model",
+        default="1.6b",
+        help="pinned model alias (450m, 1.6b, or 3b) or full LiquidAI model ID",
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--cache-dir", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, required=True)

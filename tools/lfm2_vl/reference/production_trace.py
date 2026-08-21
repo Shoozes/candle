@@ -25,6 +25,7 @@ try:
         reference_environment_lock,
         require_reference_environment,
         repo_root,
+        remote_code_admission,
         sha256_bytes,
         transformers_entry,
     )
@@ -41,6 +42,7 @@ except ImportError:  # pragma: no cover - direct script/module execution
         reference_environment_lock,
         require_reference_environment,
         repo_root,
+        remote_code_admission,
         sha256_bytes,
         transformers_entry,
     )
@@ -58,6 +60,33 @@ MAX_NEW_TOKENS = 32
 MAX_SOURCE_IMAGE_BYTES = 64 * 1024 * 1024
 MAX_SOURCE_IMAGE_PIXELS = 16 * 1024 * 1024
 MAX_IMAGE_CROPS = 64
+
+
+def _admit_remote_code(
+    model_id: str,
+    revision: str,
+    trust_remote_code: bool,
+    artifact_manifest: Mapping[str, Any] | None,
+) -> bool:
+    """Derive the loader flag only from the locked, rehashed snapshot."""
+
+    if not trust_remote_code:
+        return False
+    if artifact_manifest is None:
+        raise ValueError(
+            "trust_remote_code requires the external artifact manifest for the locked snapshot"
+        )
+    lock = load_reference_lock()
+    entry = model_entry(lock, model_id)
+    if entry.get("id") != "LiquidAI/LFM2.5-VL-3B" or revision != entry.get("revision"):
+        raise ValueError(
+            "trust_remote_code is permitted only for the exact locked LFM2.5-VL-3B snapshot"
+        )
+    if not remote_code_admission(entry, artifact_manifest):
+        raise ValueError(
+            "the locked snapshot does not admit trust_remote_code without model-provided code"
+        )
+    return True
 
 
 def _torch_and_transformers():
@@ -84,18 +113,23 @@ def load_trace_model(
     *,
     allow_download: bool,
     model_dir: Path | None = None,
+    trust_remote_code: bool = False,
+    artifact_manifest: Mapping[str, Any] | None = None,
 ):
     """Load one pinned production model on CPU F32 with no device auto-placement."""
 
     if model_dir is not None and allow_download:
         raise ValueError("an external model snapshot cannot be combined with --allow-download")
+    trust_remote_code = _admit_remote_code(
+        model_id, revision, trust_remote_code, artifact_manifest
+    )
     torch, auto_model, _ = _torch_and_transformers()
     _set_deterministic(torch)
     source = str(model_dir) if model_dir is not None else model_id
     kwargs = {
         "revision": revision,
         "local_files_only": model_dir is not None or not allow_download,
-        "trust_remote_code": False,
+        "trust_remote_code": trust_remote_code,
         "dtype": torch.float32,
     }
     try:
@@ -120,18 +154,23 @@ def load_trace_processor(
     *,
     allow_download: bool,
     model_dir: Path | None = None,
+    trust_remote_code: bool = False,
+    artifact_manifest: Mapping[str, Any] | None = None,
 ):
     """Load the processor at the same pinned revision as the model."""
 
     if model_dir is not None and allow_download:
         raise ValueError("an external model snapshot cannot be combined with --allow-download")
+    trust_remote_code = _admit_remote_code(
+        model_id, revision, trust_remote_code, artifact_manifest
+    )
     _, _, auto_processor = _torch_and_transformers()
     source = str(model_dir) if model_dir is not None else model_id
     return auto_processor.from_pretrained(
         source,
         revision=revision,
         local_files_only=model_dir is not None or not allow_download,
-        trust_remote_code=False,
+        trust_remote_code=trust_remote_code,
     )
 
 
@@ -406,6 +445,7 @@ def export_production_trace(
     if allow_download:
         raise ValueError("production trace with --model-dir cannot use --allow-download")
     resolved_model_dir, artifact_manifest = resolve_model_snapshot(model, model_dir)
+    trust_remote_code = remote_code_admission(entry, artifact_manifest)
     image, source_bytes = _load_rgb_image(image_path)
     torch, _, _ = _torch_and_transformers()
     _set_deterministic(torch)
@@ -414,12 +454,16 @@ def export_production_trace(
         locked_revision,
         allow_download=allow_download,
         model_dir=resolved_model_dir,
+        trust_remote_code=trust_remote_code,
+        artifact_manifest=artifact_manifest,
     )
     processor = load_trace_processor(
         str(entry["id"]),
         locked_revision,
         allow_download=allow_download,
         model_dir=resolved_model_dir,
+        trust_remote_code=trust_remote_code,
+        artifact_manifest=artifact_manifest,
     )
 
     model_inputs, rendered_prompt, processor_evidence = _processor_inputs(

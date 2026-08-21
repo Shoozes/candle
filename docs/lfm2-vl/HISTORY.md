@@ -2,6 +2,29 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-08-21 — 3B and direct-Q8 proof contract
+
+- Locked the official `LiquidAI/LFM2.5-VL-3B` native snapshot at
+  `5a414ead75d45db003906d06fb62bd5b6846cec0` and the official
+  `LiquidAI/LFM2.5-VL-3B-GGUF` repository at
+  `3e0e828198e2abb75a957ad823f5d691c13f0f28`, including exact file sizes,
+  SHA-256 identities, memory bounds, tokenizer markers, processor limits, and
+  the actual 3B architecture values. No production payload was retained.
+- Added config-only 3B validation, snapshot code-inventory rejection, and
+  hash-bound custom-code admission. The exact pinned snapshot has no Python
+  model files and an empty `auto_map`, so its policy remains
+  `trust_remote_code=false`; the model-card conflict is recorded in D-0061.
+- Added a separate direct-GGUF `hybrid-trace` receipt containing projected
+  image embeddings, prefill/decode logits, input identities, execution mode,
+  Q8 retention count, generated IDs, and cache-reset evidence. Added the
+  dense-versus-native-Q8 comparator with identical-input, positive-retention,
+  projector-cosine `0.9999`, and logit-drift `2e-2` gates.
+- Focused verification passed: Python reference tools `36 passed, 4 skipped`
+  and `cargo test --locked --offline -j 2 -p candle-examples --example
+  lfm2-vl` `33/33`. This closes the implementation/fixture subtask only; the
+  external 3B native and official 400M Q8 production receipts remain active
+  in `TODO.md` and are not claimed here.
+
 ## 2026-08-20 — WSL2 toolchain and portable baseline replay
 
 - The pinned `1.97.1-x86_64-unknown-linux-gnu` toolchain was already present
@@ -1996,4 +2019,4 @@ deferred to TODO C3; no network or toolchain install was substituted.
   documentation-only fast-forward successor.
 
 ---
-AI-edited: 2026-08-20T21:17:10-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=wsl-toolchain-replay | change=archived the successful pinned Linux toolchain and portable baseline replay
+AI-edited: 2026-08-21T12:40:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-3b-q8-proof-gap | change=archived the completed proof-contract implementation without claiming production receipts

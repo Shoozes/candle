@@ -61,6 +61,7 @@ REFERENCE_RUNTIME_PACKAGE_NAMES = tuple(
 _MODEL_ALIASES = {
     "450m": "LiquidAI/LFM2.5-VL-450M",
     "1.6b": "LiquidAI/LFM2.5-VL-1.6B",
+    "3b": "LiquidAI/LFM2.5-VL-3B",
 }
 _SECRET_KEY_PARTS = (
     "access_token",
@@ -263,6 +264,86 @@ def model_entry(lock: Mapping[str, Any], model: str) -> Mapping[str, Any]:
     raise ValueError(f"model is not pinned in reference-lock.json: {model_id}")
 
 
+def remote_code_admission(
+    entry: Mapping[str, Any], artifact_manifest: Mapping[str, Any]
+) -> bool:
+    """Return the only permitted remote-code setting for one verified snapshot.
+
+    A model snapshot may not execute Python merely because a caller requested
+    ``trust_remote_code``.  The lock must explicitly name every Python file,
+    the external artifact manifest must contain the same files and hashes, and
+    no additional Python file may be present.  The current 3B snapshot has no
+    model-provided Python files, so its locked policy remains disabled.
+    """
+
+    policy = entry.get("remote_code_policy", {})
+    if not isinstance(policy, Mapping):
+        raise ValueError("remote_code_policy must be an object")
+    raw_names = policy.get("files", [])
+    if not isinstance(raw_names, list) or any(
+        not isinstance(name, str) or not name or Path(name).name != name
+        for name in raw_names
+    ):
+        raise ValueError("remote_code_policy.files must contain direct filenames")
+    if len(set(raw_names)) != len(raw_names):
+        raise ValueError("remote_code_policy.files must not repeat filenames")
+    code_names = set(raw_names)
+    locked_files = {
+        item.get("path"): item
+        for item in entry.get("files", [])
+        if isinstance(item, Mapping) and isinstance(item.get("path"), str)
+    }
+    if not code_names.issubset(locked_files):
+        missing = sorted(code_names - locked_files.keys())
+        raise ValueError(f"remote-code files are not pinned in the lock: {missing!r}")
+
+    records = artifact_manifest.get("files")
+    if not isinstance(records, list):
+        raise ValueError("artifact manifest has no file inventory for remote-code admission")
+    artifact_files: dict[str, Mapping[str, Any]] = {}
+    for record in records:
+        if not isinstance(record, Mapping) or not isinstance(record.get("path"), str):
+            continue
+        name = str(record["path"])
+        if name in artifact_files:
+            raise ValueError(f"artifact manifest repeats model input: {name}")
+        artifact_files[name] = record
+    unlisted_python = sorted(
+        name
+        for name in artifact_files
+        if name.lower().endswith(".py") and name not in code_names
+    )
+    if unlisted_python:
+        raise ValueError(f"artifact contains unlisted model Python files: {unlisted_python!r}")
+
+    for name in sorted(code_names):
+        locked = locked_files[name]
+        record = artifact_files.get(name)
+        if record is None:
+            raise ValueError(f"artifact manifest is missing locked model code: {name}")
+        if locked.get("purpose") != "model-provided Python code":
+            raise ValueError(f"locked model code has the wrong purpose: {name}")
+        if record.get("regular_file") is not True:
+            raise ValueError(f"model code is not recorded as a regular file: {name}")
+        if record.get("sha256") != locked.get("sha256"):
+            raise ValueError(f"model code hash does not match the lock: {name}")
+        if record.get("bytes") != locked.get("bytes"):
+            raise ValueError(f"model code size does not match the lock: {name}")
+
+    requested = policy.get("trust_remote_code", False)
+    if not isinstance(requested, bool):
+        raise ValueError("remote_code_policy.trust_remote_code must be boolean")
+    if requested and not code_names:
+        raise ValueError(
+            "trust_remote_code cannot be enabled without hash-bound model code files"
+        )
+    if artifact_manifest.get("model_id") != entry.get("id"):
+        raise ValueError("artifact model ID does not match the locked remote-code entry")
+    if artifact_manifest.get("revision") != entry.get("revision"):
+        raise ValueError("artifact revision does not match the locked remote-code entry")
+    return requested
+
+
 def transformers_entry(lock: Mapping[str, Any]) -> Mapping[str, Any]:
     for entry in lock.get("repositories", []):
         if entry.get("id") == "huggingface-transformers":
@@ -418,7 +499,10 @@ def normalized_model_summary(
     vision = dict(config.get("vision_config") or config.get("vision") or locked.get("vision", {}))
     processor_defaults = dict(locked.get("processor", {}))
     if processor:
-        processor_defaults.update(processor)
+        processor_override = processor.get("image_processor", processor)
+        if not isinstance(processor_override, Mapping):
+            raise ValueError("processor image_processor must be an object")
+        processor_defaults.update(processor_override)
     if "type" not in processor_defaults and "image_processor_type" in processor_defaults:
         processor_defaults["type"] = processor_defaults["image_processor_type"]
     processor = processor_defaults
@@ -510,6 +594,77 @@ def normalized_model_summary(
     }
     validate_summary(summary)
     return summary
+
+
+_LOCKED_SUMMARY_PATHS = (
+    "architecture",
+    "model_type",
+    "image_token_id",
+    "downsample_factor",
+    "projector.hidden_size",
+    "projector.activation",
+    "projector.bias",
+    "projector.use_layernorm",
+    "projector.input_size",
+    "projector.output_size",
+    "text.model_type",
+    "text.hidden_size",
+    "text.vocab_size",
+    "text.num_hidden_layers",
+    "text.num_attention_heads",
+    "text.num_key_value_heads",
+    "text.intermediate_size",
+    "text.effective_ffn_size",
+    "text.conv_L_cache",
+    "text.max_position_embeddings",
+    "text.layer_types",
+    "text.full_attention_layers",
+    "text.eos_token_id",
+    "vision.model_type",
+    "vision.hidden_size",
+    "vision.intermediate_size",
+    "vision.num_hidden_layers",
+    "vision.num_attention_heads",
+    "vision.num_channels",
+    "vision.patch_size",
+    "vision.num_patches",
+    "processor.type",
+    "processor.tile_size",
+    "processor.min_tiles",
+    "processor.max_tiles",
+    "processor.min_image_tokens",
+    "processor.max_image_tokens",
+    "processor.max_num_patches",
+    "processor.use_thumbnail",
+    "processor.image_mean",
+    "processor.image_std",
+    "special_token_ids",
+    "tie_word_embeddings",
+)
+
+
+def _summary_path(summary: Mapping[str, Any], path: str) -> Any:
+    value: Any = summary
+    for part in path.split("."):
+        if not isinstance(value, Mapping) or part not in value:
+            return None
+        value = value[part]
+    return value
+
+
+def validate_summary_against_lock(
+    entry: Mapping[str, Any], summary: Mapping[str, Any]
+) -> None:
+    """Reject a local config/processor that changes a locked checkpoint contract."""
+
+    expected = normalized_model_summary(entry)
+    mismatches = {
+        path: {"locked": _summary_path(expected, path), "local": _summary_path(summary, path)}
+        for path in _LOCKED_SUMMARY_PATHS
+        if _summary_path(expected, path) != _summary_path(summary, path)
+    }
+    if mismatches:
+        raise ValueError(f"local config does not match the locked checkpoint: {mismatches}")
 
 
 def validate_summary(summary: Mapping[str, Any]) -> None:

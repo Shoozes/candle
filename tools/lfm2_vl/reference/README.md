@@ -17,10 +17,20 @@ This path works with stdlib-only Python:
 ```bash
 python3 tools/lfm2_vl/reference/inspect_config.py --model 450m
 python3 tools/lfm2_vl/reference/inspect_config.py --model 1.6b --tokenizer /path/to/tokenizer.json
+python3 tools/lfm2_vl/reference/inspect_config.py --model 3b --tokenizer /path/to/3b/tokenizer.json
 python3 tools/lfm2_vl/reference/export_fixtures.py --mode config-only --model 1.6b
 ```
 
 Small local `config.json`, `processor_config.json`, and `tokenizer.json` files can be supplied with `--config`, `--processor-config`, and `--tokenizer`. The files must be JSON and are bounded to a small configuration size; weight files are not accepted. Tokenizer inspection verifies the model's image placeholder ID, requires at least one row/column marker, and reports distinct in-vocabulary wrapper, thumbnail, and grid marker IDs without importing `tokenizers`. Standalone `--output` publication refuses an existing or racing destination unless the command exposes and receives an explicit `--overwrite` flag.
+
+The lock aliases are `450m`, `1.6b`, and `3b`. The 3B config-only path
+checks the actual 30-layer/2,048-width text model, 27-layer/1,152-width
+SigLIP2 tower, 16-pixel patch geometry, 4,608-wide projector input, image
+token `124907`, processor tile/patch limits, and tokenizer marker IDs. The
+exact 3B snapshot currently contains no model Python code and has an empty
+`auto_map`; its locked policy therefore does not enable `trust_remote_code`.
+If a future exact snapshot needs custom code, every `.py` file must be listed
+and hash-matched in the external artifact manifest before admission.
 
 ## Guarded snapshot acquisition
 
@@ -255,6 +265,27 @@ python tools/lfm2_vl/reference/compare_traces.py \
 
 The comparator validates each bundle's trace schema/mode, matching metadata/manifest contract, no-weights claim, manifest, metadata hash, safetensors hash, canonical dtype names, shapes, and tensor names before loading one pair at a time. It requires both lanes to record successful post-inference input revalidation, then requires the native trace's consumed `config.json`, `processor_config.json`, `tokenizer.json`, safetensors index, and weight-shard evidence to match the oracle artifact manifest by direct filename, byte count, and SHA-256; missing, extra, duplicate, or content-mismatched native inputs fail before tensor comparison. Required input IDs, attention masks, processor tensors, projector input-patch ranges, and decode IDs are exact. The complete `stage.*` inventory must also match, so an optional configured stage such as projector LayerNorm cannot silently disappear; vision, projector, and language floats then use recorded CPU-F32 tolerances. Exit 0 means the report has `passed=true`, exit 1 means a valid comparison contains one or more failed tensors, and exit 2 means the bundles or invocation are invalid. A nonzero result is a failed gate, not a rounded-caption success claim.
 
+Direct-GGUF production evidence uses the same native trace command with
+`--model-file`, `--mmproj-file`, tokenizer, processor, image, prompt, and
+`--trace-output`. A direct GGUF output is a separate `hybrid-trace` bundle;
+split MMProj output remains ineligible for this evidence mode. Produce one
+dense/dequantized bundle from the official F16 MMProj and one native-Q8 bundle
+from the official Q8_0 MMProj, then compare them with:
+
+```bash
+python tools/lfm2_vl/reference/compare_traces.py \
+  --dense /external/evidence/lfm2-vl-3b-f16 \
+  --q8 /external/evidence/lfm2-vl-3b-q8 \
+  --output /external/evidence/lfm2-vl-3b-dense-vs-q8.json
+```
+
+The hybrid comparator requires identical text/tokenizer/processor/prompt/image
+identity, exact generated IDs and cache-reset replay, positive native Q8
+retention, projector cosine `>=0.9999`, and language-logit max absolute drift
+`<=2e-2`. These are comparison tolerances for the bounded Q8 lane, not a
+production claim until both official artifact manifests and cleanup receipts
+are present.
+
 ## Split dense MMProj export
 
 `tools/export_lfm2_vl_mmproj.py` is a separate stdlib-only development tool. It accepts a local safetensors file plus local model and processor JSON, streams only the canonical `model.vision_tower.*` and `model.multi_modal_projector.*` payloads, and emits `mmproj.safetensors`, `mmproj.json`, and `processor_config.json`. It validates source offsets and byte sizes, refuses non-dense MMProj tensors, writes atomically, and never downloads a model.
@@ -311,4 +342,4 @@ malformed manifest JSON, artifact identity ambiguity, exact oracle/native
 artifact matching, and platform-specific environment selection.
 
 ---
-AI-edited: 2026-08-11T09:15:59-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=docs | change=clarified marker validation and shared no-clobber outputs
+AI-edited: 2026-08-21T12:40:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-3b-q8-proof-gap | change=documented 3B locking, custom-code admission, and hybrid comparison commands

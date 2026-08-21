@@ -64,7 +64,23 @@ REQUIRED_TENSORS = {
     "stage.vision.post_layernorm",
     "stage.vision.resized_position_embedding",
 }
-TRACE_MODES = {"native-trace", "production-trace"}
+HYBRID_TRACE_MODE = "hybrid-trace"
+TRACE_MODES = {"native-trace", "production-trace", HYBRID_TRACE_MODE}
+HYBRID_REQUIRED_TENSORS = {
+    "input.decode_token_ids",
+    "input.image_rgb_u8",
+    "input.attention_mask",
+    "input.input_ids",
+    "input.pixel_attention_mask",
+    "input.pixel_values",
+    "input.projector_crop_ranges",
+    "input.spatial_shapes",
+    "stage.language.decode_logits",
+    "stage.language.prefill_logits",
+    "stage.projector.output",
+}
+HYBRID_PROJECTOR_MIN_COSINE = 0.9999
+HYBRID_LOGIT_MAX_ABS = 2.0e-2
 REQUIRED_SHARED_CONTRACT_FIELDS = {
     "source_image_sha256",
     "prompt",
@@ -372,7 +388,14 @@ def _comparison_policy(name: str) -> tuple[str, float | None]:
     return "allclose", None
 
 
-def _compare_tensor(torch: Any, reference: Any, candidate: Any, name: str) -> dict[str, Any]:
+def _compare_tensor(
+    torch: Any,
+    reference: Any,
+    candidate: Any,
+    name: str,
+    *,
+    hybrid: bool = False,
+) -> dict[str, Any]:
     if tuple(reference.shape) != tuple(candidate.shape):
         return {
             "name": name,
@@ -390,7 +413,12 @@ def _compare_tensor(torch: Any, reference: Any, candidate: Any, name: str) -> di
             "candidate_dtype": str(candidate.dtype),
         }
     atol, rtol = _tolerance(name)
-    policy, policy_limit = _comparison_policy(name)
+    if hybrid and name == "stage.projector.output":
+        policy, policy_limit = "cosine_or_allclose", HYBRID_PROJECTOR_MIN_COSINE
+    elif hybrid and name.startswith("stage.language."):
+        policy, policy_limit = "max_abs", HYBRID_LOGIT_MAX_ABS
+    else:
+        policy, policy_limit = _comparison_policy(name)
     if name in INTEGER_TENSORS:
         exact = bool(torch.equal(reference, candidate))
         return {
@@ -548,10 +576,148 @@ def compare_traces(oracle: Path, native: Path) -> dict[str, Any]:
     }
 
 
+def _hybrid_input_identity(metadata: Mapping[str, Any]) -> dict[str, tuple[int, str]]:
+    records = metadata.get("model_inputs")
+    if not isinstance(records, list) or not records:
+        raise ValueError("hybrid trace metadata has no consumed-file evidence")
+    result: dict[str, tuple[int, str]] = {}
+    for index, record in enumerate(records):
+        if not isinstance(record, Mapping):
+            raise ValueError(f"hybrid model input {index} is not an object")
+        path = record.get("path")
+        if not isinstance(path, str) or not path:
+            raise ValueError(f"hybrid model input {index} has no path")
+        name = path.replace("\\", "/").rsplit("/", 1)[-1]
+        if not name or name in result:
+            raise ValueError(f"hybrid model inputs repeat filename {name!r}")
+        result[name] = (
+            _byte_count(record.get("bytes"), f"hybrid model input {name} bytes"),
+            _sha256(record.get("sha256"), f"hybrid model input {name} sha256"),
+        )
+    return result
+
+
+def _validate_hybrid_metadata(
+    metadata: Mapping[str, Any], manifest: Mapping[str, Any], label: str
+) -> None:
+    _validate_trace_manifest(manifest, Path(label))
+    if metadata.get("mode") != HYBRID_TRACE_MODE:
+        raise ValueError(f"{label} is not a hybrid trace")
+    if metadata.get("model_inputs_reverified") is not True:
+        raise ValueError(f"{label} did not reverify consumed GGUF inputs")
+    if metadata.get("schema_version") != manifest.get("schema_version"):
+        raise ValueError(f"{label} metadata/schema mismatch")
+    if metadata.get("weights_serialized") is not False:
+        raise ValueError(f"{label} serialized weights")
+    if metadata.get("cache_reset_exact") is not True:
+        raise ValueError(f"{label} did not prove exact cache reset")
+    execution = metadata.get("execution_mode")
+    if execution not in {"dense-dequantized", "q8_0-native"}:
+        raise ValueError(f"{label} has an unsupported hybrid execution mode")
+    q8_count = metadata.get("q8_tensor_count")
+    if not isinstance(q8_count, int) or isinstance(q8_count, bool) or q8_count < 0:
+        raise ValueError(f"{label} has an invalid Q8 tensor count")
+    if execution == "q8_0-native" and q8_count <= 0:
+        raise ValueError(f"{label} claims native Q8 execution without retained Q8 tensors")
+    if execution == "dense-dequantized" and q8_count != 0:
+        raise ValueError(f"{label} claims dense execution with retained Q8 tensors")
+
+
+def compare_hybrid_traces(dense: Path, q8: Path) -> dict[str, Any]:
+    """Compare two direct-GGUF receipts and require the candidate to be native Q8."""
+
+    dense = dense.resolve()
+    q8 = q8.resolve()
+    if dense == q8:
+        raise ValueError("dense and q8 hybrid trace paths must be different")
+    validate_bundle(dense, require_tensors=True)
+    validate_bundle(q8, require_tensors=True)
+    dense_manifest = _load_json(dense / "manifest.json")
+    q8_manifest = _load_json(q8 / "manifest.json")
+    _validate_hybrid_metadata(_load_json(dense / "metadata.json"), dense_manifest, "dense hybrid trace")
+    _validate_hybrid_metadata(_load_json(q8 / "metadata.json"), q8_manifest, "q8 hybrid trace")
+    dense_metadata = _load_json(dense / "metadata.json")
+    q8_metadata = _load_json(q8 / "metadata.json")
+    if dense_metadata["execution_mode"] != "dense-dequantized":
+        raise ValueError("dense comparison input did not resolve to dense-dequantized execution")
+    if q8_metadata["execution_mode"] != "q8_0-native":
+        raise ValueError("Q8 comparison input did not resolve to native Q8_0 execution")
+
+    dense_contract = _contract_fields(dense_metadata)
+    q8_contract = _contract_fields(q8_metadata)
+    _validate_shared_contract(dense_contract, "dense hybrid")
+    _validate_shared_contract(q8_contract, "q8 hybrid")
+    mismatches = {
+        key: {"dense": dense_contract[key], "q8": q8_contract[key]}
+        for key in dense_contract
+        if dense_contract[key] != q8_contract[key]
+    }
+    if mismatches:
+        raise ValueError(f"hybrid input contract mismatch: {mismatches}")
+    dense_inputs = _hybrid_input_identity(dense_metadata)
+    q8_inputs = _hybrid_input_identity(q8_metadata)
+    shared_names = sorted(set(dense_inputs) & set(q8_inputs))
+    for name in shared_names:
+        if dense_inputs[name] != q8_inputs[name]:
+            raise ValueError(f"hybrid shared input changed between dense and Q8: {name}")
+    dense_mmproj = {name for name in dense_inputs if "mmproj" in name.lower()}
+    q8_mmproj = {name for name in q8_inputs if "mmproj" in name.lower()}
+    if len(dense_mmproj) != 1 or len(q8_mmproj) != 1:
+        raise ValueError("hybrid receipts must each contain exactly one direct MMProj input")
+    if dense_inputs[next(iter(dense_mmproj))] == q8_inputs[next(iter(q8_mmproj))]:
+        raise ValueError("dense and Q8 receipts unexpectedly use the same MMProj bytes")
+    if dense_metadata.get("generation", {}).get("generated_ids") != q8_metadata.get("generation", {}).get("generated_ids"):
+        raise ValueError("dense and Q8 generated token IDs differ")
+
+    dense_names = set(dense_manifest.get("tensor_inventory", {}))
+    q8_names = set(q8_manifest.get("tensor_inventory", {}))
+    missing = sorted((HYBRID_REQUIRED_TENSORS - dense_names) | (HYBRID_REQUIRED_TENSORS - q8_names))
+    if missing:
+        raise ValueError(f"hybrid evidence is missing required tensors: {missing!r}")
+    dense_tensor_path, _ = _bundle_paths(dense, dense_manifest)
+    q8_tensor_path, _ = _bundle_paths(q8, q8_manifest)
+    torch, safe_open = _torch_and_safe_open()
+    results: list[dict[str, Any]] = []
+    with safe_open(str(dense_tensor_path), framework="pt", device="cpu") as dense_file:
+        with safe_open(str(q8_tensor_path), framework="pt", device="cpu") as q8_file:
+            for name in sorted(HYBRID_REQUIRED_TENSORS):
+                results.append(
+                    _compare_tensor(
+                        torch,
+                        dense_file.get_tensor(name),
+                        q8_file.get_tensor(name),
+                        name,
+                        hybrid=True,
+                    )
+                )
+    failures = [item for item in results if not item["passed"]]
+    return {
+        "schema_version": 1,
+        "format": "lfm2-vl-hybrid-comparison",
+        "dense": str(dense),
+        "q8": str(q8),
+        "dense_execution": dense_metadata["execution_mode"],
+        "q8_execution": q8_metadata["execution_mode"],
+        "q8_tensor_count": q8_metadata["q8_tensor_count"],
+        "contract": dense_contract,
+        "shared_input_files": shared_names,
+        "tensor_count_compared": len(results),
+        "failure_count": len(failures),
+        "passed": not failures,
+        "tensors": results,
+        "tolerances": {
+            "projector_min_cosine": HYBRID_PROJECTOR_MIN_COSINE,
+            "language_max_abs": HYBRID_LOGIT_MAX_ABS,
+        },
+    }
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--oracle", type=Path, required=True, help="pinned Transformers trace directory")
-    parser.add_argument("--native", type=Path, required=True, help="native Candle trace directory")
+    parser.add_argument("--oracle", type=Path, help="pinned Transformers trace directory")
+    parser.add_argument("--native", type=Path, help="native Candle trace directory")
+    parser.add_argument("--dense", type=Path, help="direct-GGUF dense evidence directory")
+    parser.add_argument("--q8", type=Path, help="direct-GGUF native-Q8 evidence directory")
     parser.add_argument("--output", type=Path, help="optional JSON report outside the repository")
     return parser
 
@@ -580,7 +746,14 @@ def _write_report(path: Path, report: Mapping[str, Any]) -> None:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        report = compare_traces(args.oracle, args.native)
+        if args.dense is not None or args.q8 is not None:
+            if args.dense is None or args.q8 is None or args.oracle is not None or args.native is not None:
+                raise ValueError("hybrid comparison requires exactly --dense and --q8")
+            report = compare_hybrid_traces(args.dense, args.q8)
+        elif args.oracle is not None and args.native is not None:
+            report = compare_traces(args.oracle, args.native)
+        else:
+            raise ValueError("comparison requires --oracle/--native or --dense/--q8")
         if args.output:
             _write_report(args.output, report)
         else:
@@ -595,4 +768,4 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
     raise SystemExit(main())
 
 
-__all__ = ["compare_traces", "main"]
+__all__ = ["compare_hybrid_traces", "compare_traces", "main"]
