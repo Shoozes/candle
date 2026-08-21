@@ -274,10 +274,11 @@ impl Lfm2Config {
 
     /// Convert a validated configuration using the legacy infallible API.
     ///
-    /// New callers that need to report malformed configuration input should
-    /// use [`Self::try_into_config`]. Existing model examples and integrations
-    /// have historically called this method with configuration values that
-    /// were already validated by their loader.
+    /// This method panics when validation fails and is retained only for
+    /// compatibility with legacy callers that validate configuration before
+    /// conversion. New callers and all maintained in-tree paths must use
+    /// [`Self::try_into_config`] to report malformed configuration input.
+    #[deprecated(note = "use Lfm2Config::try_into_config to handle malformed configuration without panicking")]
     pub fn into_config(self, use_flash_attn: bool) -> Config {
         match self.try_into_config(use_flash_attn) {
             Ok(config) => config,

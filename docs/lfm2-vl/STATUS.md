@@ -6,9 +6,12 @@
   `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Upstream integration base: Candle main at
   `6f74e7c390c717f8fd34f23ce02aceb058173370`.
-- Published combined-overlay source checkpoint and verified remote `main`:
-  `e2c6565d2970de7a9e507b7759a608d3a2c827e7`, tree
-  `18c1600fe0278754c697c83cbc6113cb69ab39bc`.
+- Published combined-overlay source checkpoint: `e2c6565d2970de7a9e507b7759a608d3a2c827e7`,
+  tree `18c1600fe0278754c697c83cbc6113cb69ab39bc`.
+- Current documentation-only `main`/`origin/main` head: `4c1b548f1484c19cd247d4443405b485a7fb7e4c`,
+  tree `f6d653f20c4b2289d25a75fbb7932b160eb4e4eb`; it does not change the
+  published source checkpoint. The working tree currently carries the
+  uncommitted compatibility slice and its documentation updates listed below.
 - Immutable first-MVP tag: `lfm2-vl-mvp-0.1.0` peels to
   `ff885586f6d44a3d9b9ac1724032cdf5f0155384`; never move or reuse it.
 - Proposed combined tag: `candle-overlays-mvp-0.2.0`. It does not yet exist
@@ -25,9 +28,17 @@
 - Native Windows/MSVC is the product and release-proof lane. WSL2/Linux is a
   secondary portability replay, not the product platform.
 - The guarded helper published and remotely verified the source checkpoint on
-  2026-08-13. This documentation-only state reconciliation is its direct
-  fast-forward successor. No annotated tag, hosted release, repository-rule
-  change, secret inspection, or hosted-CI invocation was authorized or used.
+  2026-08-13; the committed head above contains the subsequent documentation
+  reconciliation, while the current working tree carries the separately
+  verified LFM2 compatibility deprecation. No annotated tag, hosted release,
+  repository-rule change, secret inspection, or hosted-CI invocation was
+  authorized or used.
+- Current active local slice: `candle-transformers/src/models/lfm2/config.rs`
+  and `candle-transformers/src/models/lfm2.rs`, with corresponding
+  `docs/lfm2-vl/TODO.md`, `DECISIONS.md`, `HISTORY.md`, and `STATUS.md`
+  updates. `summary_bank.json` remains the context route for this slice; the
+  existing `candle-vlm/README.md` and summary-bank cleanup are earlier
+  uncommitted integrity work preserved in the same working tree.
 - Models, caches, downloads, generated proof, Cargo output, and
   `.tools/.secrets/` remain ignored or external. Operator disk cleanup removed
   the local model/cache inputs; do not reconstruct or download them implicitly.
@@ -35,7 +46,9 @@
 ## Current Product State
 
 - LFM2.5 text configuration, embedding prefill, cached decode, and reset are
-  config-driven and compatibility-preserving.
+  config-driven and compatibility-preserving. Maintained external
+  configuration loading uses fallible `try_into_config`; the legacy
+  infallible `into_config` API is deprecated without a signature change.
 - SigLIP2 NaFlex, image preprocessing, crop/thumbnail metadata, prompt
   expansion, pixel unshuffle/projector, and multi-image feature insertion are
   implemented with checked limits and controlled malformed-input errors.
@@ -53,7 +66,7 @@
   modifications, 12 additions). Their registered union is 167 paths with 13
   shared paths.
 
-## Latest Integrity Review (2026-08-16)
+## Latest Integrity Review (2026-08-20)
 
 - No missing LFM2-VL module export, broken example import, production stub, or
   incomplete owned feature was found. The public example test binary compiles
@@ -63,19 +76,21 @@
   and invalid native, split, BF16, and F16 combinations.
 - The stale SDXL attention TODO was replaced with the actual contiguous-layout
   invariant; no speculative kernel optimization was introduced.
-- `summary_bank.json` now separates the active linked-worktree hazard from the
-  archived Gknome attempt, routes newly found upstream VAE/runtime panic work,
-  and keeps the publication route at 103.7 KiB. The default orientation route
-  is 130.9/256 KiB.
+- `summary_bank.json` separates the active linked-worktree hazard from the
+  archived Gknome attempt and keeps the default orientation route focused at
+  129.5/256 KiB. The text-only LFM2 route no longer repeats the composite VL
+  configuration file; the current issue and workflow groups remain covered by
+  the existing route set.
 - `START_HERE.md` and `docs/FORK_OVERLAYS.md` no longer repeat completed
   lineage and parity narratives. This file holds current truth; `TODO.md`
   holds only active or explicitly deferred work; `HISTORY.md` holds completed
   detail.
-- This pass found one additional owned edge case: the legacy public
-  `Lfm2Config::into_config` method still panics on malformed input by contract,
-  while `try_into_config` provides the safe path. It is now routed as a
-  post-release compatibility task under decision D-0059 rather than changed
-  during the frozen snapshot boundary.
+- The legacy public `Lfm2Config::into_config` compatibility boundary is now
+  explicitly deprecated without changing its signature. Maintained in-tree
+  callers use `try_into_config`, and malformed parsed configuration is covered
+  by the focused rejection regression. Direct deprecated callers remain
+  responsible for validation and may still observe the historical panic; this
+  limitation is recorded in D-0059/D-0060.
 - `summary_bank.json` now has a focused
   `issue__lfm2_config_compatibility` route. The large failure log is no longer
   repeated in the reference-environment or linked-worktree groups; the
@@ -84,85 +99,61 @@
   `todo!`/`unimplemented!` and unchecked serialization/configuration paths.
   They are shaped in `TODO.md` as post-0.2.0, one-subsystem-at-a-time work so
   the frozen candidate is not silently widened.
+- No architect or research-inbox files are present in the repository; no
+  unverified drop-in recommendations were promoted into current state or the
+  backlog.
 
 ## Current Verification
 
-- 2026-08-16 native Windows PowerShell 7.6.4: `cargo fmt --all -- --check`,
-  `cargo check --locked --offline -j 2 -p candle-core -p candle-nn
-  -p candle-transformers -p candle-vlm`, and the three focused example checks
-  passed.
-- 2026-08-16 focused tests passed: `candle-vlm` 37/37,
-  `candle-transformers --lib lfm2` 35/35, and `candle-examples --example
+- 2026-08-20 native Windows PowerShell with Rust/Cargo 1.97.1: `cargo fmt
+  --all -- --check`, locked/offline checks for `candle-core`, `candle-nn`,
+  `candle-transformers`, `candle-vlm`, and the `lfm2`, `quantized-lfm2`, and
+  `lfm2-vl` examples passed.
+- Focused tests passed: `candle-vlm` 37/37,
+  `candle-transformers --lib lfm2` 36/36, and `candle-examples --example
   lfm2-vl` 32/32.
-- 2026-08-16 summary-bank validation passed for 31 groups with a 130.9 KiB
-  default union; the bundled Python module-layout verifier passed all
-  registered splits; local Markdown targets passed for 18/18 state files.
-- 2026-08-16 bounded local harness checks passed: release receipt 22/22,
-  preflight smoke, and bounded-oracle smoke. The system `python` command is
-  absent from `PATH`; the module-layout result used the repository-session
-  bundled Python executable explicitly.
-- The remaining bullets in this section retain the 2026-08-13 published
-  checkpoint's broader local evidence. They were not all replayed in the
-  managed shell for this documentation/context pass.
-- `cargo fmt --all -- --check`: passed.
-- The complete `lfm2-vl` example suite passed 32/32, including the 17 focused
-  argument-policy cases. Focused LoRA parser tests passed 3/3 and the
-  disabled-feature attention regression passed 1/1.
-- `PYO3_NO_PYTHON=1 cargo check --locked --offline -j 2 --workspace`: passed.
-- `PYO3_NO_PYTHON=1 cargo clippy --locked --offline -j 2 --workspace
-  --all-targets -- -D warnings`: passed.
-- Summary-bank validation passed under PowerShell 7 and 5.1 for 30 groups at
-  the 2026-08-13 checkpoint; the current PowerShell 7 replay above passes 31
-  groups. A temporary negative fixture proved archived groups without
-  `_archive_note`
-  are rejected.
-- Module layout passed for every registered include-based split using the
-  bundled read-only Python runtime.
+- Summary-bank validation passed for 31 groups with a 129.5 KiB default
+  union; the Python 3.13 module-layout verifier passed all registered splits.
 - Both overlay manifests and the repository union passed at 156/20/167 with
-  13 shared paths.
-- Local Markdown targets across project/fork/LFM2-VL docs passed 18/18 files.
-- `PYO3_NO_PYTHON=1 cargo test --locked --offline -j 2 --workspace --exclude
-  candle-datasets --exclude candle-pyo3` passed all selected unit,
-  integration, and doc-test lanes.
-- Release-receipt contract tests passed 22/22 assertions under PowerShell 7
-  and 22/22 under Windows PowerShell 5.1.
-- `git diff --check` and the complete manifest diff inspection passed.
+  13 shared paths. The local/remote `main` heads and trees match exactly.
+- `PYO3_NO_PYTHON=1 cargo check --locked --offline -j 2 --workspace`, the
+  matching warnings-denied workspace Clippy gate, and the locked/offline
+  workspace test/doc-test suite excluding `candle-datasets` and
+  `candle-pyo3` all passed. The direct `candle-pyo3` package test also passed
+  with Python 3.13 (0 tests discovered).
+- Production model/CUDA parity and hosted CI were not rerun. Historical parity
+  results remain in `HISTORY.md`; no new production-runtime claim is made here.
 
 ## Gaps And Blockers
 
 - The combined-overlay implementation has no known owned source or local-check
-  blocker. The reviewed documentation/context closeout was committed as
-  `725799329a077e81c5fdbf3275f865f7eac456f3` and published directly to
-  `origin/main` through the guarded publisher.
+  blocker. The current documentation/context head is the exact local/remote
+  `4c1b548f1484c19cd247d4443405b485a7fb7e4c` recorded above.
 - Production model inputs are absent after operator cleanup. Existing retained
   hash-bound parity remains historical evidence; no new live model/CUDA claim
   is made in this task.
 - The upstream `candle-datasets` runtime test performs live HTTP even under
   Cargo offline mode. It remains an owner-scoped skip; crate check and Clippy
   still cover its source.
-- `candle-pyo3` tests cannot link in the cleaned local environment: the system
-  Python launcher has no registered interpreter, the bundled Python is 3.12
-  while the crate requires `abi3-py313`, and interpreter-free test linking
-  cannot find `python3.lib`. Workspace check and warnings-denied Clippy cover
-  the crate with `PYO3_NO_PYTHON=1`; its runtime tests remain an explicit
-  environment skip rather than a source failure.
+- `candle-pyo3` currently defines no runtime tests; its package test lane
+  compiled and passed with Python 3.13. The live-HTTP `candle-datasets` test
+  remains intentionally excluded from the offline gate.
 - Lower-than-Q8 vision quantization, video, true text batching, generic VLM
   traits, WebGPU/WASM, public signing, and LTS are deferred product scope.
 - Reachable panic/stub candidates outside both frozen overlays are not hidden:
   disabled-feature model attention, stable-diffusion VAE input assumptions,
   selected model/operator and example stub branches, core dtype/dummy-backend
-  panics, fallible safetensors serialization, and the legacy LFM2 configuration
-  conversion boundary have explicit post-release tasks in `TODO.md`.
-- The initial integrity pass could not run Git status/diff or the WSL replay
-  because the managed environment denied WSL enumeration and the checkout's
-  `.git` pointer targets a Linux worktree path. An elevated read-only retry
-  reached the linked worktree and confirmed the pre-publication head at
-  `b4e1aacf4c531fe6e6e1844e4c74451ecef02fed`. The guarded publisher first
-  refused the dirty worktree, then passed after the reviewed five-file commit;
-  the direct push and remote-head verification completed at
-  `725799329a077e81c5fdbf3275f865f7eac456f3`. No active publication blocker
-  remains, and no related Candle/LFM2/Cargo/Rust process was running at
-  closeout.
+  panics, and fallible safetensors serialization have explicit post-release
+  tasks in `TODO.md`. The LFM2 configuration conversion boundary is now
+  deprecated and tracked as a compatibility limitation rather than an active
+  TODO item.
+- The linked-worktree Git boundary is operational through `NVIDIA-Workbench`;
+  the current local and remote refs were read successfully in this pass. No
+  related Candle/LFM2/Cargo/Rust process was running after verification.
+- The optional WSL2 replay is environment-blocked before project verification:
+  the pinned Linux toolchain is not installed in `NVIDIA-Workbench`, and
+  `rustup` attempted to sync it. The replay was stopped before any implicit
+  toolchain download; no WSL result is claimed.
 
 ## Exact Next Task
 
@@ -173,4 +164,4 @@ immutability rules. Do not combine those families with the post-release safety
 tasks in `TODO.md`.
 
 ---
-AI-edited: 2026-08-16T00:24:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=closing-session | change=recorded the verified direct-main publication and clean closeout state
+AI-edited: 2026-08-20T20:37:44-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-config-compatibility | change=deprecated the legacy infallible conversion while preserving validated caller compatibility

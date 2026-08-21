@@ -78,7 +78,7 @@ must retain and identify.
 Run the detailed example from the repository root:
 
 ```powershell
-cargo run --locked --release -p candle-examples --example lfm2-vl -- --help
+cargo run --locked --offline --release -p candle-examples --example lfm2-vl -- --help
 ```
 
 See [`candle-examples/examples/lfm2-vl/README.md`](../candle-examples/examples/lfm2-vl/README.md)

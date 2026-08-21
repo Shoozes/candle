@@ -2,6 +2,43 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-08-20 — Repository integrity and current-state reconciliation
+
+- Replayed the native focused gate with Rust/Cargo 1.97.1: formatting, locked
+  offline checks for the four affected libraries, and the `lfm2`,
+  `quantized-lfm2`, and `lfm2-vl` example checks passed.
+- Replayed focused tests: `candle-vlm` 37/37, the LFM2 transformer slice
+  35/35, and the `lfm2-vl` example 32/32.
+- Replayed the broader native gate: locked/offline workspace check,
+  warnings-denied workspace Clippy, and workspace tests/doc-tests excluding
+  the live-HTTP `candle-datasets` tests and `candle-pyo3` from the aggregate
+  lane all passed. The direct `candle-pyo3` package test also compiled and
+  passed with Python 3.13 (0 tests discovered).
+- Revalidated the 31-group summary bank, both overlay manifests, the
+  repository-wide 167-path union, and all registered module-layout splits.
+  Removed one accidental `lfm2_vl/config.rs` member from the text-only route
+  and made the public `candle-vlm` help command explicitly locked/offline.
+- Audited the active overlay exports, imports, incomplete-logic markers, and
+  research/architect inbox locations. No broken active export, production
+  stub, or inbox drop-in was found; the broader upstream panic/stub inventory
+  remains represented by the existing conditional TODO groups.
+- Confirmed local `main` and `origin/main` both resolve to
+  `4c1b548f1484c19cd247d4443405b485a7fb7e4c`. This pass did not tag, publish,
+  download production assets, run CUDA/model parity, invoke hosted CI, or
+  change the release boundary.
+- The optional WSL2 replay was attempted with the repository baseline script
+  but stopped before project verification when `rustup` tried to sync the
+  missing pinned Linux 1.97.1 toolchain. No implicit toolchain download was
+  allowed, so the WSL lane remains unproven for this pass.
+- Completed the LFM2 configuration compatibility slice: the legacy public
+  `Lfm2Config::into_config` method now carries a deprecation warning while
+  retaining its signature for validated downstream callers; maintained
+  in-tree loading uses `try_into_config`, and the existing malformed-dimension
+  regression remains the proof that malformed parsed configuration returns an
+  actionable error before model construction. A test-only valid-conversion
+  parity regression exercises the retained legacy API. Decision D-0060 records
+  the compatibility boundary and the exact caller inventory.
+
 ## 2026-08-16 — Closing-session verification and publication boundary
 
 - Replayed the focused closeout checks: `candle-vlm` 37/37, the LFM2
@@ -1920,4 +1957,4 @@ deferred to TODO C3; no network or toolchain install was substituted.
   documentation-only fast-forward successor.
 
 ---
-AI-edited: 2026-08-13T20:21:47-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=archived the verified direct-main source checkpoint and exact remaining release boundary
+AI-edited: 2026-08-20T20:34:39-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-config-compatibility | change=archived the completed legacy conversion compatibility migration and verification

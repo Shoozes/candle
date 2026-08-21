@@ -1299,5 +1299,35 @@ general malformed-input guarantee for direct legacy callers. New or maintained
 in-tree paths must validate through `try_into_config`, preserve valid
 text-only behavior, and add a regression before any future public API change.
 
+## D-0060: Deprecate the Legacy LFM2 Infallible Conversion Without Changing Its Signature
+
+Status: Accepted for the post-snapshot compatibility migration.
+
+Decision:
+Mark `Lfm2Config::into_config` deprecated while retaining its existing
+signature and behavior for downstream callers that have already validated
+their configuration. Keep `Lfm2Config::try_into_config` as the maintained
+fallible conversion path. The LFM2 example and all other in-tree external
+configuration callers use the fallible method; the exact current inventory
+contains no maintained external-input call sites for the deprecated method;
+the only in-tree call is the test-only valid-configuration compatibility
+regression, explicitly annotated to exercise the retained API.
+
+Why:
+The legacy method's infallible return type cannot report malformed external
+configuration without a breaking API change. Deprecation makes the panic
+boundary visible to new callers while preserving valid text-only behavior and
+avoiding an unreviewed signature change. The existing malformed-dimension
+regression proves that the supported parser/conversion path returns an
+actionable error before model construction.
+
+Consequences:
+Direct callers of the deprecated method remain responsible for validating
+configuration and may still observe its historical panic on invalid input;
+this is an explicit compatibility limitation, not a general malformed-input
+guarantee. A future major API release may remove or change the method after a
+downstream migration window. No dimension coercion or silent text-only
+fallback is introduced.
+
 ---
-AI-edited: 2026-08-16T00:13:52-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=recorded the frozen LFM2 configuration compatibility boundary
+AI-edited: 2026-08-20T20:34:39-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-config-compatibility | change=recorded the deprecated legacy conversion compatibility migration

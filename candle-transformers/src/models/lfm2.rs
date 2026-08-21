@@ -309,6 +309,45 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
+    fn legacy_conversion_preserves_valid_configuration() -> Result<()> {
+        let config = parse_config(serde_json::json!({
+            "vocab_size": 32,
+            "hidden_size": 12,
+            "num_hidden_layers": 2,
+            "num_attention_heads": 3,
+            "num_key_value_heads": 1,
+            "layer_types": ["conv", "full_attention"],
+            "block_ff_dim": 32,
+            "block_auto_adjust_ff_dim": false,
+            "conv_l_cache": 3
+        }))?;
+        let fallible = config.clone().try_into_config(false)?;
+        let legacy = config.into_config(false);
+
+        assert_eq!(legacy.vocab_size, fallible.vocab_size);
+        assert_eq!(legacy.hidden_size, fallible.hidden_size);
+        assert_eq!(legacy.intermediate_size, fallible.intermediate_size);
+        assert_eq!(legacy.num_hidden_layers, fallible.num_hidden_layers);
+        assert_eq!(legacy.num_attention_heads, fallible.num_attention_heads);
+        assert_eq!(legacy.num_key_value_heads, fallible.num_key_value_heads);
+        assert_eq!(legacy.norm_eps, fallible.norm_eps);
+        assert_eq!(legacy.rope_theta, fallible.rope_theta);
+        assert_eq!(
+            legacy.max_position_embeddings,
+            fallible.max_position_embeddings
+        );
+        assert_eq!(legacy.conv_l_cache, fallible.conv_l_cache);
+        assert_eq!(legacy.conv_bias, fallible.conv_bias);
+        assert_eq!(legacy.layer_types, fallible.layer_types);
+        assert_eq!(legacy.tie_embedding, fallible.tie_embedding);
+        assert_eq!(legacy.bos_token_id, fallible.bos_token_id);
+        assert_eq!(legacy.eos_token_id, fallible.eos_token_id);
+        assert_eq!(legacy.use_flash_attn, fallible.use_flash_attn);
+        Ok(())
+    }
+
+    #[test]
     fn malformed_dimensions_are_rejected_before_model_construction() -> Result<()> {
         let base = serde_json::json!({
             "vocab_size": 32,
