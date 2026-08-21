@@ -8,10 +8,10 @@
   `6f74e7c390c717f8fd34f23ce02aceb058173370`.
 - Published combined-overlay source checkpoint: `e2c6565d2970de7a9e507b7759a608d3a2c827e7`,
   tree `18c1600fe0278754c697c83cbc6113cb69ab39bc`.
-- Current `main` head prepared for direct publication: `04e0a224c54bdc28b1fe2a7f2edb8285efa0346b`,
-  tree `793d6296bc460bf61be916a45bbb0c6c8056a102`; it does not change the
-  published source checkpoint. The guarded push below must make this exact
-  commit the local/remote `main` head.
+- Current local/remote `main` head: `b5bed850f6262a335798cb1d4ff4aafece267d40`,
+  tree `b54af02d434be4a6c11f7f8810363043249eb436`; it does not change the
+  published source checkpoint. The guarded push verified this exact commit on
+  remote `main`.
 - Immutable first-MVP tag: `lfm2-vl-mvp-0.1.0` peels to
   `ff885586f6d44a3d9b9ac1724032cdf5f0155384`; never move or reuse it.
 - Proposed combined tag: `candle-overlays-mvp-0.2.0`. It does not yet exist
@@ -28,11 +28,9 @@
 - Native Windows/MSVC is the product and release-proof lane. WSL2/Linux is a
   secondary portability replay, not the product platform.
 - The guarded helper published and remotely verified the source checkpoint on
-  2026-08-13; the closeout commit above contains the separately verified LFM2
-  compatibility deprecation and documentation/context reconciliation. Direct
-  `main` publication is authorized for this closeout; no annotated tag, hosted
-  release, repository-rule change, secret inspection, or hosted-CI invocation
-  is included.
+  2026-08-13 and the closeout commits above directly on `main` in this
+  session. No annotated tag, hosted release, repository-rule change, secret
+  inspection, or hosted-CI invocation is included.
 - Current active local slice: none. The LFM2 compatibility implementation,
   tests, TODO/history/decision/status updates, README command correction, and
   summary-bank cleanup are committed in the closeout head above.
@@ -75,7 +73,7 @@
   invariant; no speculative kernel optimization was introduced.
 - `summary_bank.json` separates the active linked-worktree hazard from the
   archived Gknome attempt and keeps the default orientation route focused at
-  129.6/256 KiB. The text-only LFM2 route no longer repeats the composite VL
+  129.4/256 KiB. The text-only LFM2 route no longer repeats the composite VL
   configuration file; the current issue and workflow groups remain covered by
   the existing route set.
 - `START_HERE.md` and `docs/FORK_OVERLAYS.md` no longer repeat completed
@@ -113,7 +111,7 @@
   affected libraries and all three LFM2 examples, workspace warnings-denied
   Clippy, and the workspace unit/integration/doc-test lane excluding the
   live-HTTP `candle-datasets` and testless `candle-pyo3` aggregate packages.
-- Summary-bank validation passed for 31 groups with a 129.6 KiB default
+- Summary-bank validation passed for 31 groups with a 129.4 KiB default
   union; the Python 3.13 module-layout verifier passed all registered splits.
 - Both overlay manifests and the repository union passed at 156/20/167 with
   13 shared paths. The local/remote `main` heads and trees match exactly.
@@ -128,9 +126,9 @@
 ## Gaps And Blockers
 
 - The combined-overlay implementation has no known owned source or local-check
-  blocker. The current closeout head is the exact local commit
-  `04e0a224c54bdc28b1fe2a7f2edb8285efa0346b` recorded above; publication must
-  verify the same SHA on remote `main`.
+  blocker. The current closeout head is the exact local/remote commit
+  `b5bed850f6262a335798cb1d4ff4aafece267d40` recorded above, with matching
+  tree `b54af02d434be4a6c11f7f8810363043249eb436`.
 - Production model inputs are absent after operator cleanup. Existing retained
   hash-bound parity remains historical evidence; no new live model/CUDA claim
   is made in this task.
@@ -166,4 +164,4 @@ immutability rules. Do not combine those families with the post-release safety
 tasks in `TODO.md`.
 
 ---
-AI-edited: 2026-08-20T20:48:13-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=closing-session | change=recorded the verified closeout commit and direct-main publication boundary
+AI-edited: 2026-08-20T20:50:17-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=closing-session | change=recorded the verified closeout commit and direct-main publication boundary

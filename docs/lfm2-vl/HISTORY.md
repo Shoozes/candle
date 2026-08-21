@@ -2,7 +2,7 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
-## 2026-08-20 — Closing-session verification and direct-main publication preparation
+## 2026-08-20 — Closing-session verification and direct-main publication
 
 - Re-ran the native Windows closeout gate with Rust/Cargo 1.97.1: formatting,
   locked/offline checks for `candle-core`, `candle-nn`,
@@ -12,7 +12,7 @@ This file preserves completed implementation and verification evidence. Any pres
   `lfm2-vl` example 32/32. Workspace warnings-denied Clippy and the locked /
   offline workspace test/doc-test lane excluding live-HTTP `candle-datasets`
   and aggregate `candle-pyo3` also passed.
-- Revalidated the summary bank at 31 groups and 129.5 KiB default union, the
+- Revalidated the summary bank at 31 groups and 129.4 KiB default union, the
   156-path LFM2-VL manifest, and the 167-path two-overlay union. The scoped
   incomplete-logic audit classified remaining `unwrap`/`expect` hits as
   test-only fixture assertions except for the documented deprecated legacy
@@ -20,8 +20,10 @@ This file preserves completed implementation and verification evidence. Any pres
 - Committed the reviewed eight-file closeout as
   `04e0a224c54bdc28b1fe2a7f2edb8285efa0346b` with tree
   `793d6296bc460bf61be916a45bbb0c6c8056a102`. Direct publication through the
-  guarded `.tools/gitpush.ps1` remains the final closeout action; no tag,
-  hosted release, or repository-rule mutation is included.
+- guarded `.tools/gitpush.ps1` then recorded the final documentation head
+  `b5bed850f6262a335798cb1d4ff4aafece267d40` with tree
+  `b54af02d434be4a6c11f7f8810363043249eb436` on both local and remote `main`.
+  No tag, hosted release, or repository-rule mutation is included.
 
 ## 2026-08-20 — Repository integrity and current-state reconciliation
 
@@ -1978,4 +1980,4 @@ deferred to TODO C3; no network or toolchain install was substituted.
   documentation-only fast-forward successor.
 
 ---
-AI-edited: 2026-08-20T20:48:13-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=closing-session | change=archived closeout verification and the direct-main publication preparation
+AI-edited: 2026-08-20T20:50:17-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=closing-session | change=archived closeout verification and the verified direct-main publication
