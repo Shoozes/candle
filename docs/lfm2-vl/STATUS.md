@@ -82,7 +82,7 @@
   invariant; no speculative kernel optimization was introduced.
 - `summary_bank.json` separates the active linked-worktree hazard from the
   archived Gknome attempt and keeps the default orientation route focused at
-  135.3/256 KiB. The text-only LFM2 route no longer repeats the composite VL
+  135.5/256 KiB. The text-only LFM2 route no longer repeats the composite VL
   configuration file; the current issue and workflow groups remain covered by
   the existing route set.
 - `START_HERE.md` and `docs/FORK_OVERLAYS.md` no longer repeat completed
@@ -141,7 +141,7 @@
 - The warnings-denied Windows example Clippy lane passed after reducing the
   hybrid evidence writer boundary; the final WSL replay also passed the locked
   format/check/layout/diff/mod-manifest gate from `16:36:17Z` to `16:36:54Z`.
-- Summary-bank validation passed for 31 groups with a 135.3 KiB default
+- Summary-bank validation passed for 31 groups with a 135.5 KiB default
   union; the Python 3.13 module-layout verifier passed all registered splits.
 - Both overlay manifests and the repository union passed at 156/20/167 with
   13 shared paths. The local/remote `main` heads and trees match exactly.
