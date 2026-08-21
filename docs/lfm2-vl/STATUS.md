@@ -8,10 +8,9 @@
   `6f74e7c390c717f8fd34f23ce02aceb058173370`.
 - Published combined-overlay source checkpoint: `e2c6565d2970de7a9e507b7759a608d3a2c827e7`,
   tree `18c1600fe0278754c697c83cbc6113cb69ab39bc`.
-- Current local/remote `main` head: `b5bed850f6262a335798cb1d4ff4aafece267d40`,
-  tree `b54af02d434be4a6c11f7f8810363043249eb436`; it does not change the
-  published source checkpoint. The guarded push verified this exact commit on
-  remote `main`.
+- Last verified app/source `main` head: `53b2f3b3a1e7a9e49126a57213c3abb74a65c698`,
+  tree `b431e817325e8f3c12da30c4c3c34b9dfe7f5cfc`; the WSL replay and this
+  follow-up state record are source-neutral documentation work.
 - Immutable first-MVP tag: `lfm2-vl-mvp-0.1.0` peels to
   `ff885586f6d44a3d9b9ac1724032cdf5f0155384`; never move or reuse it.
 - Proposed combined tag: `candle-overlays-mvp-0.2.0`. It does not yet exist
@@ -73,7 +72,7 @@
   invariant; no speculative kernel optimization was introduced.
 - `summary_bank.json` separates the active linked-worktree hazard from the
   archived Gknome attempt and keeps the default orientation route focused at
-  129.4/256 KiB. The text-only LFM2 route no longer repeats the composite VL
+  129.8/256 KiB. The text-only LFM2 route no longer repeats the composite VL
   configuration file; the current issue and workflow groups remain covered by
   the existing route set.
 - `START_HERE.md` and `docs/FORK_OVERLAYS.md` no longer repeat completed
@@ -111,7 +110,13 @@
   affected libraries and all three LFM2 examples, workspace warnings-denied
   Clippy, and the workspace unit/integration/doc-test lane excluding the
   live-HTTP `candle-datasets` and testless `candle-pyo3` aggregate packages.
-- Summary-bank validation passed for 31 groups with a 129.4 KiB default
+- 2026-08-21 WSL2 replay used the installed pinned `1.97.1-x86_64-unknown-linux-gnu`
+  toolchain with `cargo`, `clippy`, `rustfmt`, and `rust-std`; the complete
+  `scripts/lfm2-vl/verify-baseline.sh` passed, including all locked/offline
+  crate/example checks, module-layout, diff gates, and the mod manifest.
+  The verifier-only Cargo.lock SHA-256 was
+  `9b7aa15899ae8acf7b1a09b951ddba2f16462137eee2fed0db863a9d84707175`.
+- Summary-bank validation passed for 31 groups with a 129.8 KiB default
   union; the Python 3.13 module-layout verifier passed all registered splits.
 - Both overlay manifests and the repository union passed at 156/20/167 with
   13 shared paths. The local/remote `main` heads and trees match exactly.
@@ -126,9 +131,9 @@
 ## Gaps And Blockers
 
 - The combined-overlay implementation has no known owned source or local-check
-  blocker. The current closeout head is the exact local/remote commit
-  `b5bed850f6262a335798cb1d4ff4aafece267d40` recorded above, with matching
-  tree `b54af02d434be4a6c11f7f8810363043249eb436`.
+  blocker. The last verified app/source closeout head is
+  `53b2f3b3a1e7a9e49126a57213c3abb74a65c698`; the WSL documentation update
+  does not alter application source.
 - Production model inputs are absent after operator cleanup. Existing retained
   hash-bound parity remains historical evidence; no new live model/CUDA claim
   is made in this task.
@@ -150,10 +155,10 @@
 - The linked-worktree Git boundary is operational through `NVIDIA-Workbench`;
   the current local and remote refs were read successfully in this pass. No
   related Candle/LFM2/Cargo/Rust process was running after verification.
-- The optional WSL2 replay is environment-blocked before project verification:
-  the pinned Linux toolchain is not installed in `NVIDIA-Workbench`, and
-  `rustup` attempted to sync it. The replay was stopped before any implicit
-  toolchain download; no WSL result is claimed.
+- WSL2/Linux is no longer blocked for the pinned CPU baseline: the required
+  toolchain and components are installed and the full replay passed. Future
+  WSL runs remain secondary portability evidence, not a replacement for the
+  native Windows release lane.
 
 ## Exact Next Task
 
@@ -164,4 +169,4 @@ immutability rules. Do not combine those families with the post-release safety
 tasks in `TODO.md`.
 
 ---
-AI-edited: 2026-08-20T20:50:17-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=closing-session | change=recorded the verified closeout commit and direct-main publication boundary
+AI-edited: 2026-08-20T21:17:10-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=wsl-toolchain-replay | change=recorded the successful pinned Linux toolchain and portable baseline replay

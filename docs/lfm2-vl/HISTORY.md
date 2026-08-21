@@ -2,6 +2,22 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-08-20 — WSL2 toolchain and portable baseline replay
+
+- The pinned `1.97.1-x86_64-unknown-linux-gnu` toolchain was already present
+  in `NVIDIA-Workbench` when checked; `cargo`, `clippy`, `rustfmt`, and
+  `rust-std` components were verified. No broader toolchain or environment
+  mutation was needed.
+- Ran the repository command with locked/offline CPU policy:
+  `CARGO_BUILD_JOBS=2 CARGO_NET_OFFLINE=true bash
+  scripts/lfm2-vl/verify-baseline.sh`. The complete WSL2 replay passed,
+  including formatting, all required crate/example checks, module layout,
+  diff gates, and the 156-path mod manifest. No model execution or download
+  occurred.
+- Replay window: `2026-08-21T01:14:10Z`–`2026-08-21T01:15:53Z`; verifier-only
+  Cargo.lock SHA-256:
+  `9b7aa15899ae8acf7b1a09b951ddba2f16462137eee2fed0db863a9d84707175`.
+
 ## 2026-08-20 — Closing-session verification and direct-main publication
 
 - Re-ran the native Windows closeout gate with Rust/Cargo 1.97.1: formatting,
@@ -12,7 +28,7 @@ This file preserves completed implementation and verification evidence. Any pres
   `lfm2-vl` example 32/32. Workspace warnings-denied Clippy and the locked /
   offline workspace test/doc-test lane excluding live-HTTP `candle-datasets`
   and aggregate `candle-pyo3` also passed.
-- Revalidated the summary bank at 31 groups and 129.4 KiB default union, the
+- Revalidated the summary bank at 31 groups and 129.8 KiB default union, the
   156-path LFM2-VL manifest, and the 167-path two-overlay union. The scoped
   incomplete-logic audit classified remaining `unwrap`/`expect` hits as
   test-only fixture assertions except for the documented deprecated legacy
@@ -1980,4 +1996,4 @@ deferred to TODO C3; no network or toolchain install was substituted.
   documentation-only fast-forward successor.
 
 ---
-AI-edited: 2026-08-20T20:50:17-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=closing-session | change=archived closeout verification and the verified direct-main publication
+AI-edited: 2026-08-20T21:17:10-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=wsl-toolchain-replay | change=archived the successful pinned Linux toolchain and portable baseline replay
