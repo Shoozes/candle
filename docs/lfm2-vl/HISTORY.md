@@ -2,6 +2,27 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-08-20 — Closing-session verification and direct-main publication preparation
+
+- Re-ran the native Windows closeout gate with Rust/Cargo 1.97.1: formatting,
+  locked/offline checks for `candle-core`, `candle-nn`,
+  `candle-transformers`, `candle-vlm`, and the `lfm2`, `quantized-lfm2`, and
+  `lfm2-vl` examples passed.
+- Re-ran focused tests: LFM2 transformer 36/36, `candle-vlm` 37/37, and the
+  `lfm2-vl` example 32/32. Workspace warnings-denied Clippy and the locked /
+  offline workspace test/doc-test lane excluding live-HTTP `candle-datasets`
+  and aggregate `candle-pyo3` also passed.
+- Revalidated the summary bank at 31 groups and 129.5 KiB default union, the
+  156-path LFM2-VL manifest, and the 167-path two-overlay union. The scoped
+  incomplete-logic audit classified remaining `unwrap`/`expect` hits as
+  test-only fixture assertions except for the documented deprecated legacy
+  LFM2 conversion panic boundary; no active export/import defect was found.
+- Committed the reviewed eight-file closeout as
+  `04e0a224c54bdc28b1fe2a7f2edb8285efa0346b` with tree
+  `793d6296bc460bf61be916a45bbb0c6c8056a102`. Direct publication through the
+  guarded `.tools/gitpush.ps1` remains the final closeout action; no tag,
+  hosted release, or repository-rule mutation is included.
+
 ## 2026-08-20 — Repository integrity and current-state reconciliation
 
 - Replayed the native focused gate with Rust/Cargo 1.97.1: formatting, locked
@@ -1957,4 +1978,4 @@ deferred to TODO C3; no network or toolchain install was substituted.
   documentation-only fast-forward successor.
 
 ---
-AI-edited: 2026-08-20T20:34:39-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-config-compatibility | change=archived the completed legacy conversion compatibility migration and verification
+AI-edited: 2026-08-20T20:48:13-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=closing-session | change=archived closeout verification and the direct-main publication preparation

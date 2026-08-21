@@ -8,10 +8,10 @@
   `6f74e7c390c717f8fd34f23ce02aceb058173370`.
 - Published combined-overlay source checkpoint: `e2c6565d2970de7a9e507b7759a608d3a2c827e7`,
   tree `18c1600fe0278754c697c83cbc6113cb69ab39bc`.
-- Current documentation-only `main`/`origin/main` head: `4c1b548f1484c19cd247d4443405b485a7fb7e4c`,
-  tree `f6d653f20c4b2289d25a75fbb7932b160eb4e4eb`; it does not change the
-  published source checkpoint. The working tree currently carries the
-  uncommitted compatibility slice and its documentation updates listed below.
+- Current `main` head prepared for direct publication: `04e0a224c54bdc28b1fe2a7f2edb8285efa0346b`,
+  tree `793d6296bc460bf61be916a45bbb0c6c8056a102`; it does not change the
+  published source checkpoint. The guarded push below must make this exact
+  commit the local/remote `main` head.
 - Immutable first-MVP tag: `lfm2-vl-mvp-0.1.0` peels to
   `ff885586f6d44a3d9b9ac1724032cdf5f0155384`; never move or reuse it.
 - Proposed combined tag: `candle-overlays-mvp-0.2.0`. It does not yet exist
@@ -28,17 +28,14 @@
 - Native Windows/MSVC is the product and release-proof lane. WSL2/Linux is a
   secondary portability replay, not the product platform.
 - The guarded helper published and remotely verified the source checkpoint on
-  2026-08-13; the committed head above contains the subsequent documentation
-  reconciliation, while the current working tree carries the separately
-  verified LFM2 compatibility deprecation. No annotated tag, hosted release,
-  repository-rule change, secret inspection, or hosted-CI invocation was
-  authorized or used.
-- Current active local slice: `candle-transformers/src/models/lfm2/config.rs`
-  and `candle-transformers/src/models/lfm2.rs`, with corresponding
-  `docs/lfm2-vl/TODO.md`, `DECISIONS.md`, `HISTORY.md`, and `STATUS.md`
-  updates. `summary_bank.json` remains the context route for this slice; the
-  existing `candle-vlm/README.md` and summary-bank cleanup are earlier
-  uncommitted integrity work preserved in the same working tree.
+  2026-08-13; the closeout commit above contains the separately verified LFM2
+  compatibility deprecation and documentation/context reconciliation. Direct
+  `main` publication is authorized for this closeout; no annotated tag, hosted
+  release, repository-rule change, secret inspection, or hosted-CI invocation
+  is included.
+- Current active local slice: none. The LFM2 compatibility implementation,
+  tests, TODO/history/decision/status updates, README command correction, and
+  summary-bank cleanup are committed in the closeout head above.
 - Models, caches, downloads, generated proof, Cargo output, and
   `.tools/.secrets/` remain ignored or external. Operator disk cleanup removed
   the local model/cache inputs; do not reconstruct or download them implicitly.
@@ -78,7 +75,7 @@
   invariant; no speculative kernel optimization was introduced.
 - `summary_bank.json` separates the active linked-worktree hazard from the
   archived Gknome attempt and keeps the default orientation route focused at
-  129.5/256 KiB. The text-only LFM2 route no longer repeats the composite VL
+  129.6/256 KiB. The text-only LFM2 route no longer repeats the composite VL
   configuration file; the current issue and workflow groups remain covered by
   the existing route set.
 - `START_HERE.md` and `docs/FORK_OVERLAYS.md` no longer repeat completed
@@ -112,7 +109,11 @@
 - Focused tests passed: `candle-vlm` 37/37,
   `candle-transformers --lib lfm2` 36/36, and `candle-examples --example
   lfm2-vl` 32/32.
-- Summary-bank validation passed for 31 groups with a 129.5 KiB default
+- The closing-session rerun also passed the locked/offline checks for all four
+  affected libraries and all three LFM2 examples, workspace warnings-denied
+  Clippy, and the workspace unit/integration/doc-test lane excluding the
+  live-HTTP `candle-datasets` and testless `candle-pyo3` aggregate packages.
+- Summary-bank validation passed for 31 groups with a 129.6 KiB default
   union; the Python 3.13 module-layout verifier passed all registered splits.
 - Both overlay manifests and the repository union passed at 156/20/167 with
   13 shared paths. The local/remote `main` heads and trees match exactly.
@@ -127,8 +128,9 @@
 ## Gaps And Blockers
 
 - The combined-overlay implementation has no known owned source or local-check
-  blocker. The current documentation/context head is the exact local/remote
-  `4c1b548f1484c19cd247d4443405b485a7fb7e4c` recorded above.
+  blocker. The current closeout head is the exact local commit
+  `04e0a224c54bdc28b1fe2a7f2edb8285efa0346b` recorded above; publication must
+  verify the same SHA on remote `main`.
 - Production model inputs are absent after operator cleanup. Existing retained
   hash-bound parity remains historical evidence; no new live model/CUDA claim
   is made in this task.
@@ -164,4 +166,4 @@ immutability rules. Do not combine those families with the post-release safety
 tasks in `TODO.md`.
 
 ---
-AI-edited: 2026-08-20T20:37:44-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-config-compatibility | change=deprecated the legacy infallible conversion while preserving validated caller compatibility
+AI-edited: 2026-08-20T20:48:13-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=closing-session | change=recorded the verified closeout commit and direct-main publication boundary
