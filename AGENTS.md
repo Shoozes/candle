@@ -148,7 +148,7 @@ Do not report a test as passing unless it was executed in the current task.
 
 Use focused verification during development and broader verification at phase gates.
 
-For this fork, native Windows PowerShell/MSVC is the primary runtime and verification lane. Replay the relevant CPU gate in WSL2/Linux when practical to preserve portability, but do not use a WSL-only result as a substitute for Windows proof. The current folder's WSL-owned Git metadata is a local checkout topology; it does not change the product platform. Missing native dependencies are a truthful blocked/skipped result and are not permission for an implicit network fetch.
+For this fork, native Windows PowerShell/MSVC is the primary runtime and verification lane. Replay the relevant CPU gate in WSL2/Linux when practical to preserve portability, but do not use a WSL-only result as a substitute for Windows proof. Canonical Git lives in `C:\DevStuff\candle` (WSL path `/mnt/c/DevStuff/candle`); WSL does not own `main`. Missing native dependencies are a truthful blocked/skipped result and are not permission for an implicit network fetch.
 
 Minimum Rust checks:
 
@@ -191,23 +191,19 @@ Do not hide pre-existing failures. Record them separately from failures caused b
   unless the owner explicitly changes this workflow.
 - Create a checkpoint commit after every green phase gate.
 - Review staged files before committing.
-- This Windows edit folder is a WSL-owned linked worktree attached to local
-  `main`; Windows Git still cannot resolve its Linux absolute `.git` pointer.
-  Use WSL Git for status, staging, commits, merges, and revision checks. Never
-  attach the same named branch to a second worktree. This remains local Git
-  topology, not a runtime/platform requirement. See `START_HERE.md` and
-  `FAILURE_LOG.md` F-0009.
+- Canonical checkout is `C:\DevStuff\candle` on local `main` (WSL path
+  `/mnt/c/DevStuff/candle`). Native Windows Git owns status, staging, commits,
+  merges, and revision checks. Do not recreate `C:\DevStuff\candle-mods`. Do
+  not attach the same named branch to a second worktree. See `START_HERE.md`
+  and `docs/lfm2-vl/STATUS.md`.
 - Before publication, fetch `origin/main`, preserve both histories through a
   reviewed non-force integration, rerun the local gate, and require a clean
   named `main` worktree.
-- Push only after explicit owner authorization, using the ignored
-  `.tools/gitpush.ps1`. The helper must not stage, commit, merge, rebase,
-  create repositories, delete refs, or force-push. It may publish an
-  already-reviewed fast-forward `main`; after remote `main` exactly matches
-  local `HEAD`, its guarded tag mode may publish one annotated tag in the
-  `lfm2-vl-mvp-X.Y.Z` or `candle-overlays-mvp-X.Y.Z` namespace that peels to
-  that same commit. It must reject lightweight, mismatched,
-  pre-existing-conflicting, or unrelated refs, and it must never move an
+- Push only after explicit owner authorization, using ordinary Git and
+  ignored `.tools/.secrets/gt.txt`. Do not use EdgeSymbio `gitpush.ps1` in
+  this repository. Fast-forward `main` only; never force-push. Annotated
+  `lfm2-vl-mvp-X.Y.Z` / `candle-overlays-mvp-X.Y.Z` tags remain a separately
+  authorized action after remote `main` equals local `HEAD`. Never move an
   existing release tag.
 - Never read, stage, or publish `.tools/.secrets/`; never use broad staging for this mod.
 
@@ -243,4 +239,4 @@ The next Codex session must be able to continue from this file without reconstru
 Keep active tasks and their What/Why/When/Where/How/Done-when/Verification contract in `TODO.md`. Move completed details to `HISTORY.md`, recurring hazards to `FAILURE_LOG.md`, and never duplicate either into the summary bank.
 
 ---
-AI-edited: 2026-08-13T19:14:09-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=release-closeout | change=admitted the combined-overlay tag namespace while preserving exact-head and immutable-tag guards
+AI-edited: 2026-09-18T00:35:00-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=p0-git-truth | change=canonical C:\\DevStuff\\candle checkout; ordinary Git plus gt.txt; no gitpush.ps1

@@ -6,6 +6,11 @@
   `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Upstream integration base: Candle main at
   `6f74e7c390c717f8fd34f23ce02aceb058173370`.
+- Proposed next HF integration base (not merged):
+  `7c2e89295dad4aeebc6ef7a92c255360b6957c2c`. Inventory:
+  `docs/lfm2-vl/UPSTREAM_SYNC.md`. Rejects `#3952` fancy-regex and later
+  `#3954` Remove ug. `#3952` does not force an Edge `tokenizers` feature
+  change at this SHA.
 - Published combined-overlay source checkpoint: `e2c6565d2970de7a9e507b7759a608d3a2c827e7`,
   tree `18c1600fe0278754c697c83cbc6113cb69ab39bc`.
 - Last verified app/source `main` head before this proof-gap slice:
@@ -21,11 +26,12 @@
 
 ## Worktree And Authority
 
-- Canonical checkout is `C:\DevStuff\candle` on local `main`. Publish with
-  ordinary Git plus `.tools/.secrets/gt.txt`; this repository does not use
-  EdgeSymbio `gitpush.ps1`. `C:\DevStuff\candle-mods` is a retired linked
-  worktree. Do not recreate it. WSL Git, when used, targets
-  `/mnt/c/DevStuff/candle`.
+- Canonical checkout is `C:\DevStuff\candle` on local `main` (WSL path
+  `/mnt/c/DevStuff/candle`). Native Windows Git owns `main`. Publish with
+  ordinary Git plus `.tools/.secrets/gt.txt`. Do not use EdgeSymbio
+  `gitpush.ps1`. `C:\DevStuff\candle-mods` is a retired linked worktree; do
+  not recreate it. WSL is an optional `verify-baseline.sh` replay, not the
+  Git backend.
 - Native Windows/MSVC is the product and release-proof lane. WSL2/Linux is a
   secondary portability replay, not the product platform.
 - The guarded helper published and remotely verified the source checkpoint on
@@ -67,9 +73,9 @@
 - Generic SDXL framework additions cover three-component LoRA transactions,
   exact residual admission, opt-in pooled-text/time-ID conditioning,
   lower-precision cast order, and a consumer-test-only rollback seam.
-- The LFM2-VL overlay contains 156 paths (16 fork modifications, 140
+- The LFM2-VL overlay contains 157 paths (16 fork modifications, 141
   additions). The SnapFlash-derived overlay contains 20 paths (8
-  modifications, 12 additions). Their registered union is 167 paths with 13
+  modifications, 12 additions). Their registered union is 168 paths with 13
   shared paths.
 
 ## Latest Integrity Review (2026-08-21)
@@ -82,11 +88,12 @@
   and invalid native, split, BF16, and F16 combinations.
 - The stale SDXL attention TODO was replaced with the actual contiguous-layout
   invariant; no speculative kernel optimization was introduced.
-- `summary_bank.json` separates the active linked-worktree hazard from the
-  archived Gknome attempt and keeps the default orientation route focused at
-  135.5/256 KiB. The text-only LFM2 route no longer repeats the composite VL
-  configuration file; the current issue and workflow groups remain covered by
-  the existing route set.
+- `summary_bank.json` routes current Git topology through the canonical
+  `C:\DevStuff\candle` checkout group and keeps the rejected Gknome attempt
+  archived. The default orientation route stays focused at 135.5/256 KiB. The
+  text-only LFM2 route no longer repeats the composite VL configuration file;
+  the current issue and workflow groups remain covered by the existing route
+  set.
 - `START_HERE.md` and `docs/FORK_OVERLAYS.md` no longer repeat completed
   lineage and parity narratives. This file holds current truth; `TODO.md`
   holds only active or explicitly deferred work; `HISTORY.md` holds completed
@@ -99,7 +106,7 @@
   limitation is recorded in D-0059/D-0060.
 - `summary_bank.json` now has a focused
   `issue__lfm2_config_compatibility` route. The large failure log is no longer
-  repeated in the reference-environment or linked-worktree groups; the
+  repeated in the reference-environment or Git-topology groups; the
   dedicated containment route remains the owner for that history.
 - The 3B/Q8 proof slice adds immutable native and official GGUF repository
   entries, exact 3B config/tokenizer/processor checks, bounded custom-code
@@ -145,8 +152,10 @@
   format/check/layout/diff/mod-manifest gate from `16:36:17Z` to `16:36:54Z`.
 - Summary-bank validation passed for 31 groups with a 135.5 KiB default
   union; the Python 3.13 module-layout verifier passed all registered splits.
-- Both overlay manifests and the repository union passed at 156/20/167 with
-  13 shared paths. The local/remote `main` heads and trees match exactly.
+- Overlay inventories are 157/20/168 with 13 shared paths after adding
+  `docs/lfm2-vl/UPSTREAM_SYNC.md`. Re-run `scripts/verify-fork-overlays.sh`
+  before the next publication. The frozen unpublished 0.2.0 candidate still
+  recorded 156/20/167.
 - `PYO3_NO_PYTHON=1 cargo check --locked --offline -j 2 --workspace`, the
   matching warnings-denied workspace Clippy gate, and the locked/offline
   workspace test/doc-test suite excluding `candle-datasets` and
@@ -204,4 +213,4 @@ leave the status Gated and retain the explicit blocker. The separate
 authorization.
 
 ---
-AI-edited: 2026-09-18T00:28:11-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=worktree | change=retired candle-mods; canonical checkout is C:\\DevStuff\\candle
+AI-edited: 2026-09-18T00:35:00-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=p0-git-truth | change=WSL is optional replay; native Git owns main

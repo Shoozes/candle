@@ -7,7 +7,7 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 - Model and compatibility baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Current publication baseline: Candle main at `6f74e7c390c717f8fd34f23ce02aceb058173370`, the exact `origin/main` tip integrated before this direct-main release.
 - Historical mod checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`; that branch is retained as evidence, not used as a second publication line.
-- Current release-candidate LFM2-VL overlay: 156 paths, exactly 16 fork-origin modifications and 140 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL.
+- Current release-candidate LFM2-VL overlay: 157 paths, exactly 16 fork-origin modifications and 141 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL.
 - A **fork-origin modification** is a path that exists in the current publication baseline and is intentionally changed by this mod.
 - A **mod-owned addition** is a path absent from the current publication baseline and created for this project.
 - “Mod-owned” describes repository provenance, not third-party authorship. External source and license provenance remains authoritative in `SOURCES.md` and `LICENSE_NOTES.md`.
@@ -135,6 +135,7 @@ No other file from the integrated Candle publication baseline is part of the mod
 - `docs/lfm2-vl/STATUS.md`
 - `docs/lfm2-vl/TENSOR_MAP.md`
 - `docs/lfm2-vl/TODO.md`
+- `docs/lfm2-vl/UPSTREAM_SYNC.md`
 - `docs/lfm2-vl/history/BOOTSTRAP_AND_PHASE_GUIDE.md`
 - `summary_bank.json`
 
@@ -218,4 +219,4 @@ commands are prohibited. The LFM2-VL verifier remains independently runnable
 and does not absorb unfinished diffusion paths.
 
 ---
-AI-edited: 2026-08-13T19:14:09-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=release-closeout | change=registered the fail-closed receipt generator and hermetic contract suite in the combined release overlay
+AI-edited: 2026-09-18T00:35:00-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=p1-inventory | change=registered UPSTREAM_SYNC.md in the LFM2-VL overlay

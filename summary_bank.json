@@ -363,11 +363,12 @@
       ]
     },
     "issue__linked_worktree_git_boundary": {
-      "description": "Active Windows edit-folder and WSL-owned Git boundary, including safe status/publication commands and the recurring linked-worktree failure mode.",
+      "description": "Canonical checkout C:\\DevStuff\\candle (WSL /mnt/c/DevStuff/candle): native Windows Git owns main; publish with ordinary Git plus .tools/.secrets/gt.txt; candle-mods is retired; WSL is optional verify-baseline replay only.",
       "status": "active",
       "paths": [
         "AGENTS.md",
-        "docs/lfm2-vl/START_HERE.md"
+        "docs/lfm2-vl/START_HERE.md",
+        "docs/lfm2-vl/UPSTREAM_SYNC.md"
       ]
     },
     "issue__lfm2_config_compatibility": {
@@ -506,7 +507,7 @@
   },
   "exclusions": {
     ".git": {
-      "note": "Repository internals, including this checkout's WSL linked-worktree pointer; inspect with the owning Git backend, never load as context."
+      "note": "Repository internals of C:\\DevStuff\\candle; inspect with native Windows Git, never load as context."
     },
     ".tools/.secrets": {
       "note": "Operator-owned credentials; never read, route, stage, or publish."

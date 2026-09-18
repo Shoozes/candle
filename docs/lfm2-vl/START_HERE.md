@@ -96,25 +96,27 @@ Before any production-model run:
 
 ## Git and Worktree Boundary
 
-This particular Windows folder is a WSL-owned linked worktree attached to local
-`main`. The historical feature branch remains checked out by
-`/home/workbench/code/candle-lfm2-vl`; it is not a second publication line.
-Windows Git cannot resolve the Linux absolute `.git` pointer, so WSL Git owns
-all repository operations here. This is local Git topology, not a requirement
-for building or using the fork on Windows.
+Canonical checkout is `C:\DevStuff\candle` on local `main`. The same tree is
+`/mnt/c/DevStuff/candle` when WSL is used for an optional
+`scripts/lfm2-vl/verify-baseline.sh` replay. WSL does not own `main`. Native
+Windows Git owns status, staging, commits, merges, and publication.
+`C:\DevStuff\candle-mods` is retired; do not recreate it. The historical
+feature branch at `/home/workbench/code/candle-lfm2-vl` is not a second
+publication line.
 
-- Read and edit here when requested.
-- Use WSL Git for status, staging, commits, merges, and revision checks.
+- Read and edit in `C:\DevStuff\candle`.
+- Use native Windows Git for status, staging, commits, merges, and revision
+  checks.
 - Do not force-attach the same branch to two worktrees.
 - Keep `main` as the single local and GitHub integration branch; no PR is
   required for owner-reviewed work.
 - Fetch and review `origin/main`, preserve both histories without force, and
   rerun the local release gate after every integration.
-- Invoke the ignored `.tools/gitpush.ps1` only after explicit approval and only
-  from a clean named `main`; it verifies ancestry and remote identity and does
-  not stage, commit, merge, delete refs, or force-push. Its optional guarded
-  tag mode runs only after remote `main` equals local `HEAD` and publishes one
-  annotated `lfm2-vl-mvp-X.Y.Z` tag that peels to that exact commit.
+- Publish with ordinary Git plus ignored `.tools/.secrets/gt.txt` after
+  explicit owner approval and from a clean named `main`. Do not use
+  EdgeSymbio `gitpush.ps1` here. Fast-forward only; never force-push.
+  Annotated `lfm2-vl-mvp-X.Y.Z` tags remain a separately authorized action
+  after remote `main` equals local `HEAD`.
 - Track the root `Cargo.lock` and `rust-toolchain.toml` as release inputs; keep
   `.tools/.secrets/`, models, caches, downloads, artifacts, and local logs out
   of publication.
@@ -125,10 +127,9 @@ for building or using the fork on Windows.
   never normalize line endings in a loader to hide a checkout-identity defect.
 
 Gknome adoption is deferred outside the LFM2-VL product backlog. If revisited,
-it must support ordinary native Windows repositories and recognize this
-checkout's `.git` file, fail closed when its Git backend cannot operate through
-the WSL pointer, and require a dry run with zero authority conflicts before any
-generated file is accepted. Repair and additive template replacement remain
+it must support this ordinary native Windows repository, require a dry run
+with zero authority conflicts before any generated file is accepted, and must
+not revive a linked worktree. Repair and additive template replacement remain
 prohibited.
 
 ## Documentation Roles
@@ -143,4 +144,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-09-18T00:28:11-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=worktree | change=pointed WSL baseline replay at C:\\DevStuff\\candle
+AI-edited: 2026-09-18T00:35:00-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=p0-git-truth | change=one checkout story: native Git at C:\\DevStuff\\candle; WSL replay only
