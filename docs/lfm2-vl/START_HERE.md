@@ -73,7 +73,7 @@ cargo check --locked --offline -p candle-examples --example lfm2-vl
 Then replay the portable baseline in WSL when its local cache is available:
 
 ```powershell
-wsl.exe -d NVIDIA-Workbench --cd /mnt/c/DevStuff/candle-mods bash -lc "CARGO_TARGET_DIR=/home/workbench/code/candle-lfm2-vl/target bash scripts/lfm2-vl/verify-baseline.sh"
+wsl.exe -d NVIDIA-Workbench --cd /mnt/c/DevStuff/candle bash -lc "CARGO_TARGET_DIR=/home/workbench/code/candle-lfm2-vl/target bash scripts/lfm2-vl/verify-baseline.sh"
 ```
 
 These commands perform compilation and tests only. They do not authorize dependency downloads, model execution, hosted CI, commits, pushes, or PRs. Hosted CI is not a release authority for this fork; required evidence is local native Windows proof plus an explicitly labeled WSL replay when practical. A missing offline dependency is a blocked lane to record in `STATUS.md`, not permission to fetch it implicitly.
@@ -143,4 +143,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-08-13T20:21:47-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=recorded the clean verified and remotely equal combined-overlay source checkpoint
+AI-edited: 2026-09-18T00:28:11-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=worktree | change=pointed WSL baseline replay at C:\\DevStuff\\candle

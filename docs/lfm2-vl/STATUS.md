@@ -21,9 +21,11 @@
 
 ## Worktree And Authority
 
-- `C:\DevStuff\candle-mods` is a WSL-owned linked worktree attached to local
-  `main`. Use the `NVIDIA-Workbench` WSL Git backend for status, revision,
-  staging, commit, merge, and publication checks.
+- Canonical checkout is `C:\DevStuff\candle` on local `main`. Publish with
+  ordinary Git plus `.tools/.secrets/gt.txt`; this repository does not use
+  EdgeSymbio `gitpush.ps1`. `C:\DevStuff\candle-mods` is a retired linked
+  worktree. Do not recreate it. WSL Git, when used, targets
+  `/mnt/c/DevStuff/candle`.
 - Native Windows/MSVC is the product and release-proof lane. WSL2/Linux is a
   secondary portability replay, not the product platform.
 - The guarded helper published and remotely verified the source checkpoint on
@@ -183,9 +185,8 @@
   tasks in `TODO.md`. The LFM2 configuration conversion boundary is now
   deprecated and tracked as a compatibility limitation rather than an active
   TODO item.
-- The linked-worktree Git boundary is operational through `NVIDIA-Workbench`;
-  the current local and remote refs were read successfully in this pass. No
-  related Candle/LFM2/Cargo/Rust process was running after verification.
+- Git identity is the `C:\DevStuff\candle` checkout. The retired
+  `candle-mods` linked worktree is not part of current operations.
 - WSL2/Linux is no longer blocked for the pinned CPU baseline: the required
   toolchain and components are installed and the full replay passed. Future
   WSL runs remain secondary portability evidence, not a replacement for the
@@ -203,4 +204,4 @@ leave the status Gated and retain the explicit blocker. The separate
 authorization.
 
 ---
-AI-edited: 2026-08-21T12:40:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-3b-q8-proof-gap | change=recorded the bounded 3B and direct-Q8 proof contract and its gated production status
+AI-edited: 2026-09-18T00:28:11-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=worktree | change=retired candle-mods; canonical checkout is C:\\DevStuff\\candle
