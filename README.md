@@ -21,10 +21,9 @@ overlays described in [`docs/FORK_OVERLAYS.md`](./docs/FORK_OVERLAYS.md).
 Start repository work from
 [`docs/lfm2-vl/START_HERE.md`](./docs/lfm2-vl/START_HERE.md); current truth and
 remaining work live in [`STATUS.md`](./docs/lfm2-vl/STATUS.md) and
-[`TODO.md`](./docs/lfm2-vl/TODO.md). Current worker-track slice: S4 overlay
-and Edge consumer compatibility on the local S3 merge of Hugging Face
-`7c2e89295dad4aeebc6ef7a92c255360b6957c2c`. Do not open gpt-oss C0 until S4
-is green. Model weights, caches, runtime evidence, and downloads are
+[`TODO.md`](./docs/lfm2-vl/TODO.md). Current worker-track slice: Edge pin-adoption of published
+`4c1feb82eccd60a14f9f00f84ef6c9bdedcddd06` with `tokenizers` 0.23/`onig`.
+Do not open gpt-oss C0 until that pairing lands. Model weights, caches, runtime evidence, and downloads are
 external inputs and are never part of normal source setup or publication.
 
 ## Get started

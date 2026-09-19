@@ -41,14 +41,14 @@
   2026-08-13 and the closeout commits above directly on `main` in this
   session. No annotated tag, hosted release, repository-rule change, secret
   inspection, or hosted-CI invocation is included.
-- Current active local slice: **publish the S3/S4 candidate**, then Edge
-  pin-adoption with `tokenizers` 0.23/`onig`. Local overlay and consumer
-  checks passed on merge `25d676f5…` plus the unpublished follow-on tree.
-  Do not open gpt-oss C0 until that published pin-adoption lands. Keep the
-  Edge pin on `238cc176…` until then. The 3B native / official Q8 MMProj
-  production-proof gap, overlay 0.2.0 tagging, and live CUDA/model parity
-  remain outside this chain. Model-free verification stays distinct from
-  production model/CUDA receipts; no implicit 3B download.
+- Current active local slice: **Edge pin-adoption** of published
+  `4c1feb82eccd60a14f9f00f84ef6c9bdedcddd06` with `tokenizers` 0.23/`onig`.
+  `origin/main` equals that SHA. Do not open gpt-oss C0 until the Edge pin
+  and tokenizers move together. Keep the Edge pin on `238cc176…` until then.
+  The 3B native / official Q8 MMProj production-proof gap, overlay 0.2.0
+  tagging, and live CUDA/model parity remain outside this chain. Model-free
+  verification stays distinct from production model/CUDA receipts; no
+  implicit 3B download.
 - Models, caches, downloads, generated proof, Cargo output, and
   `.tools/.secrets/` remain ignored or external. Operator disk cleanup removed
   the local model/cache inputs; do not reconstruct or download them implicitly.

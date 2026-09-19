@@ -22,7 +22,8 @@ This file preserves completed implementation and verification evidence. Any pres
   with `test-utils`; `custom_op_tests` 4/4. Model-free Edge API/CLI CPU and
   CUDA `cargo check` passed only with throwaway Edge `tokenizers` 0.23/`onig`.
   Current Edge pin remains `238cc176…`. Live model/CUDA parity and 3B proof
-  were not rerun. C0 was not opened.
+  were not rerun. C0 was not opened. `origin/main` later published this
+  candidate at `4c1feb82eccd60a14f9f00f84ef6c9bdedcddd06`.
 
 ## 2026-08-21 — 3B and direct-Q8 proof contract
 

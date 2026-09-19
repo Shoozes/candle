@@ -6,23 +6,23 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ## Active Candle backlog
 
-### [ ] Publish S3/S4 candidate and Edge pin-adoption recipe (not C0)
+### [ ] Edge pin-adoption of published S3/S4 SHA (not C0)
 
-- What: Publish the local S3/S4 candidate with ordinary Git plus
-  `.tools/.secrets/gt.txt`, then adopt it in Edge together with `tokenizers`
-  0.23/`onig`. Do not silently unify 0.22 and 0.23 `Tokenizer` types.
-- Why: Overlay and consumer gates passed locally. `TokenizerFromGguf` is
-  implemented for candle-core's tokenizers crate version, so Edge 0.22 and
-  candidate 0.23 cannot share one `Tokenizer` type.
-- When: After this local candidate is committed/reviewed. Before C0.
-- Where: This checkout; Edge `source/backend/Cargo.toml` tokenizers line and
-  the four `candle-*` git revs. Keep historical VL selection `dca98495…`.
-- How: No force-push. Do not use Edge `gitpush.ps1`. Bind new Edge evidence
-  to the new pin; do not rewrite pack-selection identity.
-- Done when: `origin/main` carries the merged SHA, Edge pin and tokenizers
-  move together, and C0 remains unopened until that pin-adoption lands.
-- Verification: `git status` clean on Candle after push; Edge `cargo check
-  --locked` against the published SHA with `tokenizers` 0.23/`onig`.
+- What: Adopt published Shoozes/candle `4c1feb82eccd60a14f9f00f84ef6c9bdedcddd06`
+  in Edge together with `tokenizers` 0.23/`onig`. Do not silently unify 0.22
+  and 0.23 `Tokenizer` types.
+- Why: Overlay and consumer gates passed. `TokenizerFromGguf` is implemented
+  for candle-core's tokenizers crate version, so Edge 0.22 and this SHA's
+  0.23 cannot share one `Tokenizer` type.
+- When: After this published SHA. Before C0.
+- Where: Edge `source/backend/Cargo.toml` tokenizers line and the four
+  `candle-*` git revs. Keep historical VL selection `dca98495…`.
+- How: Bind new Edge evidence to the new pin; do not rewrite pack-selection
+  identity. Do not open C0 from the pin bump.
+- Done when: Edge pin and tokenizers move together, historical VL selection
+  stays `dca98495…`, and C0 remains unopened until that pin-adoption lands.
+- Verification: Edge `cargo check --locked` against `4c1feb82…` with
+  `tokenizers` 0.23/`onig`.
 
 ### [ ] Publish the immutable combined-overlay 0.2.0 snapshot
 
