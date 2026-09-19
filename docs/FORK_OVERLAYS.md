@@ -15,7 +15,10 @@ integration plan.
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each
 overlay-specific verifier may validate only its own paths, so unfinished work
-in one overlay cannot silently become release evidence for another.
+in one overlay cannot silently become release evidence for another. The live
+union baseline is Hugging Face `7c2e89295dad4aeebc6ef7a92c255360b6957c2c`
+(`#3950`). Frozen `candle-overlays-mvp-0.2.0` receipt scripts still encode
+the earlier `6f74e7c` identity and are not this slice.
 
 The `candle-overlays-mvp-0.2.0` closeout admits only build or verification
 fixes, reproducibility and packaging changes, release metadata, distribution

@@ -2,6 +2,7 @@
 # across Git core.autocrlf settings and never run binary payloads through text
 # conversion.
 /.gitattributes text eol=lf
+*.sh text eol=lf
 
 /tests/fixtures/lfm2_vl_tiny/*.json text eol=lf
 /tests/fixtures/lfm2_vl_tiny/*.md text eol=lf

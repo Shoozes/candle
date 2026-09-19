@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export LC_ALL=C
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd -P)"
-BASELINE="${1:-6f74e7c390c717f8fd34f23ce02aceb058173370}"
+BASELINE="${1:-7c2e89295dad4aeebc6ef7a92c255360b6957c2c}"
 REGISTRY="${REPO_ROOT}/docs/FORK_OVERLAYS.md"
 MANIFESTS=(
     "docs/lfm2-vl/MOD_MANIFEST.md"
@@ -42,7 +43,7 @@ STALE_PATHS="${TEMP_DIR}/stale-paths.txt"
 {
     git diff --name-only --diff-filter=ACDMRTUXB "$BASELINE" --
     git ls-files --others --exclude-standard
-} | LC_ALL=C sort -u >"$REPO_PATHS"
+} | tr -d '\r' | sort -u >"$REPO_PATHS"
 
 : >"$ALL_MANIFEST_PATHS"
 for manifest in "${MANIFESTS[@]}"; do
@@ -51,16 +52,18 @@ for manifest in "${MANIFESTS[@]}"; do
         exit 2
     fi
     sed -n \
+        -e 's/\r$//' \
         -e 's/^| `\([^`]*\)` |.*$/\1/p' \
         -e 's/^- `\([^`]*\)`$/\1/p' \
-        "$manifest" | LC_ALL=C sort -u >>"$ALL_MANIFEST_PATHS"
+        "$manifest" | tr -d '\r' | sort -u >>"$ALL_MANIFEST_PATHS"
 done
 
 LC_ALL=C sort -u "$ALL_MANIFEST_PATHS" >"$UNION_PATHS"
 LC_ALL=C sort "$ALL_MANIFEST_PATHS" | uniq -d >"$DUPLICATE_PATHS"
 sed -n '/<!-- shared-paths:start -->/,/<!-- shared-paths:end -->/ {
+    s/\r$//
     s/^- `\([^`]*\)`$/\1/p
-}' "$REGISTRY" | LC_ALL=C sort -u >"$SHARED_PATHS"
+}' "$REGISTRY" | tr -d '\r' | sort -u >"$SHARED_PATHS"
 
 comm -23 "$DUPLICATE_PATHS" "$SHARED_PATHS" >"$UNDECLARED_DUPLICATES"
 if [[ -s "$UNDECLARED_DUPLICATES" ]]; then

@@ -6,10 +6,11 @@ Fetched 2026-09-18 against `C:\DevStuff\candle`.
 
 | Clock | SHA | Note |
 | --- | --- | --- |
-| Ours / overlay `main` | `2ec92ace0b868cff1248253d2c4ca8cf51bfef5d` | Docs + overlays. HF base still `6f74e7c`. |
-| Edge pin (before P2) | `dca9849584e377cebc1da40de966d050733f3bbf` | Product still compiled this until the Edge pin bump. |
-| Declared HF integration base | `6f74e7c390c717f8fd34f23ce02aceb058173370` | Merge-base of overlay vs `huggingface/main`. |
-| `huggingface/main` tip | `ddf1b879dc3a1760cbcb3f3c4a7c6467850cec4a` | 2026-09-04 `Remove ug (#3954)`. 41 commits after `6f74e7c`. |
+| Local overlay `main` (unpublished S3 merge) | `25d676f5663f152cf9371b405236d75fe110d14f` | `--no-ff` of exact HF `#3950` onto `238cc176`. |
+| Published overlay `origin/main` | `238cc176e2a7283da88588fdef47276965d0022b` | Edge pin remains here until S4. |
+| Live HF integration base | `7c2e89295dad4aeebc6ef7a92c255360b6957c2c` | Selected S3 SHA. `#3950`. |
+| Prior overlay HF base (frozen 0.2.0 receipts) | `6f74e7c390c717f8fd34f23ce02aceb058173370` | Not the live union gate after S3. |
+| `huggingface/main` tip | `ddf1b879dc3a1760cbcb3f3c4a7c6467850cec4a` | 2026-09-04 `Remove ug (#3954)`. Do not merge. |
 | Compat baseline | `31f35b147389700ed2a178ee66a91c3cc25cc80d` | Candle 0.11.0. Not a sync target. |
 
 HF `main` has no gpt-oss paths. Overlay still has `candle-ug/`; the tip deleted it.
@@ -89,7 +90,9 @@ Rejected later (do not merge as floating `main`):
 
 `#3952` does **not** apply at the proposed SHA. Edge can keep `tokenizers` 0.22/`onig` until a later chosen base includes #3952. The proposed SHA already has workspace `tokenizers` 0.23.1 with `onig`; that is a version unify, not a backend switch.
 
-This SHA is proposed, not merged.
+This SHA is merged locally as `25d676f5…` and is **not** S4-complete or
+published. Do not treat the merge as consumer-green until overlay and Edge
+compatibility gates pass. Keep the Edge pin on `238cc176…` until then.
 
 ---
 AI-edited: 2026-09-18T00:35:00-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=p1-p3-inventory | change=recorded overlay vs HF path table and proposed 7c2e8929 integration base

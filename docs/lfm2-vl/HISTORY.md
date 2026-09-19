@@ -2,6 +2,28 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-09-18 — S3 merge of `7c2e8929` and local S4 gates
+
+- History-preserving `--no-ff` merge `25d676f5663f152cf9371b405236d75fe110d14f`
+  of exact Hugging Face `#3950` `7c2e89295dad4aeebc6ef7a92c255360b6957c2c`
+  onto `238cc176…`. Rejected later `#3952` fancy-regex and `#3954` Remove ug.
+- Conflicts in `rust-ci.yml` and `custom_op_tests.rs` kept overlay `--locked`
+  / `cuda_i32_to_f32_cast` and took upstream `--all-targets` / InplaceAdd.
+  `candle-ug` remains; examples still request `tokenizers` `onig`.
+- Lock refresh: `hf-hub 1.0.0`, `tokenizers 0.23.2` from declared `0.23.1`.
+- Overlay union vs the new base: 169 paths, 158 LFM / 20 SnapFlash / 13
+  shared. Live verifier default is `7c2e8929…`. Frozen 0.2.0 receipts still
+  encode `6f74e7c`.
+- Tokenizers 0.23 `add_special_tokens` now takes owned tokens. LayerNorm
+  keeps HF `weight`/`gamma` aliases and restores Init fallback so native
+  fixtures still load.
+- Checks: four-crate and three LFM example `cargo check --locked --offline`;
+  `candle-vlm` tests; `lfm2-vl` example 33/33; SnapFlash mutable tests 2/2
+  with `test-utils`; `custom_op_tests` 4/4. Model-free Edge API/CLI CPU and
+  CUDA `cargo check` passed only with throwaway Edge `tokenizers` 0.23/`onig`.
+  Current Edge pin remains `238cc176…`. Live model/CUDA parity and 3B proof
+  were not rerun. C0 was not opened.
+
 ## 2026-08-21 — 3B and direct-Q8 proof contract
 
 - Locked the official `LiquidAI/LFM2.5-VL-3B` native snapshot at

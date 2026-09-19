@@ -4,13 +4,16 @@
 
 - Compatibility baseline: Candle 0.11.0 at
   `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
-- Upstream integration base: Candle main at
-  `6f74e7c390c717f8fd34f23ce02aceb058173370`.
-- Proposed next HF integration base (not merged):
-  `7c2e89295dad4aeebc6ef7a92c255360b6957c2c`. Inventory:
-  `docs/lfm2-vl/UPSTREAM_SYNC.md`. Rejects `#3952` fancy-regex and later
-  `#3954` Remove ug. `#3952` does not force an Edge `tokenizers` feature
-  change at this SHA.
+- Live HF integration base: Candle main at
+  `7c2e89295dad4aeebc6ef7a92c255360b6957c2c` (`#3950`). Local S3 merge
+  commit: `25d676f5663f152cf9371b405236d75fe110d14f`. The earlier 0.2.0
+  publication base `6f74e7c390c717f8fd34f23ce02aceb058173370` remains the
+  frozen receipt identity, not the live union gate.
+- Inventory: `docs/lfm2-vl/UPSTREAM_SYNC.md`. Reject later `#3952`
+  fancy-regex, `#3953`, `#3959`, and `#3954` Remove ug. This SHA keeps
+  `candle-ug` and `tokenizers` `onig`, and already includes `hf-hub 1.0.0`
+  plus `tokenizers 0.23.1` (lock currently resolves `0.23.2` with `onig`
+  still present). Consumer risk is not zero.
 - Published combined-overlay source checkpoint: `e2c6565d2970de7a9e507b7759a608d3a2c827e7`,
   tree `18c1600fe0278754c697c83cbc6113cb69ab39bc`.
 - Last verified app/source `main` head before this proof-gap slice:
@@ -38,11 +41,14 @@
   2026-08-13 and the closeout commits above directly on `main` in this
   session. No annotated tag, hosted release, repository-rule change, secret
   inspection, or hosted-CI invocation is included.
-- Current active local slice: close the 3B native and official 400M Q8 MMProj
-  production-proof gap. Reference locking, config-only validation, hash-bound
-  remote-code admission, direct-GGUF hybrid evidence, Q8 retention checks, and
-  deterministic fixture tests are implemented locally; production receipts are
-  still external and not present in this repository.
+- Current active local slice: **publish the S3/S4 candidate**, then Edge
+  pin-adoption with `tokenizers` 0.23/`onig`. Local overlay and consumer
+  checks passed on merge `25d676f5…` plus the unpublished follow-on tree.
+  Do not open gpt-oss C0 until that published pin-adoption lands. Keep the
+  Edge pin on `238cc176…` until then. The 3B native / official Q8 MMProj
+  production-proof gap, overlay 0.2.0 tagging, and live CUDA/model parity
+  remain outside this chain. Model-free verification stays distinct from
+  production model/CUDA receipts; no implicit 3B download.
 - Models, caches, downloads, generated proof, Cargo output, and
   `.tools/.secrets/` remain ignored or external. Operator disk cleanup removed
   the local model/cache inputs; do not reconstruct or download them implicitly.
@@ -152,10 +158,9 @@
   format/check/layout/diff/mod-manifest gate from `16:36:17Z` to `16:36:54Z`.
 - Summary-bank validation passed for 31 groups with a 135.5 KiB default
   union; the Python 3.13 module-layout verifier passed all registered splits.
-- Overlay inventories are 157/20/168 with 13 shared paths after adding
-  `docs/lfm2-vl/UPSTREAM_SYNC.md`. Re-run `scripts/verify-fork-overlays.sh`
-  before the next publication. The frozen unpublished 0.2.0 candidate still
-  recorded 156/20/167.
+- Overlay inventories are 158/20/169 with 13 shared paths after S3 plus the
+  LayerNorm Init fallback. Live union baseline is `7c2e8929…`. The frozen
+  unpublished 0.2.0 candidate still recorded 156/20/167.
 - `PYO3_NO_PYTHON=1 cargo check --locked --offline -j 2 --workspace`, the
   matching warnings-denied workspace Clippy gate, and the locked/offline
   workspace test/doc-test suite excluding `candle-datasets` and

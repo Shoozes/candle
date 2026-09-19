@@ -128,7 +128,9 @@ mod tests {
                 ));
             }
         }
-        tokenizer.add_special_tokens(&special_tokens);
+        tokenizer
+            .add_special_tokens(special_tokens)
+            .map_err(anyhow::Error::msg)?;
         Ok(tokenizer)
     }
 

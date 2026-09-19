@@ -6,6 +6,24 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ## Active Candle backlog
 
+### [ ] Publish S3/S4 candidate and Edge pin-adoption recipe (not C0)
+
+- What: Publish the local S3/S4 candidate with ordinary Git plus
+  `.tools/.secrets/gt.txt`, then adopt it in Edge together with `tokenizers`
+  0.23/`onig`. Do not silently unify 0.22 and 0.23 `Tokenizer` types.
+- Why: Overlay and consumer gates passed locally. `TokenizerFromGguf` is
+  implemented for candle-core's tokenizers crate version, so Edge 0.22 and
+  candidate 0.23 cannot share one `Tokenizer` type.
+- When: After this local candidate is committed/reviewed. Before C0.
+- Where: This checkout; Edge `source/backend/Cargo.toml` tokenizers line and
+  the four `candle-*` git revs. Keep historical VL selection `dca98495…`.
+- How: No force-push. Do not use Edge `gitpush.ps1`. Bind new Edge evidence
+  to the new pin; do not rewrite pack-selection identity.
+- Done when: `origin/main` carries the merged SHA, Edge pin and tokenizers
+  move together, and C0 remains unopened until that pin-adoption lands.
+- Verification: `git status` clean on Candle after push; Edge `cargo check
+  --locked` against the published SHA with `tokenizers` 0.23/`onig`.
+
 ### [ ] Publish the immutable combined-overlay 0.2.0 snapshot
 
 - What: Create annotated tag `candle-overlays-mvp-0.2.0`, attach the source
@@ -33,6 +51,9 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   remote equality, and annotated-tag peel/asset comparison.
 
 ### [ ] Close the native 3B and official 400M Q8 MMProj production proof gap
+
+- Sequencing: outside the S3/S4 → C0 worker chain. Do not start this instead
+  of S3.
 
 - What: Acquire and verify the immutable `LiquidAI/LFM2.5-VL-3B` native
   snapshot and the official `LiquidAI/LFM2.5-VL-3B-GGUF` text/F16/Q8_0 MMProj

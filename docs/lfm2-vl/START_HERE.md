@@ -15,6 +15,20 @@ This is the live execution entry point for the Candle 0.11 LFM2.5-VL/MMProj exte
 
 ## Current Gate
 
+Selected product direction: Edge + this Shoozes/candle overlay. Edge Q8 stays
+the product default. GPT-OSS is an explicit later experiment (C0 only after
+S4). No training from this gate.
+
+**S3/S4 local candidate exists** at merge
+`25d676f5663f152cf9371b405236d75fe110d14f` plus the unpublished lock,
+overlay-baseline, tokenizers, and LayerNorm follow-on. Overlay and focused
+checks passed. **Next mutation:** publish this candidate, then adopt it in
+Edge together with `tokenizers` 0.23/`onig`. Do not merge floating
+`huggingface/main`. Do not retag `lfm2-vl-mvp-0.1.0`. Do not open gpt-oss
+C0 until that published pin-adoption lands. Keep the Edge pin on
+`238cc176…` until then. 3B production proof, another llama.cpp fixture,
+MOSS, and release tagging are outside this chain.
+
 The LFM2-VL implementation phases and the coordinated Candle/SnapFlash
 framework primitives are complete. Their detailed lineage and proof belong in
 `HISTORY.md`, `PARITY.md`, and `docs/FORK_OVERLAYS.md`; do not copy those

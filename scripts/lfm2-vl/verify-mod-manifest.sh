@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export LC_ALL=C
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd -P)"
-BASELINE="${1:-6f74e7c390c717f8fd34f23ce02aceb058173370}"
+BASELINE="${1:-7c2e89295dad4aeebc6ef7a92c255360b6957c2c}"
 MANIFEST="${REPO_ROOT}/docs/lfm2-vl/MOD_MANIFEST.md"
 cd -- "$REPO_ROOT"
 
@@ -91,12 +92,13 @@ done
 {
     git diff --name-only --diff-filter=ACDMRTUXB "$BASELINE" --
     git ls-files --others --exclude-standard
-} | LC_ALL=C sort -u >"$REPO_PATHS"
+} | tr -d '\r' | sort -u >"$REPO_PATHS"
 
 sed -n \
+    -e 's/\r$//' \
     -e 's/^| `\([^`]*\)` |.*$/\1/p' \
     -e 's/^- `\([^`]*\)`$/\1/p' \
-    "$MANIFEST" | LC_ALL=C sort -u >"$MANIFEST_PATHS"
+    "$MANIFEST" | tr -d '\r' | sort -u >"$MANIFEST_PATHS"
 
 if grep -E '^(\.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$MANIFEST_PATHS"; then
     printf 'error: LFM2-VL manifest contains a prohibited local/runtime path\n' >&2
@@ -120,13 +122,13 @@ while IFS= read -r path; do
     fi
 done <"$MANIFEST_PATHS"
 
-if [[ "$modified_count" -ne 16 ]]; then
-    printf 'error: expected exactly 16 LFM2-VL fork-origin modifications, found %s\n' "$modified_count" >&2
+if [[ "$modified_count" -ne 17 ]]; then
+    printf 'error: expected exactly 17 LFM2-VL fork-origin modifications, found %s\n' "$modified_count" >&2
     exit 1
 fi
 
-if [[ "$added_count" -ne 140 ]]; then
-    printf 'error: expected exactly 140 LFM2-VL additions, found %s\n' "$added_count" >&2
+if [[ "$added_count" -ne 141 ]]; then
+    printf 'error: expected exactly 141 LFM2-VL additions, found %s\n' "$added_count" >&2
     exit 1
 fi
 
