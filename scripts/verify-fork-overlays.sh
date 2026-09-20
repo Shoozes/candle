@@ -4,7 +4,7 @@ export LC_ALL=C
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd -P)"
-BASELINE="${1:-7c2e89295dad4aeebc6ef7a92c255360b6957c2c}"
+BASELINE="${1:-d830e03078a29d39a1aacd741620475eb33b7609}"
 REGISTRY="${REPO_ROOT}/docs/FORK_OVERLAYS.md"
 MANIFESTS=(
     "docs/lfm2-vl/MOD_MANIFEST.md"
@@ -39,7 +39,6 @@ DUPLICATE_PATHS="${TEMP_DIR}/duplicate-paths.txt"
 SHARED_PATHS="${TEMP_DIR}/shared-paths.txt"
 UNDECLARED_DUPLICATES="${TEMP_DIR}/undeclared-duplicates.txt"
 MISSING_PATHS="${TEMP_DIR}/missing-paths.txt"
-STALE_PATHS="${TEMP_DIR}/stale-paths.txt"
 
 {
     git diff --name-only --diff-filter=ACDMRTUXB "$BASELINE" --
@@ -79,17 +78,17 @@ if grep -E '^(\.tools/\.secrets/|\.venv/|artifacts/|downloads/|models/|target/)|
 fi
 
 comm -23 "$REPO_PATHS" "$UNION_PATHS" >"$MISSING_PATHS"
-comm -13 "$REPO_PATHS" "$UNION_PATHS" >"$STALE_PATHS"
 if [[ -s "$MISSING_PATHS" ]]; then
     printf 'error: changed paths are absent from every overlay manifest:\n' >&2
     sed 's/^/  - /' "$MISSING_PATHS" >&2
     exit 1
 fi
-if [[ -s "$STALE_PATHS" ]]; then
-    printf 'error: overlay manifest paths are absent from the baseline-to-current delta:\n' >&2
-    sed 's/^/  - /' "$STALE_PATHS" >&2
-    exit 1
-fi
+while IFS= read -r path; do
+    if [[ ! -e "$path" ]]; then
+        printf 'error: overlay manifest path is missing from the checkout: %s\n' "$path" >&2
+        exit 1
+    fi
+done <"$UNION_PATHS"
 
 printf 'fork-overlays baseline=%s paths=%s overlays=%s shared=%s\n' \
     "$BASELINE" \

@@ -49,15 +49,17 @@
       ]
     },
     "feature__gpt_oss_experimental": {
-      "description": "Experimental GPT-OSS checkpoint admission, packed MXFP4 blocks/scales, CPU expert reference, and synthetic forward/cache proof.",
+      "description": "Experimental GPT-OSS checkpoint admission, packed MXFP4 blocks/scales, hash-pinned GGUF inventory/config normalization, CPU expert reference, and synthetic forward/cache proof.",
       "status": "active",
       "paths": [
         "candle-transformers/src/models/mod.rs",
         "candle-transformers/src/models/gpt_oss/mod.rs",
         "candle-transformers/src/models/gpt_oss/checkpoint.rs",
         "candle-transformers/src/models/gpt_oss/config.rs",
+        "candle-transformers/src/models/gpt_oss/gguf.rs",
         "candle-transformers/src/models/gpt_oss/mxfp4.rs",
         "candle-transformers/src/models/gpt_oss/model.rs",
+        "docs/lfm2-vl/DECISIONS.md",
         "docs/gpt-oss/MOD_MANIFEST.md",
         "docs/gpt-oss/SOURCES.md",
         "docs/gpt-oss/STATUS.md",
@@ -250,8 +252,7 @@
         "tools/lfm2_vl/reference/inspect_artifact.py",
         "tools/lfm2_vl/reference/manifest.py",
         "tools/lfm2_vl/reference/test_acquire_snapshot.py",
-        "tools/lfm2_vl/reference/README.md",
-        "docs/lfm2-vl/DECISIONS.md"
+        "tools/lfm2_vl/reference/README.md"
       ]
     },
     "workflow__production_parity": {

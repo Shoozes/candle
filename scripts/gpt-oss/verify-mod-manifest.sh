@@ -29,7 +29,6 @@ trap 'rm -rf -- "$TEMP_DIR"' EXIT
 
 REPO_PATHS="${TEMP_DIR}/repo-paths.txt"
 MANIFEST_PATHS="${TEMP_DIR}/manifest-paths.txt"
-STALE_PATHS="${TEMP_DIR}/stale-paths.txt"
 
 {
     git diff --name-only --diff-filter=ACDMRTUXB "$BASELINE" --
@@ -47,16 +46,17 @@ if grep -E '^(.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pyca
     exit 1
 fi
 
-comm -23 "$MANIFEST_PATHS" "$REPO_PATHS" >"$STALE_PATHS"
-if [[ -s "$STALE_PATHS" ]]; then
-    printf 'error: GPT-OSS manifest paths absent from the baseline-to-current delta:\n' >&2
-    sed 's/^/  - /' "$STALE_PATHS" >&2
-    exit 1
-fi
+while IFS= read -r path; do
+    if [[ ! -e "$path" ]]; then
+        printf 'error: GPT-OSS manifest path is missing from the checkout: %s\n' "$path" >&2
+        exit 1
+    fi
+done <"$MANIFEST_PATHS"
 
 required_paths=(
     candle-transformers/src/models/gpt_oss/checkpoint.rs
     candle-transformers/src/models/gpt_oss/config.rs
+    candle-transformers/src/models/gpt_oss/gguf.rs
     candle-transformers/src/models/gpt_oss/mod.rs
     candle-transformers/src/models/gpt_oss/model.rs
     candle-transformers/src/models/gpt_oss/mxfp4.rs

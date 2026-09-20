@@ -1413,5 +1413,35 @@ verifiers, never the real token or remote. The production helper reads the
 token only through `GIT_ASKPASS`; `.tools/.secrets/gt.txt`, runtime receipts,
 and local test-mode files remain excluded from Git.
 
+## D-0064: Normalize GPT-OSS GGUF Identity at the Candle Boundary
+
+Status: Accepted for the owner-authorized GPT-OSS C2a admission slice.
+
+Decision:
+Require the GGUF metadata architecture string `gpt-oss` and normalize it to
+Candle's existing `GptOssConfig.model_type` value `gpt_oss`. Reverse GGUF v2/v3
+dimension order into Candle logical shape order, retain MXFP4 type 39 as raw
+17-byte/32-value blocks, and accept only the complete owner-selected tensor
+inventory with its validated roles, shapes, dtypes, and non-overlapping byte
+ranges. Recognize the pinned converter's fused QKV/fused-expert and
+converter-style split-expert naming forms, but reject mixed or incomplete
+forms. Admit the external file only after its exact SHA-256 matches
+`aab205256a9b6361e410c24de3086e30f907092ca6f9ba8cd4b22c8a2b025778`.
+
+Why:
+The official Candle config boundary and GGUF wire boundary use different
+architecture spellings and dimension conventions. The pinned llama.cpp
+converter also repacks source MXFP4 blocks and may split gate/up experts, so
+silently treating GGUF bytes as the source-format U8 blocks would create a
+false execution claim. Exact file admission plus explicit normalization keeps
+these representation differences visible and prevents a malformed or unrelated
+GGUF from being accepted by shape coincidence.
+
+Consequences:
+Task 1 proves admission and ownership only. No production artifact is stored
+or downloaded by this repository, no GGUF tensor is dequantized, and no live
+CPU or CUDA model parity is claimed. Independent numerical, byte-bound, and
+rollback evidence remains a required Task 2 gate before a packed CUDA executor.
+
 ---
 AI-edited: 2026-09-19T00:00:00-04:00 | agent=Codex/root | model=unknown | effort=high | task=guarded-publication | change=adopted tracked clean-commit helper without Gknome coupling

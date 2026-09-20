@@ -19,6 +19,21 @@ packed into 16 U8 bytes, with a matching scale along the final tensor
 dimension. The Candle tests use deterministic synthetic payloads and do not
 identify or load a production model.
 
+The GGUF wire-format and converter behavior are pinned to `ggml-org/llama.cpp`
+commit `f072b103714dfa1eee531f80b24512faf38e3dd2`, resolved on 2026-09-20,
+under MIT. The relevant files are:
+
+- [`conversion/gpt_oss.py`](https://github.com/ggml-org/llama.cpp/blob/f072b103714dfa1eee531f80b24512faf38e3dd2/conversion/gpt_oss.py)
+  for MXFP4 repacking and fused-to-split expert tensor naming.
+- [`gguf-py/gguf/constants.py`](https://github.com/ggml-org/llama.cpp/blob/f072b103714dfa1eee531f80b24512faf38e3dd2/gguf-py/gguf/constants.py)
+  for GGML MXFP4 type 39 and its 17-byte/32-value block size.
+- [`src/llama-arch.cpp`](https://github.com/ggml-org/llama.cpp/blob/f072b103714dfa1eee531f80b24512faf38e3dd2/src/llama-arch.cpp)
+  for the `gpt-oss` architecture and canonical GGUF tensor names.
+
+The Candle loader uses these files as format behavior references only. It
+retains the GGUF MXFP4 bytes without applying the converter's nibble transform;
+that execution concern is intentionally deferred to the later executor gate.
+
 ---
 
 AI-edited: 2026-09-19; agent=Codex; task=gpt-oss-c0-c1; change=pinned official source identity

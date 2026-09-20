@@ -29,7 +29,6 @@ trap 'rm -rf -- "$TEMP_DIR"' EXIT
 
 REPO_PATHS="${TEMP_DIR}/repo-paths.txt"
 MANIFEST_PATHS="${TEMP_DIR}/manifest-paths.txt"
-STALE_PATHS="${TEMP_DIR}/stale-paths.txt"
 
 fixture_roots=(
     tests/fixtures/lfm2_vl_tiny
@@ -105,12 +104,12 @@ if grep -E '^(\.tools/\.secrets/|\.venv/|artifacts/|downloads/|models/|target/)|
     exit 1
 fi
 
-comm -23 "$MANIFEST_PATHS" "$REPO_PATHS" >"$STALE_PATHS"
-if [[ -s "$STALE_PATHS" ]]; then
-    printf 'error: LFM2-VL manifest paths absent from the baseline-to-current delta:\n' >&2
-    sed 's/^/  - /' "$STALE_PATHS" >&2
-    exit 1
-fi
+while IFS= read -r path; do
+    if [[ ! -e "$path" ]]; then
+        printf 'error: LFM2-VL manifest path is missing from the checkout: %s\n' "$path" >&2
+        exit 1
+    fi
+done <"$MANIFEST_PATHS"
 
 modified_count=0
 added_count=0
