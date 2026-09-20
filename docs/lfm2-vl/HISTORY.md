@@ -27,6 +27,10 @@ This file preserves completed implementation and verification evidence. Any pres
   core/NN/transformer/VLM and three LFM example checks, transformer Clippy,
   maintained library tests, LFM2-VL example tests, and all context/inventory
   guards without fetching optional dataset dependencies.
+- The broader maintained-library test lane then exposed one tokenizers 0.23
+  `unused_must_use` warning in the LFM2-VL test tokenizer. The fixture now
+  asserts successful special-token registration instead of discarding the
+  fallible result; no production signature or behavior changed.
 
 ## 2026-09-18 — S3 merge of `7c2e8929` and local S4 gates
 

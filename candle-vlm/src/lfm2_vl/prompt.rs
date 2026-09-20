@@ -72,7 +72,9 @@ mod tests {
                 AddedToken::from("<|img_row_2_col_3|>", true),
             ]);
         }
-        tokenizer.add_special_tokens(tokens);
+        tokenizer
+            .add_special_tokens(tokens)
+            .expect("fixed test special tokens");
         tokenizer
     }
 
