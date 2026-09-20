@@ -75,7 +75,7 @@ Native Windows/MSVC, locked offline dependencies:
   passed.
 - `cargo fmt --all -- --check` and `git diff --check`: passed.
 - `pwsh -NoProfile -File scripts/lfm2-vl/verify-summary-bank.ps1`: passed;
-  GPT-OSS route 12 files / 241.7 KiB, max 256 KiB.
+  GPT-OSS route 12 files / 243.6 KiB, max 256 KiB.
 - Git-for-Windows `scripts/gpt-oss/verify-mod-manifest.sh`: passed.
 - Git-for-Windows `scripts/lfm2-vl/verify-mod-manifest.sh`: passed with
   17 fork-origin modifications and 146 additions.
