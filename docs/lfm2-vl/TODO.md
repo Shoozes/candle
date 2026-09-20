@@ -82,8 +82,8 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 - Why: CUDA work is ordered behind the independent CPU numerical and resource
   proof and must not hide model, cache, or ownership defects.
 - When: Only after Task 2 is accepted and the owner authorizes this separate
-  gate; exact-product loading/parity remains separately gated by the missing
-  external artifact receipt.
+  gate; exact-product numerical parity remains separately gated from the
+  bounded assembly proof.
 - Where: `candle-transformers/src/models/gpt_oss/`, CUDA-gated kernels/tests,
   and the GPT-OSS proof records. Do not change Edge/Harmony integration or the
   maintained Q8 default.
@@ -92,11 +92,23 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   explicit device memory, cancellation, rollback, and cleanup evidence.
 - Done when: CPU parity remains green, the packed CUDA path is opt-in and
   feature-gated, no dense fallback is hidden, resource/cleanup receipts pass,
-  and exact-model claims remain excluded without the external product receipt.
+  and production claims remain excluded without a numerical/tokenizer
+  inference receipt.
   **Complete:** the native RTX 4090 lane passed direct packed-kernel,
   attention/router component, uncached/cached forward, exact cache admission,
   cancellation rollback, eviction/retry, typed failure, and pre-device static
   budget checks at the pinned oracle tolerance.
+- Corrective follow-up in the current uncommitted slice is complete: the
+  expert helper's pure contribution contract is explicit, the zero-expert
+  post-MoE residual is asserted directly, an independently generated
+  two-layer CPU/reference/CUDA trace covers sliding/full attention, sinks,
+  unequal routing, and nontrivial positions, and packed CUDA narrowed views
+  match their materialized-copy path with launch guards.
+- The same bounded slice now assembles fused and converter-style split
+  synthetic GGUF fixtures, then the exact owner-selected artifact, through one
+  retained load session. It proves `GptOssWeights` construction and registry
+  cleanup without copying model bytes into the repository; tokenizer,
+  forward-logit, and production parity remain deferred.
 - Verification: CPU focused/full gates first, then the authorized CUDA build,
   numerical comparison, memory/cleanup receipt, summary-bank and overlay
   verifiers, and guarded publication.
@@ -109,12 +121,13 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   integration after native packed execution and prevents Q8/default changes
   from being inferred from the bounded synthetic CUDA proof.
 - When: Only after the published Task 3 receipt and a separately scoped owner
-  acceptance; the absent product artifact remains an explicit evidence gap.
+  acceptance; the exact assembly proof does not substitute for quantized-text
+  or split-MMProj numerical evidence.
 - Where: GPT-OSS GGUF/runtime modules, CUDA-gated or quantized tests, and
   `docs/gpt-oss/` proof records. Do not touch Edge/Harmony integration.
 - How: Retain packed ownership, admit split tensor identities before
-  allocation, add an independent fixture, and keep exact product claims
-  closed until the owner-selected artifact is externally manifested.
+  allocation, add an independent fixture, and keep numerical product claims
+  closed until tokenizer and inference evidence is manifested.
 - Done when: Quantized text and split dense MMProj component behavior,
   resource ownership, and cleanup are independently verified without changing
   maintained Q8/LFM2 defaults.
@@ -323,4 +336,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-09-19T00:00:00-04:00 | agent=Codex/root | model=unknown | effort=high | task=gpt-oss-c0-c1 | change=clarified LFM2-VL C0 hold versus separate GPT-OSS overlay
+AI-edited: 2026-09-20T00:00:00-04:00 | agent=Codex | model=unknown | effort=high | task=gpt-oss-task3-cuda-assembly | change=closed the bounded GPT-OSS CUDA correction and GGUF assembly follow-up while preserving Task 4 scope

@@ -1508,5 +1508,38 @@ four-token/512-byte limit. The path is not yet a product GGUF/quantized-text
 loader, cross-device matrix, or production performance claim; quantized text
 plus split dense MMProj is the next ordered task.
 
+## D-0067: Bound GPT-OSS GGUF Assembly and Materialize Unsafe CUDA Views
+
+Status: Accepted for the owner-authorized GPT-OSS Task 3 assembly correction.
+
+Decision:
+Keep hash-pinned GGUF admission and tensor-inventory validation as the trust
+boundary, then assemble one admitted artifact through a single retained file
+session. Convert supported dense F32/F16/BF16 payloads to the CPU F32 model
+representation, retain MXFP4 expert payloads as packed blocks/scales, and
+interleave fused or converter-style split expert and Q/K/V layouts only after
+their normalized shapes pass validation. Reject Q8_0 dense text explicitly
+until its ordered quantized-text task owns that implementation. For packed CUDA
+matmul, validate device, dtype, routing, and shape contracts before dispatch;
+materialize narrowed or strided views when their offsets cannot be represented
+by the kernel's base pointers, and keep cudarc read/write pointer guards alive
+through the launch.
+
+Why:
+The exact product artifact now needs a bounded executable assembly path, but
+its 13.8 GB payload must not be duplicated by per-tensor reopen/hash cycles or
+by an unbounded raw read. CUDA tensor views can carry non-zero offsets or
+strides that a base-pointer kernel cannot infer; explicit materialization and
+launch-lifetime guards make the view path equivalent to the contiguous-copy
+path without adding a generic kernel framework.
+
+Consequences:
+Synthetic fused/split fixtures and the owner-selected artifact assemble into
+`GptOssWeights` under a resident-byte bound, and the registry lease is released
+after model construction. The exact result proves loading and construction,
+not tokenizer compatibility, forward-logit parity, quantized text, or
+production support. The CUDA narrowed-view regression is accepted on the
+existing native lane; the packed CUDA path remains opt-in.
+
 ---
-AI-edited: 2026-09-19T00:00:00-04:00 | agent=Codex/root | model=unknown | effort=high | task=guarded-publication | change=adopted tracked clean-commit helper without Gknome coupling
+AI-edited: 2026-09-20T00:00:00-04:00 | agent=Codex | model=unknown | effort=high | task=gpt-oss-task3-cuda-assembly | change=bounded GGUF assembly and explicit CUDA narrowed-view materialization decision

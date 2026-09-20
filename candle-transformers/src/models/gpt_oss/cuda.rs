@@ -10,7 +10,7 @@ use super::runtime::{
     cache_bytes_for_tokens, GptOssCancellationToken, GptOssResourceLimits, GptOssResourceUsage,
 };
 use super::GptOssConfig;
-use candle::cuda_backend::cudarc::driver::DevicePtr;
+use candle::cuda_backend::cudarc::driver::{DevicePtr, DevicePtrMut};
 use candle::{DType, Device, Shape, Storage, Tensor, D};
 use candle_nn::{ops, rotary_emb};
 use std::fmt::{Display, Formatter};
@@ -235,7 +235,9 @@ struct CudaLayer {
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct CudaLayerTrace {
-    hidden: Tensor,
+    post_attention_hidden: Tensor,
+    expert_contribution: Tensor,
+    post_moe_hidden: Tensor,
     attention: Tensor,
     router: Tensor,
     expert_indices: Tensor,
@@ -558,7 +560,7 @@ impl GptOssCudaModel {
     ) -> GptOssCudaResult<Tensor> {
         Ok(self
             .forward_layer_trace(layer, hidden, cache, position, layer_index)?
-            .hidden)
+            .post_moe_hidden)
     }
 
     fn forward_layer_trace(
@@ -639,9 +641,9 @@ impl GptOssCudaModel {
         cache.keys = Some(next_keys);
         cache.values = Some(next_values);
         let attention_update = layer.attention_out.forward(&attended)?;
-        let hidden = hidden.broadcast_add(&attention_update)?;
+        let post_attention_hidden = hidden.broadcast_add(&attention_update)?;
 
-        let normalized = ops::rms_norm(&hidden, &layer.moe_norm, 1e-5)?;
+        let normalized = ops::rms_norm(&post_attention_hidden, &layer.moe_norm, 1e-5)?;
         let gate = layer.gate.forward(&normalized)?;
         let top_k = self.config.experts_per_token;
         let (sorted_values, sorted_indices) = gate.sort_last_dim(false)?;
@@ -680,10 +682,12 @@ impl GptOssCudaModel {
         let second = cuda_mxfp4_matmul(&activated, &layer.experts.mlp2, &route_indices)?;
         let second_bias = layer.experts.mlp2_bias.index_select(&route_indices, 0)?;
         let second = second.broadcast_add(&second_bias)?;
-        let expert_output = second.broadcast_mul(&route_weights)?.sum(0)?.unsqueeze(0)?;
-        let delta = expert_output.broadcast_sub(&normalized)?;
+        let expert_contribution = second.broadcast_mul(&route_weights)?.sum(0)?.unsqueeze(0)?;
+        let post_moe_hidden = post_attention_hidden.broadcast_add(&expert_contribution)?;
         Ok(CudaLayerTrace {
-            hidden: hidden.broadcast_add(&delta)?,
+            post_attention_hidden,
+            expert_contribution,
+            post_moe_hidden,
             attention: attended,
             router: gate,
             expert_indices: top_indices,
@@ -836,8 +840,56 @@ fn cuda_mxfp4_matmul(
     weights: &CudaPackedMxfp4,
     experts: &Tensor,
 ) -> GptOssCudaResult<Tensor> {
+    cuda_mxfp4_matmul_with_views(
+        input,
+        &weights.blocks,
+        &weights.scales,
+        &weights.shape,
+        experts,
+    )
+}
+
+fn cuda_mxfp4_matmul_with_views(
+    input: &Tensor,
+    blocks: &Tensor,
+    scales: &Tensor,
+    shape: &[usize],
+    experts: &Tensor,
+) -> GptOssCudaResult<Tensor> {
+    if !input.device().is_cuda()
+        || !blocks.device().is_cuda()
+        || !scales.device().is_cuda()
+        || !experts.device().is_cuda()
+    {
+        return Err(GptOssCudaError::Invalid {
+            message: "CUDA MXFP4 inputs, packed storage, and route indices must be CUDA tensors"
+                .to_string(),
+        });
+    }
+    for (name, tensor) in [("blocks", blocks), ("scales", scales), ("experts", experts)] {
+        if !input.device().same_device(tensor.device()) {
+            return Err(GptOssCudaError::Invalid {
+                message: format!("CUDA MXFP4 {name} tensor is on a different device"),
+            });
+        }
+    }
+    if input.dtype() != DType::F32
+        || blocks.dtype() != DType::U8
+        || scales.dtype() != DType::U8
+        || experts.dtype() != DType::U32
+    {
+        return Err(GptOssCudaError::UnsupportedDtype {
+            requested: format!(
+                "input={:?}, blocks={:?}, scales={:?}, experts={:?}",
+                input.dtype(),
+                blocks.dtype(),
+                scales.dtype(),
+                experts.dtype()
+            ),
+        });
+    }
     let (route_count, input_width) = input.dims2()?;
-    let (expert_count, output_width, weight_input_width) = match weights.shape.as_slice() {
+    let (expert_count, output_width, weight_input_width) = match shape {
         [expert_count, output_width, input_width] => (*expert_count, *output_width, *input_width),
         shape => {
             return Err(GptOssCudaError::Invalid {
@@ -855,11 +907,6 @@ fn cuda_mxfp4_matmul(
             message: "CUDA MXFP4 dimensions must be non-zero and block-aligned".to_string(),
         });
     }
-    if input.dtype() != DType::F32 || experts.dtype() != DType::U32 {
-        return Err(GptOssCudaError::UnsupportedDtype {
-            requested: format!("input={:?}, experts={:?}", input.dtype(), experts.dtype()),
-        });
-    }
     let blocks_per_row = input_width / VALUES_PER_BLOCK;
     let block_count = expert_count
         .checked_mul(output_width)
@@ -873,7 +920,7 @@ fn cuda_mxfp4_matmul(
             .ok_or(GptOssCudaError::Overflow {
                 operation: "CUDA MXFP4 block bytes",
             })?;
-    if weights.blocks.dims1()? != block_bytes || weights.scales.dims1()? != block_count {
+    if blocks.dims1()? != block_bytes || scales.dims1()? != block_count {
         return Err(GptOssCudaError::Invalid {
             message: "CUDA MXFP4 packed storage does not match its logical shape".to_string(),
         });
@@ -882,8 +929,14 @@ fn cuda_mxfp4_matmul(
     let output_width_i32 = checked_i32(output_width, "CUDA MXFP4 output width")?;
     let input_width_i32 = checked_i32(input_width, "CUDA MXFP4 input width")?;
     let expert_count_i32 = checked_i32(expert_count, "CUDA MXFP4 expert count")?;
-    let input = input.contiguous()?;
-    let experts = experts.contiguous()?;
+    // Raw CUDA pointers must describe the logical view, not an arbitrary
+    // parent allocation. Materializing a non-zero-offset or strided view
+    // makes narrowed offsets equivalent to the already-contiguous path before
+    // pointer extraction, while preserving the zero-offset fast path.
+    let input = materialize_cuda_view(input)?;
+    let blocks = materialize_cuda_view(blocks)?;
+    let scales = materialize_cuda_view(scales)?;
+    let experts = materialize_cuda_view(experts)?;
     let device = input.device().as_cuda_device()?.clone();
     let (input_storage, _) = input.storage_and_layout();
     let input_slice = match &*input_storage {
@@ -894,7 +947,7 @@ fn cuda_mxfp4_matmul(
             })
         }
     };
-    let (block_storage, _) = weights.blocks.storage_and_layout();
+    let (block_storage, _) = blocks.storage_and_layout();
     let block_slice = match &*block_storage {
         Storage::Cuda(storage) => storage.as_cuda_slice::<u8>()?,
         _ => {
@@ -903,7 +956,7 @@ fn cuda_mxfp4_matmul(
             })
         }
     };
-    let (scale_storage, _) = weights.scales.storage_and_layout();
+    let (scale_storage, _) = scales.storage_and_layout();
     let scale_slice = match &*scale_storage {
         Storage::Cuda(storage) => storage.as_cuda_slice::<u8>()?,
         _ => {
@@ -927,20 +980,28 @@ fn cuda_mxfp4_matmul(
             .ok_or(GptOssCudaError::Overflow {
                 operation: "CUDA MXFP4 output elements",
             })?;
-    let output = unsafe { device.alloc::<f32>(output_elements) }?;
-    let status = unsafe {
-        candle::cuda_backend::kernels::ffi::launch_gpt_oss_mxfp4_matmul(
-            input_slice.device_ptr(input_slice.stream()).0 as *const f32,
-            block_slice.device_ptr(block_slice.stream()).0 as *const u8,
-            scale_slice.device_ptr(scale_slice.stream()).0 as *const u8,
-            expert_slice.device_ptr(expert_slice.stream()).0 as *const u32,
-            output.device_ptr(output.stream()).0 as *mut f32,
-            route_count_i32,
-            output_width_i32,
-            input_width_i32,
-            expert_count_i32,
-            device.cuda_stream().cu_stream() as i64,
-        )
+    let mut output = unsafe { device.alloc::<f32>(output_elements) }?;
+    let status = {
+        let stream = device.cuda_stream().clone();
+        let (input_ptr, _input_guard) = input_slice.device_ptr(&stream);
+        let (block_ptr, _block_guard) = block_slice.device_ptr(&stream);
+        let (scale_ptr, _scale_guard) = scale_slice.device_ptr(&stream);
+        let (expert_ptr, _expert_guard) = expert_slice.device_ptr(&stream);
+        let (output_ptr, _output_guard) = output.device_ptr_mut(&stream);
+        unsafe {
+            candle::cuda_backend::kernels::ffi::launch_gpt_oss_mxfp4_matmul(
+                input_ptr as *const f32,
+                block_ptr as *const u8,
+                scale_ptr as *const u8,
+                expert_ptr as *const u32,
+                output_ptr as *mut f32,
+                route_count_i32,
+                output_width_i32,
+                input_width_i32,
+                expert_count_i32,
+                stream.cu_stream() as i64,
+            )
+        }
     };
     if status != 0 {
         return Err(GptOssCudaError::Kernel { status });
@@ -952,6 +1013,13 @@ fn cuda_mxfp4_matmul(
         candle::op::BackpropOp::none(),
         false,
     ))
+}
+
+fn materialize_cuda_view(tensor: &Tensor) -> candle::Result<Tensor> {
+    match tensor.layout().contiguous_offsets() {
+        Some((0, end)) if end == tensor.elem_count() => Ok(tensor.clone()),
+        _ => tensor.force_contiguous(),
+    }
 }
 
 fn checked_i32(value: usize, operation: &'static str) -> GptOssCudaResult<i32> {
@@ -1057,6 +1125,10 @@ mod tests {
     const ORACLE_BYTES: &[u8] =
         include_bytes!("../../../../tests/fixtures/gpt_oss_task2/oracle.json");
     const ORACLE_SHA256: &str = "db79441a688bce500217635051372270fce02b7e6f8f03d769855ac290d4ab04";
+    const TWO_LAYER_ORACLE_BYTES: &[u8] =
+        include_bytes!("../../../../tests/fixtures/gpt_oss_task3_two_layer/oracle.json");
+    const TWO_LAYER_ORACLE_SHA256: &str =
+        "0530081353cc7268d796ae070c4168ec4e6bb036f62d54670b975a43556bc173";
 
     #[derive(Debug, Deserialize)]
     struct Oracle {
@@ -1104,12 +1176,57 @@ mod tests {
         router: Vec<f32>,
     }
 
+    #[derive(Debug, Deserialize)]
+    struct TwoLayerOracle {
+        fixture_id: String,
+        forward: TwoLayerOracleForward,
+        provenance: OracleProvenance,
+        trace: TwoLayerOracleTraceBundle,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct TwoLayerOracleForward {
+        prompt: Vec<u32>,
+        prefill: Vec<u32>,
+        decode: Vec<u32>,
+        uncached_logits: Vec<f32>,
+        decode_logits: Vec<f32>,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct TwoLayerOracleTraceBundle {
+        token: u32,
+        position: usize,
+        layers: Vec<TwoLayerOracleLayer>,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct TwoLayerOracleLayer {
+        sliding: bool,
+        attention: Vec<f32>,
+        post_attention_hidden: Vec<f32>,
+        expert_contribution: Vec<f32>,
+        post_moe_hidden: Vec<f32>,
+        router: Vec<f32>,
+        expert_indices: Vec<usize>,
+        expert_weights: Vec<f32>,
+    }
+
     type TestResult = std::result::Result<(), Box<dyn std::error::Error>>;
 
     fn oracle() -> std::result::Result<Oracle, Box<dyn std::error::Error>> {
         let actual = format!("{:x}", Sha256::digest(ORACLE_BYTES));
         assert_eq!(actual, ORACLE_SHA256, "Task 2 oracle fixture changed");
         Ok(serde_json::from_slice(ORACLE_BYTES)?)
+    }
+
+    fn two_layer_oracle() -> std::result::Result<TwoLayerOracle, Box<dyn std::error::Error>> {
+        let actual = format!("{:x}", Sha256::digest(TWO_LAYER_ORACLE_BYTES));
+        assert_eq!(
+            actual, TWO_LAYER_ORACLE_SHA256,
+            "Task 3 two-layer oracle fixture changed"
+        );
+        Ok(serde_json::from_slice(TWO_LAYER_ORACLE_BYTES)?)
     }
 
     fn assert_close(actual: &[f32], expected: &[f32], tolerance: f32) {
@@ -1145,14 +1262,48 @@ mod tests {
         }
     }
 
+    fn config_with_layers(layer_count: usize) -> GptOssConfig {
+        let mut config = config();
+        config.num_hidden_layers = layer_count;
+        config
+    }
+
     fn packed(shape: &[usize], seed: u8) -> crate::models::gpt_oss::mxfp4::PackedMxfp4 {
+        packed_with_scale(shape, seed, SCALE_BIAS as u8)
+    }
+
+    fn packed_with_scale(
+        shape: &[usize],
+        seed: u8,
+        scale: u8,
+    ) -> crate::models::gpt_oss::mxfp4::PackedMxfp4 {
         let elements = shape.iter().product::<usize>();
         let blocks = elements / VALUES_PER_BLOCK;
         let bytes: Vec<u8> = (0..blocks * BYTES_PER_BLOCK)
             .map(|index| seed.wrapping_add(index as u8).rotate_left(1))
             .collect();
-        let scales = vec![SCALE_BIAS as u8; blocks];
+        let scales = vec![scale; blocks];
         crate::models::gpt_oss::mxfp4::PackedMxfp4::from_parts(shape, bytes, scales).unwrap()
+    }
+
+    fn packed_or_zero(
+        shape: &[usize],
+        seed: u8,
+        zero: bool,
+        scale: u8,
+    ) -> crate::models::gpt_oss::mxfp4::PackedMxfp4 {
+        if zero {
+            let elements = shape.iter().product::<usize>();
+            let blocks = elements / VALUES_PER_BLOCK;
+            crate::models::gpt_oss::mxfp4::PackedMxfp4::from_parts(
+                shape,
+                vec![0; blocks * BYTES_PER_BLOCK],
+                vec![scale; blocks],
+            )
+            .unwrap()
+        } else {
+            packed_with_scale(shape, seed, scale)
+        }
     }
 
     fn linear(rows: usize, cols: usize, seed: f32, bias: bool) -> DenseLinear {
@@ -1163,54 +1314,90 @@ mod tests {
         DenseLinear::new(rows, cols, weights, bias).unwrap()
     }
 
-    fn model_parts() -> (GptOssConfig, GptOssWeights) {
-        let config = config();
+    fn model_parts_with_options(
+        layer_count: usize,
+        zero_experts: bool,
+        nonzero_sinks: bool,
+    ) -> (GptOssConfig, GptOssWeights) {
+        let config = config_with_layers(layer_count);
         let qkv_rows =
             config.head_dim * (config.num_attention_heads + 2 * config.num_key_value_heads);
-        let experts = Mxfp4ExpertOperation::new(
-            packed(
-                &[
-                    config.num_experts,
-                    config.intermediate_size * 2,
-                    config.hidden_size,
-                ],
-                1,
-            ),
-            vec![0.0; config.num_experts * config.intermediate_size * 2],
-            packed(
-                &[
-                    config.num_experts,
-                    config.hidden_size,
-                    config.intermediate_size,
-                ],
-                7,
-            ),
-            vec![0.0; config.num_experts * config.hidden_size],
-            config.swiglu_limit,
-        )
-        .unwrap();
-        let layer = GptOssLayerWeights::new(
-            &config,
-            vec![1.0; config.hidden_size],
-            linear(qkv_rows, config.hidden_size, 0.0003, true),
-            linear(
-                config.hidden_size,
-                config.num_attention_heads * config.head_dim,
-                0.0002,
-                true,
-            ),
-            vec![0.0; config.num_attention_heads],
-            vec![1.0; config.hidden_size],
-            linear(config.num_experts, config.hidden_size, 0.0004, true),
-            experts,
-        )
-        .unwrap();
+        let expert_scale = if nonzero_sinks {
+            (SCALE_BIAS - 4) as u8
+        } else {
+            SCALE_BIAS as u8
+        };
+        let layers = (0..layer_count)
+            .map(|layer_index| {
+                let layer_offset = layer_index as u8;
+                let layer_seed = layer_index as f32;
+                let experts = Mxfp4ExpertOperation::new(
+                    packed_or_zero(
+                        &[
+                            config.num_experts,
+                            config.intermediate_size * 2,
+                            config.hidden_size,
+                        ],
+                        1u8.wrapping_add(layer_offset.wrapping_mul(17)),
+                        zero_experts,
+                        expert_scale,
+                    ),
+                    vec![0.0; config.num_experts * config.intermediate_size * 2],
+                    packed_or_zero(
+                        &[
+                            config.num_experts,
+                            config.hidden_size,
+                            config.intermediate_size,
+                        ],
+                        7u8.wrapping_add(layer_offset.wrapping_mul(19)),
+                        zero_experts,
+                        expert_scale,
+                    ),
+                    vec![0.0; config.num_experts * config.hidden_size],
+                    config.swiglu_limit,
+                )
+                .unwrap();
+                let sinks = if nonzero_sinks {
+                    (0..config.num_attention_heads)
+                        .map(|head| (head as f32 - 1.5) * 0.125 + layer_seed * 0.25)
+                        .collect()
+                } else {
+                    vec![0.0; config.num_attention_heads]
+                };
+                GptOssLayerWeights::new(
+                    &config,
+                    vec![1.0; config.hidden_size],
+                    linear(
+                        qkv_rows,
+                        config.hidden_size,
+                        0.0003 + layer_seed * 0.00007,
+                        true,
+                    ),
+                    linear(
+                        config.hidden_size,
+                        config.num_attention_heads * config.head_dim,
+                        0.0002 + layer_seed * 0.00005,
+                        true,
+                    ),
+                    sinks,
+                    vec![1.0; config.hidden_size],
+                    linear(
+                        config.num_experts,
+                        config.hidden_size,
+                        0.0004 + layer_seed * 0.0003,
+                        true,
+                    ),
+                    experts,
+                )
+                .unwrap()
+            })
+            .collect::<Vec<_>>();
         let weights = GptOssWeights::new(
             &config,
             (0..config.vocab_size * config.hidden_size)
                 .map(|index| (index % 17) as f32 * 0.001)
                 .collect(),
-            vec![layer],
+            layers,
             vec![1.0; config.hidden_size],
             linear(config.vocab_size, config.hidden_size, 0.0001, false),
         )
@@ -1218,11 +1405,23 @@ mod tests {
         (config, weights)
     }
 
+    fn model_parts() -> (GptOssConfig, GptOssWeights) {
+        model_parts_with_options(1, false, false)
+    }
+
     fn cuda_model() -> std::result::Result<GptOssCudaModel, Box<dyn std::error::Error>> {
         let (config, weights) = model_parts();
+        cuda_model_from_parts(config, weights, 4)
+    }
+
+    fn cuda_model_from_parts(
+        config: GptOssConfig,
+        weights: GptOssWeights,
+        max_sequence_tokens: usize,
+    ) -> std::result::Result<GptOssCudaModel, Box<dyn std::error::Error>> {
         let limits = GptOssResourceLimits {
-            max_sequence_tokens: 4,
-            max_cache_bytes: cache_bytes_for_tokens(&config, 4)?,
+            max_sequence_tokens,
+            max_cache_bytes: cache_bytes_for_tokens(&config, max_sequence_tokens)?,
         };
         let max_weight_bytes = cpu_weight_resident_bytes(&weights)?;
         let cuda_config = GptOssCudaConfig::new(0, DType::F32, max_weight_bytes, limits)?;
@@ -1233,23 +1432,34 @@ mod tests {
         model: &mut GptOssCudaModel,
         input_id: u32,
     ) -> std::result::Result<CudaLayerTrace, Box<dyn std::error::Error>> {
+        let traces = trace_token_layers(model, input_id)?;
+        traces
+            .into_iter()
+            .next()
+            .ok_or_else(|| "missing synthetic CUDA layer".into())
+    }
+
+    fn trace_token_layers(
+        model: &mut GptOssCudaModel,
+        input_id: u32,
+    ) -> std::result::Result<Vec<CudaLayerTrace>, Box<dyn std::error::Error>> {
         let token = Tensor::from_slice(&[input_id], (1,), &model.device)?;
-        let hidden = model.weights.token_embedding.index_select(&token, 0)?;
+        let mut hidden = model.weights.token_embedding.index_select(&token, 0)?;
         let mut working = model.cache.clone();
         let position = working.tokens;
-        let layer = model
-            .weights
-            .layers
-            .first()
-            .ok_or("missing synthetic CUDA layer")?;
-        let cache = working
-            .layers
-            .first_mut()
-            .ok_or("missing CUDA cache layer")?;
-        let trace = model.forward_layer_trace(layer, hidden, cache, position, 0)?;
+        let mut traces = Vec::new();
+        for (layer_index, layer) in model.weights.layers.iter().enumerate() {
+            let cache = working
+                .layers
+                .get_mut(layer_index)
+                .ok_or("missing CUDA cache layer")?;
+            let trace = model.forward_layer_trace(layer, hidden, cache, position, layer_index)?;
+            hidden = trace.post_moe_hidden.clone();
+            traces.push(trace);
+        }
         working.tokens += 1;
         model.cache = working;
-        Ok(trace)
+        Ok(traces)
     }
 
     fn flatten_tensor(
@@ -1367,6 +1577,178 @@ mod tests {
         let cpu_decode = cpu.decode(decode_token, &cpu_cancellation)?;
         assert_close(&decode, &cpu_decode, tolerance);
         cuda.synchronize()?;
+        Ok(())
+    }
+
+    #[test]
+    fn packed_cuda_narrowed_views_match_materialized_copy() -> TestResult {
+        let (config, weights) = model_parts();
+        let cuda = cuda_model_from_parts(config, weights, 1)?;
+        let packed_weights = packed(&[2, 64, 32], 1);
+        let packed_cuda = CudaPackedMxfp4::from_cpu(&packed_weights, cuda.device())?;
+        let input_values: Vec<f32> = (0..32).map(|index| index as f32 * 0.03125).collect();
+        let mut padded_input = vec![99.0f32];
+        padded_input.extend_from_slice(&input_values);
+        padded_input.push(-99.0);
+        let input_view =
+            Tensor::from_slice(&padded_input, (1, 34), cuda.device())?.narrow(1, 1, 32)?;
+
+        let mut padded_blocks = vec![0u8];
+        padded_blocks.extend_from_slice(packed_weights.blocks());
+        padded_blocks.push(0);
+        let block_view = Tensor::from_slice(&padded_blocks, (padded_blocks.len(),), cuda.device())?
+            .narrow(0, 1, packed_weights.blocks().len())?;
+        let mut padded_scales = vec![0u8];
+        padded_scales.extend_from_slice(packed_weights.scales());
+        padded_scales.push(0);
+        let scale_view = Tensor::from_slice(&padded_scales, (padded_scales.len(),), cuda.device())?
+            .narrow(0, 1, packed_weights.scales().len())?;
+        let padded_expert =
+            Tensor::from_slice(&[77u32, 0], (2,), cuda.device())?.narrow(0, 1, 1)?;
+        let view_output = cuda_mxfp4_matmul_with_views(
+            &input_view,
+            &block_view,
+            &scale_view,
+            packed_weights.shape(),
+            &padded_expert,
+        )?;
+        let full_input = Tensor::from_slice(&input_values, (1, 32), cuda.device())?;
+        let full_expert = Tensor::from_slice(&[0u32], (1,), cuda.device())?;
+        let materialized_output = cuda_mxfp4_matmul(&full_input, &packed_cuda, &full_expert)?;
+        let view_output = view_output.flatten_all()?.to_vec1::<f32>()?;
+        let materialized_output = materialized_output.flatten_all()?.to_vec1::<f32>()?;
+        assert_close(&view_output, &materialized_output, 1e-6);
+        cuda.synchronize()?;
+        Ok(())
+    }
+
+    #[test]
+    fn zero_expert_output_preserves_nonzero_post_attention_hidden() -> TestResult {
+        let (config, weights) = model_parts_with_options(1, true, false);
+        let mut cuda = cuda_model_from_parts(config.clone(), weights, 1)?;
+        let traces = trace_token_layers(&mut cuda, 1)?;
+        let trace = traces.first().ok_or("missing zero-expert CUDA trace")?;
+        let post_attention = flatten_tensor(&trace.post_attention_hidden)?;
+        let expert_contribution = flatten_tensor(&trace.expert_contribution)?;
+        let post_moe = flatten_tensor(&trace.post_moe_hidden)?;
+        assert!(
+            post_attention.iter().any(|value| value.abs() > 1e-6),
+            "regression requires a nonzero post-attention residual"
+        );
+        assert_close(&expert_contribution, &vec![0.0; config.hidden_size], 1e-6);
+        assert_close(&post_moe, &post_attention, 1e-6);
+        cuda.synchronize()?;
+        Ok(())
+    }
+
+    #[test]
+    fn task3_two_layer_cpu_reference_cuda_and_hidden_traces_match_oracle() -> TestResult {
+        let oracle = two_layer_oracle()?;
+        assert_eq!(
+            oracle.fixture_id,
+            "synthetic-gpt-oss-task3-two-layer-oracle-v1"
+        );
+        assert_eq!(oracle.trace.token, 4);
+        assert_eq!(oracle.trace.position, 3);
+        let tolerance = oracle.provenance.tolerance_abs;
+        let (config, weights) = model_parts_with_options(2, false, true);
+        assert_eq!(config.num_hidden_layers, 2);
+        assert!(weights
+            .layers()
+            .iter()
+            .all(|layer| { layer.sinks().iter().any(|value| value.abs() > 0.0) }));
+
+        let mut cpu = crate::models::gpt_oss::GptOssModel::new(config.clone(), weights.clone())?;
+        let cpu_uncached = cpu.forward_uncached(&oracle.forward.prompt)?;
+        assert_close(&cpu_uncached, &oracle.forward.uncached_logits, tolerance);
+
+        let mut cuda = cuda_model_from_parts(config.clone(), weights.clone(), 4)?;
+        let cuda_uncached = cuda
+            .forward_uncached(&oracle.forward.prompt, &GptOssCancellationToken::new())?
+            .to_vec2::<f32>()?
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>();
+        assert_close(&cuda_uncached, &oracle.forward.uncached_logits, tolerance);
+        assert_close(&cuda_uncached, &cpu_uncached, tolerance);
+
+        cpu.prefill(&oracle.forward.prefill, &GptOssCancellationToken::new())?;
+        let decode_token = *oracle
+            .forward
+            .decode
+            .first()
+            .ok_or("missing two-layer decode token")?;
+        let cpu_decode = cpu.decode(decode_token, &GptOssCancellationToken::new())?;
+        assert_close(&cpu_decode, &oracle.forward.decode_logits, tolerance);
+
+        cuda.prefill(&oracle.forward.prefill, &GptOssCancellationToken::new())?;
+        let cuda_decode = cuda
+            .decode(decode_token, &GptOssCancellationToken::new())?
+            .to_vec2::<f32>()?
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>();
+        assert_close(&cuda_decode, &oracle.forward.decode_logits, tolerance);
+        assert_close(&cuda_decode, &cpu_decode, tolerance);
+
+        let mut traced = cuda_model_from_parts(config, weights, 4)?;
+        for token in [1u32, 2, 3] {
+            trace_token_layers(&mut traced, token)?;
+        }
+        let actual_layers = trace_token_layers(&mut traced, oracle.trace.token)?;
+        assert_eq!(actual_layers.len(), oracle.trace.layers.len());
+        assert_eq!(traced.cache_len(), 4);
+        for (layer_index, (actual, expected)) in
+            actual_layers.iter().zip(&oracle.trace.layers).enumerate()
+        {
+            assert_eq!(expected.sliding, layer_index.is_multiple_of(2));
+            assert_close(
+                &flatten_tensor(&actual.attention)?,
+                &expected.attention,
+                tolerance,
+            );
+            assert_close(
+                &flatten_tensor(&actual.post_attention_hidden)?,
+                &expected.post_attention_hidden,
+                tolerance,
+            );
+            assert_close(
+                &flatten_tensor(&actual.expert_contribution)?,
+                &expected.expert_contribution,
+                tolerance,
+            );
+            assert_close(
+                &flatten_tensor(&actual.post_moe_hidden)?,
+                &expected.post_moe_hidden,
+                tolerance,
+            );
+            assert_close(
+                &flatten_tensor(&actual.router)?,
+                &expected.router,
+                tolerance,
+            );
+            let actual_indices = actual
+                .expert_indices
+                .flatten_all()?
+                .to_vec1::<u32>()?
+                .into_iter()
+                .map(|index| index as usize)
+                .collect::<Vec<_>>();
+            assert_eq!(actual_indices, expected.expert_indices);
+            assert_close(
+                &flatten_tensor(&actual.expert_weights)?,
+                &expected.expert_weights,
+                tolerance,
+            );
+            assert!(
+                expected
+                    .expert_weights
+                    .windows(2)
+                    .any(|weights| { (weights[0] - weights[1]).abs() > tolerance }),
+                "layer {layer_index} must exercise unequal routing weights"
+            );
+        }
+        traced.synchronize()?;
         Ok(())
     }
 

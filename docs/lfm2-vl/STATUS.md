@@ -48,13 +48,16 @@
   commits. The LFM2-VL/Edge C0 chain remains held until the Edge pin and
   tokenizers move together; keep the Edge pin on `238cc176…` until then. A
   separate owner-authorized Candle-only GPT-OSS experiment has delivered its
-  C0/C1 source, Task 2 synthetic CPU/resource proof, and Task 3 packed CUDA
-  proof; see `docs/gpt-oss/STATUS.md`. The CUDA result is feature-gated and
-  limited to the digest-pinned synthetic fixture on the named local RTX 4090;
-  it does not change the Q8 default or make a real-checkpoint, tokenizer,
-  production, cross-device, or exact-model claim. The 3B native / official
-  Q8 MMProj production-proof gap, overlay 0.2.0 tagging, and live product
-  CUDA/model parity remain outside this chain. No implicit 3B download.
+  C0/C1 source, Task 2 synthetic CPU/resource proof, Task 3 packed CUDA proof,
+  and bounded synthetic/exact GGUF-to-weights assembly; see
+  `docs/gpt-oss/STATUS.md`. The CUDA result is feature-gated and limited to
+  the digest-pinned synthetic fixture on the named local RTX 4090. The exact
+  artifact was read in place only: no model bytes entered this checkout. The
+  round does not claim tokenizer compatibility, forward-logit parity,
+  production support, cross-device parity, or a Q8/default change. The 3B
+  native / official Q8 MMProj production-proof gap, overlay 0.2.0 tagging, and
+  live product CUDA/model parity remain outside this chain. No implicit 3B
+  download.
 - Models, caches, downloads, generated proof, Cargo output, and
   `.tools/.secrets/` remain ignored or external. Operator disk cleanup removed
   the local model/cache inputs; do not reconstruct or download them implicitly.
@@ -88,22 +91,27 @@
 - The LFM2-VL overlay contains 163 paths (17 fork modifications, 146
   additions). The SnapFlash-derived overlay contains 20 paths (8
   modifications, 12 additions). The separate GPT-OSS overlay currently
-  registers 21 paths. Their current registered union is 190 paths with 21
-   shared paths, including the shared CUDA build path.
+  manifest currently registers 28 paths (19 overlay-owned and 9 shared).
+  Their current registered union is 193 paths with 21 shared paths, including
+  the shared CUDA build path.
 
 ## Separate GPT-OSS Experimental Handoff
 
-- Current phase: Task 3 / packed MXFP4 CUDA executor for the GPT-OSS
-  experimental overlay.
-- Task 3 starting baseline: clean published `main`
-  `eed8ef6594a9012f3ed61a5c1a1d06f2af0ee068`, tree
-  `38fc50f0c3cbfe6e3d775633cbbf782c2479da96`.
+- Current phase: Task 3 correctness correction / packed MXFP4 CUDA executor plus
+  bounded GGUF-to-weights assembly for the GPT-OSS experimental overlay. This
+  slice is uncommitted pending owner review and does not change EdgeSymbio or
+  symbio-code.
+- Current baseline: clean published `main`
+  `2ac78ba5160ad939f70374fdbef966c91fd6e426`, tree
+  `18b70631609c969ba2d82972b6c287f84f2b1cee`.
 - Task 1 source: `67a7fe605194384c1505df96b536c3238ad408e1`, tree
   `fa35de0a6438992e5aa6bc6b4429bb18ed44005b`.
-- Last green verification: 30/30 focused GPT-OSS tests with CUDA enabled,
-  warnings-denied CUDA Clippy, the native CPU/CUDA checks, the full guarded
-  publication gate, summary-bank verification, both overlay-specific checks,
-  and the rolling-baseline union overlay gate passed for Task 3.
+- Last published green verification: 30/30 focused GPT-OSS tests with CUDA
+  enabled, warnings-denied CUDA Clippy, the native CPU/CUDA checks, the full
+  guarded publication gate, summary-bank verification, both overlay-specific
+  checks, and the rolling-baseline union overlay gate passed for published
+  Task 3. Current correction and assembly verification is recorded in
+  `docs/gpt-oss/STATUS.md` after this slice's local gates.
 - Delivery files: the Task 2 runtime/resource and oracle boundary, the
   feature-gated packed CUDA executor/kernel, typed CUDA failures, manifest and
   source records, the GPT decision/history/status updates, and the shared
@@ -113,13 +121,31 @@
   tolerance `1e-4`; exact 128-byte/token logical KV accounting with boundary
   and one-over rejection; prefill/decode cancellation and failure rollback;
   duplicate-load prevention with cancellation cleanup, retry/reopen, and zero
-  active/loaded ownership after release; and native CUDA packed execution with
-  19,416 logical static bytes, 3,264 packed bytes, and no dense expert copy.
+  active/loaded ownership after release; native CUDA packed execution with
+  19,416 logical static bytes, 3,264 packed bytes, and no dense expert copy;
+  narrowed-view/materialized-copy CUDA equivalence; and fused/split synthetic
+  plus exact owner-selected GGUF-to-weights assembly.
 - Known limitation/blocker: the owner-selected product GGUF with SHA-256
-  `aab205256a9b6361e410c24de3086e30f907092ca6f9ba8cd4b22c8a2b025778` is not
-  present, so no exact-model load, numerical parity, tokenizer, quantized-text,
-  or production claim is made. Q8 remains the maintained product default and
-  quantized text plus split dense MMProj is the next GPT-OSS task.
+  `aab205256a9b6361e410c24de3086e30f907092ca6f9ba8cd4b22c8a2b025778` was
+  read only from its external owner-provided path. Exact assembly and model
+  construction pass, but forward-logit parity, tokenizer compatibility,
+  quantized text, and production claims remain unproven. Q8 remains the
+  maintained product default and quantized text plus split dense MMProj is the
+  next GPT-OSS task.
+- Current active files: `candle-transformers/src/models/gpt_oss/gguf.rs`,
+  `candle-transformers/src/models/gpt_oss/mod.rs`,
+  `candle-transformers/src/models/gpt_oss/mxfp4.rs`,
+  `candle-transformers/src/models/gpt_oss/model.rs`,
+  `candle-transformers/src/models/gpt_oss/cuda.rs`, and the independent
+  `tests/fixtures/gpt_oss_task3_two_layer/` oracle.
+- Proven correction behavior: CPU and CUDA use a pure expert contribution
+  added to the post-attention hidden state; zero expert output preserves a
+  nonzero post-attention residual; a two-layer CPU/reference/CUDA trace covers
+  sliding/full attention, sinks, unequal routing, and position 3; and packed
+  CUDA narrowed views equal their materialized-copy path with launch guards.
+- Exact next task: finish local review of this uncommitted correction and
+  assembly slice; publish only after explicit owner authorization, then keep
+  Task 4 quantized text and split dense MMProj work separately scoped.
 
 ## Latest Integrity Review (2026-08-21)
 
@@ -256,4 +282,4 @@ leave the status Gated and retain the explicit blocker. The separate
 authorization.
 
 ---
-AI-edited: 2026-09-19T00:00:00-04:00 | agent=Codex/root | model=unknown | effort=high | task=gpt-oss-c0-c1 | change=recorded separate GPT-OSS experimental handoff and native verification
+AI-edited: 2026-09-20T00:00:00-04:00 | agent=Codex | model=unknown | effort=high | task=gpt-oss-task3-cuda-assembly | change=updated the separate GPT-OSS handoff for narrowed-view CUDA and bounded exact GGUF assembly

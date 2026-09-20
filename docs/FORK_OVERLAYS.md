@@ -5,6 +5,17 @@ review and release identity of each independently promoted feature family.
 The registry is the authority for overlay ownership; it is not an application
 integration plan.
 
+## Baseline modes
+
+The repository-wide verifier has two explicit baseline modes. The default and
+rolling-baseline mode checks the committed baseline-to-HEAD delta plus staged,
+unstaged, and untracked candidate paths, and retains ownership from both the
+current and baseline manifests so historic paths survive a rolling checkpoint.
+Upstream-baseline is the frozen exact-delta mode: it also rejects current
+manifest paths absent from that upstream delta. Git path inventories are
+NUL-delimited and use core.autocrlf=true with safe-CRLF warnings disabled so
+native Windows and WSL report the same candidate paths.
+
 ## Registered overlays
 
 | Overlay | Manifest | Current boundary |
@@ -139,4 +150,4 @@ product policy remain outside the framework API.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-08-13T20:08:58-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=kept the overlay map concise and delegated detailed evidence to owned histories
+AI-edited: 2026-09-20 | agent=Codex | task=verify-fork-overlays | change=made rolling and frozen baseline semantics explicit and normalized cross-platform path inventories

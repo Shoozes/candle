@@ -63,7 +63,7 @@
       ]
     },
     "feature__gpt_oss_task2_proof": {
-      "description": "Independent GPT-OSS packed/router/attention/cache oracle plus exact token/KV-byte admission, cancellation rollback, and RAII load ownership proof.",
+      "description": "Independent GPT-OSS packed/router/attention/cache oracle plus exact token/KV-byte admission, cancellation rollback, RAII load ownership, and bounded GGUF-to-weights assembly proof.",
       "status": "active",
       "paths": [
         "candle-transformers/src/models/gpt_oss/gguf.rs",
@@ -78,7 +78,7 @@
       ]
     },
     "feature__gpt_oss_task3_cuda": {
-      "description": "Opt-in packed GPT-OSS MXFP4 CUDA executor, device/resource/cancellation contracts, component parity, and native CUDA proof records.",
+      "description": "Opt-in packed GPT-OSS MXFP4 CUDA executor, narrowed-view/materialized-copy equivalence, explicit expert-contribution/residual contracts, device/resource/cancellation contracts, two-layer trace parity, and native CUDA proof records.",
       "status": "active",
       "paths": [
         "candle-kernels/build.rs",
@@ -88,6 +88,8 @@
         "candle-transformers/src/models/gpt_oss/mod.rs",
         "candle-transformers/src/models/gpt_oss/model.rs",
         "candle-transformers/src/models/gpt_oss/mxfp4.rs",
+        "tests/fixtures/gpt_oss_task3_two_layer/README.md",
+        "tests/fixtures/gpt_oss_task3_two_layer/oracle.json",
         "docs/gpt-oss/MOD_MANIFEST.md",
         "docs/gpt-oss/SOURCES.md",
         "docs/gpt-oss/STATUS.md"
@@ -520,6 +522,7 @@
         "scripts/release/write-candle-overlays-receipt.ps1",
         "scripts/snapflash/verify-mod-manifest.sh",
         "scripts/verify-fork-overlays.sh",
+        "scripts/tests/test-verify-fork-overlays.sh",
         "summary_bank.json"
       ]
     },

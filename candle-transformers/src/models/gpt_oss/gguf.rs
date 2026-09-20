@@ -1,16 +1,16 @@
 //! Hash-pinned GPT-OSS GGUF admission and tensor-inventory normalization.
 //!
-//! This is an admission boundary, not a runtime executor.  It understands the
-//! GGUF directory and the MXFP4 wire type used by the selected GPT-OSS
-//! artifact, retains tensor ownership and byte ranges, and reads raw tensor
-//! bytes on demand.  It deliberately does not dequantize or construct a
-//! Candle model.
+//! This is the hash-pinned GGUF admission and CPU assembly boundary.  It
+//! understands the GGUF directory and the MXFP4 wire type used by the selected
+//! GPT-OSS artifact, retains tensor ownership and byte ranges, and can assemble
+//! one bounded Candle model load without retaining raw tensor payloads.
 
-use super::GptOssConfig;
+use super::mxfp4::{Mxfp4ExpertOperation, PackedMxfp4, BYTES_PER_BLOCK, VALUES_PER_BLOCK};
+use super::{DenseLinear, GptOssConfig, GptOssLayerWeights, GptOssWeights};
 use crate::models::gpt_oss::runtime::{
     GptOssCancellationToken, GptOssLoadRegistry, GptOssLoadedHandle,
 };
-use candle::{bail, Result};
+use candle::{bail, DType, Device, Result, Tensor};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
@@ -88,6 +88,16 @@ fn block_byte_len(
         .checked_div(block_size)
         .and_then(|blocks| blocks.checked_mul(bytes_per_block))
         .ok_or_else(|| candle::Error::Msg(format!("GGUF {dtype} byte length overflowed")))
+}
+
+fn checked_usize_product<I>(values: I, label: &str) -> Result<usize>
+where
+    I: IntoIterator<Item = usize>,
+{
+    values
+        .into_iter()
+        .try_fold(1usize, |product, value| product.checked_mul(value))
+        .ok_or_else(|| candle::Error::Msg(format!("{label} overflowed")))
 }
 
 /// The Candle-side owner of a normalized GGUF tensor.
@@ -340,6 +350,317 @@ impl GptOssGgufArtifact {
         Ok(bytes)
     }
 
+    /// Return the bytes retained by the assembled CPU model, before any
+    /// transient tensor payload is read from the GGUF file.
+    pub fn weight_resident_bytes(&self) -> Result<usize> {
+        let mut total = 0usize;
+        for tensor in &self.tensors {
+            let bytes = match &tensor.role {
+                GptOssTensorRole::ExpertGateUpWeight(_)
+                | GptOssTensorRole::ExpertGateWeight(_)
+                | GptOssTensorRole::ExpertUpWeight(_)
+                | GptOssTensorRole::ExpertDownWeight(_) => usize::try_from(tensor.byte_len)
+                    .map_err(|_| {
+                        candle::Error::Msg(format!(
+                            "GPT-OSS tensor {:?} resident bytes do not fit usize",
+                            tensor.name
+                        ))
+                    })?,
+                _ => usize::try_from(element_count(&tensor.shape, &tensor.name)?)
+                    .map_err(|_| {
+                        candle::Error::Msg(format!(
+                            "GPT-OSS tensor {:?} element count does not fit usize",
+                            tensor.name
+                        ))
+                    })?
+                    .checked_mul(std::mem::size_of::<f32>())
+                    .ok_or_else(|| {
+                        candle::Error::Msg(format!(
+                            "GPT-OSS tensor {:?} resident bytes overflowed",
+                            tensor.name
+                        ))
+                    })?,
+            };
+            total = total.checked_add(bytes).ok_or_else(|| {
+                candle::Error::Msg("GPT-OSS resident weight bytes overflowed".into())
+            })?;
+        }
+        Ok(total)
+    }
+
+    /// Assemble one admitted GGUF artifact into the CPU reference weights.
+    ///
+    /// `max_resident_bytes` is checked before the first tensor payload is
+    /// allocated. The loader then retains one file handle and reads each raw
+    /// tensor once, dropping the transient payload after it is converted into
+    /// the model-owned representation.
+    pub fn load_weights(&self, max_resident_bytes: usize) -> Result<GptOssWeights> {
+        let cancellation = GptOssCancellationToken::new();
+        self.load_weights_with_cancellation(&cancellation, max_resident_bytes)
+    }
+
+    /// Assemble one admitted GGUF artifact with cooperative cancellation.
+    pub fn load_weights_with_cancellation(
+        &self,
+        cancellation: &GptOssCancellationToken,
+        max_resident_bytes: usize,
+    ) -> Result<GptOssWeights> {
+        let mut session = GptOssGgufLoadSession::open(self)?;
+        self.assemble_weights_with_reader(
+            |tensor| session.read_tensor(tensor),
+            Some(cancellation),
+            max_resident_bytes,
+        )
+    }
+
+    fn assemble_weights_with_reader<F>(
+        &self,
+        mut read_tensor: F,
+        cancellation: Option<&GptOssCancellationToken>,
+        max_resident_bytes: usize,
+    ) -> Result<GptOssWeights>
+    where
+        F: FnMut(&GptOssGgufTensor) -> Result<Vec<u8>>,
+    {
+        let resident_bytes = self.weight_resident_bytes()?;
+        if resident_bytes > max_resident_bytes {
+            bail!(
+                "GPT-OSS assembled weights require {resident_bytes} resident bytes, limit is {max_resident_bytes}"
+            );
+        }
+
+        let token_embedding = read_dense_role(
+            self,
+            &mut read_tensor,
+            &GptOssTensorRole::TokenEmbedding,
+            cancellation,
+        )?;
+        let final_norm = read_dense_role(
+            self,
+            &mut read_tensor,
+            &GptOssTensorRole::OutputNorm,
+            cancellation,
+        )?;
+        let lm_head = read_linear_role(
+            self,
+            &mut read_tensor,
+            &GptOssTensorRole::Output,
+            None,
+            cancellation,
+        )?;
+
+        let mut layers = Vec::new();
+        layers
+            .try_reserve_exact(self.config.num_hidden_layers)
+            .map_err(|error| {
+                candle::Error::Msg(format!("GPT-OSS layer weight allocation failed: {error}"))
+            })?;
+        for layer_index in 0..self.config.num_hidden_layers {
+            if let Some(cancellation) = cancellation {
+                cancellation.checkpoint()?;
+            }
+            let attention_norm = read_dense_role(
+                self,
+                &mut read_tensor,
+                &GptOssTensorRole::AttentionNorm(layer_index),
+                cancellation,
+            )?;
+            let qkv = if self
+                .find_role(&GptOssTensorRole::QkvWeight(layer_index))
+                .is_some()
+            {
+                read_linear_role(
+                    self,
+                    &mut read_tensor,
+                    &GptOssTensorRole::QkvWeight(layer_index),
+                    Some(GptOssTensorRole::QkvBias(layer_index)),
+                    cancellation,
+                )?
+            } else {
+                let mut qkv_weights = Vec::new();
+                let mut qkv_bias = Vec::new();
+                for (weight_role, bias_role) in [
+                    (
+                        GptOssTensorRole::QueryWeight(layer_index),
+                        GptOssTensorRole::QueryBias(layer_index),
+                    ),
+                    (
+                        GptOssTensorRole::KeyWeight(layer_index),
+                        GptOssTensorRole::KeyBias(layer_index),
+                    ),
+                    (
+                        GptOssTensorRole::ValueWeight(layer_index),
+                        GptOssTensorRole::ValueBias(layer_index),
+                    ),
+                ] {
+                    let weight =
+                        read_dense_role(self, &mut read_tensor, &weight_role, cancellation)?;
+                    let bias = read_dense_role(self, &mut read_tensor, &bias_role, cancellation)?;
+                    qkv_weights
+                        .try_reserve_exact(weight.len())
+                        .map_err(|error| {
+                            candle::Error::Msg(format!("GPT-OSS QKV allocation failed: {error}"))
+                        })?;
+                    qkv_weights.extend_from_slice(&weight);
+                    qkv_bias.try_reserve_exact(bias.len()).map_err(|error| {
+                        candle::Error::Msg(format!("GPT-OSS QKV bias allocation failed: {error}"))
+                    })?;
+                    qkv_bias.extend_from_slice(&bias);
+                }
+                let hidden = self.config.hidden_size;
+                let qkv_width = qkv_bias.len();
+                DenseLinear::new(qkv_width, hidden, qkv_weights, Some(qkv_bias))?
+            };
+            let attention_out = read_linear_role(
+                self,
+                &mut read_tensor,
+                &GptOssTensorRole::AttentionOutputWeight(layer_index),
+                Some(GptOssTensorRole::AttentionOutputBias(layer_index)),
+                cancellation,
+            )?;
+            let sinks = read_dense_role(
+                self,
+                &mut read_tensor,
+                &GptOssTensorRole::AttentionSinks(layer_index),
+                cancellation,
+            )?;
+            let moe_norm = read_dense_role(
+                self,
+                &mut read_tensor,
+                &GptOssTensorRole::MoeNorm(layer_index),
+                cancellation,
+            )?;
+            let gate = read_linear_role(
+                self,
+                &mut read_tensor,
+                &GptOssTensorRole::RouterWeight(layer_index),
+                Some(GptOssTensorRole::RouterBias(layer_index)),
+                cancellation,
+            )?;
+
+            let (mlp1, mlp1_bias) = if self
+                .find_role(&GptOssTensorRole::ExpertGateUpWeight(layer_index))
+                .is_some()
+            {
+                let fused_intermediate =
+                    self.config
+                        .intermediate_size
+                        .checked_mul(2)
+                        .ok_or_else(|| {
+                            candle::Error::Msg("GPT-OSS fused intermediate width overflowed".into())
+                        })?;
+                (
+                    read_mxfp4_role(
+                        self,
+                        &mut read_tensor,
+                        &GptOssTensorRole::ExpertGateUpWeight(layer_index),
+                        &[
+                            self.config.num_experts,
+                            fused_intermediate,
+                            self.config.hidden_size,
+                        ],
+                        cancellation,
+                    )?,
+                    read_dense_role(
+                        self,
+                        &mut read_tensor,
+                        &GptOssTensorRole::ExpertGateUpBias(layer_index),
+                        cancellation,
+                    )?,
+                )
+            } else {
+                let gate = read_mxfp4_role(
+                    self,
+                    &mut read_tensor,
+                    &GptOssTensorRole::ExpertGateWeight(layer_index),
+                    &[
+                        self.config.num_experts,
+                        self.config.intermediate_size,
+                        self.config.hidden_size,
+                    ],
+                    cancellation,
+                )?;
+                let up = read_mxfp4_role(
+                    self,
+                    &mut read_tensor,
+                    &GptOssTensorRole::ExpertUpWeight(layer_index),
+                    &[
+                        self.config.num_experts,
+                        self.config.intermediate_size,
+                        self.config.hidden_size,
+                    ],
+                    cancellation,
+                )?;
+                let gate_bias = read_dense_role(
+                    self,
+                    &mut read_tensor,
+                    &GptOssTensorRole::ExpertGateBias(layer_index),
+                    cancellation,
+                )?;
+                let up_bias = read_dense_role(
+                    self,
+                    &mut read_tensor,
+                    &GptOssTensorRole::ExpertUpBias(layer_index),
+                    cancellation,
+                )?;
+                (
+                    interleave_mxfp4_rows(
+                        &gate,
+                        &up,
+                        self.config.num_experts,
+                        self.config.intermediate_size,
+                        self.config.hidden_size,
+                    )?,
+                    interleave_biases(
+                        &gate_bias,
+                        &up_bias,
+                        self.config.num_experts,
+                        self.config.intermediate_size,
+                    )?,
+                )
+            };
+            let mlp2 = read_mxfp4_role(
+                self,
+                &mut read_tensor,
+                &GptOssTensorRole::ExpertDownWeight(layer_index),
+                &[
+                    self.config.num_experts,
+                    self.config.hidden_size,
+                    self.config.intermediate_size,
+                ],
+                cancellation,
+            )?;
+            let mlp2_bias = read_dense_role(
+                self,
+                &mut read_tensor,
+                &GptOssTensorRole::ExpertDownBias(layer_index),
+                cancellation,
+            )?;
+            let experts = Mxfp4ExpertOperation::new(
+                mlp1,
+                mlp1_bias,
+                mlp2,
+                mlp2_bias,
+                self.config.swiglu_limit,
+            )?;
+            layers.push(GptOssLayerWeights::new(
+                &self.config,
+                attention_norm,
+                qkv,
+                attention_out,
+                sinks,
+                moe_norm,
+                gate,
+                experts,
+            )?);
+        }
+        GptOssWeights::new(&self.config, token_embedding, layers, final_norm, lm_head)
+    }
+
+    fn find_role(&self, role: &GptOssTensorRole) -> Option<&GptOssGgufTensor> {
+        self.tensors.iter().find(|tensor| &tensor.role == role)
+    }
+
     fn from_parsed(path: PathBuf, sha256: String, parsed: ParsedGguf) -> Result<Self> {
         let normalized = normalize_config(&parsed.metadata)?;
         let owners = expected_tensor_owners(&normalized.config, &parsed.tensors)?;
@@ -354,6 +675,402 @@ impl GptOssGgufArtifact {
             tensors,
         })
     }
+}
+
+/// One retained file session used by the GGUF-to-weights assembly path.
+///
+/// Admission has already verified the artifact identity. Keeping this handle
+/// open avoids reopening and rehashing a multi-gigabyte file for every tensor;
+/// the size is rechecked before the session starts and each read remains
+/// bounded by the admitted tensor descriptor.
+struct GptOssGgufLoadSession<'a> {
+    artifact: &'a GptOssGgufArtifact,
+    file: File,
+}
+
+impl<'a> GptOssGgufLoadSession<'a> {
+    fn open(artifact: &'a GptOssGgufArtifact) -> Result<Self> {
+        let current_size = std::fs::metadata(&artifact.path)
+            .map_err(|error| {
+                candle::Error::Msg(format!(
+                    "failed to stat admitted GPT-OSS GGUF {:?}: {error}",
+                    artifact.path
+                ))
+            })?
+            .len();
+        if current_size != artifact.file_size {
+            bail!(
+                "admitted GPT-OSS GGUF {:?} changed size from {} to {}",
+                artifact.path,
+                artifact.file_size,
+                current_size
+            );
+        }
+        let file = File::open(&artifact.path).map_err(|error| {
+            candle::Error::Msg(format!(
+                "failed to open admitted GPT-OSS GGUF {:?}: {error}",
+                artifact.path
+            ))
+        })?;
+        Ok(Self { artifact, file })
+    }
+
+    fn read_tensor(&mut self, tensor: &GptOssGgufTensor) -> Result<Vec<u8>> {
+        let owned = self.artifact.tensor(&tensor.name)?;
+        if owned != tensor {
+            bail!(
+                "GPT-OSS GGUF tensor {:?} is not the admitted descriptor",
+                tensor.name
+            );
+        }
+        if tensor.byte_len > MAX_RAW_TENSOR_BYTES {
+            bail!(
+                "GPT-OSS GGUF tensor {:?} payload {} exceeds raw read limit {}",
+                tensor.name,
+                tensor.byte_len,
+                MAX_RAW_TENSOR_BYTES
+            );
+        }
+        let byte_len = usize::try_from(tensor.byte_len).map_err(|_| {
+            candle::Error::Msg(format!(
+                "GPT-OSS GGUF tensor {:?} payload does not fit in usize",
+                tensor.name
+            ))
+        })?;
+        let absolute_offset = self
+            .artifact
+            .tensor_data_offset
+            .checked_add(tensor.offset)
+            .ok_or_else(|| candle::Error::Msg("GPT-OSS GGUF tensor offset overflowed".into()))?;
+        self.file.seek(SeekFrom::Start(absolute_offset))?;
+        let mut bytes = Vec::new();
+        bytes.try_reserve_exact(byte_len).map_err(|error| {
+            candle::Error::Msg(format!(
+                "GPT-OSS GGUF tensor {:?} allocation failed: {error}",
+                tensor.name
+            ))
+        })?;
+        bytes.resize(byte_len, 0);
+        self.file.read_exact(&mut bytes).map_err(|error| {
+            candle::Error::Msg(format!(
+                "GPT-OSS GGUF tensor {:?} is truncated while reading: {error}",
+                tensor.name
+            ))
+        })?;
+        Ok(bytes)
+    }
+}
+
+/// Admit one exact local GGUF and assemble it while retaining one load lease.
+pub fn load_gpt_oss_weights(
+    path: impl AsRef<Path>,
+    registry: &GptOssLoadRegistry,
+    max_resident_bytes: usize,
+) -> Result<(GptOssGgufArtifact, GptOssWeights, GptOssLoadedHandle)> {
+    let cancellation = GptOssCancellationToken::new();
+    load_gpt_oss_weights_with_cancellation(path, registry, &cancellation, max_resident_bytes)
+}
+
+/// Admit one exact local GGUF, assemble it with cancellation, and return the
+/// retained handle so duplicate concurrent loads remain rejected.
+pub fn load_gpt_oss_weights_with_cancellation(
+    path: impl AsRef<Path>,
+    registry: &GptOssLoadRegistry,
+    cancellation: &GptOssCancellationToken,
+    max_resident_bytes: usize,
+) -> Result<(GptOssGgufArtifact, GptOssWeights, GptOssLoadedHandle)> {
+    let (artifact, handle) =
+        GptOssGgufArtifact::open_with_registry_with_cancellation(path, registry, cancellation)?;
+    let weights = artifact.load_weights_with_cancellation(cancellation, max_resident_bytes)?;
+    Ok((artifact, weights, handle))
+}
+
+fn read_role_bytes<F>(
+    artifact: &GptOssGgufArtifact,
+    read_tensor: &mut F,
+    role: &GptOssTensorRole,
+    cancellation: Option<&GptOssCancellationToken>,
+) -> Result<Vec<u8>>
+where
+    F: FnMut(&GptOssGgufTensor) -> Result<Vec<u8>>,
+{
+    if let Some(cancellation) = cancellation {
+        cancellation.checkpoint()?;
+    }
+    let tensor = artifact
+        .find_role(role)
+        .ok_or_else(|| candle::Error::Msg(format!("missing GPT-OSS tensor role {role:?}")))?;
+    let bytes = read_tensor(tensor)?;
+    if bytes.len()
+        != usize::try_from(tensor.byte_len).map_err(|_| {
+            candle::Error::Msg(format!(
+                "GPT-OSS tensor {:?} length does not fit usize",
+                tensor.name
+            ))
+        })?
+    {
+        bail!(
+            "GPT-OSS tensor {:?} read {} bytes, expected {}",
+            tensor.name,
+            bytes.len(),
+            tensor.byte_len
+        );
+    }
+    if let Some(cancellation) = cancellation {
+        cancellation.checkpoint()?;
+    }
+    Ok(bytes)
+}
+
+fn decode_dense_values(tensor: &GptOssGgufTensor, bytes: &[u8]) -> Result<Vec<f32>> {
+    let count = usize::try_from(element_count(&tensor.shape, &tensor.name)?).map_err(|_| {
+        candle::Error::Msg(format!(
+            "GPT-OSS tensor {:?} element count does not fit usize",
+            tensor.name
+        ))
+    })?;
+    let dtype = match tensor.dtype {
+        GptOssGgufDType::F32 => DType::F32,
+        GptOssGgufDType::F16 => DType::F16,
+        GptOssGgufDType::BF16 => DType::BF16,
+        GptOssGgufDType::Q8_0 => {
+            bail!(
+                "GPT-OSS GGUF tensor {:?} uses Q8_0; quantized dense text assembly is deferred",
+                tensor.name
+            )
+        }
+        GptOssGgufDType::Mxfp4 => {
+            bail!(
+                "GPT-OSS tensor {:?} is MXFP4, not a dense F32 tensor",
+                tensor.name
+            )
+        }
+    };
+    Tensor::from_raw_buffer(bytes, dtype, &[count], &Device::Cpu)?
+        .to_dtype(DType::F32)?
+        .to_vec1::<f32>()
+}
+
+fn read_dense_role<F>(
+    artifact: &GptOssGgufArtifact,
+    read_tensor: &mut F,
+    role: &GptOssTensorRole,
+    cancellation: Option<&GptOssCancellationToken>,
+) -> Result<Vec<f32>>
+where
+    F: FnMut(&GptOssGgufTensor) -> Result<Vec<u8>>,
+{
+    let tensor = artifact
+        .find_role(role)
+        .ok_or_else(|| candle::Error::Msg(format!("missing GPT-OSS tensor role {role:?}")))?;
+    let bytes = read_role_bytes(artifact, read_tensor, role, cancellation)?;
+    decode_dense_values(tensor, &bytes)
+}
+
+fn read_linear_role<F>(
+    artifact: &GptOssGgufArtifact,
+    read_tensor: &mut F,
+    weight_role: &GptOssTensorRole,
+    bias_role: Option<GptOssTensorRole>,
+    cancellation: Option<&GptOssCancellationToken>,
+) -> Result<DenseLinear>
+where
+    F: FnMut(&GptOssGgufTensor) -> Result<Vec<u8>>,
+{
+    let weight_tensor = artifact.find_role(weight_role).ok_or_else(|| {
+        candle::Error::Msg(format!("missing GPT-OSS tensor role {weight_role:?}"))
+    })?;
+    if weight_tensor.shape.len() != 2 {
+        bail!(
+            "GPT-OSS dense weight {:?} must be rank 2, got {:?}",
+            weight_tensor.name,
+            weight_tensor.shape
+        );
+    }
+    let weight_bytes = read_role_bytes(artifact, read_tensor, weight_role, cancellation)?;
+    let weights = decode_dense_values(weight_tensor, &weight_bytes)?;
+    let bias = match bias_role {
+        None => None,
+        Some(role) => Some(read_dense_role(artifact, read_tensor, &role, cancellation)?),
+    };
+    // The normalized GPT-OSS GGUF inventory uses Candle's output-by-input
+    // matrix order, so its contiguous bytes can be retained directly.
+    DenseLinear::new(
+        weight_tensor.shape[0],
+        weight_tensor.shape[1],
+        weights,
+        bias,
+    )
+}
+
+fn read_mxfp4_role<F>(
+    artifact: &GptOssGgufArtifact,
+    read_tensor: &mut F,
+    role: &GptOssTensorRole,
+    packed_shape: &[usize],
+    cancellation: Option<&GptOssCancellationToken>,
+) -> Result<PackedMxfp4>
+where
+    F: FnMut(&GptOssGgufTensor) -> Result<Vec<u8>>,
+{
+    let tensor = artifact
+        .find_role(role)
+        .ok_or_else(|| candle::Error::Msg(format!("missing GPT-OSS tensor role {role:?}")))?;
+    if tensor.dtype != GptOssGgufDType::Mxfp4 {
+        bail!(
+            "GPT-OSS expert tensor {:?} must be MXFP4, got {:?}",
+            tensor.name,
+            tensor.dtype
+        );
+    }
+    let bytes = read_role_bytes(artifact, read_tensor, role, cancellation)?;
+    if !bytes.len().is_multiple_of(BYTES_PER_BLOCK + 1) {
+        bail!(
+            "GPT-OSS MXFP4 tensor {:?} has {} bytes, not divisible by 17",
+            tensor.name,
+            bytes.len()
+        );
+    }
+    let block_count = bytes.len() / (BYTES_PER_BLOCK + 1);
+    let block_bytes =
+        checked_usize_product([block_count, BYTES_PER_BLOCK], "GPT-OSS MXFP4 block bytes")?;
+    let mut blocks = Vec::new();
+    blocks.try_reserve_exact(block_bytes).map_err(|error| {
+        candle::Error::Msg(format!("GPT-OSS MXFP4 block allocation failed: {error}"))
+    })?;
+    let mut scales = Vec::new();
+    scales.try_reserve_exact(block_count).map_err(|error| {
+        candle::Error::Msg(format!("GPT-OSS MXFP4 scale allocation failed: {error}"))
+    })?;
+    for chunk in bytes.chunks_exact(BYTES_PER_BLOCK + 1) {
+        scales.push(chunk[0]);
+        blocks.extend_from_slice(&chunk[1..]);
+    }
+    PackedMxfp4::from_parts(packed_shape, blocks, scales)
+}
+
+fn interleave_mxfp4_rows(
+    gate: &PackedMxfp4,
+    up: &PackedMxfp4,
+    expert_count: usize,
+    rows: usize,
+    hidden_size: usize,
+) -> Result<PackedMxfp4> {
+    let expected_shape = [expert_count, rows, hidden_size];
+    if gate.shape() != expected_shape || up.shape() != expected_shape {
+        bail!(
+            "GPT-OSS split expert shapes do not match {:?}: gate={:?}, up={:?}",
+            expected_shape,
+            gate.shape(),
+            up.shape()
+        );
+    }
+    let blocks_per_row = hidden_size / VALUES_PER_BLOCK;
+    if !hidden_size.is_multiple_of(VALUES_PER_BLOCK) {
+        bail!(
+            "GPT-OSS split expert hidden size {hidden_size} is not divisible by {VALUES_PER_BLOCK}"
+        );
+    }
+    let row_block_bytes = checked_usize_product(
+        [blocks_per_row, BYTES_PER_BLOCK],
+        "GPT-OSS expert row block bytes",
+    )?;
+    let row_count =
+        checked_usize_product([expert_count, rows, 2], "GPT-OSS fused expert row count")?;
+    let block_bytes = checked_usize_product(
+        [row_count, row_block_bytes],
+        "GPT-OSS fused expert block bytes",
+    )?;
+    let fused_rows = rows
+        .checked_mul(2)
+        .ok_or_else(|| candle::Error::Msg("GPT-OSS fused expert row count overflowed".into()))?;
+    let mut blocks = Vec::new();
+    blocks.try_reserve_exact(block_bytes).map_err(|error| {
+        candle::Error::Msg(format!(
+            "GPT-OSS fused expert block allocation failed: {error}"
+        ))
+    })?;
+    let mut scales = Vec::new();
+    let scale_count = checked_usize_product(
+        [row_count, blocks_per_row],
+        "GPT-OSS fused expert scale count",
+    )?;
+    scales.try_reserve_exact(scale_count).map_err(|error| {
+        candle::Error::Msg(format!(
+            "GPT-OSS fused expert scale allocation failed: {error}"
+        ))
+    })?;
+    for expert in 0..expert_count {
+        for row in 0..rows {
+            for (source_blocks, source_scales) in
+                [(gate.blocks(), gate.scales()), (up.blocks(), up.scales())]
+            {
+                let row_index = expert
+                    .checked_mul(rows)
+                    .and_then(|value| value.checked_add(row))
+                    .ok_or_else(|| candle::Error::Msg("GPT-OSS expert row overflowed".into()))?;
+                let block_start = row_index
+                    .checked_mul(blocks_per_row)
+                    .and_then(|value| value.checked_mul(BYTES_PER_BLOCK))
+                    .ok_or_else(|| {
+                        candle::Error::Msg("GPT-OSS expert block offset overflowed".into())
+                    })?;
+                let block_end = block_start.checked_add(row_block_bytes).ok_or_else(|| {
+                    candle::Error::Msg("GPT-OSS expert block range overflowed".into())
+                })?;
+                blocks.extend_from_slice(source_blocks.get(block_start..block_end).ok_or_else(
+                    || candle::Error::Msg("GPT-OSS split expert block row is out of bounds".into()),
+                )?);
+                let scale_start = row_index.checked_mul(blocks_per_row).ok_or_else(|| {
+                    candle::Error::Msg("GPT-OSS expert scale offset overflowed".into())
+                })?;
+                let scale_end = scale_start.checked_add(blocks_per_row).ok_or_else(|| {
+                    candle::Error::Msg("GPT-OSS expert scale range overflowed".into())
+                })?;
+                scales.extend_from_slice(source_scales.get(scale_start..scale_end).ok_or_else(
+                    || candle::Error::Msg("GPT-OSS split expert scale row is out of bounds".into()),
+                )?);
+            }
+        }
+    }
+    PackedMxfp4::from_parts(&[expert_count, fused_rows, hidden_size], blocks, scales)
+}
+
+fn interleave_biases(
+    gate: &[f32],
+    up: &[f32],
+    expert_count: usize,
+    rows: usize,
+) -> Result<Vec<f32>> {
+    let row_count = checked_usize_product([expert_count, rows], "GPT-OSS expert bias rows")?;
+    if gate.len() != row_count || up.len() != row_count {
+        bail!("GPT-OSS split expert bias shapes do not match the expert configuration");
+    }
+    let result_len = checked_usize_product([row_count, 2], "GPT-OSS expert bias values")?;
+    let mut result = Vec::new();
+    result.try_reserve_exact(result_len).map_err(|error| {
+        candle::Error::Msg(format!("GPT-OSS expert bias allocation failed: {error}"))
+    })?;
+    for expert in 0..expert_count {
+        for row in 0..rows {
+            let index = expert
+                .checked_mul(rows)
+                .and_then(|value| value.checked_add(row))
+                .ok_or_else(|| {
+                    candle::Error::Msg("GPT-OSS expert bias offset overflowed".into())
+                })?;
+            result.push(
+                *gate.get(index).ok_or_else(|| {
+                    candle::Error::Msg("GPT-OSS gate bias is out of bounds".into())
+                })?,
+            );
+            result
+                .push(*up.get(index).ok_or_else(|| {
+                    candle::Error::Msg("GPT-OSS up bias is out of bounds".into())
+                })?);
+        }
+    }
+    Ok(result)
 }
 
 #[derive(Debug)]
@@ -1272,48 +1989,48 @@ fn expected_shape(config: &GptOssConfig, role: &GptOssTensorRole) -> Result<Vec<
         .ok_or_else(|| candle::Error::Msg("GPT-OSS fused intermediate width overflowed".into()))?;
     let shape = match role {
         GptOssTensorRole::TokenEmbedding | GptOssTensorRole::Output => {
-            vec![config.hidden_size, config.vocab_size]
+            vec![config.vocab_size, config.hidden_size]
         }
         GptOssTensorRole::OutputNorm
         | GptOssTensorRole::AttentionNorm(_)
         | GptOssTensorRole::MoeNorm(_) => vec![config.hidden_size],
-        GptOssTensorRole::QkvWeight(_) => vec![config.hidden_size, qkv_width],
+        GptOssTensorRole::QkvWeight(_) => vec![qkv_width, config.hidden_size],
         GptOssTensorRole::QkvBias(_) => vec![qkv_width],
-        GptOssTensorRole::QueryWeight(_) => vec![config.hidden_size, q_width],
+        GptOssTensorRole::QueryWeight(_) => vec![q_width, config.hidden_size],
         GptOssTensorRole::QueryBias(_) => vec![q_width],
         GptOssTensorRole::KeyWeight(_) | GptOssTensorRole::ValueWeight(_) => {
-            vec![config.hidden_size, kv_width]
+            vec![kv_width, config.hidden_size]
         }
         GptOssTensorRole::KeyBias(_) | GptOssTensorRole::ValueBias(_) => vec![kv_width],
-        GptOssTensorRole::AttentionOutputWeight(_) => vec![q_width, config.hidden_size],
+        GptOssTensorRole::AttentionOutputWeight(_) => vec![config.hidden_size, q_width],
         GptOssTensorRole::AttentionOutputBias(_) => vec![config.hidden_size],
         GptOssTensorRole::AttentionSinks(_) => vec![config.num_attention_heads],
-        GptOssTensorRole::RouterWeight(_) => vec![config.hidden_size, config.num_experts],
+        GptOssTensorRole::RouterWeight(_) => vec![config.num_experts, config.hidden_size],
         GptOssTensorRole::RouterBias(_) => vec![config.num_experts],
         GptOssTensorRole::ExpertGateUpWeight(_) => {
-            vec![config.hidden_size, fused_intermediate, config.num_experts]
+            vec![config.num_experts, fused_intermediate, config.hidden_size]
         }
         GptOssTensorRole::ExpertGateUpBias(_) => {
-            vec![fused_intermediate, config.num_experts]
+            vec![config.num_experts, fused_intermediate]
         }
         GptOssTensorRole::ExpertGateWeight(_) | GptOssTensorRole::ExpertUpWeight(_) => {
             vec![
-                config.hidden_size,
-                config.intermediate_size,
                 config.num_experts,
+                config.intermediate_size,
+                config.hidden_size,
             ]
         }
         GptOssTensorRole::ExpertGateBias(_) | GptOssTensorRole::ExpertUpBias(_) => {
-            vec![config.intermediate_size, config.num_experts]
+            vec![config.num_experts, config.intermediate_size]
         }
         GptOssTensorRole::ExpertDownWeight(_) => {
             vec![
-                config.hidden_size,
-                config.intermediate_size,
                 config.num_experts,
+                config.intermediate_size,
+                config.hidden_size,
             ]
         }
-        GptOssTensorRole::ExpertDownBias(_) => vec![config.hidden_size, config.num_experts],
+        GptOssTensorRole::ExpertDownBias(_) => vec![config.num_experts, config.hidden_size],
     };
     Ok(shape)
 }
@@ -1356,7 +2073,7 @@ mod tests {
         let expert = artifact.tensor("blk.0.ffn_gate_up_exps.weight")?;
         assert_eq!(expert.role, GptOssTensorRole::ExpertGateUpWeight(0));
         assert_eq!(expert.dtype, GptOssGgufDType::Mxfp4);
-        assert_eq!(expert.shape, vec![32, 64, 2]);
+        assert_eq!(expert.shape, vec![2, 64, 32]);
         assert_eq!(expert.byte_len, 2176);
         Ok(())
     }
@@ -1366,7 +2083,11 @@ mod tests {
         let bytes = tiny_converter_style_gguf()?;
         let actual = format!("{:x}", Sha256::digest(&bytes));
         let artifact = parse_test_bytes(&bytes, &actual)?;
-        assert_eq!(artifact.tensors().len(), 18);
+        assert_eq!(artifact.tensors().len(), 22);
+        assert_eq!(
+            artifact.tensor("blk.0.attn_k.weight")?.role,
+            GptOssTensorRole::KeyWeight(0)
+        );
         assert_eq!(
             artifact.tensor("blk.0.attn_output.weight")?.role,
             GptOssTensorRole::AttentionOutputWeight(0)
@@ -1383,6 +2104,74 @@ mod tests {
             artifact.tensor("blk.0.ffn_gate_exps.weight")?.role,
             GptOssTensorRole::ExpertGateWeight(0)
         );
+        Ok(())
+    }
+
+    #[test]
+    fn assembles_fused_and_split_synthetic_gguf_weights() -> Result<()> {
+        for bytes in [tiny_gguf()?, tiny_converter_style_gguf()?] {
+            let actual = format!("{:x}", Sha256::digest(&bytes));
+            let artifact = parse_test_bytes(&bytes, &actual)?;
+            let max_resident_bytes = artifact.weight_resident_bytes()?;
+            let weights = artifact.assemble_weights_with_reader(
+                |tensor| {
+                    let start = usize::try_from(
+                        artifact
+                            .tensor_data_offset()
+                            .checked_add(tensor.offset)
+                            .ok_or_else(|| {
+                                candle::Error::Msg("synthetic GGUF offset overflowed".into())
+                            })?,
+                    )
+                    .map_err(|_| candle::Error::Msg("synthetic GGUF offset is too large".into()))?;
+                    let byte_len = usize::try_from(tensor.byte_len).map_err(|_| {
+                        candle::Error::Msg("synthetic GGUF tensor length is too large".into())
+                    })?;
+                    let end = start.checked_add(byte_len).ok_or_else(|| {
+                        candle::Error::Msg("synthetic GGUF tensor range overflowed".into())
+                    })?;
+                    bytes.get(start..end).map(ToOwned::to_owned).ok_or_else(|| {
+                        candle::Error::Msg("synthetic GGUF tensor is truncated".into())
+                    })
+                },
+                None,
+                max_resident_bytes,
+            )?;
+            let model =
+                crate::models::gpt_oss::GptOssModel::new(artifact.config().clone(), weights)?;
+            let logits = model.forward_uncached(&[1])?;
+            assert_eq!(logits.len(), artifact.config().vocab_size);
+        }
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "requires the owner-admitted local GPT-OSS GGUF artifact"]
+    fn assembles_owner_selected_product_artifact_when_requested() -> Result<()> {
+        let path = std::env::var_os("CANDLE_GPT_OSS_GGUF")
+            .ok_or_else(|| candle::Error::Msg("CANDLE_GPT_OSS_GGUF is not set".into()))?;
+        let max_resident_bytes = std::env::var("CANDLE_GPT_OSS_MAX_RESIDENT_BYTES")
+            .unwrap_or_else(|_| (32usize * 1024 * 1024 * 1024).to_string())
+            .parse::<usize>()
+            .map_err(|error| {
+                candle::Error::Msg(format!(
+                    "invalid CANDLE_GPT_OSS_MAX_RESIDENT_BYTES: {error}"
+                ))
+            })?;
+        let registry = GptOssLoadRegistry::default();
+        let cancellation = GptOssCancellationToken::new();
+        let (artifact, weights, handle) = load_gpt_oss_weights_with_cancellation(
+            path,
+            &registry,
+            &cancellation,
+            max_resident_bytes,
+        )?;
+        assert_eq!(artifact.sha256(), SELECTED_GPT_OSS_GGUF_SHA256);
+        assert_eq!(registry.loaded_count()?, 1);
+        let _model = crate::models::gpt_oss::GptOssModel::new(artifact.config().clone(), weights)?;
+        drop(artifact);
+        drop(handle);
+        assert_eq!(registry.loaded_count()?, 0);
         Ok(())
     }
 
@@ -1508,21 +2297,22 @@ mod tests {
     }
 
     fn tiny_gguf() -> Result<Vec<u8>> {
-        tiny_gguf_with_options(&[32, 48], false, false)
+        tiny_gguf_with_options(&[48, 32], false, false, false)
     }
 
     fn tiny_gguf_with_qkv_shape(qkv_shape: &[usize]) -> Result<Vec<u8>> {
-        tiny_gguf_with_options(qkv_shape, false, false)
+        tiny_gguf_with_options(qkv_shape, false, false, false)
     }
 
     fn tiny_converter_style_gguf() -> Result<Vec<u8>> {
-        tiny_gguf_with_options(&[32, 48], true, true)
+        tiny_gguf_with_options(&[48, 32], true, true, true)
     }
 
     fn tiny_gguf_with_options(
         qkv_shape: &[usize],
         split_experts: bool,
         converter_style_names: bool,
+        split_qkv: bool,
     ) -> Result<Vec<u8>> {
         let config = [
             ("general.architecture", Meta::String("gpt-oss")),
@@ -1545,12 +2335,29 @@ mod tests {
             ("tokenizer.ggml.tokens", Meta::StringArray(8)),
         ];
         let mut tensors = Vec::new();
-        push_tensor(&mut tensors, "token_embd.weight", &[32, 8], Dtype::F32)?;
+        push_tensor(&mut tensors, "token_embd.weight", &[8, 32], Dtype::F32)?;
         push_tensor(&mut tensors, "output_norm.weight", &[32], Dtype::F32)?;
-        push_tensor(&mut tensors, "output.weight", &[32, 8], Dtype::F32)?;
+        push_tensor(&mut tensors, "output.weight", &[8, 32], Dtype::F32)?;
         push_tensor(&mut tensors, "blk.0.attn_norm.weight", &[32], Dtype::F32)?;
-        push_tensor(&mut tensors, "blk.0.attn_qkv.weight", qkv_shape, Dtype::F32)?;
-        push_tensor(&mut tensors, "blk.0.attn_qkv.bias", &[48], Dtype::F32)?;
+        if split_qkv {
+            for (suffix, width) in [("q", 32usize), ("k", 8usize), ("v", 8usize)] {
+                push_tensor(
+                    &mut tensors,
+                    &format!("blk.0.attn_{suffix}.weight"),
+                    &[width, 32],
+                    Dtype::F32,
+                )?;
+                push_tensor(
+                    &mut tensors,
+                    &format!("blk.0.attn_{suffix}.bias"),
+                    &[width],
+                    Dtype::F32,
+                )?;
+            }
+        } else {
+            push_tensor(&mut tensors, "blk.0.attn_qkv.weight", qkv_shape, Dtype::F32)?;
+            push_tensor(&mut tensors, "blk.0.attn_qkv.bias", &[48], Dtype::F32)?;
+        }
         let attention_output = if converter_style_names {
             "attn_output"
         } else {
@@ -1593,7 +2400,7 @@ mod tests {
         push_tensor(
             &mut tensors,
             "blk.0.ffn_gate_inp.weight",
-            &[32, 2],
+            &[2, 32],
             Dtype::F32,
         )?;
         push_tensor(&mut tensors, "blk.0.ffn_gate_inp.bias", &[2], Dtype::F32)?;
@@ -1602,13 +2409,13 @@ mod tests {
                 push_tensor(
                     &mut tensors,
                     &format!("blk.0.{suffix}.weight"),
-                    &[32, 32, 2],
+                    &[2, 32, 32],
                     Dtype::Mxfp4,
                 )?;
                 push_tensor(
                     &mut tensors,
                     &format!("blk.0.{suffix}.bias"),
-                    &[32, 2],
+                    &[2, 32],
                     Dtype::F32,
                 )?;
             }
@@ -1616,26 +2423,26 @@ mod tests {
             push_tensor(
                 &mut tensors,
                 "blk.0.ffn_gate_up_exps.weight",
-                &[32, 64, 2],
+                &[2, 64, 32],
                 Dtype::Mxfp4,
             )?;
             push_tensor(
                 &mut tensors,
                 "blk.0.ffn_gate_up_exps.bias",
-                &[64, 2],
+                &[2, 64],
                 Dtype::F32,
             )?;
         }
         push_tensor(
             &mut tensors,
             "blk.0.ffn_down_exps.weight",
-            &[32, 32, 2],
+            &[2, 32, 32],
             Dtype::Mxfp4,
         )?;
         push_tensor(
             &mut tensors,
             "blk.0.ffn_down_exps.bias",
-            &[32, 2],
+            &[2, 32],
             Dtype::F32,
         )?;
         build_gguf(&config, &tensors)

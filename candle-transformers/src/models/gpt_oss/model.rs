@@ -597,6 +597,20 @@ impl GptOssModel {
         cache: &mut GptOssCache,
         position: usize,
     ) -> Result<Vec<f32>> {
+        Ok(
+            Self::forward_layer_trace(config, layer, layer_index, hidden, cache, position)?
+                .post_moe_hidden,
+        )
+    }
+
+    fn forward_layer_trace(
+        config: &GptOssConfig,
+        layer: &GptOssLayerWeights,
+        layer_index: usize,
+        hidden: Vec<f32>,
+        cache: &mut GptOssCache,
+        position: usize,
+    ) -> Result<CpuLayerTrace> {
         let normalized = rms_norm(&hidden, &layer.attention_norm, 1e-5)?;
         let qkv = layer.qkv.forward(&normalized)?;
         let q_width = config
@@ -677,28 +691,39 @@ impl GptOssModel {
             config,
         )?;
         let attention_update = layer.attention_out.forward(&attended)?;
-        let mut hidden = add_vectors(&hidden, &attention_update)?;
+        let post_attention_hidden = add_vectors(&hidden, &attention_update)?;
 
-        let normalized = rms_norm(&hidden, &layer.moe_norm, 1e-5)?;
+        let normalized = rms_norm(&post_attention_hidden, &layer.moe_norm, 1e-5)?;
         let gate = layer.gate.forward(&normalized)?;
         let (expert_indices, expert_weights) =
             route_top_k(&gate, config.experts_per_token, config.num_experts)?;
-        let expert_output =
+        let expert_contribution =
             layer
                 .experts
-                .forward(&normalized, 1, &expert_indices, &expert_weights)?;
-        for index in 0..hidden.len() {
-            let delta = *expert_output.get(index).ok_or_else(|| {
-                candle::Error::Msg("GPT-OSS expert output is out of bounds".to_string())
-            })? - *normalized.get(index).ok_or_else(|| {
-                candle::Error::Msg("GPT-OSS normalized output is out of bounds".to_string())
-            })?;
-            *hidden.get_mut(index).ok_or_else(|| {
-                candle::Error::Msg("GPT-OSS hidden output is out of bounds".to_string())
-            })? += delta;
-        }
-        Ok(hidden)
+                .forward_contribution(&normalized, 1, &expert_indices, &expert_weights)?;
+        let post_moe_hidden = add_vectors(&post_attention_hidden, &expert_contribution)?;
+        Ok(CpuLayerTrace {
+            post_attention_hidden,
+            expert_contribution,
+            post_moe_hidden,
+            attention: attended,
+            router: gate,
+            expert_indices,
+            expert_weights,
+        })
     }
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct CpuLayerTrace {
+    post_attention_hidden: Vec<f32>,
+    expert_contribution: Vec<f32>,
+    post_moe_hidden: Vec<f32>,
+    attention: Vec<f32>,
+    router: Vec<f32>,
+    expert_indices: Vec<usize>,
+    expert_weights: Vec<f32>,
 }
 
 fn validate_input_ids(config: &GptOssConfig, input_ids: &[u32]) -> Result<()> {
@@ -981,6 +1006,10 @@ mod tests {
     const ORACLE_BYTES: &[u8] =
         include_bytes!("../../../../tests/fixtures/gpt_oss_task2/oracle.json");
     const ORACLE_SHA256: &str = "db79441a688bce500217635051372270fce02b7e6f8f03d769855ac290d4ab04";
+    const TWO_LAYER_ORACLE_BYTES: &[u8] =
+        include_bytes!("../../../../tests/fixtures/gpt_oss_task3_two_layer/oracle.json");
+    const TWO_LAYER_ORACLE_SHA256: &str =
+        "0530081353cc7268d796ae070c4168ec4e6bb036f62d54670b975a43556bc173";
 
     #[derive(Debug, Deserialize)]
     struct Oracle {
@@ -1027,6 +1056,42 @@ mod tests {
         router: Vec<f32>,
     }
 
+    #[derive(Debug, Deserialize)]
+    struct TwoLayerOracle {
+        fixture_id: String,
+        forward: TwoLayerOracleForward,
+        provenance: OracleProvenance,
+        trace: TwoLayerOracleTraceBundle,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct TwoLayerOracleForward {
+        prompt: Vec<u32>,
+        prefill: Vec<u32>,
+        decode: Vec<u32>,
+        uncached_logits: Vec<f32>,
+        decode_logits: Vec<f32>,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct TwoLayerOracleTraceBundle {
+        token: u32,
+        position: usize,
+        layers: Vec<TwoLayerOracleLayer>,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct TwoLayerOracleLayer {
+        sliding: bool,
+        attention: Vec<f32>,
+        post_attention_hidden: Vec<f32>,
+        expert_contribution: Vec<f32>,
+        post_moe_hidden: Vec<f32>,
+        router: Vec<f32>,
+        expert_indices: Vec<usize>,
+        expert_weights: Vec<f32>,
+    }
+
     struct ActualTransition {
         attention: Vec<f32>,
         expert_indices: Vec<usize>,
@@ -1045,6 +1110,22 @@ mod tests {
         }
         serde_json::from_slice(ORACLE_BYTES).map_err(|error| {
             candle::Error::Msg(format!("invalid GPT-OSS Task 2 oracle fixture: {error}"))
+        })
+    }
+
+    fn two_layer_oracle() -> Result<TwoLayerOracle> {
+        let actual = format!("{:x}", Sha256::digest(TWO_LAYER_ORACLE_BYTES));
+        if actual != TWO_LAYER_ORACLE_SHA256 {
+            bail!(
+                "GPT-OSS Task 3 two-layer oracle fixture changed: expected {}, got {}",
+                TWO_LAYER_ORACLE_SHA256,
+                actual
+            );
+        }
+        serde_json::from_slice(TWO_LAYER_ORACLE_BYTES).map_err(|error| {
+            candle::Error::Msg(format!(
+                "invalid GPT-OSS Task 3 two-layer oracle fixture: {error}"
+            ))
         })
     }
 
@@ -1082,13 +1163,41 @@ mod tests {
     }
 
     fn packed(shape: &[usize], seed: u8) -> crate::models::gpt_oss::mxfp4::PackedMxfp4 {
+        packed_with_scale(shape, seed, SCALE_BIAS as u8)
+    }
+
+    fn packed_with_scale(
+        shape: &[usize],
+        seed: u8,
+        scale: u8,
+    ) -> crate::models::gpt_oss::mxfp4::PackedMxfp4 {
         let elements = shape.iter().product::<usize>();
         let blocks = elements / VALUES_PER_BLOCK;
         let bytes: Vec<u8> = (0..blocks * BYTES_PER_BLOCK)
             .map(|index| seed.wrapping_add(index as u8).rotate_left(1))
             .collect();
-        let scales = vec![SCALE_BIAS as u8; blocks];
+        let scales = vec![scale; blocks];
         crate::models::gpt_oss::mxfp4::PackedMxfp4::from_parts(shape, bytes, scales).unwrap()
+    }
+
+    fn packed_or_zero(
+        shape: &[usize],
+        seed: u8,
+        zero: bool,
+        scale: u8,
+    ) -> crate::models::gpt_oss::mxfp4::PackedMxfp4 {
+        if zero {
+            let elements = shape.iter().product::<usize>();
+            let blocks = elements / VALUES_PER_BLOCK;
+            crate::models::gpt_oss::mxfp4::PackedMxfp4::from_parts(
+                shape,
+                vec![0; blocks * BYTES_PER_BLOCK],
+                vec![scale; blocks],
+            )
+            .unwrap()
+        } else {
+            packed_with_scale(shape, seed, scale)
+        }
     }
 
     fn linear(rows: usize, cols: usize, seed: f32, bias: bool) -> DenseLinear {
@@ -1099,59 +1208,100 @@ mod tests {
         DenseLinear::new(rows, cols, weights, bias).unwrap()
     }
 
-    fn model() -> GptOssModel {
-        let config = config();
+    fn model_with_options(
+        layer_count: usize,
+        zero_experts: bool,
+        nonzero_sinks: bool,
+    ) -> GptOssModel {
+        let mut config = config();
+        config.num_hidden_layers = layer_count;
         let qkv_rows =
             config.head_dim * (config.num_attention_heads + 2 * config.num_key_value_heads);
-        let experts = Mxfp4ExpertOperation::new(
-            packed(
-                &[
-                    config.num_experts,
-                    config.intermediate_size * 2,
-                    config.hidden_size,
-                ],
-                1,
-            ),
-            vec![0.0; config.num_experts * config.intermediate_size * 2],
-            packed(
-                &[
-                    config.num_experts,
-                    config.hidden_size,
-                    config.intermediate_size,
-                ],
-                7,
-            ),
-            vec![0.0; config.num_experts * config.hidden_size],
-            config.swiglu_limit,
-        )
-        .unwrap();
-        let layer = GptOssLayerWeights::new(
-            &config,
-            vec![1.0; config.hidden_size],
-            linear(qkv_rows, config.hidden_size, 0.0003, true),
-            linear(
-                config.hidden_size,
-                config.num_attention_heads * config.head_dim,
-                0.0002,
-                true,
-            ),
-            vec![0.0; config.num_attention_heads],
-            vec![1.0; config.hidden_size],
-            linear(config.num_experts, config.hidden_size, 0.0004, true),
-            experts,
-        )
-        .unwrap();
+        let expert_scale = if nonzero_sinks {
+            (SCALE_BIAS - 4) as u8
+        } else {
+            SCALE_BIAS as u8
+        };
+        let layers = (0..layer_count)
+            .map(|layer_index| {
+                let layer_offset = layer_index as u8;
+                let layer_seed = layer_index as f32;
+                let experts = Mxfp4ExpertOperation::new(
+                    packed_or_zero(
+                        &[
+                            config.num_experts,
+                            config.intermediate_size * 2,
+                            config.hidden_size,
+                        ],
+                        1u8.wrapping_add(layer_offset.wrapping_mul(17)),
+                        zero_experts,
+                        expert_scale,
+                    ),
+                    vec![0.0; config.num_experts * config.intermediate_size * 2],
+                    packed_or_zero(
+                        &[
+                            config.num_experts,
+                            config.hidden_size,
+                            config.intermediate_size,
+                        ],
+                        7u8.wrapping_add(layer_offset.wrapping_mul(19)),
+                        zero_experts,
+                        expert_scale,
+                    ),
+                    vec![0.0; config.num_experts * config.hidden_size],
+                    config.swiglu_limit,
+                )
+                .unwrap();
+                let sinks = if nonzero_sinks {
+                    (0..config.num_attention_heads)
+                        .map(|head| (head as f32 - 1.5) * 0.125 + layer_seed * 0.25)
+                        .collect()
+                } else {
+                    vec![0.0; config.num_attention_heads]
+                };
+                GptOssLayerWeights::new(
+                    &config,
+                    vec![1.0; config.hidden_size],
+                    linear(
+                        qkv_rows,
+                        config.hidden_size,
+                        0.0003 + layer_seed * 0.00007,
+                        true,
+                    ),
+                    linear(
+                        config.hidden_size,
+                        config.num_attention_heads * config.head_dim,
+                        0.0002 + layer_seed * 0.00005,
+                        true,
+                    ),
+                    sinks,
+                    vec![1.0; config.hidden_size],
+                    linear(
+                        config.num_experts,
+                        config.hidden_size,
+                        0.0004 + layer_seed * 0.0003,
+                        true,
+                    ),
+                    experts,
+                )
+                .unwrap()
+            })
+            .collect::<Vec<_>>();
         let weights = GptOssWeights::new(
             &config,
             (0..config.vocab_size * config.hidden_size)
                 .map(|index| (index % 17) as f32 * 0.001)
                 .collect(),
-            vec![layer],
+            layers,
             vec![1.0; config.hidden_size],
             linear(config.vocab_size, config.hidden_size, 0.0001, false),
         )
         .unwrap();
         GptOssModel::new(config, weights).unwrap()
+    }
+
+    fn model() -> GptOssModel {
+        model_with_options(1, false, false)
     }
 
     fn model_with_limits(limits: GptOssResourceLimits) -> GptOssModel {
@@ -1275,6 +1425,59 @@ mod tests {
         Ok(transition)
     }
 
+    fn trace_layer_states(
+        model: &GptOssModel,
+        cache: &mut GptOssCache,
+        token: u32,
+        position: usize,
+    ) -> Result<Vec<CpuLayerTrace>> {
+        let token = usize::try_from(token)
+            .map_err(|_| candle::Error::Msg("trace token does not fit usize".to_string()))?;
+        let embedding_offset = token
+            .checked_mul(model.config.hidden_size)
+            .ok_or_else(|| candle::Error::Msg("trace embedding offset overflowed".to_string()))?;
+        let embedding_end = embedding_offset
+            .checked_add(model.config.hidden_size)
+            .ok_or_else(|| candle::Error::Msg("trace embedding range overflowed".to_string()))?;
+        let mut hidden = model
+            .weights
+            .token_embedding
+            .get(embedding_offset..embedding_end)
+            .ok_or_else(|| candle::Error::Msg("trace embedding row is out of bounds".to_string()))?
+            .to_vec();
+        let mut traces = Vec::new();
+        traces
+            .try_reserve_exact(model.weights.layers.len())
+            .map_err(|error| candle::Error::Msg(format!("trace allocation failed: {error}")))?;
+        for (layer_index, layer) in model.weights.layers.iter().enumerate() {
+            let trace = GptOssModel::forward_layer_trace(
+                &model.config,
+                layer,
+                layer_index,
+                hidden,
+                cache,
+                position,
+            )?;
+            hidden = trace.post_moe_hidden.clone();
+            traces.push(trace);
+        }
+        Ok(traces)
+    }
+
+    fn trace_layer_states_and_advance(
+        model: &GptOssModel,
+        cache: &mut GptOssCache,
+        token: u32,
+        position: usize,
+    ) -> Result<Vec<CpuLayerTrace>> {
+        let traces = trace_layer_states(model, cache, token, position)?;
+        cache.tokens = cache
+            .tokens
+            .checked_add(1)
+            .ok_or_else(|| candle::Error::Msg("trace cache overflowed".to_string()))?;
+        Ok(traces)
+    }
+
     #[test]
     fn cached_forward_matches_uncached_last_token_and_reset() -> Result<()> {
         let mut model = model();
@@ -1338,6 +1541,78 @@ mod tests {
             assert_close(&actual.router, &expected.router, tolerance);
             assert_eq!(actual.expert_indices, expected.expert_indices);
             assert_close(&actual.expert_weights, &expected.expert_weights, tolerance);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn task3_two_layer_independent_oracle_matches_cpu_reference_and_traces() -> Result<()> {
+        let oracle = two_layer_oracle()?;
+        assert_eq!(
+            oracle.fixture_id,
+            "synthetic-gpt-oss-task3-two-layer-oracle-v1"
+        );
+        assert_eq!(oracle.trace.token, 4);
+        assert_eq!(oracle.trace.position, 3);
+        assert_eq!(oracle.trace.layers.len(), 2);
+        let tolerance = oracle.provenance.tolerance_abs;
+
+        let uncached = model_with_options(2, false, true);
+        let uncached_logits = uncached.forward_uncached(&oracle.forward.prompt)?;
+        assert_close(&uncached_logits, &oracle.forward.uncached_logits, tolerance);
+
+        let mut cached = model_with_options(2, false, true);
+        cached.prefill(&oracle.forward.prefill, &GptOssCancellationToken::new())?;
+        let decode_token = *oracle
+            .forward
+            .decode
+            .first()
+            .ok_or_else(|| candle::Error::Msg("oracle decode token is missing".to_string()))?;
+        let decode_logits = cached.decode(decode_token, &GptOssCancellationToken::new())?;
+        assert_close(&decode_logits, &oracle.forward.decode_logits, tolerance);
+        assert_eq!(cached.cache_len(), 4);
+
+        let traced_model = model_with_options(2, false, true);
+        let mut trace_cache = GptOssCache::new(2);
+        for (position, token) in [1u32, 2, 3].into_iter().enumerate() {
+            trace_layer_states_and_advance(&traced_model, &mut trace_cache, token, position)?;
+        }
+        let actual = trace_layer_states_and_advance(
+            &traced_model,
+            &mut trace_cache,
+            oracle.trace.token,
+            oracle.trace.position,
+        )?;
+        assert_eq!(actual.len(), oracle.trace.layers.len());
+        for (layer_index, (actual, expected)) in actual.iter().zip(&oracle.trace.layers).enumerate()
+        {
+            assert_eq!(expected.sliding, layer_index.is_multiple_of(2));
+            assert_close(&actual.attention, &expected.attention, tolerance);
+            assert_close(
+                &actual.post_attention_hidden,
+                &expected.post_attention_hidden,
+                tolerance,
+            );
+            assert_close(
+                &actual.expert_contribution,
+                &expected.expert_contribution,
+                tolerance,
+            );
+            assert_close(
+                &actual.post_moe_hidden,
+                &expected.post_moe_hidden,
+                tolerance,
+            );
+            assert_close(&actual.router, &expected.router, tolerance);
+            assert_eq!(actual.expert_indices, expected.expert_indices);
+            assert_close(&actual.expert_weights, &expected.expert_weights, tolerance);
+            assert!(
+                actual
+                    .expert_weights
+                    .windows(2)
+                    .any(|weights| { (weights[0] - weights[1]).abs() > tolerance }),
+                "layer {layer_index} must exercise unequal routing weights"
+            );
         }
         Ok(())
     }

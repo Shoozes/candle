@@ -20,8 +20,8 @@ pub use config::GptOssConfig;
 #[cfg(feature = "cuda")]
 pub use cuda::{GptOssCudaConfig, GptOssCudaError, GptOssCudaModel, GptOssCudaResult};
 pub use gguf::{
-    GptOssGgufArtifact, GptOssGgufDType, GptOssGgufTensor, GptOssTensorRole,
-    SELECTED_GPT_OSS_GGUF_SHA256,
+    load_gpt_oss_weights, load_gpt_oss_weights_with_cancellation, GptOssGgufArtifact,
+    GptOssGgufDType, GptOssGgufTensor, GptOssTensorRole, SELECTED_GPT_OSS_GGUF_SHA256,
 };
 pub use model::{DenseLinear, GptOssLayerWeights, GptOssModel, GptOssWeights};
 pub use runtime::{

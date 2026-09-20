@@ -483,6 +483,32 @@ impl Mxfp4ExpertOperation {
         expert_indices: &[usize],
         expert_weights: &[f32],
     ) -> Result<Vec<f32>> {
+        self.forward_impl(inputs, token_count, expert_indices, expert_weights, true)
+    }
+
+    /// Apply the selected experts and return only their weighted contribution.
+    ///
+    /// Keeping this separate from [`Self::forward`] prevents a caller from
+    /// adding a residual state twice or subtracting an unrelated normalized
+    /// tensor to recover the contribution.
+    pub(crate) fn forward_contribution(
+        &self,
+        inputs: &[f32],
+        token_count: usize,
+        expert_indices: &[usize],
+        expert_weights: &[f32],
+    ) -> Result<Vec<f32>> {
+        self.forward_impl(inputs, token_count, expert_indices, expert_weights, false)
+    }
+
+    fn forward_impl(
+        &self,
+        inputs: &[f32],
+        token_count: usize,
+        expert_indices: &[usize],
+        expert_weights: &[f32],
+        include_residual: bool,
+    ) -> Result<Vec<f32>> {
         let hidden = self.hidden_size();
         let expected_input = checked_product(token_count, hidden, "GPT-OSS expert input")?;
         if inputs.len() != expected_input {
@@ -514,7 +540,9 @@ impl Mxfp4ExpertOperation {
             .checked_mul(2)
             .ok_or_else(|| candle::Error::Msg("GPT-OSS MLP1 width overflowed".to_string()))?;
         let mut output = allocate_f32(inputs.len())?;
-        output.copy_from_slice(inputs);
+        if include_residual {
+            output.copy_from_slice(inputs);
+        }
         let mut mlp1_output = allocate_f32(mlp1_width)?;
         let mut activated = allocate_f32(intermediate)?;
         let mut mlp2_output = allocate_f32(hidden)?;
@@ -750,6 +778,30 @@ mod tests {
         assert_eq!(
             operation.packed_resident_bytes(),
             mlp1.resident_bytes() + mlp2.resident_bytes()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn expert_contribution_contract_excludes_residual() -> Result<()> {
+        let mlp1 = PackedMxfp4::from_parts(
+            &[2, 64, 32],
+            vec![0; 2 * 64 * BYTES_PER_BLOCK],
+            vec![SCALE_BIAS as u8; 2 * 64],
+        )?;
+        let mlp2 = PackedMxfp4::from_parts(
+            &[2, 32, 32],
+            vec![0; 2 * 32 * BYTES_PER_BLOCK],
+            vec![SCALE_BIAS as u8; 2 * 32],
+        )?;
+        let operation =
+            Mxfp4ExpertOperation::new(mlp1, vec![0.0; 2 * 64], mlp2, vec![0.0; 2 * 32], 7.0)?;
+        let inputs: Vec<f32> = (0..32).map(|index| index as f32 + 0.5).collect();
+        let contribution = operation.forward_contribution(&inputs, 1, &[0, 1], &[0.25, 0.75])?;
+        assert_eq!(contribution, vec![0.0; 32]);
+        assert_eq!(
+            operation.forward(&inputs, 1, &[0, 1], &[0.25, 0.75])?,
+            inputs
         );
         Ok(())
     }
