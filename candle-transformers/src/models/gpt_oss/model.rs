@@ -1,5 +1,8 @@
 use super::GptOssConfig;
 use crate::models::gpt_oss::mxfp4::Mxfp4ExpertOperation;
+use crate::models::gpt_oss::runtime::{
+    cache_bytes_for_tokens, GptOssCancellationToken, GptOssResourceLimits, GptOssResourceUsage,
+};
 use candle::{bail, Result};
 
 /// A small dense linear container used by the CPU GPT-OSS reference path.
@@ -310,6 +313,7 @@ pub struct GptOssModel {
     config: GptOssConfig,
     weights: GptOssWeights,
     cache: GptOssCache,
+    limits: Option<GptOssResourceLimits>,
 }
 
 impl GptOssModel {
@@ -322,6 +326,25 @@ impl GptOssModel {
             cache: GptOssCache::new(weights.layers.len()),
             config,
             weights,
+            limits: None,
+        })
+    }
+
+    pub fn new_with_limits(
+        config: GptOssConfig,
+        weights: GptOssWeights,
+        limits: GptOssResourceLimits,
+    ) -> Result<Self> {
+        config.validate()?;
+        limits.validate(&config)?;
+        if weights.layers.len() != config.num_hidden_layers {
+            bail!("GPT-OSS weight layer count does not match config");
+        }
+        Ok(Self {
+            cache: GptOssCache::new(weights.layers.len()),
+            config,
+            weights,
+            limits: Some(limits),
         })
     }
 
@@ -337,13 +360,91 @@ impl GptOssModel {
         &self.config
     }
 
+    pub fn resource_limits(&self) -> Option<GptOssResourceLimits> {
+        self.limits
+    }
+
+    pub fn resource_usage(&self) -> Result<GptOssResourceUsage> {
+        let cache_bytes = cache_bytes_for_tokens(&self.config, self.cache.tokens)?;
+        let mut cache_capacity_bytes = 0usize;
+        for layer in &self.cache.layers {
+            let layer_capacity = layer
+                .keys
+                .capacity()
+                .checked_add(layer.values.capacity())
+                .and_then(|value| value.checked_mul(std::mem::size_of::<f32>()))
+                .ok_or_else(|| {
+                    candle::Error::Msg("GPT-OSS cache capacity byte count overflowed".to_string())
+                })?;
+            cache_capacity_bytes = cache_capacity_bytes
+                .checked_add(layer_capacity)
+                .ok_or_else(|| {
+                    candle::Error::Msg("GPT-OSS cache capacity byte count overflowed".to_string())
+                })?;
+        }
+        Ok(GptOssResourceUsage {
+            sequence_tokens: self.cache.tokens,
+            cache_bytes,
+            cache_capacity_bytes,
+        })
+    }
+
     /// Run the next token span using the model's retained KV cache and return
     /// logits for the final token in the span. A failed forward leaves the
     /// retained cache unchanged.
     pub fn forward(&mut self, input_ids: &[u32]) -> Result<Vec<f32>> {
+        self.forward_transaction(input_ids, None)
+    }
+
+    /// Run a prompt-prefill span with cooperative cancellation and rollback.
+    pub fn prefill(
+        &mut self,
+        input_ids: &[u32],
+        cancellation: &GptOssCancellationToken,
+    ) -> Result<Vec<f32>> {
+        self.forward_transaction(input_ids, Some(cancellation))
+    }
+
+    /// Run one cached decode token with cooperative cancellation and rollback.
+    pub fn decode(
+        &mut self,
+        input_id: u32,
+        cancellation: &GptOssCancellationToken,
+    ) -> Result<Vec<f32>> {
+        self.forward_transaction(&[input_id], Some(cancellation))
+    }
+
+    /// Run an arbitrary retained span with cooperative cancellation and
+    /// all-or-rollback cache semantics.
+    pub fn forward_with_cancellation(
+        &mut self,
+        input_ids: &[u32],
+        cancellation: &GptOssCancellationToken,
+    ) -> Result<Vec<f32>> {
+        self.forward_transaction(input_ids, Some(cancellation))
+    }
+
+    fn forward_transaction(
+        &mut self,
+        input_ids: &[u32],
+        cancellation: Option<&GptOssCancellationToken>,
+    ) -> Result<Vec<f32>> {
+        validate_input_ids(&self.config, input_ids)?;
+        if let Some(limits) = self.limits {
+            limits.admit(&self.config, self.cache.tokens, input_ids.len())?;
+        }
+        if let Some(cancellation) = cancellation {
+            cancellation.checkpoint()?;
+        }
         let (checkpoint_tokens, layer_checkpoints) = self.cache.checkpoint()?;
-        let result =
-            Self::forward_with_cache(&self.config, &self.weights, input_ids, &mut self.cache);
+        let result = Self::forward_with_cache(
+            &self.config,
+            &self.weights,
+            self.limits.as_ref(),
+            cancellation,
+            input_ids,
+            &mut self.cache,
+        );
         match result {
             Ok(logits) => Ok(logits),
             Err(error) => match self.cache.rollback(checkpoint_tokens, &layer_checkpoints) {
@@ -359,28 +460,36 @@ impl GptOssModel {
     /// cache.  This is the reference side of the cache-equivalence proof.
     pub fn forward_uncached(&self, input_ids: &[u32]) -> Result<Vec<f32>> {
         let mut cache = GptOssCache::new(self.weights.layers.len());
-        Self::forward_with_cache(&self.config, &self.weights, input_ids, &mut cache)
+        Self::forward_with_cache(
+            &self.config,
+            &self.weights,
+            None,
+            None,
+            input_ids,
+            &mut cache,
+        )
     }
 
     fn forward_with_cache(
         config: &GptOssConfig,
         weights: &GptOssWeights,
+        limits: Option<&GptOssResourceLimits>,
+        cancellation: Option<&GptOssCancellationToken>,
         input_ids: &[u32],
         cache: &mut GptOssCache,
     ) -> Result<Vec<f32>> {
-        if input_ids.is_empty() {
-            bail!("GPT-OSS forward requires at least one input token");
+        validate_input_ids(config, input_ids)?;
+        if let Some(limits) = limits {
+            limits.admit(config, cache.tokens, input_ids.len())?;
         }
-        for (index, &token) in input_ids.iter().enumerate() {
-            if token as usize >= config.vocab_size {
-                bail!(
-                    "GPT-OSS input token {token} at position {index} exceeds vocab size {}",
-                    config.vocab_size
-                );
-            }
+        if let Some(cancellation) = cancellation {
+            cancellation.checkpoint()?;
         }
         let mut logits = Vec::new();
         for &token in input_ids {
+            if let Some(cancellation) = cancellation {
+                cancellation.checkpoint()?;
+            }
             let token = token as usize;
             let embedding_offset = token.checked_mul(config.hidden_size).ok_or_else(|| {
                 candle::Error::Msg("GPT-OSS embedding offset overflowed".to_string())
@@ -407,6 +516,9 @@ impl GptOssModel {
                 .tokens
                 .checked_add(1)
                 .ok_or_else(|| candle::Error::Msg("GPT-OSS cache length overflowed".to_string()))?;
+            if let Some(cancellation) = cancellation {
+                cancellation.checkpoint()?;
+            }
         }
         Ok(logits)
     }
@@ -521,6 +633,21 @@ impl GptOssModel {
         }
         Ok(hidden)
     }
+}
+
+fn validate_input_ids(config: &GptOssConfig, input_ids: &[u32]) -> Result<()> {
+    if input_ids.is_empty() {
+        bail!("GPT-OSS forward requires at least one input token");
+    }
+    for (index, &token) in input_ids.iter().enumerate() {
+        if token as usize >= config.vocab_size {
+            bail!(
+                "GPT-OSS input token {token} at position {index} exceeds vocab size {}",
+                config.vocab_size
+            );
+        }
+    }
+    Ok(())
 }
 
 fn route_top_k(gate: &[f32], top_k: usize, expert_count: usize) -> Result<(Vec<usize>, Vec<f32>)> {
@@ -778,9 +905,92 @@ fn allocate_f32(length: usize) -> Result<Vec<f32>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::gpt_oss::cache_bytes_per_token;
     use crate::models::gpt_oss::mxfp4::{
         BYTES_PER_BLOCK, FP4_VALUES, SCALE_BIAS, VALUES_PER_BLOCK,
     };
+    use serde::Deserialize;
+    use sha2::{Digest, Sha256};
+
+    const ORACLE_BYTES: &[u8] =
+        include_bytes!("../../../../tests/fixtures/gpt_oss_task2/oracle.json");
+    const ORACLE_SHA256: &str = "db79441a688bce500217635051372270fce02b7e6f8f03d769855ac290d4ab04";
+
+    #[derive(Debug, Deserialize)]
+    struct Oracle {
+        fixture_id: String,
+        forward: OracleForward,
+        packed: OraclePacked,
+        provenance: OracleProvenance,
+        transitions: OracleTransitions,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct OracleForward {
+        decode: Vec<u32>,
+        decode_logits: Vec<f32>,
+        prefill: Vec<u32>,
+        prompt: Vec<u32>,
+        uncached_logits: Vec<f32>,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct OraclePacked {
+        input: Vec<f32>,
+        output: Vec<f32>,
+        selected_expert: usize,
+        shape: Vec<usize>,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct OracleProvenance {
+        tolerance_abs: f32,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct OracleTransitions {
+        token_1: OracleTransition,
+        token_3_decode: OracleTransition,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct OracleTransition {
+        attention: Vec<f32>,
+        expert_indices: Vec<usize>,
+        expert_weights: Vec<f32>,
+        router: Vec<f32>,
+    }
+
+    struct ActualTransition {
+        attention: Vec<f32>,
+        expert_indices: Vec<usize>,
+        expert_weights: Vec<f32>,
+        router: Vec<f32>,
+    }
+
+    fn oracle() -> Result<Oracle> {
+        let actual = format!("{:x}", Sha256::digest(ORACLE_BYTES));
+        if actual != ORACLE_SHA256 {
+            bail!(
+                "GPT-OSS Task 2 oracle fixture changed: expected {}, got {}",
+                ORACLE_SHA256,
+                actual
+            );
+        }
+        serde_json::from_slice(ORACLE_BYTES).map_err(|error| {
+            candle::Error::Msg(format!("invalid GPT-OSS Task 2 oracle fixture: {error}"))
+        })
+    }
+
+    fn assert_close(actual: &[f32], expected: &[f32], tolerance: f32) {
+        assert_eq!(actual.len(), expected.len());
+        for (index, (&actual, &expected)) in actual.iter().zip(expected).enumerate() {
+            assert!(
+                (actual - expected).abs() <= tolerance,
+                "oracle mismatch at {index}: actual={actual}, expected={expected}, tolerance={tolerance}"
+            );
+        }
+    }
 
     fn config() -> GptOssConfig {
         GptOssConfig {
@@ -878,6 +1088,127 @@ mod tests {
         GptOssModel::new(config, weights).unwrap()
     }
 
+    fn model_with_limits(limits: GptOssResourceLimits) -> GptOssModel {
+        let base = model();
+        GptOssModel::new_with_limits(base.config.clone(), base.weights.clone(), limits).unwrap()
+    }
+
+    fn trace_token(
+        model: &GptOssModel,
+        cache: &mut GptOssCache,
+        token: u32,
+        position: usize,
+    ) -> Result<ActualTransition> {
+        let token = usize::try_from(token)
+            .map_err(|_| candle::Error::Msg("oracle token does not fit usize".to_string()))?;
+        let embedding_offset = token
+            .checked_mul(model.config.hidden_size)
+            .ok_or_else(|| candle::Error::Msg("oracle embedding offset overflowed".to_string()))?;
+        let embedding_end = embedding_offset
+            .checked_add(model.config.hidden_size)
+            .ok_or_else(|| candle::Error::Msg("oracle embedding range overflowed".to_string()))?;
+        let hidden = model
+            .weights
+            .token_embedding
+            .get(embedding_offset..embedding_end)
+            .ok_or_else(|| candle::Error::Msg("oracle embedding row is out of bounds".to_string()))?
+            .to_vec();
+        let layer = model
+            .weights
+            .layers
+            .first()
+            .ok_or_else(|| candle::Error::Msg("oracle layer is missing".to_string()))?;
+        let normalized = rms_norm(&hidden, &layer.attention_norm, 1e-5)?;
+        let qkv = layer.qkv.forward(&normalized)?;
+        let q_width = model
+            .config
+            .num_attention_heads
+            .checked_mul(model.config.head_dim)
+            .ok_or_else(|| candle::Error::Msg("oracle query width overflowed".to_string()))?;
+        let kv_width = model
+            .config
+            .num_key_value_heads
+            .checked_mul(model.config.head_dim)
+            .ok_or_else(|| candle::Error::Msg("oracle KV width overflowed".to_string()))?;
+        let mut query = qkv
+            .get(..q_width)
+            .ok_or_else(|| candle::Error::Msg("oracle query is out of bounds".to_string()))?
+            .to_vec();
+        let mut key = qkv
+            .get(q_width..q_width + kv_width)
+            .ok_or_else(|| candle::Error::Msg("oracle key is out of bounds".to_string()))?
+            .to_vec();
+        let value_start = q_width
+            .checked_add(kv_width)
+            .ok_or_else(|| candle::Error::Msg("oracle value offset overflowed".to_string()))?;
+        let value = qkv
+            .get(value_start..)
+            .ok_or_else(|| candle::Error::Msg("oracle value is out of bounds".to_string()))?
+            .to_vec();
+        apply_rope(
+            &mut query,
+            model.config.num_attention_heads,
+            model.config.head_dim,
+            position,
+            &model.config,
+        )?;
+        apply_rope(
+            &mut key,
+            model.config.num_key_value_heads,
+            model.config.head_dim,
+            position,
+            &model.config,
+        )?;
+        let layer_cache = cache
+            .layers
+            .first_mut()
+            .ok_or_else(|| candle::Error::Msg("oracle layer cache is missing".to_string()))?;
+        layer_cache.keys.extend_from_slice(&key);
+        layer_cache.values.extend_from_slice(&value);
+        layer_cache.tokens = layer_cache
+            .tokens
+            .checked_add(1)
+            .ok_or_else(|| candle::Error::Msg("oracle layer cache overflowed".to_string()))?;
+        let attention_values = attention(
+            &query,
+            &layer_cache.keys,
+            &layer_cache.values,
+            &layer.sinks,
+            layer_cache.tokens,
+            true,
+            &model.config,
+        )?;
+        let attention_update = layer.attention_out.forward(&attention_values)?;
+        let hidden = add_vectors(&hidden, &attention_update)?;
+        let normalized = rms_norm(&hidden, &layer.moe_norm, 1e-5)?;
+        let router = layer.gate.forward(&normalized)?;
+        let (expert_indices, expert_weights) = route_top_k(
+            &router,
+            model.config.experts_per_token,
+            model.config.num_experts,
+        )?;
+        Ok(ActualTransition {
+            attention: attention_values,
+            expert_indices,
+            expert_weights,
+            router,
+        })
+    }
+
+    fn trace_and_advance(
+        model: &GptOssModel,
+        cache: &mut GptOssCache,
+        token: u32,
+        position: usize,
+    ) -> Result<ActualTransition> {
+        let transition = trace_token(model, cache, token, position)?;
+        cache.tokens = cache
+            .tokens
+            .checked_add(1)
+            .ok_or_else(|| candle::Error::Msg("oracle cache overflowed".to_string()))?;
+        Ok(transition)
+    }
+
     #[test]
     fn cached_forward_matches_uncached_last_token_and_reset() -> Result<()> {
         let mut model = model();
@@ -896,6 +1227,136 @@ mod tests {
         for (actual, expected) in replay.iter().zip(expected.iter()) {
             assert!((actual - expected).abs() <= 1e-5, "{actual} != {expected}");
         }
+        Ok(())
+    }
+
+    #[test]
+    fn task2_independent_oracle_covers_packed_router_attention_and_cache() -> Result<()> {
+        let oracle = oracle()?;
+        assert_eq!(oracle.fixture_id, "synthetic-gpt-oss-task2-oracle-v1");
+        let tolerance = oracle.provenance.tolerance_abs;
+
+        let packed_weight = packed(&oracle.packed.shape, 1);
+        let packed_output = packed_weight.matmul_selected(
+            &oracle.packed.input,
+            1,
+            &[oracle.packed.selected_expert],
+        )?;
+        assert_close(&packed_output, &oracle.packed.output, tolerance);
+
+        let candidate = model();
+        let uncached_logits = candidate.forward_uncached(&oracle.forward.prompt)?;
+        assert_close(&uncached_logits, &oracle.forward.uncached_logits, tolerance);
+
+        let mut cached = model();
+        let cancellation = GptOssCancellationToken::new();
+        cached.prefill(&oracle.forward.prefill, &cancellation)?;
+        let decode_token = *oracle
+            .forward
+            .decode
+            .first()
+            .ok_or_else(|| candle::Error::Msg("oracle decode token is missing".to_string()))?;
+        let decode_logits = cached.decode(decode_token, &cancellation)?;
+        assert_close(&decode_logits, &oracle.forward.decode_logits, tolerance);
+        assert_eq!(cached.cache_len(), 3);
+
+        let mut trace_cache = GptOssCache::new(1);
+        let token_1 = trace_and_advance(&candidate, &mut trace_cache, 1, 0)?;
+        let _token_2 = trace_and_advance(&candidate, &mut trace_cache, 2, 1)?;
+        let token_3 = trace_and_advance(&candidate, &mut trace_cache, 3, 2)?;
+        for (actual, expected) in [
+            (token_1, oracle.transitions.token_1),
+            (token_3, oracle.transitions.token_3_decode),
+        ] {
+            assert_close(&actual.attention, &expected.attention, tolerance);
+            assert_close(&actual.router, &expected.router, tolerance);
+            assert_eq!(actual.expert_indices, expected.expert_indices);
+            assert_close(&actual.expert_weights, &expected.expert_weights, tolerance);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn resource_limits_admit_exact_boundary_and_reject_one_over() -> Result<()> {
+        let config = config();
+        let bytes_per_token = cache_bytes_per_token(&config)?;
+        assert_eq!(model().resource_limits(), None);
+        let mut exact = model_with_limits(GptOssResourceLimits {
+            max_sequence_tokens: 4,
+            max_cache_bytes: bytes_per_token * 4,
+        });
+        let cancellation = GptOssCancellationToken::new();
+        exact.prefill(&[1, 2, 3, 4], &cancellation)?;
+        assert_eq!(
+            exact.resource_usage()?,
+            GptOssResourceUsage {
+                sequence_tokens: 4,
+                cache_bytes: bytes_per_token * 4,
+                cache_capacity_bytes: exact.resource_usage()?.cache_capacity_bytes,
+            }
+        );
+        let before = exact.resource_usage()?;
+        let error = exact
+            .decode(5, &cancellation)
+            .expect_err("one token above the exact sequence bound must fail");
+        assert!(error.to_string().contains("sequence admission"));
+        assert_eq!(
+            exact.resource_usage()?.sequence_tokens,
+            before.sequence_tokens
+        );
+        assert_eq!(exact.resource_usage()?.cache_bytes, before.cache_bytes);
+
+        let mut byte_limited = model_with_limits(GptOssResourceLimits {
+            max_sequence_tokens: 5,
+            max_cache_bytes: bytes_per_token * 4,
+        });
+        byte_limited.prefill(&[1, 2, 3, 4], &cancellation)?;
+        let error = byte_limited
+            .decode(5, &cancellation)
+            .expect_err("one token above the exact byte bound must fail");
+        assert!(error.to_string().contains("KV-cache admission"));
+        assert_eq!(byte_limited.cache_len(), 4);
+
+        let mut under = model_with_limits(GptOssResourceLimits {
+            max_sequence_tokens: 4,
+            max_cache_bytes: bytes_per_token * 4 - 1,
+        });
+        let error = under
+            .prefill(&[1, 2, 3, 4], &cancellation)
+            .expect_err("one byte below the exact bound must fail before mutation");
+        assert!(error.to_string().contains("KV-cache admission"));
+        assert_eq!(under.cache_len(), 0);
+        assert_eq!(under.resource_usage()?.cache_bytes, 0);
+        Ok(())
+    }
+
+    #[test]
+    fn cancellation_and_reset_release_owned_cache_buffers() -> Result<()> {
+        let mut cancelled_model = model();
+        let cancellation = GptOssCancellationToken::cancel_after_checks(3);
+        let error = cancelled_model
+            .prefill(&[1, 2], &cancellation)
+            .expect_err("mid-prefill cancellation must fail");
+        assert!(error.to_string().contains("cancelled"));
+        assert_eq!(cancelled_model.cache_len(), 0);
+        let partial = cancelled_model.resource_usage()?;
+        assert_eq!(partial.cache_bytes, 0);
+        assert!(partial.cache_capacity_bytes > 0);
+
+        cancelled_model.reset_cache();
+        assert_eq!(cancelled_model.resource_usage()?.cache_capacity_bytes, 0);
+
+        let mut decode_model = model();
+        let no_cancel = GptOssCancellationToken::new();
+        decode_model.prefill(&[1, 2], &no_cancel)?;
+        let before = decode_model.resource_usage()?;
+        let cancellation = GptOssCancellationToken::new();
+        cancellation.cancel();
+        let error = decode_model
+            .decode(3, &cancellation)
+            .expect_err("cancelled decode must fail before mutation");
+        assert!(error.to_string().contains("cancelled"));
+        assert_eq!(decode_model.resource_usage()?, before);
         Ok(())
     }
 

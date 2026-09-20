@@ -10,6 +10,7 @@ mod config;
 mod gguf;
 mod model;
 pub mod mxfp4;
+mod runtime;
 
 pub use checkpoint::GptOssCheckpoint;
 pub use config::GptOssConfig;
@@ -18,3 +19,7 @@ pub use gguf::{
     SELECTED_GPT_OSS_GGUF_SHA256,
 };
 pub use model::{DenseLinear, GptOssLayerWeights, GptOssModel, GptOssWeights};
+pub use runtime::{
+    cache_bytes_for_tokens, cache_bytes_per_token, GptOssCancellationToken, GptOssLoadLease,
+    GptOssLoadRegistry, GptOssLoadedHandle, GptOssResourceLimits, GptOssResourceUsage,
+};

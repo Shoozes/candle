@@ -49,21 +49,32 @@
       ]
     },
     "feature__gpt_oss_experimental": {
-      "description": "Experimental GPT-OSS checkpoint admission, packed MXFP4 blocks/scales, hash-pinned GGUF inventory/config normalization, CPU expert reference, and synthetic forward/cache proof.",
+      "description": "Experimental GPT-OSS checkpoint admission, packed MXFP4 blocks/scales, and hash-pinned source/config records.",
       "status": "active",
       "paths": [
         "candle-transformers/src/models/mod.rs",
         "candle-transformers/src/models/gpt_oss/mod.rs",
         "candle-transformers/src/models/gpt_oss/checkpoint.rs",
         "candle-transformers/src/models/gpt_oss/config.rs",
-        "candle-transformers/src/models/gpt_oss/gguf.rs",
         "candle-transformers/src/models/gpt_oss/mxfp4.rs",
-        "candle-transformers/src/models/gpt_oss/model.rs",
-        "docs/lfm2-vl/DECISIONS.md",
         "docs/gpt-oss/MOD_MANIFEST.md",
         "docs/gpt-oss/SOURCES.md",
-        "docs/gpt-oss/STATUS.md",
         "scripts/gpt-oss/verify-mod-manifest.sh"
+      ]
+    },
+    "feature__gpt_oss_task2_proof": {
+      "description": "Independent GPT-OSS packed/router/attention/cache oracle plus exact token/KV-byte admission, cancellation rollback, and RAII load ownership proof.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/gpt_oss/gguf.rs",
+        "candle-transformers/src/models/gpt_oss/mod.rs",
+        "candle-transformers/src/models/gpt_oss/model.rs",
+        "candle-transformers/src/models/gpt_oss/runtime.rs",
+        "tests/fixtures/gpt_oss_task2/README.md",
+        "tests/fixtures/gpt_oss_task2/oracle.json",
+        "docs/gpt-oss/MOD_MANIFEST.md",
+        "docs/gpt-oss/SOURCES.md",
+        "docs/gpt-oss/STATUS.md"
       ]
     },
     "feature__siglip2_naflex": {

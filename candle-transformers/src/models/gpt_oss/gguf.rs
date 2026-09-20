@@ -7,6 +7,9 @@
 //! Candle model.
 
 use super::GptOssConfig;
+use crate::models::gpt_oss::runtime::{
+    GptOssCancellationToken, GptOssLoadRegistry, GptOssLoadedHandle,
+};
 use candle::{bail, Result};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
@@ -177,6 +180,55 @@ impl GptOssGgufArtifact {
         file.seek(SeekFrom::Start(0))?;
         let parsed = parse_gguf(&mut file, file_size)?;
         Self::from_parsed(path.to_path_buf(), sha256, parsed)
+    }
+
+    /// Admit one local artifact while holding a duplicate-load lease.
+    ///
+    /// A failed admission drops the in-progress lease, so a later retry can
+    /// reopen the same path.  A successful result keeps ownership until the
+    /// returned handle is dropped.
+    pub fn open_with_registry(
+        path: impl AsRef<Path>,
+        registry: &GptOssLoadRegistry,
+    ) -> Result<(Self, GptOssLoadedHandle)> {
+        Self::open_with_registry_inner(path, registry, None)
+    }
+
+    /// Admit one local artifact with cooperative cancellation.
+    pub fn open_with_registry_with_cancellation(
+        path: impl AsRef<Path>,
+        registry: &GptOssLoadRegistry,
+        cancellation: &GptOssCancellationToken,
+    ) -> Result<(Self, GptOssLoadedHandle)> {
+        Self::open_with_registry_inner(path, registry, Some(cancellation))
+    }
+
+    fn open_with_registry_inner(
+        path: impl AsRef<Path>,
+        registry: &GptOssLoadRegistry,
+        cancellation: Option<&GptOssCancellationToken>,
+    ) -> Result<(Self, GptOssLoadedHandle)> {
+        let path = path.as_ref();
+        let canonical_path = std::fs::canonicalize(path).map_err(|error| {
+            candle::Error::Msg(format!(
+                "failed to canonicalize GPT-OSS GGUF {:?}: {error}",
+                path
+            ))
+        })?;
+        if let Some(cancellation) = cancellation {
+            cancellation.checkpoint()?;
+        }
+        let identity = canonical_path.to_string_lossy().into_owned();
+        let lease = registry.begin(identity)?;
+        if let Some(cancellation) = cancellation {
+            cancellation.checkpoint()?;
+        }
+        let artifact = Self::open(&canonical_path)?;
+        if let Some(cancellation) = cancellation {
+            cancellation.checkpoint()?;
+        }
+        let handle = lease.commit()?;
+        Ok((artifact, handle))
     }
 
     pub fn path(&self) -> &Path {
@@ -1286,7 +1338,9 @@ fn validate_dtype(role: &GptOssTensorRole, dtype: GptOssGgufDType, name: &str) -
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::gpt_oss::GptOssLoadRegistry;
     use std::io::Write;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn normalizes_and_owns_tiny_fused_gguf() -> Result<()> {
@@ -1377,6 +1431,67 @@ mod tests {
         let error =
             parse_test_bytes(&renamed, &renamed_hash).expect_err("unowned tensor name must fail");
         assert!(error.to_string().contains("tensor identity mismatch"));
+        Ok(())
+    }
+
+    #[test]
+    fn failed_registered_load_releases_lease_for_retry() -> Result<()> {
+        let path = std::env::temp_dir().join(format!(
+            "gpt-oss-task2-{}-{}.gguf",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map_err(candle::Error::wrap)?
+                .as_nanos()
+        ));
+        std::fs::write(&path, tiny_gguf()?).map_err(candle::Error::wrap)?;
+        let registry = GptOssLoadRegistry::default();
+
+        let error = GptOssGgufArtifact::open_with_registry(&path, &registry)
+            .expect_err("wrong-identity fixture must fail registered admission");
+        assert!(error.to_string().contains("identity mismatch"));
+        assert_eq!(registry.active_count()?, 0);
+        assert_eq!(registry.loaded_count()?, 0);
+
+        let retry = GptOssGgufArtifact::open_with_registry(&path, &registry)
+            .expect_err("retry should reach the same identity check, not a duplicate-load error");
+        assert!(retry.to_string().contains("identity mismatch"));
+        assert_eq!(registry.active_count()?, 0);
+        assert_eq!(registry.loaded_count()?, 0);
+        std::fs::remove_file(&path).map_err(candle::Error::wrap)?;
+        Ok(())
+    }
+
+    #[test]
+    fn cancelled_registered_load_releases_lease_for_retry() -> Result<()> {
+        let path = std::env::temp_dir().join(format!(
+            "gpt-oss-task2-cancelled-{}-{}.gguf",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map_err(candle::Error::wrap)?
+                .as_nanos()
+        ));
+        std::fs::write(&path, tiny_gguf()?).map_err(candle::Error::wrap)?;
+        let registry = GptOssLoadRegistry::default();
+        let cancellation = GptOssCancellationToken::cancel_after_checks(1);
+
+        let error = GptOssGgufArtifact::open_with_registry_with_cancellation(
+            &path,
+            &registry,
+            &cancellation,
+        )
+        .expect_err("cancellation after lease acquisition must fail the load");
+        assert!(error.to_string().contains("cancelled"));
+        assert_eq!(registry.active_count()?, 0);
+        assert_eq!(registry.loaded_count()?, 0);
+
+        let retry = GptOssGgufArtifact::open_with_registry(&path, &registry)
+            .expect_err("retry should reach identity validation after cancellation cleanup");
+        assert!(retry.to_string().contains("identity mismatch"));
+        assert_eq!(registry.active_count()?, 0);
+        assert_eq!(registry.loaded_count()?, 0);
+        std::fs::remove_file(&path).map_err(candle::Error::wrap)?;
         Ok(())
     }
 

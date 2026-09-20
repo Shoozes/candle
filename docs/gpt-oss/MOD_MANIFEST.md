@@ -2,8 +2,9 @@
 
 This manifest registers the experimental GPT-OSS support boundary separately
 from the maintained LFM2-VL/Q8 product overlay. It owns only Candle-side
-configuration admission, packed MXFP4 storage/loading, and deterministic CPU
-reference code. It does not promote GPT-OSS to the product default.
+configuration admission, packed MXFP4 storage/loading, deterministic CPU
+reference code, and the bounded Task 2 proof seam. It does not promote
+GPT-OSS to the product default.
 
 ## Current state
 
@@ -18,16 +19,23 @@ reference code. It does not promote GPT-OSS to the product default.
   `GptOssConfig`, and the complete tensor inventory is owned by role, shape,
   dtype, and bounded raw byte range. Fused and current converter-style split
   expert layouts are fail-closed and covered by synthetic GGUF fixtures.
+- Task 2 is delivered for the synthetic CPU boundary: an independently
+  generated packed/router/attention/forward/cache oracle is digest-pinned,
+  token and logical KV-cache byte admission is checked before mutation,
+  prefill/decode cancellation rolls back retained state, and cancellable RAII
+  load leases prevent duplicates while releasing cancelled, failed, and
+  completed ownership.
 - No real GPT-OSS checkpoint, tokenizer, artifact manifest, production trace,
   or CUDA execution has been loaded or claimed; the owner-selected artifact
   is not stored in this checkout.
 - Candle's maintained Q8 path and LFM2-VL release boundary remain unchanged.
 
-The implementation remains execution-free at this boundary. The C2a loader
-admits one exact GGUF byte identity and normalizes its directory without
-dequantizing or constructing a live model. A future executor must publish its
-external artifact receipt and independent numerical fixtures before any
-runtime or parity claim is made.
+The implementation remains production-execution-free at this boundary. The
+C2a loader admits one exact GGUF byte identity and normalizes its directory
+without dequantizing or constructing a live model. Task 2 exercises only the
+existing synthetic CPU reference model and bounded ownership contracts. A
+future executor must publish its external artifact receipt before any exact
+model or CUDA parity claim is made.
 
 ## Overlay-owned additions
 
@@ -40,6 +48,9 @@ runtime or parity claim is made.
 - `candle-transformers/src/models/gpt_oss/gguf.rs`
 - `candle-transformers/src/models/gpt_oss/mxfp4.rs`
 - `candle-transformers/src/models/gpt_oss/model.rs`
+- `candle-transformers/src/models/gpt_oss/runtime.rs`
+- `tests/fixtures/gpt_oss_task2/README.md`
+- `tests/fixtures/gpt_oss_task2/oracle.json`
 - `scripts/gpt-oss/verify-mod-manifest.sh`
 
 ## Shared overlay paths
@@ -71,16 +82,19 @@ repository-wide shared-path registry:
 - `Mxfp4ExpertOperation` applies the official FP4 lookup, E8M0 scale, SwiGLU,
   selected-expert routing, and residual reference operation.
 - `GptOssModel`/`GptOssWeights` provide a synthetic CPU forward/cache proof
-  boundary. `GptOssCheckpoint::open` is the only C0 admission boundary; no
-  production model loader is exposed in C1.
+  boundary with explicit sequence/KV-byte limits, prefill/decode cancellation,
+  rollback, and logical/capacity usage reporting.
+- `GptOssLoadRegistry` and `GptOssGgufArtifact::open_with_registry` provide
+  duplicate-load prevention plus RAII release on failed retry and completed
+  load ownership. No worker process or hidden download is created.
 
 ## Completion boundary
 
-The next dependency is Task 2: independent numerical fixtures plus explicit
-token/cache byte bounds, cancellation/rollback, and no-duplicate/load-leak
-evidence for the admitted GGUF boundary. Only after that gate is accepted
-should a packed CUDA executor be proposed.
+Task 2 is complete for the bounded synthetic CPU proof boundary. The next
+dependency is a separately reviewed packed CUDA executor, still blocked from
+exact-model parity claims until the owner-selected product artifact and its
+external receipt are available.
 
 ---
 
-AI-edited: 2026-09-19; agent=Codex; task=gpt-oss-c0-c1; change=registered experimental packed-MXFP4 CPU boundary
+AI-edited: 2026-09-20; agent=Codex; task=gpt-oss-task2; change=added independent numerical and bounded resource proof

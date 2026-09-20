@@ -51,7 +51,7 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   summary/layout/overlay verifiers, `git diff --check`, clean status, guarded
   remote equality, and annotated-tag peel/asset comparison.
 
-### [ ] GPT-OSS Task 2: independent GGUF numerical and resource proof
+### [x] GPT-OSS Task 2: independent GGUF numerical and resource proof
 
 - What: Add independent numerical fixtures for the hash-pinned GPT-OSS GGUF
   admission boundary, plus explicit token/cache byte bounds,
@@ -68,10 +68,34 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   and record exact counts, byte ceilings, identities, and cleanup results.
 - Done when: Independent component values, resource bounds, rollback, and
   duplicate/load-leak checks pass on native CPU with no Q8/default behavior
-  change; CUDA remains unopened until this gate is green.
+  change; CUDA remains unopened until this gate is green. **Complete:** the
+  digest-pinned synthetic oracle and all resource/rollback/ownership checks
+  pass in the 27-test focused GPT-OSS run.
 - Verification: Focused GPT-OSS tests, locked native transformer checks,
   summary-bank and overlay verifiers, `cargo fmt --all -- --check`,
   `git diff --check`, and the full guarded publication gate.
+
+### [ ] GPT-OSS Task 3: packed CUDA executor
+
+- What: Design and implement a packed CUDA executor for the admitted GPT-OSS
+  GGUF representation without silently densifying the major MXFP4 weights.
+- Why: CUDA work is ordered behind the independent CPU numerical and resource
+  proof and must not hide model, cache, or ownership defects.
+- When: Only after Task 2 is accepted and the owner authorizes this separate
+  gate; exact-product loading/parity remains separately gated by the missing
+  external artifact receipt.
+- Where: `candle-transformers/src/models/gpt_oss/`, CUDA-gated kernels/tests,
+  and the GPT-OSS proof records. Do not change Edge/Harmony integration or the
+  maintained Q8 default.
+- How: Preserve the admitted tensor identity, prove packed-resident ownership,
+  match the independent CPU oracle on the available CUDA lane, and publish
+  explicit device memory, cancellation, rollback, and cleanup evidence.
+- Done when: CPU parity remains green, the packed CUDA path is opt-in and
+  feature-gated, no dense fallback is hidden, resource/cleanup receipts pass,
+  and exact-model claims remain excluded without the external product receipt.
+- Verification: CPU focused/full gates first, then the authorized CUDA build,
+  numerical comparison, memory/cleanup receipt, summary-bank and overlay
+  verifiers, and guarded publication.
 
 ### [ ] Close the native 3B and official 400M Q8 MMProj production proof gap
 

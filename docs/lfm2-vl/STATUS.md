@@ -92,28 +92,30 @@
 
 ## Separate GPT-OSS Experimental Handoff
 
-- Current phase: Task 1 / C2a exact GGUF admission and config/tensor
-  normalization, committed at source revision
-  `67a7fe605194384c1505df96b536c3238ad408e1` with tree
-  `fa35de0a6438992e5aa6bc6b4429bb18ed44005b`.
+- Current phase: Task 2 / C2b independent numerical and bounded resource proof
+  for the GPT-OSS experimental overlay.
 - Baseline: clean published `main`
-  `d830e03078a29d39a1aacd741620475eb33b7609`.
-- Last green verification: 19/19 focused GPT-OSS tests, the full native
+  `f9c51b4fb2717342644d75806f99d92da78d3f9a`.
+- Task 1 source: `67a7fe605194384c1505df96b536c3238ad408e1`, tree
+  `fa35de0a6438992e5aa6bc6b4429bb18ed44005b`.
+- Last green verification: 27/27 focused GPT-OSS tests, the full native
   `.tools/verify-before-push.ps1` gate, summary-bank verification, both
-  overlay-specific checks, and the rolling-baseline union overlay gate passed.
-- Delivery files: `candle-transformers/src/models/gpt_oss/gguf.rs` and module
-  export, GPT-OSS manifest/source/status records, the GPT decision record, and
-  the baseline-aware verifier registrations.
-- Proven: selected-SHA admission before GGUF parsing, strict v2/v3 metadata
-  and range validation, normalized `gpt-oss`/`gpt_oss` configuration, complete
-  fused and converter-style split tensor ownership, malformed/truncated/wrong
-  identity rejection, and same-size file mutation rejection on raw reads.
+  overlay-specific checks, and the rolling-baseline union overlay gate passed
+  for the Task 2 delivery.
+- Delivery files: GPT-OSS runtime/resource contracts, the independent oracle
+  fixture and digest record, GPT-OSS manifest/status updates, the GPT decision
+  record, and the shared handoff/backlog updates.
+- Proven: the Task 1 selected-SHA GGUF admission and tensor inventory plus
+  independent packed/router/attention/forward/cache values at absolute
+  tolerance `1e-4`; exact 128-byte/token logical KV accounting with boundary
+  and one-over rejection; prefill/decode cancellation and failure rollback;
+  and duplicate-load prevention with cancellation cleanup, retry/reopen, and
+  zero active/loaded ownership after release.
 - Known limitation/blocker: the owner-selected product GGUF with SHA-256
   `aab205256a9b6361e410c24de3086e30f907092ca6f9ba8cd4b22c8a2b025778` is not
   present, so no exact-model load, numerical parity, tokenizer, or CUDA claim
-  is made. Task 2 must add independent numerical fixtures, token/cache byte
-  bounds, cancellation/rollback, and no-duplicate/load-leak evidence before
-  any packed CUDA executor. Q8 remains the maintained product default.
+  is made. The packed CUDA executor is the next separately reviewed gate.
+  Q8 remains the maintained product default.
 
 ## Latest Integrity Review (2026-08-21)
 

@@ -11,7 +11,7 @@ integration plan.
 | --- | --- | --- |
 | LFM2-VL/MMProj | `docs/lfm2-vl/MOD_MANIFEST.md` | Proven model, loader, processor, fixture, and verification work |
 | SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic three-component SDXL LoRA transaction, controlled unsupported flash-attention failure, and exact residual/opt-in `text_time` UNet conditioning |
-| GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Hash-pinned GGUF admission/config normalization, packed MXFP4 storage/loading, and synthetic CPU reference proof; no live-model or CUDA claim |
+| GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Hash-pinned GGUF admission/config normalization, packed MXFP4 storage/loading, independent synthetic CPU numerical/resource proof; no live-model or CUDA claim |
 
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each

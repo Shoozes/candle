@@ -1443,5 +1443,38 @@ or downloaded by this repository, no GGUF tensor is dequantized, and no live
 CPU or CUDA model parity is claimed. Independent numerical, byte-bound, and
 rollback evidence remains a required Task 2 gate before a packed CUDA executor.
 
+## D-0065: Keep GPT-OSS Task 2 Numerical and Resource Proof Independent
+
+Status: Accepted for the owner-authorized GPT-OSS Task 2/C2b slice.
+
+Decision:
+Use a checked-in, raw-byte synthetic oracle generated outside the Candle Rust
+implementation, pinned to the recorded Python 3.13.3 / NumPy 2.3.3
+environment, the OpenAI and llama.cpp source commits in `SOURCES.md`, and its
+own SHA-256. Compare packed expert output, router selection, attention
+transitions, uncached logits, and cached prefill/decode logits at the fixture's
+recorded absolute tolerance. Add explicit logical KV-cache byte admission,
+cooperative cancellation, all-or-rollback retained-cache semantics, and a
+RAII load registry that rejects duplicate active/loaded identities and releases
+cancelled, failed, or completed ownership.
+
+Why:
+Task 1 establishes that one exact GGUF directory is admitted and owned, but it
+does not establish numerical behavior or resource lifetime. Computing expected
+values through the Rust implementation would make the proof circular, while
+unbounded vector growth and untracked load retries would leave the CPU seam
+unfit for later executor review.
+
+Consequences:
+The synthetic CPU boundary now proves one independent numerical receipt and
+the exact four-token/512-byte limit for its one-layer configuration, including
+one-over rejection, partial cancellation rollback, reset release, duplicate
+load rejection, cancellation cleanup, failed-load retry, and completed-load
+release. The contract is
+opt-in around the existing `forward` behavior and does not alter the maintained
+Q8 path. No production artifact, tokenizer, exact-model parity, worker process,
+or CUDA behavior is inferred; the packed CUDA executor remains a separately
+reviewed Task 3 gate.
+
 ---
 AI-edited: 2026-09-19T00:00:00-04:00 | agent=Codex/root | model=unknown | effort=high | task=guarded-publication | change=adopted tracked clean-commit helper without Gknome coupling
