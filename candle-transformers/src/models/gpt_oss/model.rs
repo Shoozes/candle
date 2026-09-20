@@ -66,6 +66,16 @@ impl DenseLinear {
         self.cols
     }
 
+    #[cfg(feature = "cuda")]
+    pub(crate) fn weights(&self) -> &[f32] {
+        &self.weights
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn bias(&self) -> Option<&[f32]> {
+        self.bias.as_deref()
+    }
+
     fn forward(&self, input: &[f32]) -> Result<Vec<f32>> {
         if input.len() != self.cols {
             bail!(
@@ -181,6 +191,41 @@ impl GptOssLayerWeights {
             experts,
         })
     }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn attention_norm(&self) -> &[f32] {
+        &self.attention_norm
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn qkv(&self) -> &DenseLinear {
+        &self.qkv
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn attention_out(&self) -> &DenseLinear {
+        &self.attention_out
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn sinks(&self) -> &[f32] {
+        &self.sinks
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn moe_norm(&self) -> &[f32] {
+        &self.moe_norm
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn gate(&self) -> &DenseLinear {
+        &self.gate
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn experts(&self) -> &Mxfp4ExpertOperation {
+        &self.experts
+    }
 }
 
 /// Dense non-MoE weights required by the CPU GPT-OSS proof model.
@@ -237,6 +282,26 @@ impl GptOssWeights {
             final_norm,
             lm_head,
         })
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn token_embedding(&self) -> &[f32] {
+        &self.token_embedding
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn layers(&self) -> &[GptOssLayerWeights] {
+        &self.layers
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn final_norm(&self) -> &[f32] {
+        &self.final_norm
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn lm_head(&self) -> &DenseLinear {
+        &self.lm_head
     }
 }
 
@@ -303,11 +368,12 @@ impl GptOssCache {
     }
 }
 
-/// CPU-only GPT-OSS forward/reference model with explicit KV-cache behavior.
+/// CPU GPT-OSS forward/reference model with explicit KV-cache behavior.
 ///
 /// This is a deterministic proof boundary for synthetic weights.  It accepts
 /// packed MXFP4 MoE weights, but it does not load a production checkpoint or
-/// provide CUDA kernels.
+/// provide CUDA kernels. The opt-in CUDA executor is exposed separately when
+/// the `cuda` feature is enabled.
 #[derive(Debug, Clone)]
 pub struct GptOssModel {
     config: GptOssConfig,
@@ -828,7 +894,7 @@ fn apply_rope(
     Ok(())
 }
 
-fn rope_parameters(config: &GptOssConfig, half: usize) -> Result<(f32, Vec<f32>)> {
+pub(crate) fn rope_parameters(config: &GptOssConfig, half: usize) -> Result<(f32, Vec<f32>)> {
     let concentration = 0.1 * config.rope_scaling_factor.ln() + 1.0;
     let mut inv_freq = Vec::new();
     inv_freq

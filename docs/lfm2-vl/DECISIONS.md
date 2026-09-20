@@ -1476,5 +1476,37 @@ Q8 path. No production artifact, tokenizer, exact-model parity, worker process,
 or CUDA behavior is inferred; the packed CUDA executor remains a separately
 reviewed Task 3 gate.
 
+## D-0066: Keep Packed GPT-OSS CUDA Opt-In and Source-Packed
+
+Status: Accepted for the owner-authorized GPT-OSS Task 3 slice.
+
+Decision:
+Implement the CUDA executor as a feature-gated, typed path over the existing
+`GptOssWeights` boundary. Upload dense transformer parameters as F32, retain
+MXFP4 expert blocks and E8M0 scales as device U8 tensors, and use a dedicated
+CUDA kernel for selected-expert matrix products. Select the CUDA device and
+activation dtype explicitly; reject unsupported dtype, device, overflow,
+resource, cancellation, backend, and kernel failures through typed errors.
+Perform static weight and exact token/KV-cache admission before device or
+forward allocation, stage cache mutations transactionally, and commit only
+after cancellation checkpoints pass. Prove packed output, router, attention,
+uncached/cached forward, and cache cleanup against the accepted independent
+fixture at its `1e-4` tolerance.
+
+Why:
+The Task 2 CPU/resource boundary is the required predecessor, while the
+major MXFP4 weights must not be silently expanded merely to obtain a CUDA
+result. Keeping the executor separate preserves the maintained Q8/LFM2
+defaults and leaves the absent product artifact, tokenizer, and exact-model
+parity as explicit future evidence gates.
+
+Consequences:
+Task 3 is accepted for the synthetic fixture on the named Windows RTX 4090
+lane. The logical static bound is 19,416 bytes, packed expert residency is
+3,264 bytes, and the tiny model retains 128 cache bytes per token with a
+four-token/512-byte limit. The path is not yet a product GGUF/quantized-text
+loader, cross-device matrix, or production performance claim; quantized text
+plus split dense MMProj is the next ordered task.
+
 ---
 AI-edited: 2026-09-19T00:00:00-04:00 | agent=Codex/root | model=unknown | effort=high | task=guarded-publication | change=adopted tracked clean-commit helper without Gknome coupling

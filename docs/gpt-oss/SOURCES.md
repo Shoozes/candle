@@ -46,6 +46,21 @@ reference, independent of the Candle Rust implementation. The fixture uses
 deterministic synthetic seeds and records absolute tolerance `1e-4`; it is not
 production model evidence.
 
+## Task 3 packed CUDA provenance
+
+The Task 3 CUDA executor and `candle-kernels/src/gpt_oss_mxfp4.cu` are fresh
+Candle-native code. No CUDA implementation block was copied from OpenAI,
+llama.cpp, or another repository. The pinned OpenAI and llama.cpp revisions
+above remain behavioral and format authorities for the MXFP4 block/scaling,
+router, sink-attention, and SwiGLU ordering. The kernel preserves the source
+U8 block/scale ownership and decodes FP4 values on device for the selected
+routes; it does not create a dense expert-weight copy.
+
+The executed proof identity was native Windows/MSVC with Rust/Cargo 1.97.1,
+CUDA/nvcc 13.3, NVIDIA driver 616.92, and an NVIDIA GeForce RTX 4090 with
+24,564 MiB. This is toolchain/device provenance for the bounded synthetic
+receipt only, not production checkpoint evidence.
+
 ---
 
 AI-edited: 2026-09-19; agent=Codex; task=gpt-oss-c0-c1; change=pinned official source identity

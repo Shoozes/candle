@@ -77,6 +77,22 @@
         "docs/gpt-oss/STATUS.md"
       ]
     },
+    "feature__gpt_oss_task3_cuda": {
+      "description": "Opt-in packed GPT-OSS MXFP4 CUDA executor, device/resource/cancellation contracts, component parity, and native CUDA proof records.",
+      "status": "active",
+      "paths": [
+        "candle-kernels/build.rs",
+        "candle-kernels/src/ffi.rs",
+        "candle-kernels/src/gpt_oss_mxfp4.cu",
+        "candle-transformers/src/models/gpt_oss/cuda.rs",
+        "candle-transformers/src/models/gpt_oss/mod.rs",
+        "candle-transformers/src/models/gpt_oss/model.rs",
+        "candle-transformers/src/models/gpt_oss/mxfp4.rs",
+        "docs/gpt-oss/MOD_MANIFEST.md",
+        "docs/gpt-oss/SOURCES.md",
+        "docs/gpt-oss/STATUS.md"
+      ]
+    },
     "feature__siglip2_naflex": {
       "description": "Packed-patch SigLIP2 NaFlex encoding, limits, shape contracts, tensor mapping, and focused fixture evidence.",
       "status": "active",

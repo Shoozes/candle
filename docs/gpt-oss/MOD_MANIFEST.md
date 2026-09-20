@@ -3,8 +3,8 @@
 This manifest registers the experimental GPT-OSS support boundary separately
 from the maintained LFM2-VL/Q8 product overlay. It owns only Candle-side
 configuration admission, packed MXFP4 storage/loading, deterministic CPU
-reference code, and the bounded Task 2 proof seam. It does not promote
-GPT-OSS to the product default.
+reference code, and the bounded Task 2/Task 3 proof seams. It does not
+promote GPT-OSS to the product default.
 
 ## Current state
 
@@ -25,17 +25,25 @@ GPT-OSS to the product default.
   prefill/decode cancellation rolls back retained state, and cancellable RAII
   load leases prevent duplicates while releasing cancelled, failed, and
   completed ownership.
-- No real GPT-OSS checkpoint, tokenizer, artifact manifest, production trace,
-  or CUDA execution has been loaded or claimed; the owner-selected artifact
-  is not stored in this checkout.
+- Task 3 is delivered for the bounded native CUDA boundary: packed U8
+  MXFP4 blocks/scales remain device-resident, a dedicated kernel covers both
+  expert projections, and attention/router/cache/forward traces match the
+  independent oracle at absolute tolerance `1e-4`. Static weight and logical
+  cache admission precede device/forward allocation, and cancellation,
+  rollback, eviction, and typed failure cases are covered.
+- No real GPT-OSS checkpoint, tokenizer, artifact manifest, or production
+  trace has been loaded or claimed; the owner-selected artifact is not stored
+  in this checkout. CUDA evidence is limited to the synthetic fixture on the
+  named local RTX 4090 lane.
 - Candle's maintained Q8 path and LFM2-VL release boundary remain unchanged.
 
 The implementation remains production-execution-free at this boundary. The
 C2a loader admits one exact GGUF byte identity and normalizes its directory
-without dequantizing or constructing a live model. Task 2 exercises only the
-existing synthetic CPU reference model and bounded ownership contracts. A
-future executor must publish its external artifact receipt before any exact
-model or CUDA parity claim is made.
+without dequantizing or constructing a live model. Task 2 exercises the
+synthetic CPU reference and bounded ownership contracts; Task 3 exercises an
+explicit opt-in CUDA executor over the same bounded weights. An external
+artifact receipt is still required before any exact-model or production parity
+claim.
 
 ## Overlay-owned additions
 
@@ -44,11 +52,14 @@ model or CUDA parity claim is made.
 - `docs/gpt-oss/STATUS.md`
 - `candle-transformers/src/models/gpt_oss/mod.rs`
 - `candle-transformers/src/models/gpt_oss/checkpoint.rs`
+- `candle-transformers/src/models/gpt_oss/cuda.rs`
 - `candle-transformers/src/models/gpt_oss/config.rs`
 - `candle-transformers/src/models/gpt_oss/gguf.rs`
 - `candle-transformers/src/models/gpt_oss/mxfp4.rs`
 - `candle-transformers/src/models/gpt_oss/model.rs`
 - `candle-transformers/src/models/gpt_oss/runtime.rs`
+- `candle-kernels/src/ffi.rs`
+- `candle-kernels/src/gpt_oss_mxfp4.cu`
 - `tests/fixtures/gpt_oss_task2/README.md`
 - `tests/fixtures/gpt_oss_task2/oracle.json`
 - `scripts/gpt-oss/verify-mod-manifest.sh`
@@ -59,6 +70,7 @@ These paths are also owned by an existing overlay and are listed in the
 repository-wide shared-path registry:
 
 - `candle-transformers/src/models/mod.rs`
+- `candle-kernels/build.rs`
 - `docs/FORK_OVERLAYS.md`
 - `docs/lfm2-vl/START_HERE.md`
 - `docs/lfm2-vl/DECISIONS.md`
@@ -87,14 +99,18 @@ repository-wide shared-path registry:
 - `GptOssLoadRegistry` and `GptOssGgufArtifact::open_with_registry` provide
   duplicate-load prevention plus RAII release on failed retry and completed
   load ownership. No worker process or hidden download is created.
+- `GptOssCudaConfig`, `GptOssCudaModel`, and `GptOssCudaError` provide the
+  feature-gated packed CUDA proof boundary with explicit device/dtype and
+  static/cache admission, cancellation rollback, eviction, and typed kernel
+  failures. The executor is not wired into product GGUF loading.
 
 ## Completion boundary
 
-Task 2 is complete for the bounded synthetic CPU proof boundary. The next
-dependency is a separately reviewed packed CUDA executor, still blocked from
-exact-model parity claims until the owner-selected product artifact and its
+Task 3 is complete for the bounded synthetic CPU/CUDA proof boundary. The next
+dependency is quantized GPT-OSS text plus split dense MMProj work; exact-model
+parity remains blocked until the owner-selected product artifact and its
 external receipt are available.
 
 ---
 
-AI-edited: 2026-09-20; agent=Codex; task=gpt-oss-task2; change=added independent numerical and bounded resource proof
+AI-edited: 2026-09-20; agent=Codex; task=gpt-oss-task3; change=added packed CUDA executor and bounded native proof

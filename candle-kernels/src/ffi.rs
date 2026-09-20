@@ -2,6 +2,19 @@ use core::ffi::c_void;
 #[allow(dead_code)]
 #[allow(improper_ctypes)]
 extern "C" {
+    pub fn launch_gpt_oss_mxfp4_matmul(
+        input: *const f32,
+        blocks: *const u8,
+        scales: *const u8,
+        experts: *const u32,
+        output: *mut f32,
+        route_count: i32,
+        output_width: i32,
+        input_width: i32,
+        expert_count: i32,
+        stream: i64,
+    ) -> i32;
+
     #[cfg(feature = "cutile")]
     pub fn candle_launch_moe_align(
         topk_ids: *const i32,

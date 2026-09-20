@@ -2,6 +2,31 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-09-20 — GPT-OSS Task 3 packed CUDA executor
+
+- Added the opt-in `cuda`-feature-gated `GptOssCudaModel` with explicit device,
+  F32 activation, static-weight, sequence, and logical KV-cache selection plus
+  typed unsupported-dtype, unavailable-device, resource, overflow,
+  cancellation, backend, invalid-input, and kernel failures.
+- Added a fresh Candle-native CUDA kernel that consumes device-resident U8
+  MXFP4 blocks and U8 E8M0 scales for both expert projections. No dense
+  expert-weight fallback or Q8/LFM2-VL default change was introduced.
+- Preserved failure-atomic cache commits across cancellation and forward
+  errors; exact admission occurs before forward mutation, and reset/eviction
+  drops owned cache tensors for retry. Task 2's RAII load-registry contract
+  remains unchanged and no worker process is created.
+- Native Windows/MSVC proof used Rust/Cargo 1.97.1, CUDA/nvcc 13.3, NVIDIA
+  driver 616.92, and an NVIDIA GeForce RTX 4090 with 24,564 MiB. The
+  digest-pinned Task 2 oracle passed direct packed output, attention/router
+  component traces, uncached/cached logits, exact `19,416` static logical
+  bytes, `3,264` packed bytes, `128` cache bytes/token, cancellation rollback,
+  exact four-token/512-byte admission, one-over rejection, and eviction/retry
+  at absolute tolerance `1e-4`.
+- Focused feature-gated GPT-OSS verification passed `30/30`; the product
+  GGUF remains absent, so exact-model, tokenizer, production, cross-device,
+  and quantized-text claims remain unmade. The next ordered task is
+  quantized GPT-OSS text plus split dense MMProj.
+
 ## 2026-09-20 — GPT-OSS Task 2 independent CPU and resource proof
 
 - Added the digest-pinned `synthetic-gpt-oss-task2-oracle-v1` fixture: 2,690

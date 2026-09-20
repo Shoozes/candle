@@ -11,7 +11,7 @@ integration plan.
 | --- | --- | --- |
 | LFM2-VL/MMProj | `docs/lfm2-vl/MOD_MANIFEST.md` | Proven model, loader, processor, fixture, and verification work |
 | SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic three-component SDXL LoRA transaction, controlled unsupported flash-attention failure, and exact residual/opt-in `text_time` UNet conditioning |
-| GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Hash-pinned GGUF admission/config normalization, packed MXFP4 storage/loading, independent synthetic CPU numerical/resource proof; no live-model or CUDA claim |
+| GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Hash-pinned GGUF admission/config normalization, packed MXFP4 storage/loading, bounded synthetic CPU proof, and opt-in packed CUDA proof; no live-model or production claim |
 
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each
@@ -50,12 +50,14 @@ Candle implementation -> EdgeSymbio integration -> optional SnapFlash use
 For the experimental GPT-OSS path it is:
 
 ```text
-Candle CPU reference -> independent EdgeSymbio review -> owner-admitted checkpoint proof
+Candle CPU reference -> packed CUDA proof -> independent EdgeSymbio review -> owner-admitted checkpoint proof
 ```
 
 GPT-OSS remains an experiment and must not change the maintained Q8 product
 default or be treated as a production model integration until its external
-checkpoint, tokenizer, and numerical receipts are independently admitted.
+checkpoint, tokenizer, and numerical receipts are independently admitted. The
+CUDA result is bounded synthetic evidence on one named local device, not an
+exact-model or cross-device claim.
 
 ## Coordinated progress
 
@@ -101,6 +103,7 @@ must pass both affected focused gates plus the repository-wide overlay gate.
 - `Cargo.lock`
 - `Cargo.toml`
 - `CHANGELOG.md`
+- `candle-kernels/build.rs`
 - `candle-examples/Cargo.toml`
 - `candle-transformers/Cargo.toml`
 - `candle-transformers/src/models/mod.rs`

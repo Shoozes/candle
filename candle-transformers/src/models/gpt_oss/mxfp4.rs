@@ -445,6 +445,31 @@ impl Mxfp4ExpertOperation {
         self.mlp1.resident_bytes() + self.mlp2.resident_bytes()
     }
 
+    #[cfg(feature = "cuda")]
+    pub(crate) fn mlp1(&self) -> &PackedMxfp4 {
+        &self.mlp1
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn mlp2(&self) -> &PackedMxfp4 {
+        &self.mlp2
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn mlp1_bias(&self) -> &[f32] {
+        &self.mlp1_bias
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn mlp2_bias(&self) -> &[f32] {
+        &self.mlp2_bias
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn swiglu_limit(&self) -> f32 {
+        self.swiglu_limit
+    }
+
     /// Apply the selected experts and add the residual input.
     ///
     /// `expert_indices` and `expert_weights` are flattened row-major tensors

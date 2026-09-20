@@ -54,12 +54,16 @@ while IFS= read -r path; do
 done <"$MANIFEST_PATHS"
 
 required_paths=(
+    candle-kernels/build.rs
     candle-transformers/src/models/gpt_oss/checkpoint.rs
     candle-transformers/src/models/gpt_oss/config.rs
+    candle-transformers/src/models/gpt_oss/cuda.rs
     candle-transformers/src/models/gpt_oss/gguf.rs
     candle-transformers/src/models/gpt_oss/mod.rs
     candle-transformers/src/models/gpt_oss/model.rs
     candle-transformers/src/models/gpt_oss/mxfp4.rs
+    candle-kernels/src/ffi.rs
+    candle-kernels/src/gpt_oss_mxfp4.cu
 )
 for path in "${required_paths[@]}"; do
     if ! grep -Fxq "$path" "$MANIFEST_PATHS"; then

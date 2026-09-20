@@ -75,7 +75,7 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   summary-bank and overlay verifiers, `cargo fmt --all -- --check`,
   `git diff --check`, and the full guarded publication gate.
 
-### [ ] GPT-OSS Task 3: packed CUDA executor
+### [x] GPT-OSS Task 3: packed CUDA executor
 
 - What: Design and implement a packed CUDA executor for the admitted GPT-OSS
   GGUF representation without silently densifying the major MXFP4 weights.
@@ -93,9 +93,34 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 - Done when: CPU parity remains green, the packed CUDA path is opt-in and
   feature-gated, no dense fallback is hidden, resource/cleanup receipts pass,
   and exact-model claims remain excluded without the external product receipt.
+  **Complete:** the native RTX 4090 lane passed direct packed-kernel,
+  attention/router component, uncached/cached forward, exact cache admission,
+  cancellation rollback, eviction/retry, typed failure, and pre-device static
+  budget checks at the pinned oracle tolerance.
 - Verification: CPU focused/full gates first, then the authorized CUDA build,
   numerical comparison, memory/cleanup receipt, summary-bank and overlay
   verifiers, and guarded publication.
+
+### [ ] GPT-OSS Task 4: quantized text plus split dense MMProj
+
+- What: Add the next ordered GPT-OSS execution boundary for quantized GGUF
+  text with split dense MMProj while preserving the accepted packed CUDA path.
+- Why: The ordered implementation sequence keeps quantized text/MMProj
+  integration after native packed execution and prevents Q8/default changes
+  from being inferred from the bounded synthetic CUDA proof.
+- When: Only after the published Task 3 receipt and a separately scoped owner
+  acceptance; the absent product artifact remains an explicit evidence gap.
+- Where: GPT-OSS GGUF/runtime modules, CUDA-gated or quantized tests, and
+  `docs/gpt-oss/` proof records. Do not touch Edge/Harmony integration.
+- How: Retain packed ownership, admit split tensor identities before
+  allocation, add an independent fixture, and keep exact product claims
+  closed until the owner-selected artifact is externally manifested.
+- Done when: Quantized text and split dense MMProj component behavior,
+  resource ownership, and cleanup are independently verified without changing
+  maintained Q8/LFM2 defaults.
+- Verification: Targeted quantized tests, locked native checks, formatting,
+  diff, summary-bank/mod-manifest/overlay verifiers, and the guarded local
+  publication gate.
 
 ### [ ] Close the native 3B and official 400M Q8 MMProj production proof gap
 

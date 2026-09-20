@@ -48,11 +48,12 @@
   commits. The LFM2-VL/Edge C0 chain remains held until the Edge pin and
   tokenizers move together; keep the Edge pin on `238cc176…` until then. A
   separate owner-authorized Candle-only GPT-OSS experiment has delivered its
-  C0/C1 synthetic boundary at source revision
-  `6a43f5289f98f135d3406a3b957e1d94a22c3cae`; see
-  `docs/gpt-oss/STATUS.md`. It does not change the Q8 default and makes no
-  real-checkpoint, tokenizer, production, or CUDA claim. The 3B native /
-  official Q8 MMProj production-proof gap, overlay 0.2.0 tagging, and live
+  C0/C1 source, Task 2 synthetic CPU/resource proof, and Task 3 packed CUDA
+  proof; see `docs/gpt-oss/STATUS.md`. The CUDA result is feature-gated and
+  limited to the digest-pinned synthetic fixture on the named local RTX 4090;
+  it does not change the Q8 default or make a real-checkpoint, tokenizer,
+  production, cross-device, or exact-model claim. The 3B native / official
+  Q8 MMProj production-proof gap, overlay 0.2.0 tagging, and live product
   CUDA/model parity remain outside this chain. No implicit 3B download.
 - Models, caches, downloads, generated proof, Cargo output, and
   `.tools/.secrets/` remain ignored or external. Operator disk cleanup removed
@@ -87,35 +88,38 @@
 - The LFM2-VL overlay contains 163 paths (17 fork modifications, 146
   additions). The SnapFlash-derived overlay contains 20 paths (8
   modifications, 12 additions). The separate GPT-OSS overlay currently
-  registers 17 paths. Their registered union is 183 paths with 20 shared
-  paths.
+  registers 21 paths. Their current registered union is 190 paths with 21
+   shared paths, including the shared CUDA build path.
 
 ## Separate GPT-OSS Experimental Handoff
 
-- Current phase: Task 2 / C2b independent numerical and bounded resource proof
-  for the GPT-OSS experimental overlay.
-- Baseline: clean published `main`
-  `f9c51b4fb2717342644d75806f99d92da78d3f9a`.
+- Current phase: Task 3 / packed MXFP4 CUDA executor for the GPT-OSS
+  experimental overlay.
+- Task 3 starting baseline: clean published `main`
+  `eed8ef6594a9012f3ed61a5c1a1d06f2af0ee068`, tree
+  `38fc50f0c3cbfe6e3d775633cbbf782c2479da96`.
 - Task 1 source: `67a7fe605194384c1505df96b536c3238ad408e1`, tree
   `fa35de0a6438992e5aa6bc6b4429bb18ed44005b`.
-- Last green verification: 27/27 focused GPT-OSS tests, the full native
-  `.tools/verify-before-push.ps1` gate, summary-bank verification, both
-  overlay-specific checks, and the rolling-baseline union overlay gate passed
-  for the Task 2 delivery.
-- Delivery files: GPT-OSS runtime/resource contracts, the independent oracle
-  fixture and digest record, GPT-OSS manifest/status updates, the GPT decision
-  record, and the shared handoff/backlog updates.
-- Proven: the Task 1 selected-SHA GGUF admission and tensor inventory plus
+- Last green verification: 30/30 focused GPT-OSS tests with CUDA enabled,
+  warnings-denied CUDA Clippy, the native CPU/CUDA checks, the full guarded
+  publication gate, summary-bank verification, both overlay-specific checks,
+  and the rolling-baseline union overlay gate passed for Task 3.
+- Delivery files: the Task 2 runtime/resource and oracle boundary, the
+  feature-gated packed CUDA executor/kernel, typed CUDA failures, manifest and
+  source records, the GPT decision/history/status updates, and the shared
+  handoff/backlog updates.
+- Proven: the Task 1 selected-SHA GGUF admission and tensor inventory;
   independent packed/router/attention/forward/cache values at absolute
   tolerance `1e-4`; exact 128-byte/token logical KV accounting with boundary
   and one-over rejection; prefill/decode cancellation and failure rollback;
-  and duplicate-load prevention with cancellation cleanup, retry/reopen, and
-  zero active/loaded ownership after release.
+  duplicate-load prevention with cancellation cleanup, retry/reopen, and zero
+  active/loaded ownership after release; and native CUDA packed execution with
+  19,416 logical static bytes, 3,264 packed bytes, and no dense expert copy.
 - Known limitation/blocker: the owner-selected product GGUF with SHA-256
   `aab205256a9b6361e410c24de3086e30f907092ca6f9ba8cd4b22c8a2b025778` is not
-  present, so no exact-model load, numerical parity, tokenizer, or CUDA claim
-  is made. The packed CUDA executor is the next separately reviewed gate.
-  Q8 remains the maintained product default.
+  present, so no exact-model load, numerical parity, tokenizer, quantized-text,
+  or production claim is made. Q8 remains the maintained product default and
+  quantized text plus split dense MMProj is the next GPT-OSS task.
 
 ## Latest Integrity Review (2026-08-21)
 

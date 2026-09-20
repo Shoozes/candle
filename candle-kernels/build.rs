@@ -9,6 +9,7 @@ fn main() -> Result<()> {
     println!("cargo::rerun-if-changed=src/compatibility.cuh");
     println!("cargo::rerun-if-changed=src/cuda_utils.cuh");
     println!("cargo::rerun-if-changed=src/binary_op_macros.cuh");
+    println!("cargo::rerun-if-changed=src/gpt_oss_mxfp4.cu");
 
     let is_target_msvc = env::var("TARGET")
         .map(|target| target.contains("msvc"))
@@ -19,7 +20,7 @@ fn main() -> Result<()> {
     // library builds; older CUDA toolkits accept the same MSVC switch.
     let mut ptx_builder = KernelBuilder::new()
         .source_dir("src") // Scan src/ for .cu files
-        .exclude(&["moe_*.cu", "mmvq_gguf.cu", "mmq_*.cu"]) // Exclude statically compiled kernels from ptx build
+        .exclude(&["moe_*.cu", "gpt_oss_mxfp4.cu", "mmvq_gguf.cu", "mmq_*.cu"]) // Exclude statically compiled kernels from ptx build
         .arg("--expt-relaxed-constexpr")
         .arg("-std=c++17")
         .arg("-O3");
@@ -38,6 +39,7 @@ fn main() -> Result<()> {
         "src/moe/moe_gguf.cu",
         "src/moe/moe_wmma.cu",
         "src/moe/moe_wmma_gguf.cu",
+        "src/gpt_oss_mxfp4.cu",
         "src/mmvq_gguf.cu",
         "src/mmq_gguf/mmq_quantize.cu",
         "src/mmq_gguf/mmq_instance_q4_0.cu",

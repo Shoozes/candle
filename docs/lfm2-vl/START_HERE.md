@@ -17,9 +17,10 @@ This is the live execution entry point for the Candle 0.11 LFM2.5-VL/MMProj exte
 
 Selected product direction: Edge + this Shoozes/candle overlay. Edge Q8 stays
 the product default. GPT-OSS is a separate owner-authorized Candle-only
-experiment; its current C2b numerical/resource proof boundary is tracked in
-`docs/gpt-oss/STATUS.md`
-and does not change the LFM2-VL product sequence. No training from this gate.
+experiment; its current packed CUDA proof boundary is tracked in
+`docs/gpt-oss/STATUS.md` and does not change the LFM2-VL product sequence.
+The bounded Task 3 result is synthetic/device-scoped; exact GPT-OSS model,
+tokenizer, and production claims remain closed. No training from this gate.
 
 **S3/S4 source is published** at
 `4c1feb82eccd60a14f9f00f84ef6c9bdedcddd06` (`origin/main`). Overlay and
