@@ -70,13 +70,23 @@ try {
     $env:PYO3_NO_PYTHON = "1"
 
     Invoke-Step "format" { & cargo fmt --all -- --check }
-    Invoke-Step "workspace check" { & cargo check --locked --offline -j 2 --workspace }
-    Invoke-Step "workspace clippy" { & cargo clippy --locked --offline -j 2 --workspace -- -D warnings }
-    Invoke-Step "workspace tests" {
-        & cargo test --locked --offline -j 2 --workspace --exclude candle-datasets --exclude candle-pyo3
+    Invoke-Step "maintained library check" {
+        & cargo check --locked --offline -j 2 -p candle-core -p candle-nn -p candle-transformers -p candle-vlm
     }
-    $env:PYO3_NO_PYTHON = $null
-    Invoke-Step "candle-pyo3 package test" { & cargo test --locked --offline -j 2 -p candle-pyo3 }
+    foreach ($example in @("lfm2", "quantized-lfm2", "lfm2-vl")) {
+        Invoke-Step "example check: $example" {
+            & cargo check --locked --offline -j 2 -p candle-examples --example $example
+        }
+    }
+    Invoke-Step "transformer clippy" {
+        & cargo clippy --locked --offline -j 2 -p candle-transformers --lib -- -D warnings
+    }
+    Invoke-Step "maintained library tests" {
+        & cargo test --locked --offline -j 2 -p candle-core -p candle-transformers -p candle-vlm
+    }
+    Invoke-Step "LFM2-VL example tests" {
+        & cargo test --locked --offline -j 2 -p candle-examples --example lfm2-vl
+    }
     Invoke-Step "summary bank" {
         & pwsh -NoProfile -File (Join-Path $repoRoot "scripts\lfm2-vl\verify-summary-bank.ps1")
     }

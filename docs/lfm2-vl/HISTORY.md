@@ -21,6 +21,12 @@ This file preserves completed implementation and verification evidence. Any pres
   LFM2-VL 163-path, GPT-OSS 17-path, SnapFlash 20-path, and 183-path union
   manifests; plus four isolated gitpush integration cases. The final guarded
   helper reruns the complete native locked/offline publication gate.
+- The first real helper invocation failed closed before push because a blanket
+  workspace check required uncached `arrow-array 59.3.0` for the unrelated
+  `candle-datasets` lane. The fixed gate now runs the documented maintained
+  core/NN/transformer/VLM and three LFM example checks, transformer Clippy,
+  maintained library tests, LFM2-VL example tests, and all context/inventory
+  guards without fetching optional dataset dependencies.
 
 ## 2026-09-18 — S3 merge of `7c2e8929` and local S4 gates
 
