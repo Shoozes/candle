@@ -51,6 +51,28 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   summary/layout/overlay verifiers, `git diff --check`, clean status, guarded
   remote equality, and annotated-tag peel/asset comparison.
 
+### [ ] GPT-OSS Task 2: independent GGUF numerical and resource proof
+
+- What: Add independent numerical fixtures for the hash-pinned GPT-OSS GGUF
+  admission boundary, plus explicit token/cache byte bounds,
+  cancellation/rollback, and no-duplicate/load-leak evidence.
+- Why: Task 1 proves exact directory admission and tensor ownership but does
+  not prove runtime numerical behavior or bounded resource ownership.
+- When: Only after the Task 1 source and delivery commits are accepted; before
+  any packed CUDA executor or exact-model parity claim.
+- Where: `candle-transformers/src/models/gpt_oss/`, focused fixtures/tests,
+  `docs/gpt-oss/STATUS.md`, and the owned verification records. Keep the
+  selected production artifact external and do not add downloads or weights.
+- How: Use reference values generated independently of the implementation
+  under test, exercise bounded token/cache paths and cancellation rollback,
+  and record exact counts, byte ceilings, identities, and cleanup results.
+- Done when: Independent component values, resource bounds, rollback, and
+  duplicate/load-leak checks pass on native CPU with no Q8/default behavior
+  change; CUDA remains unopened until this gate is green.
+- Verification: Focused GPT-OSS tests, locked native transformer checks,
+  summary-bank and overlay verifiers, `cargo fmt --all -- --check`,
+  `git diff --check`, and the full guarded publication gate.
+
 ### [ ] Close the native 3B and official 400M Q8 MMProj production proof gap
 
 - Sequencing: outside the S3/S4 → C0 worker chain. Do not start this instead

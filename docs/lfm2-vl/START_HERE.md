@@ -17,7 +17,8 @@ This is the live execution entry point for the Candle 0.11 LFM2.5-VL/MMProj exte
 
 Selected product direction: Edge + this Shoozes/candle overlay. Edge Q8 stays
 the product default. GPT-OSS is a separate owner-authorized Candle-only
-experiment; its current C0/C1 boundary is tracked in `docs/gpt-oss/STATUS.md`
+experiment; its current C2a GGUF admission boundary is tracked in
+`docs/gpt-oss/STATUS.md`
 and does not change the LFM2-VL product sequence. No training from this gate.
 
 **S3/S4 source is published** at
