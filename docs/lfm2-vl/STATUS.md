@@ -30,25 +30,30 @@
 ## Worktree And Authority
 
 - Canonical checkout is `C:\DevStuff\candle` on local `main` (WSL path
-  `/mnt/c/DevStuff/candle`). Native Windows Git owns `main`. Publish with
-  ordinary Git plus `.tools/.secrets/gt.txt`. Do not use EdgeSymbio
-  `gitpush.ps1`. `C:\DevStuff\candle-mods` is a retired linked worktree; do
-  not recreate it. WSL is an optional `verify-baseline.sh` replay, not the
-  Git backend.
+  `/mnt/c/DevStuff/candle`). Native Windows Git owns `main`. Publish with the
+  Candle-owned `.tools/gitpush.ps1` plus ignored `.tools/.secrets/gt.txt`.
+  The helper requires a clean reviewed commit and never stages or commits.
+  `C:\DevStuff\candle-mods` is a retired linked worktree; do not recreate it.
+  WSL is an optional `verify-baseline.sh` replay, not the Git backend.
 - Native Windows/MSVC is the product and release-proof lane. WSL2/Linux is a
   secondary portability replay, not the product platform.
 - The guarded helper published and remotely verified the source checkpoint on
   2026-08-13 and the closeout commits above directly on `main` in this
   session. No annotated tag, hosted release, repository-rule change, secret
   inspection, or hosted-CI invocation is included.
-- Current active local slice: **Edge pin-adoption** of published
-  `4c1feb82eccd60a14f9f00f84ef6c9bdedcddd06` with `tokenizers` 0.23/`onig`.
-  `origin/main` equals that SHA. Do not open gpt-oss C0 until the Edge pin
-  and tokenizers move together. Keep the Edge pin on `238cc176…` until then.
-  The 3B native / official Q8 MMProj production-proof gap, overlay 0.2.0
-  tagging, and live CUDA/model parity remain outside this chain. Model-free
-  verification stays distinct from production model/CUDA receipts; no
-  implicit 3B download.
+- Current active local slice for the maintained LFM2-VL product chain: **Edge
+  pin-adoption** of published `4c1feb82eccd60a14f9f00f84ef6c9bdedcddd06`
+  with `tokenizers` 0.23/`onig`. That immutable consumer target remains valid
+  even though Candle `main` now contains later administrative and experimental
+  commits. The LFM2-VL/Edge C0 chain remains held until the Edge pin and
+  tokenizers move together; keep the Edge pin on `238cc176…` until then. A
+  separate owner-authorized Candle-only GPT-OSS experiment has delivered its
+  C0/C1 synthetic boundary at source revision
+  `6a43f5289f98f135d3406a3b957e1d94a22c3cae`; see
+  `docs/gpt-oss/STATUS.md`. It does not change the Q8 default and makes no
+  real-checkpoint, tokenizer, production, or CUDA claim. The 3B native /
+  official Q8 MMProj production-proof gap, overlay 0.2.0 tagging, and live
+  CUDA/model parity remain outside this chain. No implicit 3B download.
 - Models, caches, downloads, generated proof, Cargo output, and
   `.tools/.secrets/` remain ignored or external. Operator disk cleanup removed
   the local model/cache inputs; do not reconstruct or download them implicitly.
@@ -79,10 +84,31 @@
 - Generic SDXL framework additions cover three-component LoRA transactions,
   exact residual admission, opt-in pooled-text/time-ID conditioning,
   lower-precision cast order, and a consumer-test-only rollback seam.
-- The LFM2-VL overlay contains 157 paths (16 fork modifications, 141
+- The LFM2-VL overlay contains 163 paths (17 fork modifications, 146
   additions). The SnapFlash-derived overlay contains 20 paths (8
-  modifications, 12 additions). Their registered union is 168 paths with 13
-  shared paths.
+  modifications, 12 additions). The separate GPT-OSS overlay currently
+  registers 17 paths. Their registered union is 183 paths with 20 shared
+  paths.
+
+## Separate GPT-OSS Experimental Handoff
+
+- Current phase: C0 overlay registration/model-free rejection, C1a packed
+  MXFP4 storage/loading plus CPU expert reference, and C1b synthetic
+  forward/cache proof are committed at source revision
+  `6a43f5289f98f135d3406a3b957e1d94a22c3cae`.
+- Baseline: `e87851e4608d4770e3c5aaa0a9d7a7c0447a4345` on native `main`.
+- Last green verification: 14/14 focused GPT-OSS tests, 105/105 transformer
+  library tests, affected library/example checks, warnings-denied Clippy,
+  summary-bank, GPT-OSS manifest, and native union overlay gates all passed.
+- Delivery files: `candle-transformers/src/models/gpt_oss/`, the GPT-OSS
+  manifest/status/source records, and the registered shared control paths.
+- Proven: model-free local admission rejection, packed U8 MXFP4 loading and
+  on-demand CPU expert parity, and synthetic cached/uncached final-token
+  equivalence with reset replay.
+- Known limitation/blocker: no production safetensors loader, tokenizer,
+  real-checkpoint parity receipt, or CUDA implementation is admitted. The next
+  dependency is an owner-admitted hash-pinned checkpoint/config/tokenizer and
+  independent reference trace. Q8 remains the maintained product default.
 
 ## Latest Integrity Review (2026-08-21)
 
@@ -158,8 +184,9 @@
   format/check/layout/diff/mod-manifest gate from `16:36:17Z` to `16:36:54Z`.
 - Summary-bank validation passed for 31 groups with a 135.5 KiB default
   union; the Python 3.13 module-layout verifier passed all registered splits.
-- Overlay inventories are 158/20/169 with 13 shared paths after S3 plus the
-  LayerNorm Init fallback. Live union baseline is `7c2e8929…`. The frozen
+- Current overlay inventories are 163 LFM2-VL / 20 SnapFlash / 17 GPT-OSS,
+  with a 183-path union and 20 registered shared paths. Live union baseline
+  is `7c2e8929…`. The frozen
   unpublished 0.2.0 candidate still recorded 156/20/167.
 - `PYO3_NO_PYTHON=1 cargo check --locked --offline -j 2 --workspace`, the
   matching warnings-denied workspace Clippy gate, and the locked/offline
@@ -218,4 +245,4 @@ leave the status Gated and retain the explicit blocker. The separate
 authorization.
 
 ---
-AI-edited: 2026-09-18T00:35:00-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=p0-git-truth | change=WSL is optional replay; native Git owns main
+AI-edited: 2026-09-19T00:00:00-04:00 | agent=Codex/root | model=unknown | effort=high | task=gpt-oss-c0-c1 | change=recorded separate GPT-OSS experimental handoff and native verification

@@ -100,7 +100,7 @@ sed -n \
     -e 's/^- `\([^`]*\)`$/\1/p' \
     "$MANIFEST" | tr -d '\r' | sort -u >"$MANIFEST_PATHS"
 
-if grep -E '^(\.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$MANIFEST_PATHS"; then
+if grep -E '^(\.tools/\.secrets/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$MANIFEST_PATHS"; then
     printf 'error: LFM2-VL manifest contains a prohibited local/runtime path\n' >&2
     exit 1
 fi
@@ -127,8 +127,8 @@ if [[ "$modified_count" -ne 17 ]]; then
     exit 1
 fi
 
-if [[ "$added_count" -ne 141 ]]; then
-    printf 'error: expected exactly 141 LFM2-VL additions, found %s\n' "$added_count" >&2
+if [[ "$added_count" -ne 146 ]]; then
+    printf 'error: expected exactly 146 LFM2-VL additions, found %s\n' "$added_count" >&2
     exit 1
 fi
 

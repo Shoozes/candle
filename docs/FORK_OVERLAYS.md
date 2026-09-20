@@ -11,6 +11,7 @@ integration plan.
 | --- | --- | --- |
 | LFM2-VL/MMProj | `docs/lfm2-vl/MOD_MANIFEST.md` | Proven model, loader, processor, fixture, and verification work |
 | SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic three-component SDXL LoRA transaction, controlled unsupported flash-attention failure, and exact residual/opt-in `text_time` UNet conditioning |
+| GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Model-free admission, packed MXFP4 storage/loading, and synthetic CPU reference proof; no live-model or CUDA claim |
 
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each
@@ -42,6 +43,16 @@ For LFM2-VL it is:
 ```text
 Candle implementation -> EdgeSymbio integration -> optional SnapFlash use
 ```
+
+For the experimental GPT-OSS path it is:
+
+```text
+Candle CPU reference -> independent EdgeSymbio review -> owner-admitted checkpoint proof
+```
+
+GPT-OSS remains an experiment and must not change the maintained Q8 product
+default or be treated as a production model integration until its external
+checkpoint, tokenizer, and numerical receipts are independently admitted.
 
 ## Coordinated progress
 
@@ -91,10 +102,17 @@ must pass both affected focused gates plus the repository-wide overlay gate.
 - `candle-transformers/Cargo.toml`
 - `candle-transformers/src/models/mod.rs`
 - `candle-transformers/src/models/stable_diffusion/mod.rs`
+- `docs/FORK_OVERLAYS.md`
+- `docs/lfm2-vl/START_HERE.md`
+- `docs/lfm2-vl/DECISIONS.md`
+- `docs/lfm2-vl/STATUS.md`
+- `docs/lfm2-vl/TODO.md`
 - `docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md`
 - `rust-toolchain.toml`
 - `scripts/release/test-write-candle-overlays-receipt.ps1`
 - `scripts/release/write-candle-overlays-receipt.ps1`
+- `scripts/verify-fork-overlays.sh`
+- `summary_bank.json`
 <!-- shared-paths:end -->
 
 Shared registration permits coexistence; it does not let one overlay claim

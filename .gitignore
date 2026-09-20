@@ -58,5 +58,5 @@ bench_results/
 /.cache/huggingface/
 /.hf-cache/
 /.huggingface/
-/.tools/
+/.tools/.secrets/
 /tools/lfm2_vl/reference/outputs/

@@ -6,8 +6,10 @@
   storage/loading plus CPU expert reference, and C1b synthetic forward/cache
   proof.
 - Baseline: `e87851e4608d4770e3c5aaa0a9d7a7c0447a4345` on local `main`.
-- Delivery: C0, C1a, and C1b are started and locally delivered in the current
-  uncommitted worktree; no commit was created.
+- Source revision: `6a43f5289f98f135d3406a3b957e1d94a22c3cae`.
+- Delivery: C0, C1a, and C1b are committed. Repository policy, manifests,
+  guarded publication tooling, and this source-bound status follow in the
+  later delivery commit; no real-checkpoint or CUDA claim is added.
 - Acknowledgement: prepared for independent EdgeSymbio source-graph,
   compatibility, consumer, and canonical review.
 
@@ -62,10 +64,12 @@ Native Windows/MSVC with locked offline dependencies:
 - Native Git-for-Windows `scripts/gpt-oss/verify-mod-manifest.sh` and
   `scripts/verify-fork-overlays.sh`: passed; PowerShell summary-bank verifier:
   passed.
+- Candle `gitpush.ps1` integration fixtures: 4/4 passed for verifier failure,
+  verifier drift, remote race, and exact successful publication/receipt.
 
 No model download, hosted execution, real-checkpoint run, or CUDA execution
 was used.
 
 ---
 
-AI-edited: 2026-09-19; agent=Codex; task=gpt-oss-c0-c1; change=recorded C0/C1 handoff and evidence boundary
+AI-edited: 2026-09-19; agent=Codex; task=guarded-publication; change=bound C0/C1 source revision and publication proof

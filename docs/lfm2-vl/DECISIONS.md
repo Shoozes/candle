@@ -1362,5 +1362,56 @@ until the external snapshot and compatible pinned Transformers runtime are
 available. The hybrid example publishes a separate direct-GGUF receipt so
 Q8 retention cannot be confused with the native trace schema.
 
+## D-0062: Keep GPT-OSS as a Separate Experimental Candle Overlay
+
+Status: Accepted for the owner-authorized GPT-OSS C0/C1 handoff.
+
+Decision:
+Register GPT-OSS under `docs/gpt-oss/MOD_MANIFEST.md` as an independent,
+experimental Candle overlay. Keep the maintained LFM2-VL/Q8 product path and
+its Q8 default unchanged. The first GPT-OSS boundary admits only local
+checkpoint layout, packed MXFP4 blocks/scales, CPU reference expert math, and
+synthetic forward/cache proof. It must reject model-free input and must not
+claim real-checkpoint, tokenizer, production, or CUDA readiness.
+
+Why:
+The current LFM2-VL entry point predates the architect's explicit GPT-OSS
+handoff and still describes GPT-OSS as unopened. The handoff authorizes a
+separate experimental boundary, but does not authorize live model acquisition
+or a product-default change. Registering a distinct overlay keeps the two
+review and evidence lines independently auditable.
+
+Consequences:
+The GPT-OSS source and tests use generic Candle names and remain independent
+of EdgeSymbio. Any later production loader must bind one immutable checkpoint,
+config, tokenizer, and numerical reference receipt before changing the claim
+matrix or adding CUDA support.
+
+## D-0063: Track a Candle-Owned Clean-Commit Publication Helper
+
+Status: Accepted.
+
+Decision:
+Track `.tools/gitpush.ps1`, its askpass adapter, and its native verification
+runner as Candle-owned source while keeping `.tools/.secrets/` ignored. The
+helper publishes only an already-reviewed clean `main` commit, requires a
+fast-forward relationship to `origin/main`, reruns the locked/offline native
+gate, verifies that HEAD and the tree do not drift, pushes the exact commit,
+and writes a success receipt only after the remote tip matches.
+
+Why:
+The mature fork intentionally has no Gknome-generated project file, but it
+still needs one repository-owned credential and publication boundary. A
+tracked, tested helper removes reliance on another repository's script without
+allowing publication tooling to stage, commit, merge, rebase, create a remote,
+or expose credentials.
+
+Consequences:
+Publication remains separately authorized and fast-forward only. Behavioral
+tests use temporary local repositories, bare remotes, and deterministic
+verifiers, never the real token or remote. The production helper reads the
+token only through `GIT_ASKPASS`; `.tools/.secrets/gt.txt`, runtime receipts,
+and local test-mode files remain excluded from Git.
+
 ---
-AI-edited: 2026-08-21T12:40:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-3b-q8-proof-gap | change=recorded the hash-bound 3B remote-code and pinned-config authority decision
+AI-edited: 2026-09-19T00:00:00-04:00 | agent=Codex/root | model=unknown | effort=high | task=guarded-publication | change=adopted tracked clean-commit helper without Gknome coupling

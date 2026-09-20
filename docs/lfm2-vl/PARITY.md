@@ -8,7 +8,7 @@ The deterministic fixture phases, official 450M native Windows CPU-F32 component
 
 | Gate | Required evidence | Phase status |
 | --- | --- | --- |
-| Native Windows workspace baseline | Locked CPU-only Candle checks under MSVC plus diff/manifest gates | Green for the current source tree: bounded offline core/transformer/VLM and example tests/checks passed; read-only WSL Git replay passes `git diff --check` and the 141-path mod-manifest gate. |
+| Native Windows workspace baseline | Locked CPU-only Candle checks under MSVC plus diff/manifest gates | Green for the current source tree: bounded offline core/transformer/VLM and example tests/checks passed; the 163-path LFM2-VL manifest and repository-wide overlay gate are the publication inventory authority. |
 | WSL portability baseline | Locked CPU-only Candle checks and diff/manifest gates from Linux home | Secondary replay green; Phase 7 staged log SHA-256 `ff46cc0b23a28050ffe856be2cb81ef7144667977587021f1d3cd221e00ed330` and current consolidated baseline green |
 | Reference fixture | Deterministic pinned-Python export with component and multimodal tensors | Green; 87 tensors, byte-identical independent exports; manifest SHA-256 `c5461dadb0edfd920b20f308650c59676977110a1cc2f199e317dea7d75bdd7b` |
 | LFM2 text configuration | 450M effective FFN width `4608`; 1.6B width `8192` | Green in config tests and header evidence |

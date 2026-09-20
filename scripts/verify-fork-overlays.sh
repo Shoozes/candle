@@ -9,6 +9,7 @@ REGISTRY="${REPO_ROOT}/docs/FORK_OVERLAYS.md"
 MANIFESTS=(
     "docs/lfm2-vl/MOD_MANIFEST.md"
     "docs/snapflash/MOD_MANIFEST.md"
+    "docs/gpt-oss/MOD_MANIFEST.md"
 )
 cd -- "$REPO_ROOT"
 
@@ -72,7 +73,7 @@ if [[ -s "$UNDECLARED_DUPLICATES" ]]; then
     exit 1
 fi
 
-if grep -E '^(\.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$UNION_PATHS"; then
+if grep -E '^(\.tools/\.secrets/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$UNION_PATHS"; then
     printf 'error: overlay manifests contain a prohibited local/runtime path\n' >&2
     exit 1
 fi

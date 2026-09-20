@@ -76,4 +76,3 @@ fi
 printf 'gpt-oss-mod-manifest baseline=%s paths=%s\n' \
     "$BASELINE" "$(wc -l <"$MANIFEST_PATHS" | tr -d ' ')"
 printf 'gpt-oss-mod-manifest: passed\n'
-

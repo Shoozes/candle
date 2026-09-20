@@ -22,4 +22,3 @@ identify or load a production model.
 ---
 
 AI-edited: 2026-09-19; agent=Codex; task=gpt-oss-c0-c1; change=pinned official source identity
-

@@ -7,7 +7,7 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 - Model and compatibility baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Live overlay baseline: Hugging Face `7c2e89295dad4aeebc6ef7a92c255360b6957c2c` after the S3 merge. Frozen `candle-overlays-mvp-0.2.0` receipts still encode `6f74e7c390c717f8fd34f23ce02aceb058173370`.
 - Historical mod checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`; that branch is retained as evidence, not used as a second publication line.
-- Current release-candidate LFM2-VL overlay: 158 paths, exactly 17 fork-origin modifications and 141 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL.
+- Current release-candidate LFM2-VL overlay: 163 paths, exactly 17 fork-origin modifications and 146 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL.
 - A **fork-origin modification** is a path that exists in the current publication baseline and is intentionally changed by this mod.
 - A **mod-owned addition** is a path absent from the current publication baseline and created for this project.
 - “Mod-owned” describes repository provenance, not third-party authorship. External source and license provenance remains authoritative in `SOURCES.md` and `LICENSE_NOTES.md`.
@@ -142,6 +142,11 @@ No other file from the integrated Candle publication baseline is part of the mod
 
 ### Local verification scripts
 
+- `.tools/git-askpass.cmd`
+- `.tools/git-askpass.ps1`
+- `.tools/gitpush.ps1`
+- `.tools/verify-before-push.ps1`
+- `scripts/tests/test-gitpush.ps1`
 - `scripts/lfm2-vl/env-report.sh`
 - `scripts/lfm2-vl/preflight.ps1`
 - `scripts/lfm2-vl/run-bounded-oracle.ps1`
@@ -209,7 +214,9 @@ No other file from the integrated Candle publication baseline is part of the mod
 
 ## Never Publish From the Local Worktree
 
-- `.tools/` and every descendant, including secret material.
+- `.tools/.secrets/`, local test-mode markers/verifiers, and any unregistered
+  `.tools/` descendant. The four registered publication scripts above are
+  reviewed source; their runtime credentials are not.
 - `.venv/`, `artifacts/`, `downloads/`, `models/`, Hugging Face caches, or generated reference outputs.
 - Production model weights, authentication material, or ad hoc local logs.
 

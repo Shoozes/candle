@@ -199,9 +199,11 @@ Do not hide pre-existing failures. Record them separately from failures caused b
 - Before publication, fetch `origin/main`, preserve both histories through a
   reviewed non-force integration, rerun the local gate, and require a clean
   named `main` worktree.
-- Push only after explicit owner authorization, using ordinary Git and
-  ignored `.tools/.secrets/gt.txt`. Do not use EdgeSymbio `gitpush.ps1` in
-  this repository. Fast-forward `main` only; never force-push. Annotated
+- Push only after explicit owner authorization, using the Candle-owned
+  `.tools/gitpush.ps1` and ignored `.tools/.secrets/gt.txt`. The helper
+  requires a reviewed clean `main`, runs the native locked/offline gate, and
+  publishes one exact fast-forward commit without staging or committing.
+  Never use another repository's helper or force-push. Annotated
   `lfm2-vl-mvp-X.Y.Z` / `candle-overlays-mvp-X.Y.Z` tags remain a separately
   authorized action after remote `main` equals local `HEAD`. Never move an
   existing release tag.
@@ -239,4 +241,4 @@ The next Codex session must be able to continue from this file without reconstru
 Keep active tasks and their What/Why/When/Where/How/Done-when/Verification contract in `TODO.md`. Move completed details to `HISTORY.md`, recurring hazards to `FAILURE_LOG.md`, and never duplicate either into the summary bank.
 
 ---
-AI-edited: 2026-09-18T00:35:00-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=p0-git-truth | change=canonical C:\\DevStuff\\candle checkout; ordinary Git plus gt.txt; no gitpush.ps1
+AI-edited: 2026-09-19T00:00:00-04:00 | agent=Codex/root | model=unknown | effort=high | task=guarded-publication | change=adopted Candle-owned clean-commit gitpush helper with ignored secrets

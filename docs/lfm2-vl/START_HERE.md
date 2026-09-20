@@ -16,16 +16,18 @@ This is the live execution entry point for the Candle 0.11 LFM2.5-VL/MMProj exte
 ## Current Gate
 
 Selected product direction: Edge + this Shoozes/candle overlay. Edge Q8 stays
-the product default. GPT-OSS is an explicit later experiment (C0 only after
-S4). No training from this gate.
+the product default. GPT-OSS is a separate owner-authorized Candle-only
+experiment; its current C0/C1 boundary is tracked in `docs/gpt-oss/STATUS.md`
+and does not change the LFM2-VL product sequence. No training from this gate.
 
 **S3/S4 source is published** at
 `4c1feb82eccd60a14f9f00f84ef6c9bdedcddd06` (`origin/main`). Overlay and
-focused checks passed. **Next mutation:** adopt that SHA in Edge together
-with `tokenizers` 0.23/`onig`. Do not merge floating `huggingface/main`.
-Do not retag `lfm2-vl-mvp-0.1.0`. Do not open gpt-oss C0 until that
-pin-adoption lands. Keep the Edge pin on `238cc176…` until then. 3B
-production proof, another llama.cpp fixture, MOSS, and release tagging are
+focused checks passed. **Next mutation for the LFM2-VL chain:** adopt that SHA
+in Edge together with `tokenizers` 0.23/`onig`. Do not merge floating
+`huggingface/main`. Do not retag `lfm2-vl-mvp-0.1.0`. Keep the Edge pin on
+`238cc176…` until then. The LFM2-VL/Edge C0 chain remains held until pin
+adoption; this does not suspend the separately registered GPT-OSS experiment.
+3B production proof, another llama.cpp fixture, MOSS, and release tagging are
 outside this chain.
 
 The LFM2-VL implementation phases and the coordinated Candle/SnapFlash
@@ -125,9 +127,10 @@ publication line.
   required for owner-reviewed work.
 - Fetch and review `origin/main`, preserve both histories without force, and
   rerun the local release gate after every integration.
-- Publish with ordinary Git plus ignored `.tools/.secrets/gt.txt` after
-  explicit owner approval and from a clean named `main`. Do not use
-  EdgeSymbio `gitpush.ps1` here. Fast-forward only; never force-push.
+- Publish with the Candle-owned `.tools/gitpush.ps1` plus ignored
+  `.tools/.secrets/gt.txt` after explicit owner approval and from a reviewed,
+  clean named `main`. The helper never stages or commits. Fast-forward only;
+  never force-push or use another repository's helper.
   Annotated `lfm2-vl-mvp-X.Y.Z` tags remain a separately authorized action
   after remote `main` equals local `HEAD`.
 - Track the root `Cargo.lock` and `rust-toolchain.toml` as release inputs; keep
@@ -157,4 +160,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-09-18T00:35:00-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=p0-git-truth | change=one checkout story: native Git at C:\\DevStuff\\candle; WSL replay only
+AI-edited: 2026-09-19T00:00:00-04:00 | agent=Codex/root | model=unknown | effort=high | task=gpt-oss-c0-c1 | change=separated the authorized GPT-OSS experiment from the LFM2-VL pin hold

@@ -2,6 +2,26 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-09-19 — GPT-OSS C0/C1 source and Candle-owned publication guard
+
+- Committed the experimental, model-free GPT-OSS C0/C1 source boundary as
+  `6a43f5289f98f135d3406a3b957e1d94a22c3cae`: local checkpoint rejection,
+  packed U8 MXFP4 retention/on-demand CPU decoding, selected-expert parity,
+  synthetic forward/cache equivalence, deterministic reset, and bounded
+  failure rollback. No production checkpoint, tokenizer, download, CUDA path,
+  or product-default change is claimed.
+- Replaced the repository's missing/ignored publication helper with tracked,
+  Candle-owned `.tools/gitpush.ps1`, askpass, and native verification scripts.
+  `.tools/.secrets/` remains ignored. The helper stages and commits nothing,
+  requires clean `main`, proves fast-forward ancestry, verifies a fixed commit
+  and tree, rejects verifier drift and remote races, and writes its receipt
+  only after exact remote-tip confirmation.
+- Verification before delivery: GPT-OSS 14/14; transformer library 105/105;
+  affected checks and warnings-denied Clippy; PowerShell syntax; summary bank;
+  LFM2-VL 163-path, GPT-OSS 17-path, SnapFlash 20-path, and 183-path union
+  manifests; plus four isolated gitpush integration cases. The final guarded
+  helper reruns the complete native locked/offline publication gate.
+
 ## 2026-09-18 — S3 merge of `7c2e8929` and local S4 gates
 
 - History-preserving `--no-ff` merge `25d676f5663f152cf9371b405236d75fe110d14f`

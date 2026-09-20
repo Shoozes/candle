@@ -48,6 +48,22 @@
         "candle-transformers/src/models/lfm2/model.rs"
       ]
     },
+    "feature__gpt_oss_experimental": {
+      "description": "Experimental GPT-OSS checkpoint admission, packed MXFP4 blocks/scales, CPU expert reference, and synthetic forward/cache proof.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/mod.rs",
+        "candle-transformers/src/models/gpt_oss/mod.rs",
+        "candle-transformers/src/models/gpt_oss/checkpoint.rs",
+        "candle-transformers/src/models/gpt_oss/config.rs",
+        "candle-transformers/src/models/gpt_oss/mxfp4.rs",
+        "candle-transformers/src/models/gpt_oss/model.rs",
+        "docs/gpt-oss/MOD_MANIFEST.md",
+        "docs/gpt-oss/SOURCES.md",
+        "docs/gpt-oss/STATUS.md",
+        "scripts/gpt-oss/verify-mod-manifest.sh"
+      ]
+    },
     "feature__siglip2_naflex": {
       "description": "Packed-patch SigLIP2 NaFlex encoding, limits, shape contracts, tensor mapping, and focused fixture evidence.",
       "status": "active",
@@ -363,7 +379,7 @@
       ]
     },
     "issue__linked_worktree_git_boundary": {
-      "description": "Canonical checkout C:\\DevStuff\\candle (WSL /mnt/c/DevStuff/candle): native Windows Git owns main; publish with ordinary Git plus .tools/.secrets/gt.txt; candle-mods is retired; WSL is optional verify-baseline replay only.",
+      "description": "Canonical checkout C:\\DevStuff\\candle (WSL /mnt/c/DevStuff/candle): native Windows Git owns main; the Candle-owned guarded helper publishes clean reviewed main with ignored .tools/.secrets/gt.txt; candle-mods is retired; WSL is optional verification only.",
       "status": "active",
       "paths": [
         "AGENTS.md",
@@ -444,6 +460,10 @@
         ".github/workflows/rust-ci.yml",
         ".gitattributes",
         ".gitignore",
+        ".tools/git-askpass.cmd",
+        ".tools/git-askpass.ps1",
+        ".tools/gitpush.ps1",
+        ".tools/verify-before-push.ps1",
         "AGENTS.md",
         "rust-toolchain.toml",
         "docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md",
@@ -454,7 +474,8 @@
         "docs/lfm2-vl/LICENSE_NOTES.md",
         "scripts/release/test-write-candle-overlays-receipt.ps1",
         "scripts/release/write-candle-overlays-receipt.ps1",
-        "scripts/lfm2-vl/verify-mod-manifest.sh"
+        "scripts/lfm2-vl/verify-mod-manifest.sh",
+        "scripts/tests/test-gitpush.ps1"
       ]
     },
     "workflow__fork_overlays": {
