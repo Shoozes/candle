@@ -108,8 +108,8 @@
   `a0c795a7f6a27d56175aa5c45ee764067ad7d5e3`, tree
   `04bd1f0fa9d9601510f616d9ef6760edf1945f5d`.
 - The accepted implementation is published at guarded checkpoint
-  `ea5900f614c35c47822b8363ff18ee676ae2159a`; this closing slice adds the
-  performance harness and reconciles its state before the next guarded push.
+  `c8316e3b06090aed3a1f809004ef7e10b7e70b3b`; the prior short-parity
+  checkpoint was `ea5900f614c35c47822b8363ff18ee676ae2159a`.
 - The successful receipt executed candidate tree
   `69830f1d244ef0d13b734ee48d5bf7243366c371` before these post-proof status
   and history edits; the committed source checkpoint includes that later

@@ -12,10 +12,9 @@
 - Current baseline before this slice: `main` at
   `a0c795a7f6a27d56175aa5c45ee764067ad7d5e3`, tree
   `04bd1f0fa9d9601510f616d9ef6760edf1945f5d`.
-- The accepted implementation is published on `main` at the prior guarded
-  checkpoint `ea5900f614c35c47822b8363ff18ee676ae2159a`; this closing slice
-  adds the performance harness and its state documentation before the next
-  guarded publication.
+- The accepted implementation is published on `main` at
+  `c8316e3b06090aed3a1f809004ef7e10b7e70b3b`; the prior short-parity
+  checkpoint was `ea5900f614c35c47822b8363ff18ee676ae2159a`.
 - The successful receipt's executed candidate tree is
   `69830f1d244ef0d13b734ee48d5bf7243366c371`; it is the pre-documentation
   candidate tree and is marked dirty in the receipt. The committed source
@@ -233,10 +232,9 @@ slice:
   passed with 197 registered paths and 21 shared paths.
 - `bash scripts/tests/test-verify-fork-overlays.sh`: passed all 7 isolated
   regression cases.
-- The guarded publication helper is the delivery gate for this closing slice;
-  the prior short-parity checkpoint is already on `origin/main`. The only
-  substantive blocker after publication is completion of the separate long
-  performance receipt.
+- The guarded publication helper passed for the closing slice and verified
+  `c8316e3b06090aed3a1f809004ef7e10b7e70b3b` on `origin/main`. The only
+  substantive blocker is completion of the separate long performance receipt.
 
 ## Exact next task
 
