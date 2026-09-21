@@ -2,6 +2,52 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-09-20 — GPT-OSS Task 3 short parity boundary
+
+- Added the bounded opt-in `gpt-oss-short-parity` CUDA example, its mandatory
+  external `_logits_` runner script, and a compact hash-bound reference fixture.
+  The runner records baseline/candidate Git identity, exact input hashes,
+  tokenizer IDs, reference build identity, CUDA device, and cleanup fields on a
+  successful receipt; dirty candidates are explicitly marked
+  `uncommitted_candidate`.
+- The reference parser follows llama.cpp b11026's normalized log-probability
+  format, including its max-minus-16 lower-tail clamp. Candle raw logits are
+  stably log-softmaxed before comparison. A Windows main-thread stack overflow
+  in the 1 MiB model and GGUF hashing buffers was fixed by moving those buffers
+  to the heap.
+- The comparison uses a predeclared robust criterion: exact top-1 agreement,
+  top-k union log-probability error <= `0.25`, full-row mean error <= `0.01`,
+  and probability-space total variation <= `0.01`. The supplied native run
+  passed prefill and both decode stages, cancellation rollback, deterministic
+  reset/replay, and registry teardown. Prefill's raw full-row maximum remains
+  `0.4869547` in the clipped tail, while the bounded top-k/mean/TV metrics pass;
+  the successful receipt is `artifacts/gpt-oss/short-parity/receipt.json`.
+  The implementation is checkpointed locally; guarded remote publication is
+  handled by the current follow-up.
+
+## 2026-09-20 — GPT-OSS Task 3 wire, ownership, and CUDA hardening
+
+- Normalized serialized GGML MXFP4 blocks at the GGUF boundary into Candle's
+  adjacent-nibble packed representation. Unit coverage exercises every one of
+  the 32 coordinates, mixed signs and scales, and the discriminating high-
+  nibble lane; the internal packed path remains unchanged.
+- Reworked GGUF loading to retain one identity-verified file handle from
+  admission through `load_weights`, deny Windows write/delete sharing, read in
+  cancellable bounded chunks, and avoid per-tensor reopen/rehash. The retained
+  handle survives same-size path replacement, and the registry lease remains
+  held by the live model/runtime owner until teardown.
+- Added real serialized fused/split GGUF fixtures that compare loaded packed
+  values, expert contributions, and CPU logits against an independent wire
+  decoder; the CUDA lane repeats the output comparison. Added delayed CUDA
+  cancellation/non-finite-output recovery and validation of every public
+  `GptOssCudaConfig` field before device setup.
+- Native Windows/MSVC verification passed the focused CPU lane `37/37` and the
+  CUDA lane `45/45`, each with one ignored external-artifact test. The
+  owner-selected external artifact test passed in `613.20s`, including pinned
+  identity admission, full assembly, model construction, and lease release.
+  No model bytes were added to the repository and no commit or publication was
+  made.
+
 ## 2026-09-20 — GPT-OSS Task 3 packed CUDA executor
 
 - Added the opt-in `cuda`-feature-gated `GptOssCudaModel` with explicit device,

@@ -1,7 +1,8 @@
 use super::GptOssConfig;
 use crate::models::gpt_oss::mxfp4::Mxfp4ExpertOperation;
 use crate::models::gpt_oss::runtime::{
-    cache_bytes_for_tokens, GptOssCancellationToken, GptOssResourceLimits, GptOssResourceUsage,
+    cache_bytes_for_tokens, GptOssCancellationToken, GptOssLoadedHandle, GptOssResourceLimits,
+    GptOssResourceUsage,
 };
 use candle::{bail, Result};
 
@@ -222,7 +223,7 @@ impl GptOssLayerWeights {
         &self.gate
     }
 
-    #[cfg(feature = "cuda")]
+    #[cfg(any(test, feature = "cuda"))]
     pub(crate) fn experts(&self) -> &Mxfp4ExpertOperation {
         &self.experts
     }
@@ -235,6 +236,7 @@ pub struct GptOssWeights {
     layers: Vec<GptOssLayerWeights>,
     final_norm: Vec<f32>,
     lm_head: DenseLinear,
+    load_handle: Option<GptOssLoadedHandle>,
 }
 
 impl GptOssWeights {
@@ -281,7 +283,17 @@ impl GptOssWeights {
             layers,
             final_norm,
             lm_head,
+            load_handle: None,
         })
+    }
+
+    pub(crate) fn attach_load_handle(&mut self, handle: GptOssLoadedHandle) {
+        self.load_handle = Some(handle);
+    }
+
+    #[cfg(feature = "cuda")]
+    pub(crate) fn load_handle(&self) -> Option<GptOssLoadedHandle> {
+        self.load_handle.clone()
     }
 
     #[cfg(feature = "cuda")]
@@ -289,7 +301,7 @@ impl GptOssWeights {
         &self.token_embedding
     }
 
-    #[cfg(feature = "cuda")]
+    #[cfg(any(test, feature = "cuda"))]
     pub(crate) fn layers(&self) -> &[GptOssLayerWeights] {
         &self.layers
     }

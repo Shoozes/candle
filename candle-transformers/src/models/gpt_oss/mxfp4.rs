@@ -29,6 +29,10 @@ pub struct PackedMxfp4 {
 
 impl PackedMxfp4 {
     /// Build a packed tensor from the exact on-disk blocks/scales payloads.
+    ///
+    /// `blocks` already uses Candle's internal adjacent-nibble order: each
+    /// byte contains logical coordinates `2j` and `2j + 1`. GGML MXFP4 uses a
+    /// different wire order and must enter through [`Self::from_ggml_parts`].
     pub fn from_parts(shape: &[usize], blocks: Vec<u8>, scales: Vec<u8>) -> Result<Self> {
         let (expected_blocks, expected_block_bytes) = expected_storage(shape)?;
         if blocks.len() != expected_block_bytes {
@@ -63,6 +67,52 @@ impl PackedMxfp4 {
             blocks,
             scales,
         })
+    }
+
+    /// Build a packed tensor from GGML `block_mxfp4` payloads.
+    ///
+    /// GGML stores the low nibbles for coordinates `0..16` and the high
+    /// nibbles for coordinates `16..32` in the same sixteen bytes. Candle's
+    /// CPU and CUDA implementations intentionally retain adjacent coordinates
+    /// instead, so this constructor performs the lossless layout conversion at
+    /// the format boundary. [`Self::from_parts`] remains the constructor for
+    /// the already-normalized internal representation.
+    pub fn from_ggml_parts(shape: &[usize], blocks: Vec<u8>, scales: Vec<u8>) -> Result<Self> {
+        let (_, expected_block_bytes) = expected_storage(shape)?;
+        if blocks.len() != expected_block_bytes {
+            bail!(
+                "GGML MXFP4 blocks payload has {} bytes, expected {}",
+                blocks.len(),
+                expected_block_bytes
+            );
+        }
+        let mut normalized = Vec::new();
+        normalized
+            .try_reserve_exact(blocks.len())
+            .map_err(|error| {
+                candle::Error::Msg(format!("MXFP4 normalized block allocation failed: {error}"))
+            })?;
+        for wire_block in blocks.chunks_exact(BYTES_PER_BLOCK) {
+            for pair in 0..BYTES_PER_BLOCK / 2 {
+                let first = *wire_block.get(pair * 2).ok_or_else(|| {
+                    candle::Error::Msg("GGML MXFP4 wire block is truncated".into())
+                })?;
+                let second = *wire_block.get(pair * 2 + 1).ok_or_else(|| {
+                    candle::Error::Msg("GGML MXFP4 wire block is truncated".into())
+                })?;
+                normalized.push((first & 0x0f) | ((second & 0x0f) << 4));
+            }
+            for pair in 0..BYTES_PER_BLOCK / 2 {
+                let first = *wire_block.get(pair * 2).ok_or_else(|| {
+                    candle::Error::Msg("GGML MXFP4 wire block is truncated".into())
+                })?;
+                let second = *wire_block.get(pair * 2 + 1).ok_or_else(|| {
+                    candle::Error::Msg("GGML MXFP4 wire block is truncated".into())
+                })?;
+                normalized.push((first >> 4) | (second & 0xf0));
+            }
+        }
+        Self::from_parts(shape, normalized, scales)
     }
 
     /// Load matching U8 `blocks` and `scales` tensors from a safetensors file.
@@ -331,7 +381,7 @@ impl PackedMxfp4 {
         Ok(())
     }
 
-    fn value_at(&self, block: usize, offset: usize) -> Result<f32> {
+    pub(crate) fn value_at(&self, block: usize, offset: usize) -> Result<f32> {
         if offset >= VALUES_PER_BLOCK {
             bail!("MXFP4 value offset {offset} exceeds block size");
         }
@@ -445,12 +495,12 @@ impl Mxfp4ExpertOperation {
         self.mlp1.resident_bytes() + self.mlp2.resident_bytes()
     }
 
-    #[cfg(feature = "cuda")]
+    #[cfg(any(test, feature = "cuda"))]
     pub(crate) fn mlp1(&self) -> &PackedMxfp4 {
         &self.mlp1
     }
 
-    #[cfg(feature = "cuda")]
+    #[cfg(any(test, feature = "cuda"))]
     pub(crate) fn mlp2(&self) -> &PackedMxfp4 {
         &self.mlp2
     }
@@ -688,6 +738,16 @@ mod tests {
         FP4_VALUES[nibble] * 2f32.powi(scales[block] as i32 - SCALE_BIAS)
     }
 
+    fn ggml_reference_value(blocks: &[u8], scales: &[u8], block: usize, offset: usize) -> f32 {
+        let byte = blocks[block * BYTES_PER_BLOCK + offset % (VALUES_PER_BLOCK / 2)];
+        let nibble = if offset < VALUES_PER_BLOCK / 2 {
+            byte & 0x0f
+        } else {
+            byte >> 4
+        } as usize;
+        FP4_VALUES[nibble] * 2f32.powi(scales[block] as i32 - SCALE_BIAS)
+    }
+
     fn synthetic(shape: &[usize]) -> PackedMxfp4 {
         let elements = shape.iter().product::<usize>();
         let blocks = elements / VALUES_PER_BLOCK;
@@ -718,6 +778,87 @@ mod tests {
         for (actual, expected) in selected.iter().zip(expected.iter()) {
             assert!((actual - expected).abs() <= 1e-6, "{actual} != {expected}");
         }
+        Ok(())
+    }
+
+    #[test]
+    fn ggml_wire_normalization_covers_all_coordinates_and_discriminating_lane() -> Result<()> {
+        let mut wire = vec![0u8; BYTES_PER_BLOCK];
+        for coordinate in 0..VALUES_PER_BLOCK {
+            let code = ((coordinate * 5 + 3) % 16) as u8;
+            if coordinate < VALUES_PER_BLOCK / 2 {
+                wire[coordinate] |= code;
+            } else {
+                wire[coordinate - VALUES_PER_BLOCK / 2] |= code << 4;
+            }
+        }
+        let scales = vec![SCALE_BIAS as u8];
+        let packed =
+            PackedMxfp4::from_ggml_parts(&[1, 1, VALUES_PER_BLOCK], wire.clone(), scales.clone())?;
+        for coordinate in 0..VALUES_PER_BLOCK {
+            let mut input = vec![0.0f32; VALUES_PER_BLOCK];
+            input[coordinate] = 1.0;
+            let actual = packed.matmul_expert(0, &input, 1)?[0];
+            let expected = ggml_reference_value(&wire, &scales, 0, coordinate);
+            assert_eq!(actual, expected, "coordinate {coordinate} was mis-laned");
+        }
+
+        let mut discriminating = vec![0u8; BYTES_PER_BLOCK];
+        discriminating[0] = 0x20;
+        let packed =
+            PackedMxfp4::from_ggml_parts(&[1, 1, VALUES_PER_BLOCK], discriminating, scales)?;
+        let mut coordinate_15 = vec![0.0f32; VALUES_PER_BLOCK];
+        coordinate_15[15] = 1.0;
+        let mut coordinate_1 = vec![0.0f32; VALUES_PER_BLOCK];
+        coordinate_1[1] = 1.0;
+        let mut coordinate_16 = vec![0.0f32; VALUES_PER_BLOCK];
+        coordinate_16[16] = 1.0;
+        assert_eq!(packed.matmul_expert(0, &coordinate_15, 1)?[0], 0.0);
+        assert_eq!(packed.matmul_expert(0, &coordinate_1, 1)?[0], 0.0);
+        assert_eq!(packed.matmul_expert(0, &coordinate_16, 1)?[0], 1.0);
+        Ok(())
+    }
+
+    #[test]
+    fn ggml_wire_normalization_preserves_mixed_signs_scales_and_internal_layout() -> Result<()> {
+        let mut wire = vec![0u8; 2 * BYTES_PER_BLOCK];
+        for block in 0..2 {
+            for coordinate in 0..VALUES_PER_BLOCK {
+                let code = ((coordinate * 7 + block * 11 + 1) % 16) as u8;
+                if coordinate < VALUES_PER_BLOCK / 2 {
+                    wire[block * BYTES_PER_BLOCK + coordinate] |= code;
+                } else {
+                    wire[block * BYTES_PER_BLOCK + coordinate - VALUES_PER_BLOCK / 2] |= code << 4;
+                }
+            }
+        }
+        let scales = vec![126, 129];
+        let packed =
+            PackedMxfp4::from_ggml_parts(&[1, 2, VALUES_PER_BLOCK], wire.clone(), scales.clone())?;
+        let input: Vec<f32> = (0..64).map(|index| (index as f32 - 19.0) / 13.0).collect();
+        let actual = packed.matmul_expert(0, &input, 2)?;
+        let mut expected = vec![0.0f32; 2];
+        for row in 0..2 {
+            for coordinate in 0..VALUES_PER_BLOCK {
+                expected[row] += input[row * VALUES_PER_BLOCK + coordinate]
+                    * ggml_reference_value(&wire, &scales, row, coordinate);
+            }
+        }
+        for (actual, expected) in actual.iter().zip(expected.iter()) {
+            assert!((actual - expected).abs() <= 1e-5, "{actual} != {expected}");
+        }
+
+        let internal = PackedMxfp4::from_parts(
+            &[1, 1, VALUES_PER_BLOCK],
+            vec![0x21; BYTES_PER_BLOCK],
+            vec![SCALE_BIAS as u8],
+        )?;
+        let mut low = vec![0.0f32; VALUES_PER_BLOCK];
+        low[0] = 1.0;
+        let mut high = vec![0.0f32; VALUES_PER_BLOCK];
+        high[1] = 1.0;
+        assert_eq!(internal.matmul_expert(0, &low, 1)?[0], FP4_VALUES[1]);
+        assert_eq!(internal.matmul_expert(0, &high, 1)?[0], FP4_VALUES[2]);
         Ok(())
     }
 

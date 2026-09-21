@@ -98,7 +98,7 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   attention/router component, uncached/cached forward, exact cache admission,
   cancellation rollback, eviction/retry, typed failure, and pre-device static
   budget checks at the pinned oracle tolerance.
-- Corrective follow-up in the current uncommitted slice is complete: the
+- Corrective follow-up in the current checkpointed slice is complete: the
   expert helper's pure contribution contract is explicit, the zero-expert
   post-MoE residual is asserted directly, an independently generated
   two-layer CPU/reference/CUDA trace covers sliding/full attention, sinks,
@@ -106,9 +106,25 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   match their materialized-copy path with launch guards.
 - The same bounded slice now assembles fused and converter-style split
   synthetic GGUF fixtures, then the exact owner-selected artifact, through one
-  retained load session. It proves `GptOssWeights` construction and registry
-  cleanup without copying model bytes into the repository; tokenizer,
-  forward-logit, and production parity remain deferred.
+  retained load session. It now normalizes the GGML MXFP4 wire layout before
+  execution, denies Windows write/delete sharing, keeps the identity-verified
+  handle through loading, and binds the registry lease to the live model/runtime
+  owner. CUDA validates all public config fields and commits staged cache state
+  only after synchronization, finite-output, and final-cancellation checks.
+  It proves `GptOssWeights` construction and registry cleanup without copying
+  model bytes into the repository; tokenizer, forward-logit, and production
+  parity remain deferred.
+- Current verification: the focused CPU run passed `37/37` with one ignored
+  exact-artifact test; the CUDA run passed `45/45` with one ignored test; the
+  owner-selected external-artifact assembly test passed in `613.20s`.
+- Short exact-parity follow-up is complete for its bounded CUDA gate: the
+  hash-bound runner matched all 20 tokenizer IDs, loaded the exact external
+  GGUF, constructed CUDA state, verified cancellation rollback, and passed
+  prefill/decode under exact top-1, top-k, mean, and total-variation criteria.
+  It also passed deterministic reset/replay and registry teardown. The raw
+  prefill full-row maximum `0.4869547` is retained as a clipped-tail
+  diagnostic; it does not fail the separately bounded criteria. The success
+  receipt is `artifacts/gpt-oss/short-parity/receipt.json`.
 - Verification: CPU focused/full gates first, then the authorized CUDA build,
   numerical comparison, memory/cleanup receipt, summary-bank and overlay
   verifiers, and guarded publication.

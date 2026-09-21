@@ -19,8 +19,9 @@ promote GPT-OSS to the product default.
   into `GptOssConfig`, and the complete tensor inventory is owned by role,
   shape, dtype, and bounded raw byte range. Fused and current converter-style
   split expert layouts are fail-closed and covered by synthetic GGUF fixtures;
-  one retained bounded session now assembles both fixtures and the exact
-  owner-selected product artifact into `GptOssWeights`.
+  serialized GGML MXFP4 bytes are normalized into Candle's internal packed
+  layout, and one retained bounded session now assembles both fixtures and the
+  exact owner-selected product artifact into `GptOssWeights`.
 - Task 2 is delivered for the synthetic CPU boundary: an independently
   generated packed/router/attention/forward/cache oracle is digest-pinned,
   token and logical KV-cache byte admission is checked before mutation,
@@ -34,7 +35,8 @@ promote GPT-OSS to the product default.
   exposes a pure contribution contract, so CPU and CUDA both form the MoE
   residual as `post_attention_hidden + expert_contribution`. Static weight and
   logical cache admission precede device/forward allocation, and cancellation,
-  rollback, eviction, and typed failure cases are covered.
+  rollback, eviction, typed failure cases, public-config validation, finite
+  output checks, and final pre-commit cancellation are covered.
 - The exact owner-selected GGUF was read in place at the owner-provided path,
   admitted by its pinned SHA, and assembled into a CPU model object; it was
   not copied into this checkout. Tokenizer, forward-logit, and production
@@ -43,13 +45,15 @@ promote GPT-OSS to the product default.
 - Candle's maintained Q8 path and LFM2-VL release boundary remain unchanged.
 
 The implementation remains production-execution-free at this boundary. The
-C2a loader admits one exact GGUF byte identity, normalizes its directory, and
-can assemble a live CPU model object through one bounded retained file
-session; Q8_0 dense text dequantization and tokenizer/generation integration
-remain deferred. Task 2 exercises the synthetic CPU reference and bounded
-ownership contracts; Task 3 exercises an explicit opt-in CUDA executor over the
-same bounded weights. Exact assembly is proven, but an inference receipt is
-still required before any production parity claim.
+C2a loader admits one exact GGUF byte identity, normalizes its directory and
+serialized MXFP4 wire layout, and can assemble a live CPU model object through
+one retained file session without per-tensor reopen/rehash. The load lease is
+held by the live model/runtime owner; Q8_0 dense text dequantization and
+tokenizer/generation integration remain deferred. Task 2 exercises the
+synthetic CPU reference and bounded ownership contracts; Task 3 exercises an
+explicit opt-in CUDA executor over the same bounded weights. Exact assembly is
+proven, but an inference receipt is still required before any production parity
+claim.
 
 ## Overlay-owned additions
 
@@ -70,6 +74,10 @@ still required before any production parity claim.
 - `tests/fixtures/gpt_oss_task2/oracle.json`
 - `tests/fixtures/gpt_oss_task3_two_layer/README.md`
 - `tests/fixtures/gpt_oss_task3_two_layer/oracle.json`
+- `tests/fixtures/gpt_oss_task3_short_parity/README.md`
+- `tests/fixtures/gpt_oss_task3_short_parity/reference.json`
+- `candle-examples/examples/gpt-oss-short-parity.rs`
+- `scripts/gpt-oss/run-short-parity.ps1`
 - `scripts/gpt-oss/verify-mod-manifest.sh`
 - `scripts/tests/test-verify-fork-overlays.sh`
 
@@ -100,8 +108,9 @@ repository-wide shared-path registry:
   `aab205256a9b6361e410c24de3086e30f907092ca6f9ba8cd4b22c8a2b025778`,
   normalizes GPT-OSS GGUF metadata, owns the full tensor inventory, and reads
   admitted raw payloads without dequantizing them. Its bounded load methods
-  assemble dense F32/BF16 tensors plus packed MXFP4 experts, and the combined
-  loader retains one file session and one RAII registry lease.
+  normalize GGML MXFP4 wire bytes into adjacent-nibble packed tensors, assemble
+  dense F32/BF16 tensors plus packed experts, and the combined loader retains
+  one file session and one RAII registry lease.
 - `Mxfp4ExpertOperation` applies the official FP4 lookup, E8M0 scale, SwiGLU,
   and selected-expert routing; `forward` retains its residual-returning API
   while `forward_contribution` returns only the weighted expert contribution.
@@ -110,7 +119,8 @@ repository-wide shared-path registry:
   rollback, and logical/capacity usage reporting.
 - `GptOssLoadRegistry` and `GptOssGgufArtifact::open_with_registry` provide
   duplicate-load prevention plus RAII release on failed retry and completed
-  load ownership. No worker process or hidden download is created.
+  load ownership. The combined load lease remains live through model/runtime
+  teardown. No worker process or hidden download is created.
 - `GptOssCudaConfig`, `GptOssCudaModel`, and `GptOssCudaError` provide the
   feature-gated packed CUDA proof boundary with explicit device/dtype and
   static/cache admission, cancellation rollback, eviction, and typed kernel
@@ -119,10 +129,12 @@ repository-wide shared-path registry:
 ## Completion boundary
 
 Task 3 remains complete for the bounded synthetic CPU/CUDA proof boundary, and
-the uncommitted correction now includes narrowed-view CUDA equivalence and
-synthetic/exact GGUF-to-weights assembly. The next dependency is quantized
-GPT-OSS text plus split dense MMProj work; exact-model numerical parity remains
-blocked until tokenizer and forward-logit evidence is produced.
+the current Task 3 correction adds GGML MXFP4 wire normalization,
+retained-file identity/ownership, CUDA failure-atomic commit guards, and a
+hash-bound short CUDA parity receipt on top of the narrowed-view and
+synthetic/exact GGUF assembly proof. The next dependency is quantized GPT-OSS
+text plus split dense MMProj work; Q8/default and broad maintained production
+claims remain outside this opt-in receipt.
 
 ---
 

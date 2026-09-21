@@ -91,61 +91,52 @@
 - The LFM2-VL overlay contains 163 paths (17 fork modifications, 146
   additions). The SnapFlash-derived overlay contains 20 paths (8
   modifications, 12 additions). The separate GPT-OSS overlay currently
-  manifest currently registers 28 paths (19 overlay-owned and 9 shared).
-  Their current registered union is 193 paths with 21 shared paths, including
+  registers 32 paths (23 overlay-owned and 9 shared).
+  Their current registered union is 197 paths with 21 shared paths, including
   the shared CUDA build path.
 
 ## Separate GPT-OSS Experimental Handoff
 
-- Current phase: Task 3 correctness correction / packed MXFP4 CUDA executor plus
-  bounded GGUF-to-weights assembly for the GPT-OSS experimental overlay. This
-  slice is uncommitted pending owner review and does not change EdgeSymbio or
-  symbio-code.
-- Current baseline: clean published `main`
-  `2ac78ba5160ad939f70374fdbef966c91fd6e426`, tree
-  `18b70631609c969ba2d82972b6c287f84f2b1cee`.
-- Task 1 source: `67a7fe605194384c1505df96b536c3238ad408e1`, tree
-  `fa35de0a6438992e5aa6bc6b4429bb18ed44005b`.
-- Last published green verification: 30/30 focused GPT-OSS tests with CUDA
-  enabled, warnings-denied CUDA Clippy, the native CPU/CUDA checks, the full
-  guarded publication gate, summary-bank verification, both overlay-specific
-  checks, and the rolling-baseline union overlay gate passed for published
-  Task 3. Current correction and assembly verification is recorded in
-  `docs/gpt-oss/STATUS.md` after this slice's local gates.
-- Delivery files: the Task 2 runtime/resource and oracle boundary, the
-  feature-gated packed CUDA executor/kernel, typed CUDA failures, manifest and
-  source records, the GPT decision/history/status updates, and the shared
-  handoff/backlog updates.
-- Proven: the Task 1 selected-SHA GGUF admission and tensor inventory;
-  independent packed/router/attention/forward/cache values at absolute
-  tolerance `1e-4`; exact 128-byte/token logical KV accounting with boundary
-  and one-over rejection; prefill/decode cancellation and failure rollback;
-  duplicate-load prevention with cancellation cleanup, retry/reopen, and zero
-  active/loaded ownership after release; native CUDA packed execution with
-  19,416 logical static bytes, 3,264 packed bytes, and no dense expert copy;
-  narrowed-view/materialized-copy CUDA equivalence; and fused/split synthetic
-  plus exact owner-selected GGUF-to-weights assembly.
-- Known limitation/blocker: the owner-selected product GGUF with SHA-256
+- Current phase: Task 3 short exact-parity runner and CUDA prefill/decode
+  boundary. The runner is checkpointed locally pending guarded owner
+  publication and performance characterization, and does not change
+  EdgeSymbio or symbio-code. Its supplied-artifact run passes real GGUF load,
+  CUDA construction, cancellation rollback, bounded prefill/decode parity,
+  reset/replay, and teardown.
+- Current baseline before this slice: `main`
+  `a0c795a7f6a27d56175aa5c45ee764067ad7d5e3`, tree
+  `04bd1f0fa9d9601510f616d9ef6760edf1945f5d`.
+- The accepted implementation is now the local `main` checkpoint at `HEAD`;
+  guarded remote publication remains pending, so the exact checkpoint identity
+  is taken from `git log -1`.
+- The successful receipt executed candidate tree
+  `69830f1d244ef0d13b734ee48d5bf7243366c371` before these post-proof status
+  and history edits; the committed source checkpoint includes that later
+  reconciliation without changing the receipt's executed source identity.
+- Task 1, Task 2, and the prior Task 3 packed-executor checkpoints remain
+  accepted. This slice is committed locally; guarded remote publication is
+  pending, and no model bytes entered the repository. The detailed evidence
+  is recorded in `docs/gpt-oss/STATUS.md`.
+- Delivery files currently under active work:
+  `candle-transformers/src/models/gpt_oss/cuda.rs`, `gguf.rs`, `model.rs`,
+  `mxfp4.rs`, `runtime.rs`, `candle-examples/examples/gpt-oss-short-parity.rs`,
+  and `scripts/gpt-oss/run-short-parity.ps1`.
+- Proven: all-32-coordinate GGML wire normalization with mixed signs/scales;
+  real serialized fused/split loader values and expert-contribution checks;
+  one identity-verified retained file handle with chunk cancellation and
+  Windows write/delete sharing denial; lease rejection while a model lives and
+  release after teardown/construction failure; public CUDA config validation;
+  and synchronized finite-output/final-cancellation cache commit guards.
+- Known limitation: the owner-selected product GGUF with SHA-256
   `aab205256a9b6361e410c24de3086e30f907092ca6f9ba8cd4b22c8a2b025778` was
-  read only from its external owner-provided path. Exact assembly and model
-  construction pass, but forward-logit parity, tokenizer compatibility,
-  quantized text, and production claims remain unproven. Q8 remains the
-  maintained product default and quantized text plus split dense MMProj is the
-  next GPT-OSS task.
-- Current active files: `candle-transformers/src/models/gpt_oss/gguf.rs`,
-  `candle-transformers/src/models/gpt_oss/mod.rs`,
-  `candle-transformers/src/models/gpt_oss/mxfp4.rs`,
-  `candle-transformers/src/models/gpt_oss/model.rs`,
-  `candle-transformers/src/models/gpt_oss/cuda.rs`, and the independent
-  `tests/fixtures/gpt_oss_task3_two_layer/` oracle.
-- Proven correction behavior: CPU and CUDA use a pure expert contribution
-  added to the post-attention hidden state; zero expert output preserves a
-  nonzero post-attention residual; a two-layer CPU/reference/CUDA trace covers
-  sliding/full attention, sinks, unequal routing, and position 3; and packed
-  CUDA narrowed views equal their materialized-copy path with launch guards.
-- Exact next task: finish local review of this uncommitted correction and
-  assembly slice; publish only after explicit owner authorization, then keep
-  Task 4 quantized text and split dense MMProj work separately scoped.
+  read only from its external owner-provided path. The fixed tokenizer IDs,
+  exact assembly/model construction, and short CUDA parity receipt pass. The
+  raw prefill row retains a clipped-tail diagnostic outlier, so the accepted
+  criterion is explicitly top-k/mean/total-variation based; Q8 remains the
+  maintained product default and broad production claims remain unproven.
+- Exact next task: complete guarded publication, then run the separate
+  cold-load/warm-inference performance characterization. Keep Task 4
+  quantized text and split dense MMProj work separately scoped.
 
 ## Latest Integrity Review (2026-08-21)
 
@@ -282,4 +273,4 @@ leave the status Gated and retain the explicit blocker. The separate
 authorization.
 
 ---
-AI-edited: 2026-09-20T00:00:00-04:00 | agent=Codex | model=unknown | effort=high | task=gpt-oss-task3-cuda-assembly | change=updated the separate GPT-OSS handoff for narrowed-view CUDA and bounded exact GGUF assembly
+AI-edited: 2026-09-20T00:00:00-04:00 | agent=Codex | model=unknown | effort=high | task=gpt-oss-task3-short-parity | change=updated the separate GPT-OSS handoff for the passed hash-bound CUDA parity receipt and uncommitted candidate identity

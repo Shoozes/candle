@@ -7,7 +7,8 @@
 use super::model::{rope_parameters, DenseLinear, GptOssLayerWeights, GptOssWeights};
 use super::mxfp4::{Mxfp4ExpertOperation, PackedMxfp4, BYTES_PER_BLOCK, VALUES_PER_BLOCK};
 use super::runtime::{
-    cache_bytes_for_tokens, GptOssCancellationToken, GptOssResourceLimits, GptOssResourceUsage,
+    cache_bytes_for_tokens, GptOssCancellationToken, GptOssLoadedHandle, GptOssResourceLimits,
+    GptOssResourceUsage,
 };
 use super::GptOssConfig;
 use candle::cuda_backend::cudarc::driver::{DevicePtr, DevicePtrMut};
@@ -129,6 +130,26 @@ impl GptOssCudaConfig {
             max_weight_bytes,
             limits,
         })
+    }
+
+    fn validate(&self, config: &GptOssConfig) -> GptOssCudaResult<()> {
+        if self.activation_dtype != DType::F32 {
+            return Err(GptOssCudaError::UnsupportedDtype {
+                requested: format!("{:?}", self.activation_dtype),
+            });
+        }
+        if self.max_weight_bytes == 0 {
+            return Err(GptOssCudaError::ResourceLimit {
+                resource: "static weight bytes",
+                requested: 1,
+                limit: 0,
+            });
+        }
+        self.limits
+            .validate(config)
+            .map_err(|error| GptOssCudaError::Invalid {
+                message: error.to_string(),
+            })
     }
 }
 
@@ -348,6 +369,8 @@ pub struct GptOssCudaModel {
     device: Device,
     limits: GptOssResourceLimits,
     activation_dtype: DType,
+    #[allow(dead_code)]
+    load_handle: Option<GptOssLoadedHandle>,
 }
 
 impl GptOssCudaModel {
@@ -357,17 +380,12 @@ impl GptOssCudaModel {
         cuda_config: GptOssCudaConfig,
     ) -> GptOssCudaResult<Self> {
         config.validate().map_err(GptOssCudaError::from)?;
+        cuda_config.validate(&config)?;
         if weights.layers().len() != config.num_hidden_layers {
             return Err(GptOssCudaError::Invalid {
                 message: "weight layer count does not match configuration".to_string(),
             });
         }
-        cuda_config
-            .limits
-            .validate(&config)
-            .map_err(|error| GptOssCudaError::Invalid {
-                message: error.to_string(),
-            })?;
         let static_resident_bytes = cpu_weight_resident_bytes(&weights)?;
         if static_resident_bytes > cuda_config.max_weight_bytes {
             return Err(GptOssCudaError::ResourceLimit {
@@ -382,6 +400,7 @@ impl GptOssCudaModel {
                 message: error.to_string(),
             }
         })?;
+        let load_handle = weights.load_handle();
         let weights = CudaWeights::from_cpu(&config, &weights, &device, static_resident_bytes)?;
         let cache = CudaCache::new(config.num_hidden_layers)?;
         Ok(Self {
@@ -391,6 +410,7 @@ impl GptOssCudaModel {
             device,
             limits: cuda_config.limits,
             activation_dtype: cuda_config.activation_dtype,
+            load_handle,
         })
     }
 
@@ -520,6 +540,14 @@ impl GptOssCudaModel {
         let logits = logits.ok_or_else(|| GptOssCudaError::Invalid {
             message: "CUDA forward produced no logits".to_string(),
         })?;
+        self.device.synchronize()?;
+        let output = logits.flatten_all()?.to_vec1::<f32>()?;
+        if output.iter().any(|value| !value.is_finite()) {
+            return Err(GptOssCudaError::Invalid {
+                message: "CUDA forward produced non-finite logits".to_string(),
+            });
+        }
+        cancellation_checkpoint(cancellation)?;
         self.cache = working;
         Ok(logits)
     }
@@ -1794,6 +1822,40 @@ mod tests {
     }
 
     #[test]
+    fn cuda_delayed_cancellation_and_nonfinite_output_are_failure_atomic_and_recoverable(
+    ) -> TestResult {
+        let mut cuda = cuda_model()?;
+        let delayed = GptOssCancellationToken::cancel_after_checks(4);
+        assert!(matches!(
+            cuda.decode(1, &delayed),
+            Err(GptOssCudaError::Cancelled)
+        ));
+        assert_eq!(cuda.cache_len(), 0);
+
+        let valid_lm_head = cuda.weights.lm_head.weight.clone();
+        cuda.weights.lm_head.weight =
+            Tensor::from_slice(&vec![f32::NAN; 8 * 32], (8, 32), cuda.device())?;
+        let error = cuda
+            .decode(1, &GptOssCancellationToken::new())
+            .expect_err("non-finite output must not commit cache state");
+        assert!(matches!(
+            error,
+            GptOssCudaError::Invalid { ref message } if message.contains("non-finite")
+        ));
+        assert_eq!(cuda.cache_len(), 0);
+
+        cuda.weights.lm_head.weight = valid_lm_head;
+        let output = cuda.decode(1, &GptOssCancellationToken::new())?;
+        assert!(output
+            .flatten_all()?
+            .to_vec1::<f32>()?
+            .iter()
+            .all(|value| value.is_finite()));
+        assert_eq!(cuda.cache_len(), 1);
+        Ok(())
+    }
+
+    #[test]
     fn cuda_rejects_unsupported_dtype_and_static_budget_before_device_open() -> TestResult {
         assert!(matches!(
             GptOssCudaConfig::new(
@@ -1820,6 +1882,51 @@ mod tests {
                 resource: "static weight bytes",
                 ..
             })
+        ));
+        Ok(())
+    }
+
+    #[test]
+    fn cuda_model_revalidates_all_public_config_fields_before_device_open() -> TestResult {
+        let (config, weights) = model_parts();
+        let limits = GptOssResourceLimits::for_config(&config)?;
+        let invalid_dtype = GptOssCudaConfig {
+            device_index: 0,
+            activation_dtype: DType::F16,
+            max_weight_bytes: usize::MAX,
+            limits,
+        };
+        assert!(matches!(
+            GptOssCudaModel::new(config.clone(), weights.clone(), invalid_dtype),
+            Err(GptOssCudaError::UnsupportedDtype { .. })
+        ));
+
+        let invalid_budget = GptOssCudaConfig {
+            device_index: 0,
+            activation_dtype: DType::F32,
+            max_weight_bytes: 0,
+            limits,
+        };
+        assert!(matches!(
+            GptOssCudaModel::new(config.clone(), weights.clone(), invalid_budget),
+            Err(GptOssCudaError::ResourceLimit {
+                resource: "static weight bytes",
+                ..
+            })
+        ));
+
+        let invalid_limits = GptOssCudaConfig {
+            device_index: 0,
+            activation_dtype: DType::F32,
+            max_weight_bytes: usize::MAX,
+            limits: GptOssResourceLimits {
+                max_sequence_tokens: 0,
+                max_cache_bytes: 0,
+            },
+        };
+        assert!(matches!(
+            GptOssCudaModel::new(config, weights, invalid_limits),
+            Err(GptOssCudaError::Invalid { ref message }) if message.contains("max_sequence_tokens")
         ));
         Ok(())
     }

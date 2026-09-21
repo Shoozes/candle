@@ -1,0 +1,27 @@
+{
+  "fixture_id": "gpt-oss-task3-short-parity-c8-v1",
+  "prompt": "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.",
+  "tokenizer_add_bos": false,
+  "tokenizer_add_eos": false,
+  "token_ids": [976, 4853, 19705, 68347, 65613, 1072, 290, 29082, 6446, 13, 623, 4853, 19705, 68347, 65613, 1072, 290, 29082, 6446, 13],
+  "reference_prefix_token_ids": [976, 4853, 19705, 68347, 65613, 1072, 290, 29082],
+  "reference_context": 8,
+  "reference_vocab_size": 201088,
+  "reference_rows": 3,
+  "reference_file_bytes": 1206604,
+  "reference_file_sha256": "dafa573496953142bb637bd009f1a0e38a9e36fbd10255ee98fc9bfbc6dbfc3f",
+  "reference_executable": "llama-perplexity 0.4.1-dev build 11026 commit b49650adb",
+  "reference_command": "llama-perplexity -m <model> -p <prompt> -c 8 -b 8 -ub 8 --chunks 1 -ngl 99 --save-all-logits <reference-file> --no-perf",
+  "reference_row_top1": [
+    {"token_id": 1072, "log_prob": -0.053686145693063736},
+    {"token_id": 290, "log_prob": -0.0727996863424778},
+    {"token_id": 29082, "log_prob": -0.01703834906220436}
+  ],
+  "comparison": {
+    "top_k": 8,
+    "top_k_log_probability_abs_tolerance": 0.25,
+    "mean_abs_log_probability_tolerance": 0.01,
+    "total_variation_probability_tolerance": 0.01,
+    "tolerance_rationale": "The reference stores normalized log-probabilities as uint16 with a 0.00024414435 quantization scale and a max-minus-16 lower-tail clamp. Require exact top-1 agreement, bound the top-k union at 0.25, and separately bound full-row mean log-probability error and probability-space total variation at 0.01 so one clipped-tail outlier cannot mask head drift."
+  }
+}

@@ -30,9 +30,12 @@ under MIT. The relevant files are:
 - [`src/llama-arch.cpp`](https://github.com/ggml-org/llama.cpp/blob/f072b103714dfa1eee531f80b24512faf38e3dd2/src/llama-arch.cpp)
   for the `gpt-oss` architecture and canonical GGUF tensor names.
 
-The Candle loader uses these files as format behavior references only. It
-retains the GGUF MXFP4 bytes without applying the converter's nibble transform;
-that execution concern is intentionally deferred to the later executor gate.
+The Candle loader uses these files as format behavior references only. At the
+GGUF admission boundary it normalizes the serialized GGML MXFP4 nibble order
+into Candle's adjacent-nibble packed representation, while retaining the
+original file bytes and keeping the conversion separate from the internal
+packed execution path. The conversion is covered by an independent all-32-
+coordinate wire regression and real serialized fused/split loader fixtures.
 
 ## Task 2 numerical fixture provenance
 
@@ -60,6 +63,21 @@ The executed proof identity was native Windows/MSVC with Rust/Cargo 1.97.1,
 CUDA/nvcc 13.3, NVIDIA driver 616.92, and an NVIDIA GeForce RTX 4090 with
 24,564 MiB. This is toolchain/device provenance for the bounded synthetic
 receipt only, not production checkpoint evidence.
+
+## Task 3 short-parity reference
+
+The opt-in short runner uses the owner-provided `llama-perplexity` executable
+`0.4.1-dev`, build `11026`, commit `b49650adb`, from the pinned local
+`llama.cpp-b11026` bundle. Its external `_logits_` reference file is
+1,206,604 bytes with SHA-256
+`dafa573496953142bb637bd009f1a0e38a9e36fbd10255ee98fc9bfbc6dbfc3f` and was
+generated with plain prompt tokenization, `add_bos=false`, `add_eos=false`,
+context 8, batch 8, and one chunk. The runner compares Candle stable
+log-softmax output after applying the reference format's max-minus-16 lower
+tail clamp; it does not compare the quantized reference against raw logits.
+The exact model, tokenizer, tokenizer-config, and chat-template identities are
+recorded in the owner handoff and runner fixture; no external bytes are stored
+in this repository.
 
 ---
 

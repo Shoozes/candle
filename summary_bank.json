@@ -63,7 +63,7 @@
       ]
     },
     "feature__gpt_oss_task2_proof": {
-      "description": "Independent GPT-OSS packed/router/attention/cache oracle plus exact token/KV-byte admission, cancellation rollback, RAII load ownership, and bounded GGUF-to-weights assembly proof.",
+      "description": "Independent GPT-OSS packed/router/attention/cache oracle plus exact token/KV-byte admission, retained-file identity and chunk-cancellation checks, model-lifetime RAII load ownership, and bounded GGUF-to-weights assembly proof.",
       "status": "active",
       "paths": [
         "candle-transformers/src/models/gpt_oss/gguf.rs",
@@ -78,7 +78,7 @@
       ]
     },
     "feature__gpt_oss_task3_cuda": {
-      "description": "Opt-in packed GPT-OSS MXFP4 CUDA executor, narrowed-view/materialized-copy equivalence, explicit expert-contribution/residual contracts, device/resource/cancellation contracts, two-layer trace parity, and native CUDA proof records.",
+      "description": "Opt-in packed GPT-OSS MXFP4 CUDA executor with GGML wire normalization, narrowed-view/materialized-copy equivalence, explicit expert-contribution/residual contracts, public-config validation, failure-atomic device/resource/cancellation contracts, two-layer trace parity, and native CUDA proof records.",
       "status": "active",
       "paths": [
         "candle-kernels/build.rs",
@@ -93,6 +93,16 @@
         "docs/gpt-oss/MOD_MANIFEST.md",
         "docs/gpt-oss/SOURCES.md",
         "docs/gpt-oss/STATUS.md"
+      ]
+    },
+    "feature__gpt_oss_task3_short_parity": {
+      "description": "Exact external GPT-OSS tokenizer and short CUDA prefill/decode parity runner with hash-bound reference logits, robust top-k/mean/TV criteria, and candidate-tree receipts.",
+      "status": "active",
+      "paths": [
+        "candle-examples/examples/gpt-oss-short-parity.rs",
+        "scripts/gpt-oss/run-short-parity.ps1",
+        "tests/fixtures/gpt_oss_task3_short_parity/README.md",
+        "tests/fixtures/gpt_oss_task3_short_parity/reference.json"
       ]
     },
     "feature__siglip2_naflex": {

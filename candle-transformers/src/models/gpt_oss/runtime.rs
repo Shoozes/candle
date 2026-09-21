@@ -260,8 +260,10 @@ impl GptOssLoadLease {
         self.registry.promote(&self.identity)?;
         self.committed = true;
         Ok(GptOssLoadedHandle {
-            registry: self.registry.clone(),
-            identity: self.identity.clone(),
+            inner: Arc::new(GptOssLoadedHandleInner {
+                registry: self.registry.clone(),
+                identity: self.identity.clone(),
+            }),
         })
     }
 }
@@ -275,19 +277,24 @@ impl Drop for GptOssLoadLease {
 }
 
 /// RAII ownership of one successfully admitted load.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GptOssLoadedHandle {
+    inner: Arc<GptOssLoadedHandleInner>,
+}
+
+#[derive(Debug)]
+struct GptOssLoadedHandleInner {
     registry: GptOssLoadRegistry,
     identity: String,
 }
 
 impl GptOssLoadedHandle {
     pub fn identity(&self) -> &str {
-        &self.identity
+        &self.inner.identity
     }
 }
 
-impl Drop for GptOssLoadedHandle {
+impl Drop for GptOssLoadedHandleInner {
     fn drop(&mut self) {
         self.registry.release_loaded(&self.identity);
     }

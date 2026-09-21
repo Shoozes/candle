@@ -13,9 +13,13 @@ use crate::models::gpt_oss::runtime::{
 use candle::{bail, DType, Device, Result, Tensor};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex, MutexGuard};
+
+#[cfg(windows)]
+use std::os::windows::fs::OpenOptionsExt;
 
 /// SHA-256 of the owner-selected GPT-OSS GGUF artifact.
 ///
@@ -34,6 +38,20 @@ const GGUF_MAX_ARRAY_ELEMENTS: u64 = 1_000_000;
 const GGUF_MAX_VALUE_DEPTH: usize = 64;
 const GGUF_DEFAULT_ALIGNMENT: u64 = 32;
 const MAX_RAW_TENSOR_BYTES: u64 = 4 * 1024 * 1024 * 1024;
+const GGUF_READ_CHUNK_BYTES: usize = 1024 * 1024;
+
+fn open_retained_file(path: &Path) -> Result<File> {
+    let mut options = OpenOptions::new();
+    options.read(true);
+    #[cfg(windows)]
+    options.share_mode(0x0000_0001);
+    options.open(path).map_err(|error| {
+        candle::Error::Msg(format!(
+            "failed to open GPT-OSS GGUF {:?} for retained read-only admission: {error}",
+            path
+        ))
+    })
+}
 
 /// GGUF dtypes admitted by the GPT-OSS loader.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -149,7 +167,7 @@ pub struct GptOssGgufTensor {
 /// Loading this value validates the complete tensor inventory and all tensor
 /// ranges, but keeps the large payloads on disk.  Use [`Self::read_tensor`] to
 /// read one already-owned raw tensor payload for a later executor.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct GptOssGgufArtifact {
     path: PathBuf,
     sha256: String,
@@ -158,6 +176,19 @@ pub struct GptOssGgufArtifact {
     tensor_data_offset: u64,
     file_size: u64,
     tensors: Vec<GptOssGgufTensor>,
+    retained_file: Option<Arc<Mutex<File>>>,
+}
+
+impl PartialEq for GptOssGgufArtifact {
+    fn eq(&self, other: &Self) -> bool {
+        self.path == other.path
+            && self.sha256 == other.sha256
+            && self.config == other.config
+            && self.context_length == other.context_length
+            && self.tensor_data_offset == other.tensor_data_offset
+            && self.file_size == other.file_size
+            && self.tensors == other.tensors
+    }
 }
 
 impl GptOssGgufArtifact {
@@ -166,30 +197,44 @@ impl GptOssGgufArtifact {
     /// This function never downloads or searches for a model.  The file is
     /// hashed before any GGUF metadata is trusted.
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
-        let path = path.as_ref();
-        let metadata = std::fs::metadata(path).map_err(|error| {
-            candle::Error::Msg(format!("failed to stat GPT-OSS GGUF {:?}: {error}", path))
+        Self::open_with_expected_sha(path, SELECTED_GPT_OSS_GGUF_SHA256, None)
+    }
+
+    fn open_with_expected_sha(
+        path: impl AsRef<Path>,
+        expected_sha256: &str,
+        cancellation: Option<&GptOssCancellationToken>,
+    ) -> Result<Self> {
+        let path = path.as_ref().to_path_buf();
+        let mut file = open_retained_file(&path)?;
+        let metadata = file.metadata().map_err(|error| {
+            candle::Error::Msg(format!(
+                "failed to inspect retained GPT-OSS GGUF {:?}: {error}",
+                path
+            ))
         })?;
         if !metadata.is_file() {
             bail!("GPT-OSS GGUF path {:?} is not a regular file", path);
         }
         let file_size = metadata.len();
         validate_file_size(file_size)?;
-
-        let mut file = File::open(path).map_err(|error| {
-            candle::Error::Msg(format!("failed to open GPT-OSS GGUF {:?}: {error}", path))
-        })?;
-        let sha256 = sha256_reader(&mut file)?;
-        if sha256 != SELECTED_GPT_OSS_GGUF_SHA256 {
+        if let Some(cancellation) = cancellation {
+            cancellation.checkpoint()?;
+        }
+        let sha256 = sha256_reader(&mut file, cancellation)?;
+        if sha256 != expected_sha256 {
             bail!(
                 "GPT-OSS GGUF artifact identity mismatch: expected {}, got {}",
-                SELECTED_GPT_OSS_GGUF_SHA256,
+                expected_sha256,
                 sha256
             );
         }
+        if let Some(cancellation) = cancellation {
+            cancellation.checkpoint()?;
+        }
         file.seek(SeekFrom::Start(0))?;
         let parsed = parse_gguf(&mut file, file_size)?;
-        Self::from_parsed(path.to_path_buf(), sha256, parsed)
+        Self::from_parsed_with_file(path, sha256, parsed, Arc::new(Mutex::new(file)))
     }
 
     /// Admit one local artifact while holding a duplicate-load lease.
@@ -233,7 +278,11 @@ impl GptOssGgufArtifact {
         if let Some(cancellation) = cancellation {
             cancellation.checkpoint()?;
         }
-        let artifact = Self::open(&canonical_path)?;
+        let artifact = Self::open_with_expected_sha(
+            &canonical_path,
+            SELECTED_GPT_OSS_GGUF_SHA256,
+            cancellation,
+        )?;
         if let Some(cancellation) = cancellation {
             cancellation.checkpoint()?;
         }
@@ -287,67 +336,8 @@ impl GptOssGgufArtifact {
     /// Read one admitted tensor's raw GGUF payload without dequantizing it.
     pub fn read_tensor(&self, name: &str) -> Result<Vec<u8>> {
         let tensor = self.tensor(name)?;
-        if tensor.byte_len > MAX_RAW_TENSOR_BYTES {
-            bail!(
-                "GPT-OSS GGUF tensor {name:?} payload {} exceeds raw read limit {}",
-                tensor.byte_len,
-                MAX_RAW_TENSOR_BYTES
-            );
-        }
-        let current_size = std::fs::metadata(&self.path)
-            .map_err(|error| {
-                candle::Error::Msg(format!(
-                    "failed to stat admitted GPT-OSS GGUF {:?}: {error}",
-                    self.path
-                ))
-            })?
-            .len();
-        if current_size != self.file_size {
-            bail!(
-                "admitted GPT-OSS GGUF {:?} changed size from {} to {}",
-                self.path,
-                self.file_size,
-                current_size
-            );
-        }
-        let byte_len = usize::try_from(tensor.byte_len).map_err(|_| {
-            candle::Error::Msg(format!(
-                "GPT-OSS GGUF tensor {name:?} payload does not fit in usize"
-            ))
-        })?;
-        let absolute_offset = self
-            .tensor_data_offset
-            .checked_add(tensor.offset)
-            .ok_or_else(|| candle::Error::Msg("GPT-OSS GGUF tensor offset overflowed".into()))?;
-        let mut file = File::open(&self.path).map_err(|error| {
-            candle::Error::Msg(format!(
-                "failed to reopen admitted GPT-OSS GGUF {:?}: {error}",
-                self.path
-            ))
-        })?;
-        let current_sha256 = sha256_reader(&mut file)?;
-        if current_sha256 != self.sha256 {
-            bail!(
-                "admitted GPT-OSS GGUF {:?} changed identity from {} to {}",
-                self.path,
-                self.sha256,
-                current_sha256
-            );
-        }
-        file.seek(SeekFrom::Start(absolute_offset))?;
-        let mut bytes = Vec::new();
-        bytes.try_reserve_exact(byte_len).map_err(|error| {
-            candle::Error::Msg(format!(
-                "GPT-OSS GGUF tensor {name:?} allocation failed: {error}"
-            ))
-        })?;
-        bytes.resize(byte_len, 0);
-        file.read_exact(&mut bytes).map_err(|error| {
-            candle::Error::Msg(format!(
-                "GPT-OSS GGUF tensor {name:?} is truncated while reading: {error}"
-            ))
-        })?;
-        Ok(bytes)
+        let mut session = GptOssGgufLoadSession::open(self)?;
+        session.read_tensor(tensor, None)
     }
 
     /// Return the bytes retained by the assembled CPU model, before any
@@ -407,7 +397,7 @@ impl GptOssGgufArtifact {
     ) -> Result<GptOssWeights> {
         let mut session = GptOssGgufLoadSession::open(self)?;
         self.assemble_weights_with_reader(
-            |tensor| session.read_tensor(tensor),
+            |tensor| session.read_tensor(tensor, Some(cancellation)),
             Some(cancellation),
             max_resident_bytes,
         )
@@ -661,6 +651,7 @@ impl GptOssGgufArtifact {
         self.tensors.iter().find(|tensor| &tensor.role == role)
     }
 
+    #[cfg(test)]
     fn from_parsed(path: PathBuf, sha256: String, parsed: ParsedGguf) -> Result<Self> {
         let normalized = normalize_config(&parsed.metadata)?;
         let owners = expected_tensor_owners(&normalized.config, &parsed.tensors)?;
@@ -673,6 +664,28 @@ impl GptOssGgufArtifact {
             tensor_data_offset: parsed.tensor_data_offset,
             file_size: parsed.file_size,
             tensors,
+            retained_file: None,
+        })
+    }
+
+    fn from_parsed_with_file(
+        path: PathBuf,
+        sha256: String,
+        parsed: ParsedGguf,
+        retained_file: Arc<Mutex<File>>,
+    ) -> Result<Self> {
+        let normalized = normalize_config(&parsed.metadata)?;
+        let owners = expected_tensor_owners(&normalized.config, &parsed.tensors)?;
+        let tensors = validate_and_assign_tensors(&normalized.config, &parsed.tensors, &owners)?;
+        Ok(Self {
+            path,
+            sha256,
+            config: normalized.config,
+            context_length: normalized.context_length,
+            tensor_data_offset: parsed.tensor_data_offset,
+            file_size: parsed.file_size,
+            tensors,
+            retained_file: Some(retained_file),
         })
     }
 }
@@ -685,19 +698,21 @@ impl GptOssGgufArtifact {
 /// bounded by the admitted tensor descriptor.
 struct GptOssGgufLoadSession<'a> {
     artifact: &'a GptOssGgufArtifact,
-    file: File,
+    file: MutexGuard<'a, File>,
 }
 
 impl<'a> GptOssGgufLoadSession<'a> {
     fn open(artifact: &'a GptOssGgufArtifact) -> Result<Self> {
-        let current_size = std::fs::metadata(&artifact.path)
-            .map_err(|error| {
-                candle::Error::Msg(format!(
-                    "failed to stat admitted GPT-OSS GGUF {:?}: {error}",
-                    artifact.path
-                ))
-            })?
-            .len();
+        let retained_file = artifact.retained_file.as_ref().ok_or_else(|| {
+            candle::Error::Msg(format!(
+                "GPT-OSS GGUF {:?} has no retained file session",
+                artifact.path
+            ))
+        })?;
+        let file = retained_file.lock().map_err(|_| {
+            candle::Error::Msg("GPT-OSS GGUF retained file mutex was poisoned".into())
+        })?;
+        let current_size = file.metadata()?.len();
         if current_size != artifact.file_size {
             bail!(
                 "admitted GPT-OSS GGUF {:?} changed size from {} to {}",
@@ -706,16 +721,14 @@ impl<'a> GptOssGgufLoadSession<'a> {
                 current_size
             );
         }
-        let file = File::open(&artifact.path).map_err(|error| {
-            candle::Error::Msg(format!(
-                "failed to open admitted GPT-OSS GGUF {:?}: {error}",
-                artifact.path
-            ))
-        })?;
         Ok(Self { artifact, file })
     }
 
-    fn read_tensor(&mut self, tensor: &GptOssGgufTensor) -> Result<Vec<u8>> {
+    fn read_tensor(
+        &mut self,
+        tensor: &GptOssGgufTensor,
+        cancellation: Option<&GptOssCancellationToken>,
+    ) -> Result<Vec<u8>> {
         let owned = self.artifact.tensor(&tensor.name)?;
         if owned != tensor {
             bail!(
@@ -751,12 +764,17 @@ impl<'a> GptOssGgufLoadSession<'a> {
             ))
         })?;
         bytes.resize(byte_len, 0);
-        self.file.read_exact(&mut bytes).map_err(|error| {
-            candle::Error::Msg(format!(
-                "GPT-OSS GGUF tensor {:?} is truncated while reading: {error}",
-                tensor.name
-            ))
-        })?;
+        for chunk in bytes.chunks_mut(GGUF_READ_CHUNK_BYTES) {
+            if let Some(cancellation) = cancellation {
+                cancellation.checkpoint()?;
+            }
+            self.file.read_exact(chunk).map_err(|error| {
+                candle::Error::Msg(format!(
+                    "GPT-OSS GGUF tensor {:?} is truncated while reading: {error}",
+                    tensor.name
+                ))
+            })?;
+        }
         Ok(bytes)
     }
 }
@@ -781,7 +799,8 @@ pub fn load_gpt_oss_weights_with_cancellation(
 ) -> Result<(GptOssGgufArtifact, GptOssWeights, GptOssLoadedHandle)> {
     let (artifact, handle) =
         GptOssGgufArtifact::open_with_registry_with_cancellation(path, registry, cancellation)?;
-    let weights = artifact.load_weights_with_cancellation(cancellation, max_resident_bytes)?;
+    let mut weights = artifact.load_weights_with_cancellation(cancellation, max_resident_bytes)?;
+    weights.attach_load_handle(handle.clone());
     Ok((artifact, weights, handle))
 }
 
@@ -946,7 +965,7 @@ where
         scales.push(chunk[0]);
         blocks.extend_from_slice(&chunk[1..]);
     }
-    PackedMxfp4::from_parts(packed_shape, blocks, scales)
+    PackedMxfp4::from_ggml_parts(packed_shape, blocks, scales)
 }
 
 fn interleave_mxfp4_rows(
@@ -1120,11 +1139,17 @@ fn validate_file_size(file_size: u64) -> Result<()> {
     Ok(())
 }
 
-fn sha256_reader<R: Read + Seek>(reader: &mut R) -> Result<String> {
+fn sha256_reader<R: Read + Seek>(
+    reader: &mut R,
+    cancellation: Option<&GptOssCancellationToken>,
+) -> Result<String> {
     reader.seek(SeekFrom::Start(0))?;
     let mut hasher = Sha256::new();
-    let mut buffer = [0u8; 1024 * 1024];
+    let mut buffer = vec![0u8; 1024 * 1024];
     loop {
+        if let Some(cancellation) = cancellation {
+            cancellation.checkpoint()?;
+        }
         let read = reader.read(&mut buffer)?;
         if read == 0 {
             break;
@@ -2057,6 +2082,7 @@ mod tests {
     use super::*;
     use crate::models::gpt_oss::GptOssLoadRegistry;
     use std::io::Write;
+    use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
@@ -2146,6 +2172,231 @@ mod tests {
     }
 
     #[test]
+    fn real_loader_normalizes_nonzero_fused_and_split_gguf_and_matches_reference() -> Result<()> {
+        let fixtures = [
+            (
+                "fused",
+                tiny_nonzero_fused_gguf()?,
+                "blk.0.ffn_gate_up_exps.weight",
+                None,
+            ),
+            (
+                "split",
+                tiny_nonzero_split_gguf()?,
+                "blk.0.ffn_gate_exps.weight",
+                Some("blk.0.ffn_up_exps.weight"),
+            ),
+        ];
+        let mut reference_logits: Option<Vec<f32>> = None;
+        let mut reference_contribution: Option<Vec<f32>> = None;
+        for (label, bytes, gate_name, up_name) in fixtures {
+            let path = temporary_gguf_path(label, &bytes)?;
+            let expected_sha = format!("{:x}", Sha256::digest(&bytes));
+            let artifact =
+                GptOssGgufArtifact::open_with_expected_sha(&path.0, &expected_sha, None)?;
+            let gate_up_bytes = artifact.read_tensor(gate_name)?;
+            let up_bytes = match up_name {
+                Some(name) => Some(artifact.read_tensor(name)?),
+                None => None,
+            };
+            let down_bytes = artifact.read_tensor("blk.0.ffn_down_exps.weight")?;
+            let max_resident_bytes = artifact.weight_resident_bytes()?;
+            let weights = artifact.load_weights(max_resident_bytes)?;
+            let experts = weights
+                .layers()
+                .first()
+                .ok_or_else(|| candle::Error::Msg("test fixture has no layer".into()))?
+                .experts();
+
+            for coordinate in 0..VALUES_PER_BLOCK {
+                let expected = wire_value(&gate_up_bytes, 0, coordinate)?;
+                assert_eq!(
+                    experts.mlp1().value_at(0, coordinate)?,
+                    expected,
+                    "{label} loaded MLP1 coordinate {coordinate}"
+                );
+                assert_eq!(
+                    experts.mlp2().value_at(0, coordinate)?,
+                    wire_value(&down_bytes, 0, coordinate)?,
+                    "{label} loaded MLP2 coordinate {coordinate}"
+                );
+            }
+            if let Some(up_bytes) = &up_bytes {
+                for coordinate in 0..VALUES_PER_BLOCK {
+                    assert_eq!(
+                        experts.mlp1().value_at(1, coordinate)?,
+                        wire_value(up_bytes, 0, coordinate)?,
+                        "{label} loaded split-up coordinate {coordinate}"
+                    );
+                }
+            }
+
+            let input: Vec<f32> = (0..32).map(|index| (index as f32 + 0.5) / 17.0).collect();
+            let actual_contribution = experts.forward_contribution(&input, 1, &[0], &[1.0])?;
+            let expected_contribution = reference_expert_contribution(
+                &gate_up_bytes,
+                up_bytes.as_deref(),
+                &down_bytes,
+                &input,
+            )?;
+            assert_close(&actual_contribution, &expected_contribution, 1e-5, label);
+            if let Some(reference) = &reference_contribution {
+                assert_close(&actual_contribution, reference, 1e-5, label);
+            } else {
+                reference_contribution = Some(actual_contribution.clone());
+            }
+
+            let config = artifact.config().clone();
+            let model = crate::models::gpt_oss::GptOssModel::new(config.clone(), weights.clone())?;
+            let logits = model.forward_uncached(&[1])?;
+            if let Some(reference) = &reference_logits {
+                assert_close(&logits, reference, 1e-5, label);
+            } else {
+                reference_logits = Some(logits.clone());
+            }
+
+            #[cfg(feature = "cuda")]
+            {
+                let limits = crate::models::gpt_oss::GptOssResourceLimits::for_config(&config)?;
+                let cuda_config = crate::models::gpt_oss::GptOssCudaConfig::new(
+                    0,
+                    DType::F32,
+                    usize::MAX,
+                    limits,
+                )
+                .map_err(|error| candle::Error::Msg(error.to_string()))?;
+                let cuda =
+                    crate::models::gpt_oss::GptOssCudaModel::new(config, weights, cuda_config)
+                        .map_err(|error| candle::Error::Msg(error.to_string()))?;
+                let cuda_logits = cuda
+                    .forward_uncached(&[1], &GptOssCancellationToken::new())
+                    .map_err(|error| candle::Error::Msg(error.to_string()))?
+                    .flatten_all()?
+                    .to_vec1::<f32>()?;
+                assert_close(&cuda_logits, &logits, 1e-4, label);
+            }
+            drop(model);
+            drop(artifact);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn retained_session_reads_original_after_same_size_path_replacement() -> Result<()> {
+        let original = tiny_nonzero_fused_gguf()?;
+        let replacement = {
+            let mut bytes = original.clone();
+            let last = bytes
+                .last_mut()
+                .ok_or_else(|| candle::Error::Msg("test GGUF is empty".into()))?;
+            *last ^= 0x01;
+            bytes
+        };
+        let original_path = temporary_gguf_path("retained-original", &original)?;
+        let replacement_path = temporary_gguf_path("retained-replacement", &replacement)?;
+        let expected_sha = format!("{:x}", Sha256::digest(&original));
+        let artifact =
+            GptOssGgufArtifact::open_with_expected_sha(&original_path.0, &expected_sha, None)?;
+        let expected_payload = artifact.read_tensor("token_embd.weight")?;
+        let rename = std::fs::rename(&replacement_path.0, &original_path.0);
+        if let Err(error) = rename {
+            assert!(
+                matches!(
+                    error.kind(),
+                    std::io::ErrorKind::PermissionDenied | std::io::ErrorKind::AlreadyExists
+                ),
+                "unexpected replacement failure: {error}"
+            );
+        }
+        assert_eq!(
+            artifact.read_tensor("token_embd.weight")?,
+            expected_payload,
+            "retained admission handle must not follow a same-size replacement path"
+        );
+        Ok(())
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn retained_session_denies_same_size_mutation_attempts() -> Result<()> {
+        let bytes = tiny_nonzero_fused_gguf()?;
+        let path = temporary_gguf_path("retained-mutation", &bytes)?;
+        let expected_sha = format!("{:x}", Sha256::digest(&bytes));
+        let artifact = GptOssGgufArtifact::open_with_expected_sha(&path.0, &expected_sha, None)?;
+        let mutation = std::fs::OpenOptions::new().write(true).open(&path.0);
+        let error = mutation.expect_err("Windows admission must deny a writer");
+        assert!(
+            error.kind() == std::io::ErrorKind::PermissionDenied
+                || matches!(error.raw_os_error(), Some(5 | 32)),
+            "unexpected Windows sharing failure: {error}"
+        );
+        let _ = artifact.read_tensor("token_embd.weight")?;
+        Ok(())
+    }
+
+    #[test]
+    fn admission_hash_and_chunked_reads_honor_cancellation() -> Result<()> {
+        let bytes = tiny_nonzero_fused_gguf()?;
+        let path = temporary_gguf_path("cancellable-read", &bytes)?;
+        let expected_sha = format!("{:x}", Sha256::digest(&bytes));
+        let hash_cancelled = GptOssCancellationToken::cancel_after_checks(0);
+        let error = GptOssGgufArtifact::open_with_expected_sha(
+            &path.0,
+            &expected_sha,
+            Some(&hash_cancelled),
+        )
+        .expect_err("hash admission must be cancellable");
+        assert!(error.to_string().contains("cancelled"));
+
+        let artifact = GptOssGgufArtifact::open_with_expected_sha(&path.0, &expected_sha, None)?;
+        let read_cancelled = GptOssCancellationToken::cancel_after_checks(1);
+        let error = artifact
+            .load_weights_with_cancellation(&read_cancelled, artifact.weight_resident_bytes()?)
+            .expect_err("chunked tensor reads must be cancellable");
+        assert!(error.to_string().contains("cancelled"));
+        Ok(())
+    }
+
+    #[test]
+    fn load_lease_stays_with_model_and_releases_after_teardown_or_construction_failure(
+    ) -> Result<()> {
+        let bytes = tiny_nonzero_fused_gguf()?;
+        let path = temporary_gguf_path("lease-owner", &bytes)?;
+        let expected_sha = format!("{:x}", Sha256::digest(&bytes));
+        let canonical = std::fs::canonicalize(&path.0).map_err(candle::Error::wrap)?;
+        let identity = canonical.to_string_lossy().into_owned();
+        let registry = GptOssLoadRegistry::default();
+
+        let artifact = GptOssGgufArtifact::open_with_expected_sha(&path.0, &expected_sha, None)?;
+        let handle = registry.begin(identity.clone())?.commit()?;
+        let mut weights = artifact.load_weights(artifact.weight_resident_bytes()?)?;
+        weights.attach_load_handle(handle.clone());
+        let model = crate::models::gpt_oss::GptOssModel::new(artifact.config().clone(), weights)?;
+        drop(handle);
+        assert_eq!(registry.loaded_count()?, 1);
+        assert!(registry
+            .begin(identity.clone())
+            .expect_err("duplicate load must remain rejected while model lives")
+            .to_string()
+            .contains("duplicate"));
+        drop(model);
+        assert_eq!(registry.loaded_count()?, 0);
+
+        let artifact = GptOssGgufArtifact::open_with_expected_sha(&path.0, &expected_sha, None)?;
+        let handle = registry.begin(identity)?.commit()?;
+        let mut weights = artifact.load_weights(artifact.weight_resident_bytes()?)?;
+        weights.attach_load_handle(handle.clone());
+        let mut invalid_config = artifact.config().clone();
+        invalid_config.num_hidden_layers += 1;
+        let error = crate::models::gpt_oss::GptOssModel::new(invalid_config, weights)
+            .expect_err("construction failure must drop the resident owner");
+        assert!(error.to_string().contains("layer count"));
+        drop(handle);
+        assert_eq!(registry.loaded_count()?, 0);
+        Ok(())
+    }
+
+    #[test]
     #[ignore = "requires the owner-admitted local GPT-OSS GGUF artifact"]
     fn assembles_owner_selected_product_artifact_when_requested() -> Result<()> {
         let path = std::env::var_os("CANDLE_GPT_OSS_GGUF")
@@ -2168,9 +2419,11 @@ mod tests {
         )?;
         assert_eq!(artifact.sha256(), SELECTED_GPT_OSS_GGUF_SHA256);
         assert_eq!(registry.loaded_count()?, 1);
-        let _model = crate::models::gpt_oss::GptOssModel::new(artifact.config().clone(), weights)?;
+        let model = crate::models::gpt_oss::GptOssModel::new(artifact.config().clone(), weights)?;
         drop(artifact);
         drop(handle);
+        assert_eq!(registry.loaded_count()?, 1);
+        drop(model);
         assert_eq!(registry.loaded_count()?, 0);
         Ok(())
     }
@@ -2297,15 +2550,23 @@ mod tests {
     }
 
     fn tiny_gguf() -> Result<Vec<u8>> {
-        tiny_gguf_with_options(&[48, 32], false, false, false)
+        tiny_gguf_with_options(&[48, 32], false, false, false, false)
     }
 
     fn tiny_gguf_with_qkv_shape(qkv_shape: &[usize]) -> Result<Vec<u8>> {
-        tiny_gguf_with_options(qkv_shape, false, false, false)
+        tiny_gguf_with_options(qkv_shape, false, false, false, false)
     }
 
     fn tiny_converter_style_gguf() -> Result<Vec<u8>> {
-        tiny_gguf_with_options(&[48, 32], true, true, true)
+        tiny_gguf_with_options(&[48, 32], true, true, true, false)
+    }
+
+    fn tiny_nonzero_fused_gguf() -> Result<Vec<u8>> {
+        tiny_gguf_with_options(&[48, 32], false, false, false, true)
+    }
+
+    fn tiny_nonzero_split_gguf() -> Result<Vec<u8>> {
+        tiny_gguf_with_options(&[48, 32], true, true, true, true)
     }
 
     fn tiny_gguf_with_options(
@@ -2313,6 +2574,7 @@ mod tests {
         split_experts: bool,
         converter_style_names: bool,
         split_qkv: bool,
+        nonzero_payloads: bool,
     ) -> Result<Vec<u8>> {
         let config = [
             ("general.architecture", Meta::String("gpt-oss")),
@@ -2445,7 +2707,44 @@ mod tests {
             &[2, 32],
             Dtype::F32,
         )?;
+        if nonzero_payloads {
+            for tensor in &mut tensors {
+                fill_nonzero_test_tensor(tensor)?;
+            }
+        }
         build_gguf(&config, &tensors)
+    }
+
+    fn fill_nonzero_test_tensor(tensor: &mut TestTensor) -> Result<()> {
+        match tensor.dtype {
+            Dtype::F32 => {
+                for (index, chunk) in tensor.bytes.chunks_exact_mut(4).enumerate() {
+                    let value = if tensor.name == "token_embd.weight" {
+                        (index % 32 + 1) as f32 / 32.0
+                    } else if tensor.name == "output_norm.weight"
+                        || tensor.name.contains("norm.weight")
+                    {
+                        1.0
+                    } else if tensor.name == "output.weight" {
+                        ((index / 32 + 1) * (index % 32 + 1)) as f32 / 64.0
+                    } else {
+                        0.0
+                    };
+                    chunk.copy_from_slice(&value.to_le_bytes());
+                }
+            }
+            Dtype::Mxfp4 => {
+                for block in tensor.bytes.chunks_exact_mut(BYTES_PER_BLOCK + 1) {
+                    block[0] = 127;
+                    for (index, byte) in block[1..].iter_mut().enumerate() {
+                        let low = ((index * 3 + 1) % 16) as u8;
+                        let high = ((index * 5 + 9) % 16) as u8;
+                        *byte = low | (high << 4);
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 
     fn replace_ascii_once(bytes: &mut [u8], from: &[u8], to: &[u8]) -> Result<()> {
@@ -2458,6 +2757,95 @@ mod tests {
             .ok_or_else(|| candle::Error::Msg("test replacement needle is absent".into()))?;
         bytes[position..position + to.len()].copy_from_slice(to);
         Ok(())
+    }
+
+    struct TempGgufPath(PathBuf);
+
+    impl Drop for TempGgufPath {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_file(&self.0);
+        }
+    }
+
+    fn temporary_gguf_path(label: &str, bytes: &[u8]) -> Result<TempGgufPath> {
+        let path = std::env::temp_dir().join(format!(
+            "candle-gpt-oss-nonzero-{label}-{}-{}.gguf",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map_err(candle::Error::wrap)?
+                .as_nanos()
+        ));
+        std::fs::write(&path, bytes).map_err(candle::Error::wrap)?;
+        Ok(TempGgufPath(path))
+    }
+
+    fn wire_value(bytes: &[u8], block: usize, offset: usize) -> Result<f32> {
+        if offset >= VALUES_PER_BLOCK {
+            bail!("test MXFP4 offset {offset} is out of range");
+        }
+        let block_start = block
+            .checked_mul(BYTES_PER_BLOCK + 1)
+            .ok_or_else(|| candle::Error::Msg("test MXFP4 block offset overflowed".into()))?;
+        let byte = *bytes
+            .get(block_start + 1 + offset % BYTES_PER_BLOCK)
+            .ok_or_else(|| candle::Error::Msg("test MXFP4 wire block is truncated".into()))?;
+        let nibble = if offset < BYTES_PER_BLOCK {
+            byte & 0x0f
+        } else {
+            byte >> 4
+        } as usize;
+        let scale = *bytes
+            .get(block_start)
+            .ok_or_else(|| candle::Error::Msg("test MXFP4 scale is truncated".into()))?;
+        Ok(crate::models::gpt_oss::mxfp4::FP4_VALUES[nibble]
+            * 2f32.powi(scale as i32 - crate::models::gpt_oss::mxfp4::SCALE_BIAS))
+    }
+
+    fn reference_expert_contribution(
+        gate_up_bytes: &[u8],
+        split_up_bytes: Option<&[u8]>,
+        down_bytes: &[u8],
+        input: &[f32],
+    ) -> Result<Vec<f32>> {
+        if input.len() != 32 {
+            bail!("test expert input width is not 32");
+        }
+        let mut first = vec![0.0f32; 64];
+        for row in 0..64 {
+            for coordinate in 0..32 {
+                let (bytes, source_row) = match split_up_bytes {
+                    Some(up) if row % 2 == 1 => (up, row / 2),
+                    Some(_) => (gate_up_bytes, row / 2),
+                    None => (gate_up_bytes, row),
+                };
+                first[row] += input[coordinate] * wire_value(bytes, source_row, coordinate)?;
+            }
+        }
+        let mut activated = vec![0.0f32; 32];
+        for index in 0..32 {
+            let glu = first[index * 2].min(7.0);
+            let linear = first[index * 2 + 1].clamp(-7.0, 7.0);
+            let gate = 1.0 / (1.0 + (-1.702 * glu).exp());
+            activated[index] = glu * gate * (linear + 1.0);
+        }
+        let mut output = vec![0.0f32; 32];
+        for row in 0..32 {
+            for coordinate in 0..32 {
+                output[row] += activated[coordinate] * wire_value(down_bytes, row, coordinate)?;
+            }
+        }
+        Ok(output)
+    }
+
+    fn assert_close(actual: &[f32], expected: &[f32], tolerance: f32, label: &str) {
+        assert_eq!(actual.len(), expected.len(), "{label} length mismatch");
+        for (index, (actual, expected)) in actual.iter().zip(expected).enumerate() {
+            assert!(
+                (actual - expected).abs() <= tolerance,
+                "{label} value {index}: {actual} != {expected}"
+            );
+        }
     }
 
     #[derive(Clone, Copy)]
