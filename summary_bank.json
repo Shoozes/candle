@@ -105,6 +105,14 @@
         "tests/fixtures/gpt_oss_task3_short_parity/reference.json"
       ]
     },
+    "feature__gpt_oss_task3_performance": {
+      "description": "Bounded native GPT-OSS cold-load and warm-inference performance harness with explicit context target, resource sampling, and post-unload cleanup evidence.",
+      "status": "active",
+      "paths": [
+        "candle-examples/examples/gpt-oss-performance.rs",
+        "scripts/gpt-oss/run-performance.ps1"
+      ]
+    },
     "feature__siglip2_naflex": {
       "description": "Packed-patch SigLIP2 NaFlex encoding, limits, shape contracts, tensor mapping, and focused fixture evidence.",
       "status": "active",

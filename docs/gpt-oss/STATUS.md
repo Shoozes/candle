@@ -3,25 +3,26 @@
 ## Assignment state
 
 - Current phase: Task 3 short exact-parity runner and CUDA prefill/decode
-  boundary. The runner is checkpointed locally pending guarded owner
-  publication and performance characterization;
-  its supplied-artifact run passes the bounded prefill/decode parity gate,
+  boundary, with a separate performance-characterization harness added.
+  Short parity is published on `main`; performance characterization is
+  partially exercised but its final receipt is still pending.
+  Its supplied-artifact run passes the bounded prefill/decode parity gate,
   cancellation rollback, reset/replay, and teardown checks. It does not
   change EdgeSymbio or symbio-code.
 - Current baseline before this slice: `main` at
   `a0c795a7f6a27d56175aa5c45ee764067ad7d5e3`, tree
   `04bd1f0fa9d9601510f616d9ef6760edf1945f5d`.
-- The accepted implementation is now the local `main` checkpoint at `HEAD`;
-  guarded remote publication remains pending, so the exact checkpoint identity
-  is intentionally taken from `git log -1` rather than duplicated here.
+- The accepted implementation is published on `main` at the prior guarded
+  checkpoint `ea5900f614c35c47822b8363ff18ee676ae2159a`; this closing slice
+  adds the performance harness and its state documentation before the next
+  guarded publication.
 - The successful receipt's executed candidate tree is
   `69830f1d244ef0d13b734ee48d5bf7243366c371`; it is the pre-documentation
   candidate tree and is marked dirty in the receipt. The committed source
   checkpoint includes the later status/history/routing reconciliation without
   changing the receipt's executed source identity.
 - Task 1, Task 2, and the prior Task 3 packed-executor checkpoints remain
-  accepted. This correction is committed locally; remote publication is still
-  pending. No model bytes entered the repository.
+  accepted. No model bytes entered the repository.
 - Product artifact identity: the owner-selected GGUF SHA-256 is
   `aab205256a9b6361e410c24de3086e30f907092ca6f9ba8cd4b22c8a2b025778`.
   The external file remains outside this checkout; it was read in place only
@@ -47,6 +48,7 @@
 | Retained-file integrity and ownership | Accepted | Admission retains one identity-verified handle, Windows read-opens deny write/delete sharing, load reads avoid reopen/rehash, cancellation is chunk-aware, and the registry lease follows the live model/runtime owner. |
 | CUDA validation and commit guards | Accepted | All public CUDA config fields validate before device setup; synchronization, finite-output validation, and a final cancellation checkpoint precede cache commit, with delayed failure/cancellation recovery tests. |
 | Product artifact numerical parity | Accepted for bounded short CUDA gate | The exact short runner proves the pinned tokenizer IDs, real CUDA construction, cancellation rollback, prefill/decode parity, deterministic reset/replay, and registry teardown. The robust criterion requires exact top-1 agreement, top-k union log-probability error <= `0.25`, mean full-row error <= `0.01`, and probability-space total variation <= `0.01`; all three stages pass. This is not yet a cross-device, Q8, or maintained product-path claim. |
+| Performance characterization harness | Partial / blocked at receipt completion | `gpt-oss-performance` and `run-performance.ps1` build and pass static checks. The cancelled native run completed cold load and cases through 16,384 tokens, then started the bounded 32,764-token case; it produced no final report, throughput/TTFO receipt, or post-unload recovery evidence. |
 | Quantized text/split dense MMProj | Deferred | The ordered post-CUDA task; no Q8/LFM2 defaults or Edge/Harmony integration were changed. |
 
 ## Proven evidence
@@ -158,6 +160,10 @@ the maintained product path.
   dense MMProj execution are intentionally deferred to the next ordered task.
 - The CUDA receipt is a synthetic fixture result on one Windows RTX 4090
   lane; it is not a cross-device matrix or a production throughput claim.
+- The performance characterization run was explicitly cancelled during
+  session close while the near-32k-token case was active. The harness is
+  ready for a bounded rerun with `-TargetContextTokens 32768`, but no final
+  performance result is claimed from the partial samples.
 - The existing Windows linker warning `LNK4098` remains an environment/build
   warning in the CUDA test binary; it did not fail the executed tests.
 - The rolling repository-wide overlay gate now passes with the live union
@@ -195,6 +201,15 @@ slice:
   gpt-oss-short-parity`: passed.
 - `cargo test --locked --features cuda -p candle-examples --example
   gpt-oss-short-parity`: passed `3/3` model-free comparison tests.
+- `cargo check --locked --features cuda -p candle-examples --example
+  gpt-oss-performance`: passed.
+- `cargo test --locked --features cuda -p candle-examples --example
+  gpt-oss-performance`: passed (no Rust unit tests are defined for the
+  process harness).
+- `cargo clippy --locked --features cuda -p candle-examples --example
+  gpt-oss-performance -- -D warnings`: passed.
+- PowerShell parse validation for `scripts/gpt-oss/run-performance.ps1`:
+  passed.
 - `pwsh -NoProfile -File scripts/gpt-oss/run-short-parity.ps1
   -ReferenceLogits C:\Users\jc816\AppData\Local\Temp\edgesymbio-gptoss-reference-20260920\reference-c8.logits`:
   passed in `685.41s` on `Cuda(CudaDevice(DeviceId(1)))`. The receipt records
@@ -218,18 +233,20 @@ slice:
   passed with 197 registered paths and 21 shared paths.
 - `bash scripts/tests/test-verify-fork-overlays.sh`: passed all 7 isolated
   regression cases.
-- The guarded publication helper is the remaining delivery gate; remote
-  publication is not claimed until its clean-main, locked/offline, and
-  fast-forward checks pass.
+- The guarded publication helper is the delivery gate for this closing slice;
+  the prior short-parity checkpoint is already on `origin/main`. The only
+  substantive blocker after publication is completion of the separate long
+  performance receipt.
 
 ## Exact next task
 
-Complete guarded publication, then run the separate cold-load/warm-inference
-performance characterization. Keep Task 4 quantized text and split dense
-MMProj work separately scoped. Preserve this Task 3 executor and loader as
-opt-in paths; do not infer Q8/default or broad production support from the
-short CUDA receipt alone.
+Rerun the separate cold-load/warm-inference performance characterization with
+`-TargetContextTokens 32768` and retain its completed report plus post-unload
+recovery samples. Keep Task 4 quantized text and split dense MMProj work
+separately scoped. Preserve this Task 3 executor and loader as opt-in paths;
+do not infer Q8/default or broad production support from the short CUDA receipt
+or partial performance samples alone.
 
 ---
 
-AI-edited: 2026-09-20; agent=Codex; task=gpt-oss-task3-short-parity; change=accepted the hash-bound short CUDA parity receipt with robust top-k/mean/TV criteria and recorded the uncommitted candidate identity
+AI-edited: 2026-09-21; agent=Codex; task=gpt-oss-task3-performance-closeout; change=added the bounded performance harness and recorded its cancelled partial run without claiming a final performance receipt

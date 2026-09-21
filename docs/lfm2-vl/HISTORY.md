@@ -2,6 +2,18 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-09-21 — GPT-OSS Task 3 performance harness closeout
+
+- Added the opt-in `gpt-oss-performance` CUDA example and
+  `run-performance.ps1` monitor. The harness reports configured versus
+  observed logical cache usage, cold load, warm inference rates, host/GPU
+  samples, and post-unload cleanup deltas while requiring an explicit bounded
+  target context.
+- The first bounded native run was intentionally cancelled during session
+  close after completing cases through 16,384 tokens and starting the 32,764
+  token case. No final performance report, throughput/TTFO receipt, or
+  post-unload recovery claim is recorded; the next task is a clean rerun.
+
 ## 2026-09-20 — GPT-OSS Task 3 short parity boundary
 
 - Added the bounded opt-in `gpt-oss-short-parity` CUDA example, its mandatory

@@ -98,29 +98,31 @@
 ## Separate GPT-OSS Experimental Handoff
 
 - Current phase: Task 3 short exact-parity runner and CUDA prefill/decode
-  boundary. The runner is checkpointed locally pending guarded owner
-  publication and performance characterization, and does not change
-  EdgeSymbio or symbio-code. Its supplied-artifact run passes real GGUF load,
+  boundary. Short parity is published on `main`; the separate performance
+  harness is partially exercised and its final receipt remains pending. It does
+  not change EdgeSymbio or symbio-code. Its supplied-artifact run passes real
+  GGUF load,
   CUDA construction, cancellation rollback, bounded prefill/decode parity,
   reset/replay, and teardown.
 - Current baseline before this slice: `main`
   `a0c795a7f6a27d56175aa5c45ee764067ad7d5e3`, tree
   `04bd1f0fa9d9601510f616d9ef6760edf1945f5d`.
-- The accepted implementation is now the local `main` checkpoint at `HEAD`;
-  guarded remote publication remains pending, so the exact checkpoint identity
-  is taken from `git log -1`.
+- The accepted implementation is published at guarded checkpoint
+  `ea5900f614c35c47822b8363ff18ee676ae2159a`; this closing slice adds the
+  performance harness and reconciles its state before the next guarded push.
 - The successful receipt executed candidate tree
   `69830f1d244ef0d13b734ee48d5bf7243366c371` before these post-proof status
   and history edits; the committed source checkpoint includes that later
   reconciliation without changing the receipt's executed source identity.
 - Task 1, Task 2, and the prior Task 3 packed-executor checkpoints remain
-  accepted. This slice is committed locally; guarded remote publication is
-  pending, and no model bytes entered the repository. The detailed evidence
-  is recorded in `docs/gpt-oss/STATUS.md`.
+  accepted. No model bytes entered the repository. The detailed evidence is
+  recorded in `docs/gpt-oss/STATUS.md`.
 - Delivery files currently under active work:
   `candle-transformers/src/models/gpt_oss/cuda.rs`, `gguf.rs`, `model.rs`,
   `mxfp4.rs`, `runtime.rs`, `candle-examples/examples/gpt-oss-short-parity.rs`,
-  and `scripts/gpt-oss/run-short-parity.ps1`.
+  `scripts/gpt-oss/run-short-parity.ps1`,
+  `candle-examples/examples/gpt-oss-performance.rs`, and
+  `scripts/gpt-oss/run-performance.ps1`.
 - Proven: all-32-coordinate GGML wire normalization with mixed signs/scales;
   real serialized fused/split loader values and expert-contribution checks;
   one identity-verified retained file handle with chunk cancellation and
@@ -134,9 +136,13 @@
   raw prefill row retains a clipped-tail diagnostic outlier, so the accepted
   criterion is explicitly top-k/mean/total-variation based; Q8 remains the
   maintained product default and broad production claims remain unproven.
-- Exact next task: complete guarded publication, then run the separate
-  cold-load/warm-inference performance characterization. Keep Task 4
-  quantized text and split dense MMProj work separately scoped.
+- Known blocker: the closing-session performance run completed cold load and
+  cases through 16,384 tokens, then was cancelled after starting the bounded
+  32,764-token case. No final report, throughput/TTFO receipt, or post-unload
+  recovery evidence exists.
+- Exact next task: rerun `run-performance.ps1` with explicit
+  `-TargetContextTokens 32768` to completion. Keep Task 4 quantized text and
+  split dense MMProj work separately scoped.
 
 ## Latest Integrity Review (2026-08-21)
 
@@ -273,4 +279,4 @@ leave the status Gated and retain the explicit blocker. The separate
 authorization.
 
 ---
-AI-edited: 2026-09-20T00:00:00-04:00 | agent=Codex | model=unknown | effort=high | task=gpt-oss-task3-short-parity | change=updated the separate GPT-OSS handoff for the passed hash-bound CUDA parity receipt and uncommitted candidate identity
+AI-edited: 2026-09-21T00:00:00-04:00 | agent=Codex | model=unknown | effort=high | task=gpt-oss-task3-performance-closeout | change=recorded published short parity, the bounded performance harness, and the cancelled partial performance run

@@ -128,6 +128,10 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 - Verification: CPU focused/full gates first, then the authorized CUDA build,
   numerical comparison, memory/cleanup receipt, summary-bank and overlay
   verifiers, and guarded publication.
+  Performance follow-up: the bounded harness is implemented and statically
+  verified. Its closing-session run completed cases through 16,384 tokens and
+  started the 32,764-token case before cancellation; a completed report and
+  post-unload recovery receipt remain pending.
 
 ### [ ] GPT-OSS Task 4: quantized text plus split dense MMProj
 
