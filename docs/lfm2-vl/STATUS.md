@@ -109,7 +109,7 @@
   `2abf29cd35b0633336cf67d55f8d5ec6ceb62ee1`, tree
   `bdebed85d31a6fe42d3410593fb841ea4709623a`.
 - The accepted implementation is published at guarded checkpoint
-  `2abf29cd35b0633336cf67d55f8d5ec6ceb62ee1`; the prior short-parity
+  `ded81e9be2d6c13406507ecc74842a48f83f4162`; the prior short-parity
   checkpoint was `ea5900f614c35c47822b8363ff18ee676ae2159a`.
 - The successful receipt executed candidate tree
   `69830f1d244ef0d13b734ee48d5bf7243366c371` before these post-proof status

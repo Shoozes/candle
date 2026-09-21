@@ -14,7 +14,7 @@
   `2abf29cd35b0633336cf67d55f8d5ec6ceb62ee1`, tree
   `bdebed85d31a6fe42d3410593fb841ea4709623a`.
 - The accepted implementation is published on `main` at
-  `2abf29cd35b0633336cf67d55f8d5ec6ceb62ee1`; the prior short-parity
+  `ded81e9be2d6c13406507ecc74842a48f83f4162`; the prior short-parity
   checkpoint was `ea5900f614c35c47822b8363ff18ee676ae2159a`.
 - The successful receipt's executed candidate tree is
   `69830f1d244ef0d13b734ee48d5bf7243366c371`; it is the pre-documentation
@@ -249,8 +249,8 @@ slice:
   passed with 200 registered paths and 21 shared paths.
 - `bash scripts/tests/test-verify-fork-overlays.sh`: passed all 7 isolated
   regression cases.
-- The guarded publication helper passed for the closing slice and verified
-  `c8316e3b06090aed3a1f809004ef7e10b7e70b3b` on `origin/main`. The remaining
+- The guarded publication helper passed for this slice and verified
+  `ded81e9be2d6c13406507ecc74842a48f83f4162` on `origin/main`. The remaining
   substantive blocker is completion of a real owner-artifact performance
   receipt under a deadline long enough for the declared 16384- and 32768-token
   cases, or a separately declared narrower matrix.
