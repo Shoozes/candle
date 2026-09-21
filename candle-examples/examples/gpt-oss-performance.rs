@@ -2,8 +2,9 @@ use candle::{Error, IndexOp, Result};
 #[cfg(feature = "cuda")]
 use candle_transformers::models::gpt_oss::{
     cache_bytes_for_tokens, cache_bytes_per_token, load_gpt_oss_weights_with_cancellation,
+    max_supported_sequence_tokens, total_device_bytes_for_tokens, workspace_bytes_for_tokens,
     GptOssCancellationToken, GptOssCudaConfig, GptOssCudaError, GptOssCudaModel,
-    GptOssLoadRegistry, GptOssResourceLimits,
+    GptOssLoadRegistry, GptOssResourceLimits, EDGE_DEVICE_CEILING_BYTES,
 };
 #[cfg(feature = "cuda")]
 use serde::Serialize;
@@ -21,6 +22,9 @@ use std::thread;
 use std::time::{Duration, Instant};
 #[cfg(feature = "cuda")]
 use tokenizers::Tokenizer;
+
+#[cfg(feature = "cuda")]
+const SMALL_TEST_CONTEXT_CEILING_TOKENS: usize = 8_192;
 
 #[cfg(not(feature = "cuda"))]
 fn main() {
@@ -185,6 +189,12 @@ impl Args {
                 "target context token count must be greater than zero".to_string(),
             ));
         }
+        if self.target_context_tokens > SMALL_TEST_CONTEXT_CEILING_TOKENS {
+            return Err(Error::Msg(format!(
+                "bounded GPT-OSS qualification refuses target contexts above {} tokens",
+                SMALL_TEST_CONTEXT_CEILING_TOKENS
+            )));
+        }
         if self.decode_tokens == 0 {
             return Err(Error::Msg(
                 "generated/decode token count must be greater than zero".to_string(),
@@ -202,6 +212,12 @@ impl Args {
             return Err(Error::Msg(
                 "weight, cache, and total-device budgets must be greater than zero".to_string(),
             ));
+        }
+        if self.max_total_device_bytes != EDGE_DEVICE_CEILING_BYTES {
+            return Err(Error::Msg(format!(
+                "GPT-OSS Edge qualification requires max total-device budget exactly {} bytes",
+                EDGE_DEVICE_CEILING_BYTES
+            )));
         }
         if self.profile_id.trim().is_empty() || self.build_identity.trim().is_empty() {
             return Err(Error::Msg(
@@ -333,6 +349,8 @@ struct CaseReport {
     allocated_cache_bytes_after_prefill: usize,
     allocated_cache_bytes_after_generation: usize,
     cache_capacity_bytes_after_generation: usize,
+    workspace_bytes_after_generation: usize,
+    accounted_device_bytes_after_generation: usize,
     generated_token_ids: Vec<u32>,
 }
 
@@ -367,6 +385,7 @@ struct TerminalRecord<'a> {
     completed_cases: usize,
     total_cases: usize,
     report_written: bool,
+    stop_reason: &'static str,
     error: Option<String>,
 }
 
@@ -395,11 +414,16 @@ struct Report {
     max_weight_bytes: usize,
     max_cache_bytes: usize,
     max_total_device_bytes: usize,
+    edge_device_ceiling_bytes: usize,
     static_resident_bytes: usize,
     packed_resident_bytes: usize,
     tokenizer_load_ms: f64,
     cold_load_ms: f64,
+    warmup_prompt_tokens: usize,
     warmup_ms: f64,
+    max_supported_sequence_tokens: usize,
+    max_supported_prompt_tokens: usize,
+    workspace_definition: &'static str,
     unload_ms: f64,
     cases: Vec<CaseReport>,
     registry_loaded_count_after_teardown: usize,
@@ -480,15 +504,32 @@ fn main() {
     let terminal_path = args.terminal_path().ok();
     let result = args.validate_pre_load().and_then(|_| run(&args));
     if let Some(path) = terminal_path {
-        let (status, phase, error) = match &result {
-            Ok(()) => ("success", "report_written", None),
-            Err(error) if error.to_string().contains("deadline exceeded") => {
-                ("timeout", "deadline", Some(error.to_string()))
-            }
-            Err(error) if error.to_string().contains("cancelled") => {
-                ("cancelled", "cancelled", Some(error.to_string()))
-            }
-            Err(error) => ("model_error", "runner", Some(error.to_string())),
+        let (status, phase, stop_reason, error) = match &result {
+            Ok(()) => ("success", "report_written", "completed", None),
+            Err(error) if error.to_string().contains("deadline exceeded") => (
+                "timeout",
+                "deadline",
+                "deadline_exceeded",
+                Some(error.to_string()),
+            ),
+            Err(error) if error.to_string().contains("cancelled") => (
+                "cancelled",
+                "cancelled",
+                "cancelled",
+                Some(error.to_string()),
+            ),
+            Err(error) if error.to_string().contains("total device bytes") => (
+                "resource_limit",
+                "admission",
+                "total_device_ceiling",
+                Some(error.to_string()),
+            ),
+            Err(error) => (
+                "model_error",
+                "runner",
+                "runner_error",
+                Some(error.to_string()),
+            ),
         };
         let progress_path = args.progress_path();
         let completed_cases = read_completed_cases(&progress_path);
@@ -509,6 +550,7 @@ fn main() {
             completed_cases,
             total_cases,
             report_written: result.is_ok(),
+            stop_reason,
             error,
         };
         let _ = write_json(&path, &record);
@@ -611,18 +653,10 @@ fn run(args: &Args) -> Result<()> {
             args.max_weight_bytes
         )));
     }
-    let total_requested_bytes = weight_resident_bytes
-        .checked_add(target_cache_bytes)
-        .ok_or_else(|| Error::Msg("static plus target cache bytes overflowed".to_string()))?;
-    if total_requested_bytes > args.max_total_device_bytes {
-        return Err(Error::Msg(format!(
-            "static plus target cache bytes {total_requested_bytes} exceed explicit total-device budget {}",
-            args.max_total_device_bytes
-        )));
-    }
     let limits = GptOssResourceLimits {
         max_sequence_tokens: args.target_context_tokens,
         max_cache_bytes: args.max_cache_bytes,
+        max_total_device_bytes: args.max_total_device_bytes,
     };
     limits.validate(artifact.config())?;
     let cuda_config = GptOssCudaConfig::new(
@@ -634,6 +668,14 @@ fn run(args: &Args) -> Result<()> {
     .map_err(|error| Error::Msg(error.to_string()))?;
     let mut model = GptOssCudaModel::new(artifact.config().clone(), weights, cuda_config)
         .map_err(|error| Error::Msg(error.to_string()))?;
+    let max_supported_sequence_tokens = max_supported_sequence_tokens(
+        artifact.config(),
+        weight_resident_bytes,
+        args.target_context_tokens,
+        args.max_total_device_bytes,
+    )?;
+    let max_supported_prompt_tokens =
+        max_supported_sequence_tokens.saturating_sub(args.decode_tokens);
     cuda_call(model.synchronize(), &deadline)?;
     let cold_load_ms = elapsed_ms(cold_start);
     println!("PERF_PHASE model_ready");
@@ -663,9 +705,11 @@ fn run(args: &Args) -> Result<()> {
     println!("PERF_PHASE warmup_start");
     flush_stdout();
     let warmup_length = lengths
-        .first()
+        .iter()
         .copied()
-        .ok_or_else(|| Error::Msg("benchmark requires at least one length".to_string()))?;
+        .min()
+        .ok_or_else(|| Error::Msg("benchmark requires at least one length".to_string()))?
+        .min(8);
     model
         .reset_cache()
         .map_err(|error| Error::Msg(error.to_string()))?;
@@ -759,11 +803,16 @@ fn run(args: &Args) -> Result<()> {
         max_weight_bytes: args.max_weight_bytes,
         max_cache_bytes: args.max_cache_bytes,
         max_total_device_bytes: args.max_total_device_bytes,
+        edge_device_ceiling_bytes: EDGE_DEVICE_CEILING_BYTES,
         static_resident_bytes,
         packed_resident_bytes,
         tokenizer_load_ms,
         cold_load_ms,
+        warmup_prompt_tokens: warmup_length,
         warmup_ms,
+        max_supported_sequence_tokens,
+        max_supported_prompt_tokens,
+        workspace_definition: "checked peak one-layer F32 transient bound: 2x attention scores + 8x attention values + 2x QKV + 8x hidden + 4x router + 4x top-expert buffers; static weights and retained KV cache are separate",
         unload_ms,
         cases,
         registry_loaded_count_after_teardown,
@@ -825,6 +874,13 @@ fn run_case(
         .resource_usage()
         .map_err(|error| Error::Msg(error.to_string()))?;
     let actual_context_tokens_after_generation = after_generation.sequence_tokens;
+    let workspace_bytes_after_generation =
+        workspace_bytes_for_tokens(model.config(), actual_context_tokens_after_generation)?;
+    let accounted_device_bytes_after_generation = total_device_bytes_for_tokens(
+        model.config(),
+        model.static_resident_bytes(),
+        actual_context_tokens_after_generation,
+    )?;
     if actual_context_tokens_after_generation > args.target_context_tokens {
         return Err(Error::Msg(format!(
             "runtime context {} exceeded requested target {}",
@@ -850,6 +906,8 @@ fn run_case(
         allocated_cache_bytes_after_prefill: after_prefill.cache_bytes,
         allocated_cache_bytes_after_generation: after_generation.cache_bytes,
         cache_capacity_bytes_after_generation: after_generation.cache_capacity_bytes,
+        workspace_bytes_after_generation,
+        accounted_device_bytes_after_generation,
         generated_token_ids,
     })
 }

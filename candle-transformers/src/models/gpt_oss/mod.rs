@@ -25,6 +25,8 @@ pub use gguf::{
 };
 pub use model::{DenseLinear, GptOssLayerWeights, GptOssModel, GptOssWeights};
 pub use runtime::{
-    cache_bytes_for_tokens, cache_bytes_per_token, GptOssCancellationToken, GptOssLoadLease,
-    GptOssLoadRegistry, GptOssLoadedHandle, GptOssResourceLimits, GptOssResourceUsage,
+    cache_bytes_for_tokens, cache_bytes_per_token, max_supported_sequence_tokens,
+    total_device_bytes_for_tokens, workspace_bytes_for_tokens, GptOssCancellationToken,
+    GptOssLoadLease, GptOssLoadRegistry, GptOssLoadedHandle, GptOssResourceLimits,
+    GptOssResourceUsage, EDGE_DEVICE_CEILING_BYTES,
 };

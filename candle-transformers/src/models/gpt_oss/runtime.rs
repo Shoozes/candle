@@ -13,6 +13,9 @@ use std::sync::{Arc, Mutex};
 const F32_BYTES: usize = std::mem::size_of::<f32>();
 const NO_SCHEDULED_CANCELLATION: usize = usize::MAX;
 
+/// Product admission ceiling used by the GPT-OSS Edge qualification runner.
+pub const EDGE_DEVICE_CEILING_BYTES: usize = 20_000_000_000;
+
 /// Exact logical KV-cache bytes required for one retained token.
 pub fn cache_bytes_per_token(config: &GptOssConfig) -> Result<usize> {
     let kv_width = config
@@ -34,11 +37,113 @@ pub fn cache_bytes_for_tokens(config: &GptOssConfig, tokens: usize) -> Result<us
         .ok_or_else(|| candle::Error::Msg("GPT-OSS KV-cache byte count overflowed".to_string()))
 }
 
+/// Checked upper bound for transient F32 CUDA workspace at one retained
+/// sequence length.  The bound covers the overlapping attention score and
+/// value intermediates plus QKV, router, hidden, and top-expert buffers for
+/// the peak layer.  Layers execute sequentially and reuse this workspace;
+/// retained keys and values are accounted for separately by the KV cache.
+pub fn workspace_bytes_for_tokens(config: &GptOssConfig, tokens: usize) -> Result<usize> {
+    let query_width = config
+        .num_attention_heads
+        .checked_mul(config.head_dim)
+        .ok_or_else(|| candle::Error::Msg("GPT-OSS query width overflowed".to_string()))?;
+    let kv_width = config
+        .num_key_value_heads
+        .checked_mul(config.head_dim)
+        .ok_or_else(|| candle::Error::Msg("GPT-OSS KV width overflowed".to_string()))?;
+    let qkv_width = query_width
+        .checked_add(
+            kv_width
+                .checked_mul(2)
+                .ok_or_else(|| candle::Error::Msg("GPT-OSS QKV width overflowed".to_string()))?,
+        )
+        .ok_or_else(|| candle::Error::Msg("GPT-OSS QKV width overflowed".to_string()))?;
+    let attention_scores = config
+        .num_attention_heads
+        .checked_mul(tokens)
+        .and_then(|value| value.checked_mul(F32_BYTES))
+        .ok_or_else(|| candle::Error::Msg("GPT-OSS attention workspace overflowed".to_string()))?;
+    let attention_values = config
+        .num_attention_heads
+        .checked_mul(tokens)
+        .and_then(|value| value.checked_mul(config.head_dim))
+        .and_then(|value| value.checked_mul(F32_BYTES))
+        .ok_or_else(|| candle::Error::Msg("GPT-OSS attention workspace overflowed".to_string()))?;
+    let qkv = qkv_width
+        .checked_mul(F32_BYTES)
+        .ok_or_else(|| candle::Error::Msg("GPT-OSS QKV workspace overflowed".to_string()))?;
+    let hidden = config
+        .hidden_size
+        .checked_mul(F32_BYTES)
+        .ok_or_else(|| candle::Error::Msg("GPT-OSS hidden workspace overflowed".to_string()))?;
+    let router = config
+        .num_experts
+        .checked_mul(F32_BYTES)
+        .ok_or_else(|| candle::Error::Msg("GPT-OSS router workspace overflowed".to_string()))?;
+    let expert = config
+        .experts_per_token
+        .checked_mul(config.intermediate_size)
+        .and_then(|value| value.checked_mul(2))
+        .and_then(|value| value.checked_mul(F32_BYTES))
+        .ok_or_else(|| candle::Error::Msg("GPT-OSS expert workspace overflowed".to_string()))?;
+    attention_scores
+        .checked_mul(2)
+        .and_then(|value| value.checked_add(attention_values.checked_mul(8)?))
+        .and_then(|value| value.checked_add(qkv.checked_mul(2)?))
+        .and_then(|value| value.checked_add(hidden.checked_mul(8)?))
+        .and_then(|value| value.checked_add(router.checked_mul(4)?))
+        .and_then(|value| value.checked_add(expert.checked_mul(4)?))
+        .ok_or_else(|| candle::Error::Msg("GPT-OSS workspace byte count overflowed".to_string()))
+}
+
+/// Checked static-plus-cache-plus-workspace admission accounting.
+pub fn total_device_bytes_for_tokens(
+    config: &GptOssConfig,
+    static_resident_bytes: usize,
+    tokens: usize,
+) -> Result<usize> {
+    let cache_bytes = cache_bytes_for_tokens(config, tokens)?;
+    let workspace_bytes = workspace_bytes_for_tokens(config, tokens)?;
+    static_resident_bytes
+        .checked_add(cache_bytes)
+        .and_then(|value| value.checked_add(workspace_bytes))
+        .ok_or_else(|| candle::Error::Msg("GPT-OSS total device byte count overflowed".to_string()))
+}
+
+/// Find the greatest sequence length whose checked device accounting fits the
+/// supplied budget.  This is used for admission evidence, not as a runtime
+/// replacement for the fail-closed per-forward check.
+pub fn max_supported_sequence_tokens(
+    config: &GptOssConfig,
+    static_resident_bytes: usize,
+    max_sequence_tokens: usize,
+    max_total_device_bytes: usize,
+) -> Result<usize> {
+    let mut low = 0usize;
+    let mut high = max_sequence_tokens;
+    while low < high {
+        let span = high - low;
+        let upper_half = span / 2 + span % 2;
+        let mid = low
+            .checked_add(upper_half)
+            .ok_or_else(|| candle::Error::Msg("GPT-OSS admission search overflowed".to_string()))?;
+        if total_device_bytes_for_tokens(config, static_resident_bytes, mid)?
+            <= max_total_device_bytes
+        {
+            low = mid;
+        } else {
+            high = mid - 1;
+        }
+    }
+    Ok(low)
+}
+
 /// Admission limits for one synthetic GPT-OSS execution session.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct GptOssResourceLimits {
     pub max_sequence_tokens: usize,
     pub max_cache_bytes: usize,
+    pub max_total_device_bytes: usize,
 }
 
 impl GptOssResourceLimits {
@@ -49,6 +154,7 @@ impl GptOssResourceLimits {
         let limits = Self {
             max_sequence_tokens,
             max_cache_bytes,
+            max_total_device_bytes: usize::MAX,
         };
         limits.validate(config)?;
         Ok(limits)
@@ -60,6 +166,9 @@ impl GptOssResourceLimits {
         }
         if self.max_cache_bytes == 0 {
             bail!("GPT-OSS max_cache_bytes must be greater than zero");
+        }
+        if self.max_total_device_bytes == 0 {
+            bail!("GPT-OSS max_total_device_bytes must be greater than zero");
         }
         let one_token = cache_bytes_per_token(config)?;
         if self.max_cache_bytes < one_token {
@@ -335,11 +444,26 @@ mod tests {
         let limits = GptOssResourceLimits::for_config(&config)?;
         assert_eq!(limits.max_sequence_tokens, 8);
         assert_eq!(limits.max_cache_bytes, 1_024);
+        assert_eq!(limits.max_total_device_bytes, usize::MAX);
         assert_eq!(limits.admit(&config, 7, 1)?, 1_024);
         let error = limits
             .admit(&config, 8, 1)
             .expect_err("one token above the exact sequence bound must fail");
         assert!(error.to_string().contains("sequence admission"));
+        Ok(())
+    }
+
+    #[test]
+    fn total_device_budget_rejects_exactly_one_token_over() -> Result<()> {
+        let config = config();
+        let static_bytes = 10_000;
+        let exact = total_device_bytes_for_tokens(&config, static_bytes, 4)?;
+        assert!(total_device_bytes_for_tokens(&config, static_bytes, 4)? <= exact);
+        assert!(total_device_bytes_for_tokens(&config, static_bytes, 5)? > exact);
+        assert_eq!(
+            max_supported_sequence_tokens(&config, static_bytes, 8, exact)?,
+            4
+        );
         Ok(())
     }
 

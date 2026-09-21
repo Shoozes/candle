@@ -7,8 +7,8 @@
 use super::model::{rope_parameters, DenseLinear, GptOssLayerWeights, GptOssWeights};
 use super::mxfp4::{Mxfp4ExpertOperation, PackedMxfp4, BYTES_PER_BLOCK, VALUES_PER_BLOCK};
 use super::runtime::{
-    cache_bytes_for_tokens, GptOssCancellationToken, GptOssLoadedHandle, GptOssResourceLimits,
-    GptOssResourceUsage,
+    cache_bytes_for_tokens, total_device_bytes_for_tokens, GptOssCancellationToken,
+    GptOssLoadedHandle, GptOssResourceLimits, GptOssResourceUsage,
 };
 use super::GptOssConfig;
 use candle::cuda_backend::cudarc::driver::{DevicePtr, DevicePtrMut};
@@ -394,6 +394,13 @@ impl GptOssCudaModel {
                 limit: cuda_config.max_weight_bytes,
             });
         }
+        if static_resident_bytes > cuda_config.limits.max_total_device_bytes {
+            return Err(GptOssCudaError::ResourceLimit {
+                resource: "total device bytes",
+                requested: static_resident_bytes,
+                limit: cuda_config.limits.max_total_device_bytes,
+            });
+        }
         let device = Device::new_cuda(cuda_config.device_index).map_err(|error| {
             GptOssCudaError::DeviceUnavailable {
                 device_index: cuda_config.device_index,
@@ -560,6 +567,10 @@ impl GptOssCudaModel {
                 .ok_or(GptOssCudaError::Overflow {
                     operation: "CUDA sequence length",
                 })?;
+        self.admit_to(requested_tokens)
+    }
+
+    fn admit_to(&self, requested_tokens: usize) -> GptOssCudaResult<()> {
         if requested_tokens > self.limits.max_sequence_tokens {
             return Err(GptOssCudaError::ResourceLimit {
                 resource: "sequence tokens",
@@ -573,6 +584,18 @@ impl GptOssCudaModel {
                 resource: "KV-cache bytes",
                 requested: requested_bytes,
                 limit: self.limits.max_cache_bytes,
+            });
+        }
+        let total_bytes = total_device_bytes_for_tokens(
+            &self.config,
+            self.weights.static_resident_bytes,
+            requested_tokens,
+        )?;
+        if total_bytes > self.limits.max_total_device_bytes {
+            return Err(GptOssCudaError::ResourceLimit {
+                resource: "total device bytes",
+                requested: total_bytes,
+                limit: self.limits.max_total_device_bytes,
             });
         }
         Ok(())
@@ -1450,6 +1473,7 @@ mod tests {
         let limits = GptOssResourceLimits {
             max_sequence_tokens,
             max_cache_bytes: cache_bytes_for_tokens(&config, max_sequence_tokens)?,
+            max_total_device_bytes: usize::MAX,
         };
         let max_weight_bytes = cpu_weight_resident_bytes(&weights)?;
         let cuda_config = GptOssCudaConfig::new(0, DType::F32, max_weight_bytes, limits)?;
@@ -1865,6 +1889,7 @@ mod tests {
                 GptOssResourceLimits {
                     max_sequence_tokens: 1,
                     max_cache_bytes: 128,
+                    max_total_device_bytes: usize::MAX,
                 },
             ),
             Err(GptOssCudaError::UnsupportedDtype { .. })
@@ -1874,6 +1899,7 @@ mod tests {
         let limits = GptOssResourceLimits {
             max_sequence_tokens: 1,
             max_cache_bytes: cache_bytes_for_tokens(&config, 1)?,
+            max_total_device_bytes: usize::MAX,
         };
         let cuda_config = GptOssCudaConfig::new(usize::MAX, DType::F32, static_bytes - 1, limits)?;
         assert!(matches!(
@@ -1922,6 +1948,7 @@ mod tests {
             limits: GptOssResourceLimits {
                 max_sequence_tokens: 0,
                 max_cache_bytes: 0,
+                max_total_device_bytes: 0,
             },
         };
         assert!(matches!(

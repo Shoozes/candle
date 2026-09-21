@@ -18,6 +18,12 @@ function Assert-Test {
 try {
     $plan = Get-PerformancePlan -LengthSpec "8,auto" -Target 128 -Generated 16 -MeasurementMode "autoregressive"
     Assert-Test ($plan.Count -eq 2 -and $plan[1] -eq 112) "valid progressive plan did not resolve auto target"
+    $singlePlan = @(Get-PerformancePlan -LengthSpec "8" -Target 128 -Generated 16 -MeasurementMode "autoregressive")
+    Assert-Test ($singlePlan.Count -eq 1 -and $singlePlan[0] -eq 8) "single-case plan was not normalized to an array"
+    $releaseBuild = Get-PerformanceBuildSpec -BuildProfile "release"
+    Assert-Test ($releaseBuild.command -match "--release" -and $releaseBuild.executable_relative_path -match "target\\release\\examples") "release build spec did not select the optimized executable"
+    $debugBuild = Get-PerformanceBuildSpec -BuildProfile "debug"
+    Assert-Test ($debugBuild.command -notmatch "--release" -and $debugBuild.executable_relative_path -match "target\\debug\\examples") "debug build spec did not select the debug executable"
 
     try { Get-PerformancePlan -LengthSpec "113" -Target 128 -Generated 16 -MeasurementMode "autoregressive" | Out-Null; throw "over-target plan unexpectedly succeeded" } catch { Assert-Test ($_.Exception.Message -match "exceeds target") "over-target configuration was not rejected" }
     try { Get-PerformancePlan -LengthSpec "8" -Target 16 -Generated 16 -MeasurementMode "teacher-forced" | Out-Null; throw "invalid target/decode plan unexpectedly succeeded" } catch { Assert-Test ($_.Exception.Message -match "leave at least one prompt") "invalid target/decode configuration was not rejected" }
@@ -32,11 +38,14 @@ try {
         Model = "missing-model.gguf"; Tokenizer = "missing-tokenizer.json"; Output = $staleOutput
         Lengths = "8"; TargetContextTokens = 128; DecodeTokens = 16; Mode = "autoregressive"
         ProfileId = "test-profile"; BuildIdentity = "test-build"; DeviceIndex = 0
-        MaxWeightBytes = [UInt64]1; MaxCacheBytes = [UInt64]1; MaxTotalDeviceBytes = [UInt64]1
+        MaxWeightBytes = [UInt64]1; MaxCacheBytes = [UInt64]1; MaxTotalDeviceBytes = [UInt64]20000000000
         OverallDeadlineMs = [UInt64]1000; GracePeriodMs = 1000; SampleIntervalMs = 100
     }
     try { Assert-PerformanceConfiguration -Configuration $configuration | Out-Null; throw "stale output unexpectedly succeeded" } catch { Assert-Test ($_.Exception.Message -match "stale performance output") "stale output was not rejected" }
     Assert-Test ((Get-Content -LiteralPath $staleOutput -Raw) -eq "owner evidence") "stale output was modified"
+
+    $configuration.TargetContextTokens = 16384
+    try { Assert-PerformanceConfiguration -Configuration $configuration | Out-Null; throw "oversized bounded context unexpectedly succeeded" } catch { Assert-Test ($_.Exception.Message -match "above 8192") "oversized bounded context was not rejected" }
 
     $progressPath = Join-Path $testRoot "monitor-progress.json"
     Write-MonitorProgress -Path $progressPath -RunId "test-run" -ProfileId "test-profile" -BuildIdentity "test-build" -Mode "autoregressive" -Samples @([pscustomobject]@{ phase = "case_8_ready"; gpu_used_bytes = 1 }) -Phase "case_8_ready" -CompletedCases 1 -TotalCases 3
@@ -47,6 +56,7 @@ try {
     Write-RunTerminal -Path $terminalPath -Status "forced_termination" -Phase "case_8_ready" -RunId "test-run" -ProfileId "test-profile" -BuildIdentity "test-build" -Mode "autoregressive" -CompletedCases 1 -TotalCases 3 -ErrorMessage "simulated interruption" -RunnerTerminalPath (Join-Path $testRoot "runner-terminal.json")
     $terminal = Get-Content -LiteralPath $terminalPath -Raw | ConvertFrom-Json
     Assert-Test ($terminal.status -eq "forced_termination" -and $terminal.success_claim -eq $false -and $terminal.completed_cases -eq 1) "interruption after one case was misreported"
+    Assert-Test ((Get-TerminalStatus -RunnerStatus "resource_limit") -eq "resource_limit") "resource ceiling was not classified as a bounded stop"
 
     Write-Output "gpt-oss-performance tests: $testsPassed passed"
 } finally {

@@ -1637,6 +1637,7 @@ mod tests {
         let mut exact = model_with_limits(GptOssResourceLimits {
             max_sequence_tokens: 4,
             max_cache_bytes: bytes_per_token * 4,
+            max_total_device_bytes: usize::MAX,
         });
         let cancellation = GptOssCancellationToken::new();
         exact.prefill(&[1, 2, 3, 4], &cancellation)?;
@@ -1662,6 +1663,7 @@ mod tests {
         let mut byte_limited = model_with_limits(GptOssResourceLimits {
             max_sequence_tokens: 5,
             max_cache_bytes: bytes_per_token * 4,
+            max_total_device_bytes: usize::MAX,
         });
         byte_limited.prefill(&[1, 2, 3, 4], &cancellation)?;
         let error = byte_limited
@@ -1673,6 +1675,7 @@ mod tests {
         let mut under = model_with_limits(GptOssResourceLimits {
             max_sequence_tokens: 4,
             max_cache_bytes: bytes_per_token * 4 - 1,
+            max_total_device_bytes: usize::MAX,
         });
         let error = under
             .prefill(&[1, 2, 3, 4], &cancellation)

@@ -3,20 +3,21 @@ param(
     [string]$Model,
     [string]$Tokenizer,
     [string]$Output = "artifacts/gpt-oss/performance/report.json",
-    [string]$Lengths = "8,512,2048,8192,16384,auto",
-    [int]$TargetContextTokens = 32768,
+    [string]$Lengths = "8,512,2048,8160",
+    [int]$TargetContextTokens = 8192,
     [int]$DecodeTokens = 32,
     [ValidateSet("autoregressive", "teacher-forced")][string]$Mode = "autoregressive",
     [string]$Prompt = "The quick brown fox jumps over the lazy dog. Performance characterization prompt.",
     [int]$DeviceIndex = 0,
-    [UInt64]$MaxWeightBytes = 0,
-    [UInt64]$MaxCacheBytes = 0,
-    [UInt64]$MaxTotalDeviceBytes = 0,
-    [UInt64]$OverallDeadlineMs = 3600000,
+    [UInt64]$MaxWeightBytes = 20000000000,
+    [UInt64]$MaxCacheBytes = 20000000000,
+    [UInt64]$MaxTotalDeviceBytes = 20000000000,
+    [UInt64]$OverallDeadlineMs = 1800000,
     [int]$GracePeriodMs = 30000,
     [int]$PostUnloadHoldMs = 10000,
     [int]$SampleIntervalMs = 1000,
     [string]$ProfileId = "gpt-oss-20b-mxfp4-cuda-f32-ar-v2",
+    [ValidateSet("debug", "release")][string]$BuildProfile = "release",
     [string]$BuildIdentity,
     [string]$ExecutableOverride,
     [switch]$SkipBuild,
@@ -79,6 +80,21 @@ function Get-PerformancePlan {
     return @($lengths)
 }
 
+function Get-PerformanceBuildSpec {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet("debug", "release")][string]$BuildProfile
+    )
+    $arguments = @("build", "--locked")
+    if ($BuildProfile -eq "release") { $arguments += "--release" }
+    $arguments += @("--features", "cuda", "-p", "candle-examples", "--example", "gpt-oss-performance")
+    [pscustomobject]@{
+        profile = $BuildProfile
+        arguments = @($arguments)
+        command = "cargo " + (($arguments | ForEach-Object { $_ }) -join " ")
+        executable_relative_path = (Join-Path (Join-Path "target" $BuildProfile) "examples\gpt-oss-performance.exe")
+    }
+}
+
 function Assert-PerformanceConfiguration {
     param(
         [Parameter(Mandatory = $true)][hashtable]$Configuration,
@@ -89,9 +105,17 @@ function Assert-PerformanceConfiguration {
     if ([string]::IsNullOrWhiteSpace([string]$Configuration.Output)) { throw "Output is required." }
     if ([string]::IsNullOrWhiteSpace([string]$Configuration.ProfileId)) { throw "ProfileId is required." }
     if ([string]::IsNullOrWhiteSpace([string]$Configuration.BuildIdentity)) { throw "BuildIdentity is required." }
+    $buildProfile = if ($Configuration.ContainsKey("BuildProfile")) { [string]$Configuration.BuildProfile } else { "release" }
+    if ($buildProfile -notin @("debug", "release")) { throw "BuildProfile must be debug or release." }
     if ([int]$Configuration.DeviceIndex -lt 0) { throw "DeviceIndex must be non-negative." }
     if ([UInt64]$Configuration.MaxWeightBytes -eq 0 -or [UInt64]$Configuration.MaxCacheBytes -eq 0 -or [UInt64]$Configuration.MaxTotalDeviceBytes -eq 0) {
         throw "MaxWeightBytes, MaxCacheBytes, and MaxTotalDeviceBytes are required explicit positive budgets."
+    }
+    if ([UInt64]$Configuration.MaxTotalDeviceBytes -ne [UInt64]20000000000) {
+        throw "MaxTotalDeviceBytes must equal the Edge ceiling of exactly 20000000000 bytes."
+    }
+    if ([int]$Configuration.TargetContextTokens -gt 8192) {
+        throw "bounded GPT-OSS qualification refuses target contexts above 8192 tokens."
     }
     if ([UInt64]$Configuration.OverallDeadlineMs -eq 0) { throw "OverallDeadlineMs must be greater than zero." }
     if ([int]$Configuration.SampleIntervalMs -lt 100) { throw "SampleIntervalMs must be at least 100 ms." }
@@ -138,6 +162,7 @@ function Get-TerminalStatus {
     if ($MonitorFailure) { return "monitor_error" }
     if ($RunnerStatus -eq "timeout") { return "timeout" }
     if ($RunnerStatus -eq "cancelled") { return "cancelled" }
+    if ($RunnerStatus -eq "resource_limit") { return "resource_limit" }
     if ($RunnerStatus -eq "success") { return "success" }
     return "model_error"
 }
@@ -169,6 +194,14 @@ function Write-RunTerminal {
         total_cases = $TotalCases
         exit_code = $ExitCode
         error = $ErrorMessage
+        stop_reason = switch ($Status) {
+            "success" { "completed"; break }
+            "timeout" { "deadline_exceeded"; break }
+            "cancelled" { "cancelled"; break }
+            "resource_limit" { "total_device_ceiling"; break }
+            "forced_termination" { "forced_termination"; break }
+            default { "runner_error" }
+        }
         runner_terminal = $RunnerTerminalPath
         success_claim = ($Status -eq "success")
     })
@@ -270,6 +303,7 @@ function Invoke-GptOssPerformance {
         [int]$PostUnloadHoldMs,
         [int]$SampleIntervalMs,
         [string]$ProfileId,
+        [ValidateSet("debug", "release")][string]$BuildProfile,
         [string]$BuildIdentity,
         [string]$ExecutableOverride,
         [switch]$SkipBuild
@@ -279,12 +313,13 @@ function Invoke-GptOssPerformance {
         Model = $Model; Tokenizer = $Tokenizer; Output = $Output; Lengths = $Lengths
         TargetContextTokens = $TargetContextTokens; DecodeTokens = $DecodeTokens; Mode = $Mode
         ProfileId = $ProfileId; BuildIdentity = $BuildIdentity
+        BuildProfile = $BuildProfile
         DeviceIndex = $DeviceIndex; MaxWeightBytes = $MaxWeightBytes; MaxCacheBytes = $MaxCacheBytes
         MaxTotalDeviceBytes = $MaxTotalDeviceBytes; OverallDeadlineMs = $OverallDeadlineMs
         GracePeriodMs = $GracePeriodMs; SampleIntervalMs = $SampleIntervalMs
     }
     $outputPath = [IO.Path]::GetFullPath($Output)
-    $plan = Assert-PerformanceConfiguration -Configuration $preConfiguration -CheckInputFiles
+    $plan = @(Assert-PerformanceConfiguration -Configuration $preConfiguration -CheckInputFiles)
     $modelPath = (Resolve-Path -LiteralPath $Model).Path
     $tokenizerPath = (Resolve-Path -LiteralPath $Tokenizer).Path
     $nvidia = Get-Command "nvidia-smi.exe" -ErrorAction SilentlyContinue
@@ -311,16 +346,27 @@ function Invoke-GptOssPerformance {
     $terminalError = $null
     $finalStatus = "model_error"
     try {
+        $buildSpec = Get-PerformanceBuildSpec -BuildProfile $BuildProfile
         if (-not $SkipBuild -and [string]::IsNullOrWhiteSpace($ExecutableOverride)) {
             Write-Host "Building gpt-oss-performance..."
-            & cargo build --locked --features cuda -p candle-examples --example gpt-oss-performance
+            & cargo @($buildSpec.arguments)
             if ($LASTEXITCODE -ne 0) { throw "gpt-oss-performance build failed with exit code $LASTEXITCODE." }
         }
         $executable = if ([string]::IsNullOrWhiteSpace($ExecutableOverride)) {
-            Join-Path ((Get-Location).Path) "target\debug\examples\gpt-oss-performance.exe"
+            Join-Path ((Get-Location).Path) $buildSpec.executable_relative_path
         } else { (Resolve-Path -LiteralPath $ExecutableOverride).Path }
         if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) { throw "Performance executable was not found: $executable" }
+        $executableItem = Get-Item -LiteralPath $executable
         $binaryHash = (Get-FileHash -LiteralPath $executable -Algorithm SHA256).Hash.ToLowerInvariant()
+        $modelItem = Get-Item -LiteralPath $modelPath
+        $modelHash = (Get-FileHash -LiteralPath $modelPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        $tokenizerItem = Get-Item -LiteralPath $tokenizerPath
+        $tokenizerHash = (Get-FileHash -LiteralPath $tokenizerPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        $gpuIdentity = (& nvidia-smi.exe --id $DeviceIndex --query-gpu=name,driver_version,memory.total,compute_cap --format=csv,noheader 2>$null | Select-Object -First 1)
+        if ([string]::IsNullOrWhiteSpace([string]$gpuIdentity)) { throw "nvidia-smi returned no identity for device $DeviceIndex." }
+        $rustcIdentity = (& rustc --version 2>$null | Select-Object -First 1)
+        $cargoIdentity = (& cargo --version 2>$null | Select-Object -First 1)
+        if ([string]::IsNullOrWhiteSpace([string]$rustcIdentity) -or [string]::IsNullOrWhiteSpace([string]$cargoIdentity)) { throw "rustc and cargo versions are required for runtime identity evidence." }
         $baselineSample = Get-SystemSample -DeviceIndex $DeviceIndex -Phase "pre_launch"
         $arguments = @(
             "--model", $modelPath, "--tokenizer", $tokenizerPath, "--output", $runnerOutput,
@@ -399,7 +445,28 @@ function Invoke-GptOssPerformance {
         if ($postUnloadSamples.Count -eq 0) { throw "runner completed without post_unload recovery samples" }
         $final = [ordered]@{}
         foreach ($property in $report.PSObject.Properties) { $final[$property.Name] = $property.Value }
-        $final["qualification"] = [ordered]@{ profile_id = $ProfileId; build_identity = $BuildIdentity; executable_sha256 = $binaryHash; cargo_command = "cargo build --locked --features cuda -p candle-examples --example gpt-oss-performance"; requested_lengths = $plan; actual_prompt_tokens = @($caseObjects | ForEach-Object { $_.actual_prompt_tokens }); actual_generated_tokens = @($caseObjects | ForEach-Object { $_.actual_generated_tokens }); run_directory = $runDirectory }
+        $final["qualification"] = [ordered]@{
+            profile_id = $ProfileId
+            build_identity = $BuildIdentity
+            build_profile = $BuildProfile
+            executable_path = $executable
+            executable_bytes = [UInt64]$executableItem.Length
+            executable_sha256 = $binaryHash
+            cargo_command = $buildSpec.command
+            rustc = ([string]$rustcIdentity).Trim()
+            cargo = ([string]$cargoIdentity).Trim()
+            model_path = $modelPath
+            model_bytes = [UInt64]$modelItem.Length
+            model_sha256 = $modelHash
+            tokenizer_path = $tokenizerPath
+            tokenizer_bytes = [UInt64]$tokenizerItem.Length
+            tokenizer_sha256 = $tokenizerHash
+            gpu_identity = ([string]$gpuIdentity).Trim()
+            requested_lengths = $plan
+            actual_prompt_tokens = @($caseObjects | ForEach-Object { $_.actual_prompt_tokens })
+            actual_generated_tokens = @($caseObjects | ForEach-Object { $_.actual_generated_tokens })
+            run_directory = $runDirectory
+        }
         $final["monitor"] = $monitor
         Write-JsonEvidence -Path $outputPath -Value $final
         $finalStatus = "success"
@@ -438,7 +505,7 @@ if (-not $AsLibrary) {
             MaxCacheBytes = $MaxCacheBytes; MaxTotalDeviceBytes = $MaxTotalDeviceBytes
             OverallDeadlineMs = $OverallDeadlineMs; GracePeriodMs = $GracePeriodMs
             PostUnloadHoldMs = $PostUnloadHoldMs; SampleIntervalMs = $SampleIntervalMs
-            ProfileId = $ProfileId; BuildIdentity = $BuildIdentity
+            ProfileId = $ProfileId; BuildProfile = $BuildProfile; BuildIdentity = $BuildIdentity
         }
         if (-not [string]::IsNullOrWhiteSpace($ExecutableOverride)) { $bound.ExecutableOverride = $ExecutableOverride }
         if ($SkipBuild) { $bound.SkipBuild = $true }
