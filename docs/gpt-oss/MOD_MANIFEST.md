@@ -80,6 +80,7 @@ claim.
 - `scripts/gpt-oss/run-short-parity.ps1`
 - `candle-examples/examples/gpt-oss-performance.rs`
 - `scripts/gpt-oss/run-performance.ps1`
+- `scripts/gpt-oss/test-performance.ps1`
 - `scripts/gpt-oss/verify-mod-manifest.sh`
 - `scripts/tests/test-verify-fork-overlays.sh`
 
@@ -134,10 +135,11 @@ Task 3 remains complete for the bounded synthetic CPU/CUDA proof boundary, and
 the current Task 3 correction adds GGML MXFP4 wire normalization,
 retained-file identity/ownership, CUDA failure-atomic commit guards, and a
 hash-bound short CUDA parity receipt on top of the narrowed-view and
-synthetic/exact GGUF assembly proof. A separate performance harness is now
-available for cold-load and warm-inference characterization, but its first
-bounded run was cancelled during the near-32k-token case and has no final
-report. The next dependency is quantized GPT-OSS
+synthetic/exact GGUF assembly proof. A separate performance harness now
+qualifies an explicit autoregressive production-representative profile with
+target, budget, deadline, cancellation, progress, cleanup, and model-free
+failure tests; teacher-forced measurement remains explicitly labeled. A real
+artifact receipt is still required before throughput claims. The next dependency is quantized GPT-OSS
 text plus split dense MMProj work; Q8/default and broad maintained production
 claims remain outside this opt-in receipt.
 

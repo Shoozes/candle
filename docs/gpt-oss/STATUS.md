@@ -3,17 +3,18 @@
 ## Assignment state
 
 - Current phase: Task 3 short exact-parity runner and CUDA prefill/decode
-  boundary, with a separate performance-characterization harness added.
-  Short parity is published on `main`; performance characterization is
-  partially exercised but its final receipt is still pending.
+  boundary, with the hardened performance-characterization harness now
+  implemented and exercised against the owner-selected artifact. Short parity
+  is published on `main`; the full performance receipt remains pending because
+  the bounded run timed out after four of six cases.
   Its supplied-artifact run passes the bounded prefill/decode parity gate,
   cancellation rollback, reset/replay, and teardown checks. It does not
   change EdgeSymbio or symbio-code.
 - Current baseline before this slice: `main` at
-  `a0c795a7f6a27d56175aa5c45ee764067ad7d5e3`, tree
-  `04bd1f0fa9d9601510f616d9ef6760edf1945f5d`.
+  `2abf29cd35b0633336cf67d55f8d5ec6ceb62ee1`, tree
+  `bdebed85d31a6fe42d3410593fb841ea4709623a`.
 - The accepted implementation is published on `main` at
-  `c8316e3b06090aed3a1f809004ef7e10b7e70b3b`; the prior short-parity
+  `2abf29cd35b0633336cf67d55f8d5ec6ceb62ee1`; the prior short-parity
   checkpoint was `ea5900f614c35c47822b8363ff18ee676ae2159a`.
 - The successful receipt's executed candidate tree is
   `69830f1d244ef0d13b734ee48d5bf7243366c371`; it is the pre-documentation
@@ -47,7 +48,7 @@
 | Retained-file integrity and ownership | Accepted | Admission retains one identity-verified handle, Windows read-opens deny write/delete sharing, load reads avoid reopen/rehash, cancellation is chunk-aware, and the registry lease follows the live model/runtime owner. |
 | CUDA validation and commit guards | Accepted | All public CUDA config fields validate before device setup; synchronization, finite-output validation, and a final cancellation checkpoint precede cache commit, with delayed failure/cancellation recovery tests. |
 | Product artifact numerical parity | Accepted for bounded short CUDA gate | The exact short runner proves the pinned tokenizer IDs, real CUDA construction, cancellation rollback, prefill/decode parity, deterministic reset/replay, and registry teardown. The robust criterion requires exact top-1 agreement, top-k union log-probability error <= `0.25`, mean full-row error <= `0.01`, and probability-space total variation <= `0.01`; all three stages pass. This is not yet a cross-device, Q8, or maintained product-path claim. |
-| Performance characterization harness | Partial / blocked at receipt completion | `gpt-oss-performance` and `run-performance.ps1` build and pass static checks. The cancelled native run completed cold load and cases through 16,384 tokens, then started the bounded 32,764-token case; it produced no final report, throughput/TTFO receipt, or post-unload recovery evidence. |
+| Performance characterization harness | Implemented; artifact receipt pending | `gpt-oss-performance` now qualifies an explicit autoregressive profile with a true target-context limit, explicit weight/cache/total-device budgets, deadline-driven cancellation, incremental runner/monitor evidence, cleanup timing, and terminal status records. Teacher-forced mode is explicitly labeled. The owner-artifact timeout run remains partial evidence; no final artifact throughput/TTFO receipt is claimed. |
 | Quantized text/split dense MMProj | Deferred | The ordered post-CUDA task; no Q8/LFM2 defaults or Edge/Harmony integration were changed. |
 
 ## Proven evidence
@@ -159,10 +160,16 @@ the maintained product path.
   dense MMProj execution are intentionally deferred to the next ordered task.
 - The CUDA receipt is a synthetic fixture result on one Windows RTX 4090
   lane; it is not a cross-device matrix or a production throughput claim.
-- The performance characterization run was explicitly cancelled during
-  session close while the near-32k-token case was active. The harness is
-  ready for a bounded rerun with `-TargetContextTokens 32768`, but no final
-  performance result is claimed from the partial samples.
+- The owner-artifact performance run
+  `artifacts/gpt-oss/performance/runs/20260921T071321303Z-3cd84d87e5b8`
+  reached the 8, 512, 2048, and 8192-token autoregressive cases, then hit its
+  explicit 45-minute deadline while the 16384-token case was active. Its
+  terminal records classify the result as `timeout`, with `4/6` cases,
+  `report_written: false`, and `success_claim: false`; no post-unload recovery
+  receipt exists. The runner exited with the actionable error
+  `performance overall deadline exceeded: GPT-OSS CUDA operation cancelled`,
+  and the wrapper cleaned up the runner process. No throughput or TTFO claim is
+  made from the partial evidence.
 - The existing Windows linker warning `LNK4098` remains an environment/build
   warning in the CUDA test binary; it did not fail the executed tests.
 - The rolling repository-wide overlay gate now passes with the live union
@@ -203,12 +210,22 @@ slice:
 - `cargo check --locked --features cuda -p candle-examples --example
   gpt-oss-performance`: passed.
 - `cargo test --locked --features cuda -p candle-examples --example
-  gpt-oss-performance`: passed (no Rust unit tests are defined for the
-  process harness).
+  gpt-oss-performance`: passed `5/5` model-free planning, cancellation, and
+  logits-shape tests.
 - `cargo clippy --locked --features cuda -p candle-examples --example
   gpt-oss-performance -- -D warnings`: passed.
 - PowerShell parse validation for `scripts/gpt-oss/run-performance.ps1`:
   passed.
+- `pwsh -NoProfile -File scripts/gpt-oss/test-performance.ps1`: passed
+  `10` model-free qualification tests covering invalid and over-target plans,
+  cooperative cancellation classification, monitor failure, stale output,
+  and interruption after one completed case.
+- The owner-artifact performance command with explicit 32768-token target,
+  32 GiB weight budget, 8 GiB cache budget, 24 GiB total-device budget,
+  autoregressive mode, and 45-minute deadline exited `1` with the expected
+  non-success timeout classification. Its run directory retained incremental
+  timings and 2,414 monitor samples; it did not write the requested final
+  report.
 - `pwsh -NoProfile -File scripts/gpt-oss/run-short-parity.ps1
   -ReferenceLogits C:\Users\jc816\AppData\Local\Temp\edgesymbio-gptoss-reference-20260920\reference-c8.logits`:
   passed in `685.41s` on `Cuda(CudaDevice(DeviceId(1)))`. The receipt records
@@ -225,26 +242,29 @@ slice:
 - `git diff --check`: passed.
 - `pwsh -NoProfile -File scripts/lfm2-vl/verify-summary-bank.ps1`: passed.
 - `bash scripts/gpt-oss/verify-mod-manifest.sh a0c795a7f6a27d56175aa5c45ee764067ad7d5e3`:
-  passed with 32 registered paths.
+  passed with 35 registered paths.
 - `bash scripts/lfm2-vl/verify-mod-manifest.sh 7c2e89295dad4aeebc6ef7a92c255360b6957c2c`:
   passed with 163 total paths, 17 fork-origin modifications, and 146 additions.
 - `bash scripts/verify-fork-overlays.sh --rolling-baseline d830e03078a29d39a1aacd741620475eb33b7609`:
-  passed with 197 registered paths and 21 shared paths.
+  passed with 200 registered paths and 21 shared paths.
 - `bash scripts/tests/test-verify-fork-overlays.sh`: passed all 7 isolated
   regression cases.
 - The guarded publication helper passed for the closing slice and verified
-  `c8316e3b06090aed3a1f809004ef7e10b7e70b3b` on `origin/main`. The only
-  substantive blocker is completion of the separate long performance receipt.
+  `c8316e3b06090aed3a1f809004ef7e10b7e70b3b` on `origin/main`. The remaining
+  substantive blocker is completion of a real owner-artifact performance
+  receipt under a deadline long enough for the declared 16384- and 32768-token
+  cases, or a separately declared narrower matrix.
 
 ## Exact next task
 
-Rerun the separate cold-load/warm-inference performance characterization with
-`-TargetContextTokens 32768` and retain its completed report plus post-unload
-recovery samples. Keep Task 4 quantized text and split dense MMProj work
-separately scoped. Preserve this Task 3 executor and loader as opt-in paths;
-do not infer Q8/default or broad production support from the short CUDA receipt
-or partial performance samples alone.
+If an owner-authorized performance receipt is still required, rerun the
+hardened characterization with a deadline sufficient for the declared matrix
+(or narrow the matrix explicitly), then retain the completed report and
+post-unload recovery samples. Keep Task 4 quantized text and split dense
+MMProj work separately scoped. Preserve this Task 3 executor and loader as
+opt-in paths; do not infer Q8/default or broad production support from the
+short CUDA receipt or partial performance samples alone.
 
 ---
 
-AI-edited: 2026-09-21; agent=Codex; task=gpt-oss-task3-performance-closeout; change=added the bounded performance harness and recorded its cancelled partial run without claiming a final performance receipt
+AI-edited: 2026-09-21; agent=Codex; task=gpt-oss-performance-qualification; change=published the hardened autoregressive harness, model-free tests, and exact owner-artifact timeout evidence without claiming a final performance receipt

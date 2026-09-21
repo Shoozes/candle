@@ -91,24 +91,25 @@
 - The LFM2-VL overlay contains 163 paths (17 fork modifications, 146
   additions). The SnapFlash-derived overlay contains 20 paths (8
   modifications, 12 additions). The separate GPT-OSS overlay currently
-  registers 32 paths (23 overlay-owned and 9 shared).
-  Their current registered union is 197 paths with 21 shared paths, including
+  registers 35 paths (26 overlay-owned and 9 shared).
+  Their current registered union is 200 paths with 21 shared paths, including
   the shared CUDA build path.
 
 ## Separate GPT-OSS Experimental Handoff
 
 - Current phase: Task 3 short exact-parity runner and CUDA prefill/decode
   boundary. Short parity is published on `main`; the separate performance
-  harness is partially exercised and its final receipt remains pending. It does
-  not change EdgeSymbio or symbio-code. Its supplied-artifact run passes real
-  GGUF load,
+  harness and its 10-test model-free qualification suite are implemented. The
+  owner-artifact characterization reached four of six cases before its
+  declared deadline, so its real receipt remains pending. It does not change
+  EdgeSymbio or symbio-code. Its supplied-artifact run passes real GGUF load,
   CUDA construction, cancellation rollback, bounded prefill/decode parity,
   reset/replay, and teardown.
 - Current baseline before this slice: `main`
-  `a0c795a7f6a27d56175aa5c45ee764067ad7d5e3`, tree
-  `04bd1f0fa9d9601510f616d9ef6760edf1945f5d`.
+  `2abf29cd35b0633336cf67d55f8d5ec6ceb62ee1`, tree
+  `bdebed85d31a6fe42d3410593fb841ea4709623a`.
 - The accepted implementation is published at guarded checkpoint
-  `c8316e3b06090aed3a1f809004ef7e10b7e70b3b`; the prior short-parity
+  `2abf29cd35b0633336cf67d55f8d5ec6ceb62ee1`; the prior short-parity
   checkpoint was `ea5900f614c35c47822b8363ff18ee676ae2159a`.
 - The successful receipt executed candidate tree
   `69830f1d244ef0d13b734ee48d5bf7243366c371` before these post-proof status
@@ -122,7 +123,8 @@
   `mxfp4.rs`, `runtime.rs`, `candle-examples/examples/gpt-oss-short-parity.rs`,
   `scripts/gpt-oss/run-short-parity.ps1`,
   `candle-examples/examples/gpt-oss-performance.rs`, and
-  `scripts/gpt-oss/run-performance.ps1`.
+  `scripts/gpt-oss/run-performance.ps1`, and
+  `scripts/gpt-oss/test-performance.ps1`.
 - Proven: all-32-coordinate GGML wire normalization with mixed signs/scales;
   real serialized fused/split loader values and expert-contribution checks;
   one identity-verified retained file handle with chunk cancellation and
@@ -136,13 +138,20 @@
   raw prefill row retains a clipped-tail diagnostic outlier, so the accepted
   criterion is explicitly top-k/mean/total-variation based; Q8 remains the
   maintained product default and broad production claims remain unproven.
-- Known blocker: the closing-session performance run completed cold load and
-  cases through 16,384 tokens, then was cancelled after starting the bounded
-  32,764-token case. No final report, throughput/TTFO receipt, or post-unload
-  recovery evidence exists.
-- Exact next task: rerun `run-performance.ps1` with explicit
-  `-TargetContextTokens 32768` to completion. Keep Task 4 quantized text and
-  split dense MMProj work separately scoped.
+- Known blocker: the owner-artifact run in
+  `artifacts/gpt-oss/performance/runs/20260921T071321303Z-3cd84d87e5b8`
+  completed the 8, 512, 2048, and 8192-token autoregressive cases, then hit
+  the explicit 45-minute deadline during the 16384-token case. Its terminal
+  records report `timeout`, `4/6`, `report_written: false`, and
+  `success_claim: false`; the runner exited with
+  `performance overall deadline exceeded: GPT-OSS CUDA operation cancelled`.
+  No post-unload recovery receipt or final throughput/TTFO report exists. The
+  wrapper cleaned up the runner process and retained 2,414 monitor samples.
+- Exact next task: if a performance receipt is still required, rerun
+  `run-performance.ps1` with a deadline sufficient for the declared matrix,
+  or explicitly declare a narrower matrix, and require the final report plus
+  post-unload recovery evidence before changing the gated status. Keep Task 4
+  quantized text and split dense MMProj work separately scoped.
 
 ## Latest Integrity Review (2026-08-21)
 
@@ -279,4 +288,4 @@ leave the status Gated and retain the explicit blocker. The separate
 authorization.
 
 ---
-AI-edited: 2026-09-21T00:00:00-04:00 | agent=Codex | model=unknown | effort=high | task=gpt-oss-task3-performance-closeout | change=recorded published short parity, the bounded performance harness, and the cancelled partial performance run
+AI-edited: 2026-09-21T00:00:00-04:00 | agent=Codex | model=unknown | effort=high | task=gpt-oss-performance-qualification | change=recorded the hardened performance harness, model-free tests, and exact owner-artifact timeout evidence without claiming a final receipt

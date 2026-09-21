@@ -2,6 +2,26 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-09-21 — GPT-OSS bounded qualification harness
+
+- Hardened the performance example and monitor around an explicit
+  production-representative autoregressive profile. The runner now validates
+  prompt/target/generated bounds before model execution, uses the requested
+  target as the runtime sequence limit, requires weight/cache/total-device
+  budgets, and cancels cooperatively at an overall deadline.
+- Added greedy autoregressive generation with separate prefill/first-token/
+  steady-decode timing, explicit actual prompt/generated counts, incremental
+  runner and monitor evidence in a unique run directory, terminal success or
+  non-success records, sampled GPU/host attribution, and post-unload recovery.
+  Teacher-forced mode remains explicitly labeled.
+- Added 10 model-free PowerShell qualification tests for invalid and
+  over-target configuration, cancellation, monitor failure, stale output, and
+  interruption after one completed case. The owner-artifact rerun then
+  completed four of six declared autoregressive cases before its explicit
+  45-minute deadline; its terminal evidence is `timeout`, with no final report
+  or post-unload receipt, and partial evidence was not promoted to a success
+  claim.
+
 ## 2026-09-21 — GPT-OSS Task 3 performance harness closeout
 
 - Added the opt-in `gpt-oss-performance` CUDA example and
@@ -9,10 +29,12 @@ This file preserves completed implementation and verification evidence. Any pres
   observed logical cache usage, cold load, warm inference rates, host/GPU
   samples, and post-unload cleanup deltas while requiring an explicit bounded
   target context.
-- The first bounded native run was intentionally cancelled during session
-  close after completing cases through 16,384 tokens and starting the 32,764
-  token case. No final performance report, throughput/TTFO receipt, or
-  post-unload recovery claim is recorded; the next task is a clean rerun.
+- The earlier bounded native run was intentionally cancelled during session
+  close and is historical partial evidence. The corrected owner-artifact rerun
+  is recorded under
+  `artifacts/gpt-oss/performance/runs/20260921T071321303Z-3cd84d87e5b8`; it
+  completed 8, 512, 2048, and 8192 tokens, timed out during 16384 tokens, and
+  wrote no final report or post-unload recovery receipt.
 
 ## 2026-09-20 — GPT-OSS Task 3 short parity boundary
 

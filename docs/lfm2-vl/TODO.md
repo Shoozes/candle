@@ -128,10 +128,14 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 - Verification: CPU focused/full gates first, then the authorized CUDA build,
   numerical comparison, memory/cleanup receipt, summary-bank and overlay
   verifiers, and guarded publication.
-  Performance follow-up: the bounded harness is implemented and statically
-  verified. Its closing-session run completed cases through 16,384 tokens and
-  started the 32,764-token case before cancellation; a completed report and
-  post-unload recovery receipt remain pending.
+  Performance follow-up: the bounded harness now enforces an explicit
+  autoregressive profile, target, budgets, deadline cancellation, unique run
+  directory, incremental partial evidence, terminal status, and cleanup
+  attribution. Its model-free qualification suite passes 10 tests. The
+  owner-artifact rerun timed out after four of six cases at
+  `artifacts/gpt-oss/performance/runs/20260921T071321303Z-3cd84d87e5b8`; no
+  final report or post-unload recovery receipt exists. A future receipt run
+  needs a sufficient declared deadline or a narrower declared matrix.
 
 ### [ ] GPT-OSS Task 4: quantized text plus split dense MMProj
 

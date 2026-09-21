@@ -110,7 +110,8 @@
       "status": "active",
       "paths": [
         "candle-examples/examples/gpt-oss-performance.rs",
-        "scripts/gpt-oss/run-performance.ps1"
+        "scripts/gpt-oss/run-performance.ps1",
+        "scripts/gpt-oss/test-performance.ps1"
       ]
     },
     "feature__siglip2_naflex": {
