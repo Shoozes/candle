@@ -58,6 +58,8 @@ claim. The bounded native performance packet now supplies an optimized-release
 reserve) under the exact 20,000,000,000-byte Edge ceiling with a fail-closed
 physical monitor; larger target contexts are intentionally refused by the
 wrapper, and the 8160-prompt diagnostic is retained only as superseded evidence.
+The ignored accepted report bytes observed at delivery are bound by raw
+SHA-256 `616b188eadb04b27f7834a952d45a7cfd8ec9ff8a0b68413ce8a5aa468a71431`.
 
 ## Overlay-owned additions
 

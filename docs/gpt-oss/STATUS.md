@@ -130,7 +130,10 @@
   bytes, below the exact ceiling; runner and wrapper both report
   `stop_reason: completed`, `completed_cases: 3/3`, and `exit_code: 0`.
   After process exit, no GPT-OSS process remained and current GPU use was
-  835 MiB. The external model/tokenizer remain outside the repository.
+  835 MiB. The ignored report bytes observed at delivery are bound by raw
+  SHA-256 `616b188eadb04b27f7834a952d45a7cfd8ec9ff8a0b68413ce8a5aa468a71431`;
+  the report remains ignored and the external model/tokenizer remain outside
+  the repository.
 - The clean-source diagnostic packet
   `artifacts/gpt-oss/performance/bounded-release-packet-committed.json` is
   retained as superseded evidence: its 8160-prompt phase sampled a peak of
