@@ -57,6 +57,7 @@ try {
     $terminal = Get-Content -LiteralPath $terminalPath -Raw | ConvertFrom-Json
     Assert-Test ($terminal.status -eq "forced_termination" -and $terminal.success_claim -eq $false -and $terminal.completed_cases -eq 1) "interruption after one case was misreported"
     Assert-Test ((Get-TerminalStatus -RunnerStatus "resource_limit") -eq "resource_limit") "resource ceiling was not classified as a bounded stop"
+    Assert-Test ((Get-TerminalStatus -ObservedResourceLimit -ForcedTermination) -eq "resource_limit") "observed GPU ceiling did not take precedence over cleanup termination"
 
     Write-Output "gpt-oss-performance tests: $testsPassed passed"
 } finally {

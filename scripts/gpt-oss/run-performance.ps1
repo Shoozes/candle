@@ -3,8 +3,8 @@ param(
     [string]$Model,
     [string]$Tokenizer,
     [string]$Output = "artifacts/gpt-oss/performance/report.json",
-    [string]$Lengths = "8,512,2048,8160",
-    [int]$TargetContextTokens = 8192,
+    [string]$Lengths = "8,512,2048",
+    [int]$TargetContextTokens = 2080,
     [int]$DecodeTokens = 32,
     [ValidateSet("autoregressive", "teacher-forced")][string]$Mode = "autoregressive",
     [string]$Prompt = "The quick brown fox jumps over the lazy dog. Performance characterization prompt.",
@@ -155,14 +155,15 @@ function Get-TerminalStatus {
     param(
         [string]$RunnerStatus,
         [switch]$MonitorFailure,
+        [switch]$ObservedResourceLimit,
         [switch]$ForcedTermination,
         [switch]$Interrupted
     )
-    if ($ForcedTermination -or $Interrupted) { return "forced_termination" }
     if ($MonitorFailure) { return "monitor_error" }
+    if ($ObservedResourceLimit -or $RunnerStatus -eq "resource_limit") { return "resource_limit" }
+    if ($ForcedTermination -or $Interrupted) { return "forced_termination" }
     if ($RunnerStatus -eq "timeout") { return "timeout" }
     if ($RunnerStatus -eq "cancelled") { return "cancelled" }
-    if ($RunnerStatus -eq "resource_limit") { return "resource_limit" }
     if ($RunnerStatus -eq "success") { return "success" }
     return "model_error"
 }
@@ -343,6 +344,7 @@ function Invoke-GptOssPerformance {
     $monitorFailure = $false
     $forcedTermination = $false
     $interrupted = $false
+    $observedResourceLimit = $false
     $terminalError = $null
     $finalStatus = "model_error"
     try {
@@ -396,6 +398,10 @@ function Invoke-GptOssPerformance {
             try {
                 $sample = Get-SystemSample -DeviceIndex $DeviceIndex -ProcessId $process.Id -Phase $phase
                 $samples.Add($sample)
+                if ([UInt64]$sample.gpu_used_bytes -gt [UInt64]$MaxTotalDeviceBytes) {
+                    $observedResourceLimit = $true
+                    throw "observed GPU usage $([UInt64]$sample.gpu_used_bytes) exceeded explicit total-device budget $MaxTotalDeviceBytes"
+                }
                 Write-MonitorProgress -Path $monitorProgress -RunId $runId -ProfileId $ProfileId -BuildIdentity $BuildIdentity -Mode $Mode -Samples @($samples) -Phase $phase -CompletedCases $completedCases -TotalCases $plan.Count
             } catch {
                 $monitorFailure = $true
@@ -486,7 +492,7 @@ function Invoke-GptOssPerformance {
             } catch { }
         }
         if ($finalStatus -ne "success") {
-            $finalStatus = Get-TerminalStatus -RunnerStatus $runnerStatus -MonitorFailure:$monitorFailure -ForcedTermination:$forcedTermination -Interrupted:$interrupted
+            $finalStatus = Get-TerminalStatus -RunnerStatus $runnerStatus -MonitorFailure:$monitorFailure -ObservedResourceLimit:$observedResourceLimit -ForcedTermination:$forcedTermination -Interrupted:$interrupted
         }
         Write-RunTerminal -Path $terminalPath -Status $finalStatus -Phase $phase -RunId $runId -ProfileId $ProfileId -BuildIdentity $BuildIdentity -Mode $Mode -CompletedCases $completedCases -TotalCases $plan.Count -ErrorMessage $terminalError -RunnerTerminalPath $runnerTerminal -ExitCode $runnerExitCode
         if ($samples.Count -gt 0 -and -not (Test-Path -LiteralPath $monitorProgress -PathType Leaf)) {
