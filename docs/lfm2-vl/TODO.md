@@ -128,14 +128,18 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 - Verification: CPU focused/full gates first, then the authorized CUDA build,
   numerical comparison, memory/cleanup receipt, summary-bank and overlay
   verifiers, and guarded publication.
-  Performance follow-up: the bounded harness now enforces an explicit
-  autoregressive profile, target, budgets, deadline cancellation, unique run
-  directory, incremental partial evidence, terminal status, and cleanup
-  attribution. Its model-free qualification suite passes 10 tests. The
-  owner-artifact rerun timed out after four of six cases at
-  `artifacts/gpt-oss/performance/runs/20260921T071321303Z-3cd84d87e5b8`; no
-  final report or post-unload recovery receipt exists. A future receipt run
-  needs a sufficient declared deadline or a narrower declared matrix.
+  Performance follow-up: the bounded harness now defaults to optimized
+  release, records exact build/model/tokenizer/GPU/runtime identities, enforces
+  the exact 20,000,000,000-byte Edge ceiling with fail-closed observed-device
+  monitoring, refuses targets above 8192 total tokens, records checked
+  static+KV+workspace accounting, and preserves cancellation, stop reason,
+  incremental evidence, and cleanup attribution. Its model-free qualification
+  suite passes 16 tests. The accepted owner packet passes 8/512/2048 prompt
+  cases with a 32-token reserve at
+  `artifacts/gpt-oss/performance/bounded-release-packet-safe.json`. The clean
+  8160-prompt diagnostic is retained but superseded after a physical-ceiling
+  sample; the former 32k-matrix timeout remains historical, and no 16k/32k
+  optimization claim is made.
 
 ### [ ] GPT-OSS Task 4: quantized text plus split dense MMProj
 

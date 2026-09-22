@@ -2,6 +2,32 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-09-21 — GPT-OSS observed-safe native performance packet
+
+- Narrowed the optional performance track to an optimized-release native
+  envelope at 2080 total tokens: 2048 prompt tokens plus a 32-token
+  autoregressive reserve. The runner records release build/source identity,
+  model/tokenizer hashes, GPU and Rust/Cargo runtime identities, and refuses
+  larger-than-8192 target contexts before execution.
+- Added checked static-plus-logical-KV-plus-transient-workspace accounting with
+  the exact `20_000_000_000`-byte Edge ceiling, exact-boundary/one-over runtime
+  coverage, fail-closed observed-device monitoring, explicit resource-limit
+  stop reasons, and bounded cancellation and cleanup evidence. The existing
+  CUDA executor and KV representation were intentionally left unchanged.
+- The accepted owner-provided native packet
+  `artifacts/gpt-oss/performance/bounded-release-packet-safe.json` passed the
+  `8,512,2048` prompt cases with 32 autoregressive generated tokens. Its
+  monitor peak was `19,723,714,560` bytes, below the exact ceiling; the runner
+  and wrapper both reported `3/3` success and current post-run GPU use was
+  835 MiB with no GPT-OSS process remaining. The model and tokenizer remained
+  external and no Q8/default or 16k/32k production claim was made.
+- The clean-source `8160`-prompt diagnostic is retained as superseded evidence:
+  its sampled peak was `25,206,718,464` bytes, so logical accounting and runner
+  success do not promote it past the physical ceiling. Focused verification
+  passed PowerShell `16/16`, runtime admission `4/4`, CUDA
+  performance-example tests `5/5`, release build, and the intentional
+  `16384`-target refusal before model execution.
+
 ## 2026-09-21 — GPT-OSS bounded qualification harness
 
 - Hardened the performance example and monitor around an explicit

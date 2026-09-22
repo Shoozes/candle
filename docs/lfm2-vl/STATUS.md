@@ -97,28 +97,26 @@
 
 ## Separate GPT-OSS Experimental Handoff
 
-- Current phase: Task 3 short exact-parity runner and CUDA prefill/decode
-  boundary. Short parity is published on `main`; the separate performance
-  harness and its 10-test model-free qualification suite are implemented. The
-  owner-artifact characterization reached four of six cases before its
-  declared deadline, so its real receipt remains pending. It does not change
-  EdgeSymbio or symbio-code. Its supplied-artifact run passes real GGUF load,
-  CUDA construction, cancellation rollback, bounded prefill/decode parity,
-  reset/replay, and teardown.
+- Current phase: Task 3 bounded native performance qualification is complete
+  for the observed-safe 2080-token total-context envelope. Short parity remains
+  accepted; the optimized-release packet passes 8/512/2048 prompt cases with a
+  32-token autoregressive reserve, exact 20,000,000,000-byte admission,
+  fail-closed monitoring, and post-run cleanup. Larger targets are refused
+  fail-closed by the optional Candle track. It does not change EdgeSymbio or
+  symbio-code.
 - Current baseline before this slice: `main`
-  `2abf29cd35b0633336cf67d55f8d5ec6ceb62ee1`, tree
-  `bdebed85d31a6fe42d3410593fb841ea4709623a`.
-- The accepted implementation is published at guarded checkpoint
-  `ded81e9be2d6c13406507ecc74842a48f83f4162`; the prior short-parity
+  `f470d2de1f9370815cab2f3ebf83ba81825f1716`, tree
+  `154da36bce009ff058681113ce2ece9c24a9b71f`.
+- The bounded implementation checkpoint is
+  `4a4699981ed55bb11e857c58923c67133559145d`; the prior short-parity
   checkpoint was `ea5900f614c35c47822b8363ff18ee676ae2159a`.
-- The successful receipt executed candidate tree
-  `69830f1d244ef0d13b734ee48d5bf7243366c371` before these post-proof status
-  and history edits; the committed source checkpoint includes that later
-  reconciliation without changing the receipt's executed source identity.
+- The accepted performance receipt executed that clean source checkpoint;
+  documentation closeout is layered on top without changing its executed
+  source identity.
 - Task 1, Task 2, and the prior Task 3 packed-executor checkpoints remain
   accepted. No model bytes entered the repository. The detailed evidence is
   recorded in `docs/gpt-oss/STATUS.md`.
-- Delivery files currently under active work:
+- Delivery files completed in this slice:
   `candle-transformers/src/models/gpt_oss/cuda.rs`, `gguf.rs`, `model.rs`,
   `mxfp4.rs`, `runtime.rs`, `candle-examples/examples/gpt-oss-short-parity.rs`,
   `scripts/gpt-oss/run-short-parity.ps1`,
@@ -138,20 +136,16 @@
   raw prefill row retains a clipped-tail diagnostic outlier, so the accepted
   criterion is explicitly top-k/mean/total-variation based; Q8 remains the
   maintained product default and broad production claims remain unproven.
-- Known blocker: the owner-artifact run in
-  `artifacts/gpt-oss/performance/runs/20260921T071321303Z-3cd84d87e5b8`
-  completed the 8, 512, 2048, and 8192-token autoregressive cases, then hit
-  the explicit 45-minute deadline during the 16384-token case. Its terminal
-  records report `timeout`, `4/6`, `report_written: false`, and
-  `success_claim: false`; the runner exited with
-  `performance overall deadline exceeded: GPT-OSS CUDA operation cancelled`.
-  No post-unload recovery receipt or final throughput/TTFO report exists. The
-  wrapper cleaned up the runner process and retained 2,414 monitor samples.
-- Exact next task: if a performance receipt is still required, rerun
-  `run-performance.ps1` with a deadline sufficient for the declared matrix,
-  or explicitly declare a narrower matrix, and require the final report plus
-  post-unload recovery evidence before changing the gated status. Keep Task 4
-  quantized text and split dense MMProj work separately scoped.
+- The earlier owner-artifact 32k-matrix run in
+  `artifacts/gpt-oss/performance/runs/20260921T071321303Z-3cd84d87e5b8` is
+  historical partial evidence only. The clean-source 8160-prompt diagnostic
+  is also superseded because its sampled GPU peak was `25,206,718,464` bytes,
+  above the exact ceiling. The accepted optional packet is bounded at 2080
+  total tokens; no 16k/32k optimization, batching, mixed precision, or
+  KV-storage redesign is implied.
+- Exact next task: preserve the bounded packet and keep Task 4 quantized text
+  plus split dense MMProj separately scoped. Do not infer Q8/default or broad
+  maintained production support from this optional performance evidence.
 
 ## Latest Integrity Review (2026-08-21)
 

@@ -53,7 +53,11 @@ tokenizer/generation integration remain deferred. Task 2 exercises the
 synthetic CPU reference and bounded ownership contracts; Task 3 exercises an
 explicit opt-in CUDA executor over the same bounded weights. Exact assembly is
 proven, but an inference receipt is still required before any production parity
-claim.
+claim. The bounded native performance packet now supplies an optimized-release
+2080-total-token measurement envelope (2048 prompt tokens plus a 32-token
+reserve) under the exact 20,000,000,000-byte Edge ceiling with a fail-closed
+physical monitor; larger target contexts are intentionally refused by the
+wrapper, and the 8160-prompt diagnostic is retained only as superseded evidence.
 
 ## Overlay-owned additions
 
@@ -126,8 +130,10 @@ repository-wide shared-path registry:
   teardown. No worker process or hidden download is created.
 - `GptOssCudaConfig`, `GptOssCudaModel`, and `GptOssCudaError` provide the
   feature-gated packed CUDA proof boundary with explicit device/dtype and
-  static/cache admission, cancellation rollback, eviction, and typed kernel
-  failures. The executor is not wired into product GGUF loading.
+  static/cache/total-device admission, cancellation rollback, eviction, and
+  typed kernel failures. Runtime helpers expose checked static+KV+workspace
+  accounting and exact-boundary search. The executor is not wired into product
+  GGUF loading.
 
 ## Completion boundary
 
@@ -136,12 +142,16 @@ the current Task 3 correction adds GGML MXFP4 wire normalization,
 retained-file identity/ownership, CUDA failure-atomic commit guards, and a
 hash-bound short CUDA parity receipt on top of the narrowed-view and
 synthetic/exact GGUF assembly proof. A separate performance harness now
-qualifies an explicit autoregressive production-representative profile with
-target, budget, deadline, cancellation, progress, cleanup, and model-free
-failure tests; teacher-forced measurement remains explicitly labeled. A real
-artifact receipt is still required before throughput claims. The next dependency is quantized GPT-OSS
-text plus split dense MMProj work; Q8/default and broad maintained production
-claims remain outside this opt-in receipt.
+qualifies an explicit autoregressive bounded native profile with optimized
+release identity, exact 20,000,000,000-byte admission, checked static+KV+
+workspace accounting, target refusal above 8192 total tokens, fail-closed
+observed-device monitoring, deadline, cancellation, progress, cleanup, and
+model-free failure tests; teacher-forced measurement remains explicitly
+labeled. The accepted packet is the observed-safe 2080-total-token Candle
+measurement only; the clean 8160-prompt diagnostic is superseded after a
+physical-ceiling sample. The next dependency is quantized GPT-OSS text plus
+split dense MMProj work; Q8/default and broad maintained production claims
+remain outside this opt-in receipt.
 
 ---
 

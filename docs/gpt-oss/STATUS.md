@@ -2,25 +2,24 @@
 
 ## Assignment state
 
-- Current phase: Task 3 short exact-parity runner and CUDA prefill/decode
-  boundary, with the hardened performance-characterization harness now
-  implemented and exercised against the owner-selected artifact. Short parity
-  is published on `main`; the full performance receipt remains pending because
-  the bounded run timed out after four of six cases.
-  Its supplied-artifact run passes the bounded prefill/decode parity gate,
-  cancellation rollback, reset/replay, and teardown checks. It does not
+- Current phase: Task 3 bounded native performance qualification is complete
+  for the observed-safe 2080-token total-context envelope. Short parity remains
+  accepted; the optimized-release packet proves the 8/512/2048 prompt cases
+  with a 32-token autoregressive reserve, exact 20,000,000,000-byte admission,
+  fail-closed sampling, and post-run cleanup. The harness still refuses target
+  contexts above 8192 tokens, but the clean 8160-prompt diagnostic exceeded the
+  observed GPU ceiling and is not accepted. This optional Candle track does not
   change EdgeSymbio or symbio-code.
 - Current baseline before this slice: `main` at
-  `2abf29cd35b0633336cf67d55f8d5ec6ceb62ee1`, tree
-  `bdebed85d31a6fe42d3410593fb841ea4709623a`.
-- The accepted implementation is published on `main` at
-  `ded81e9be2d6c13406507ecc74842a48f83f4162`; the prior short-parity
-  checkpoint was `ea5900f614c35c47822b8363ff18ee676ae2159a`.
-- The successful receipt's executed candidate tree is
-  `69830f1d244ef0d13b734ee48d5bf7243366c371`; it is the pre-documentation
-  candidate tree and is marked dirty in the receipt. The committed source
-  checkpoint includes the later status/history/routing reconciliation without
-  changing the receipt's executed source identity.
+  `f470d2de1f9370815cab2f3ebf83ba81825f1716`, tree
+  `154da36bce009ff058681113ce2ece9c24a9b71f`.
+- The bounded implementation checkpoint is `4a4699981ed55bb11e857c58923c67133559145d`;
+  the prior short-parity checkpoint was
+  `ea5900f614c35c47822b8363ff18ee676ae2159a`.
+- The accepted performance receipt executed that clean source checkpoint and
+  records the exact release, model, tokenizer, GPU, and runtime identities.
+  Documentation closeout is layered on top without changing the receipt's
+  executed source identity.
 - Task 1, Task 2, and the prior Task 3 packed-executor checkpoints remain
   accepted. No model bytes entered the repository.
 - Product artifact identity: the owner-selected GGUF SHA-256 is
@@ -48,7 +47,7 @@
 | Retained-file integrity and ownership | Accepted | Admission retains one identity-verified handle, Windows read-opens deny write/delete sharing, load reads avoid reopen/rehash, cancellation is chunk-aware, and the registry lease follows the live model/runtime owner. |
 | CUDA validation and commit guards | Accepted | All public CUDA config fields validate before device setup; synchronization, finite-output validation, and a final cancellation checkpoint precede cache commit, with delayed failure/cancellation recovery tests. |
 | Product artifact numerical parity | Accepted for bounded short CUDA gate | The exact short runner proves the pinned tokenizer IDs, real CUDA construction, cancellation rollback, prefill/decode parity, deterministic reset/replay, and registry teardown. The robust criterion requires exact top-1 agreement, top-k union log-probability error <= `0.25`, mean full-row error <= `0.01`, and probability-space total variation <= `0.01`; all three stages pass. This is not yet a cross-device, Q8, or maintained product-path claim. |
-| Performance characterization harness | Implemented; artifact receipt pending | `gpt-oss-performance` now qualifies an explicit autoregressive profile with a true target-context limit, explicit weight/cache/total-device budgets, deadline-driven cancellation, incremental runner/monitor evidence, cleanup timing, and terminal status records. Teacher-forced mode is explicitly labeled. The owner-artifact timeout run remains partial evidence; no final artifact throughput/TTFO receipt is claimed. |
+| Performance characterization harness | Accepted for bounded native packet | `gpt-oss-performance` defaults to optimized release, records build/model/tokenizer/GPU/runtime identities, enforces the exact 20,000,000,000-byte Edge ceiling with a fail-closed physical monitor, reports checked static+KV+workspace accounting, preserves cancellation/stop reasons, and writes cleanup evidence. The accepted packet passes 8/512/2048 prompt cases with 32 generated tokens; the 8160-prompt diagnostic is superseded after an observed physical-ceiling violation. No 32k or maintained production claim is made. |
 | Quantized text/split dense MMProj | Deferred | The ordered post-CUDA task; no Q8/LFM2 defaults or Edge/Harmony integration were changed. |
 
 ## Proven evidence
@@ -115,6 +114,28 @@
   and registry teardown. Its receipt is
   `artifacts/gpt-oss/short-parity/receipt.json`; the candidate is explicitly
   marked `uncommitted_candidate`.
+- The accepted bounded release performance packet is
+  `artifacts/gpt-oss/performance/bounded-release-packet-safe.json`, with run
+  directory `artifacts/gpt-oss/performance/runs/20260922T002225005Z-60f5d632eaf6`.
+  It used source `4a4699981ed55bb11e857c58923c67133559145d`, release executable
+  SHA-256 `f0f808c05f570e8aa8a4cbc25055f67c2de7d78feb73d2edd5cdab5ed0c1f30c`,
+  the owner GGUF SHA-256
+  `aab205256a9b6361e410c24de3086e30f907092ca6f9ba8cd4b22c8a2b025778`, the
+  tokenizer SHA-256
+  `0614fe83cadab421296e664e1f48f4261fa8fef6e03e63bb75c20f38e37d07d3`, and
+  an RTX 4090/driver 616.92/compute 8.9. It passed the 8/512/2048 prompt
+  cases with 32 generated tokens at 14.342/13.872/13.411 prefill tokens per
+  second, with accounted device bytes of 17,379,651,840 /
+  17,495,515,392 / 17,848,623,360. The monitor peak was 19,723,714,560
+  bytes, below the exact ceiling; runner and wrapper both report
+  `stop_reason: completed`, `completed_cases: 3/3`, and `exit_code: 0`.
+  After process exit, no GPT-OSS process remained and current GPU use was
+  835 MiB. The external model/tokenizer remain outside the repository.
+- The clean-source diagnostic packet
+  `artifacts/gpt-oss/performance/bounded-release-packet-committed.json` is
+  retained as superseded evidence: its 8160-prompt phase sampled a peak of
+  `25,206,718,464` bytes, above the exact ceiling, so its logical accounting
+  and successful runner status are not an acceptance claim.
 - Pinned behavioral sources remain OpenAI `gpt-oss` commit
   `7b583341fe16729127f6d5b94a7b09ccae97e1a1` and llama.cpp commit
   `f072b103714dfa1eee531f80b24512faf38e3dd2`; see `SOURCES.md`. The CUDA
@@ -160,16 +181,13 @@ the maintained product path.
   dense MMProj execution are intentionally deferred to the next ordered task.
 - The CUDA receipt is a synthetic fixture result on one Windows RTX 4090
   lane; it is not a cross-device matrix or a production throughput claim.
-- The owner-artifact performance run
+- The earlier owner-artifact 32k-matrix run
   `artifacts/gpt-oss/performance/runs/20260921T071321303Z-3cd84d87e5b8`
-  reached the 8, 512, 2048, and 8192-token autoregressive cases, then hit its
-  explicit 45-minute deadline while the 16384-token case was active. Its
-  terminal records classify the result as `timeout`, with `4/6` cases,
-  `report_written: false`, and `success_claim: false`; no post-unload recovery
-  receipt exists. The runner exited with the actionable error
-  `performance overall deadline exceeded: GPT-OSS CUDA operation cancelled`,
-  and the wrapper cleaned up the runner process. No throughput or TTFO claim is
-  made from the partial evidence.
+  remains historical partial evidence: it reached 8/512/2048/8192 and timed
+  out during 16384 with `4/6`, no report, and no recovery receipt. This slice
+  intentionally accepts only the observed-safe 2080-token envelope; no
+  16k/32k optimization, batching, mixed precision, or KV-storage redesign is
+  implied.
 - The existing Windows linker warning `LNK4098` remains an environment/build
   warning in the CUDA test binary; it did not fail the executed tests.
 - The rolling repository-wide overlay gate now passes with the live union
@@ -212,20 +230,33 @@ slice:
 - `cargo test --locked --features cuda -p candle-examples --example
   gpt-oss-performance`: passed `5/5` model-free planning, cancellation, and
   logits-shape tests.
+- `pwsh -NoProfile -File scripts/gpt-oss/test-performance.ps1`: passed `16/16`
+  model-free harness tests, including single-case normalization, release
+  executable selection, exact Edge ceiling, bounded-context refusal, resource-
+  limit stop classification, and observed-limit precedence.
+- `cargo test --locked -p candle-transformers --lib gpt_oss::runtime`: passed
+  `4/4`, including exact total-device-boundary/one-over arithmetic.
+- `cargo build --locked --release --features cuda -p candle-examples --example
+  gpt-oss-performance`: passed with the optimized release profile.
+- The accepted bounded packet command with `-Lengths 8,512,2048`,
+  `-TargetContextTokens 2080`, autoregressive mode, and all three explicit
+  budgets set to `20000000000` exited `0` and wrote the report plus
+  runner/wrapper terminal and monitor evidence. The monitor's peak sampled GPU
+  use was `19,723,714,560` bytes and the post-run process census found no
+  GPT-OSS process.
+- The clean-source `-Lengths 8,512,2048,8160` / `-TargetContextTokens 8192`
+  diagnostic is retained but rejected because its 8160 phase sampled
+  `25,206,718,464` bytes. The wrapper with `-TargetContextTokens 16384`
+  exited `1` before model execution with `bounded GPT-OSS qualification
+  refuses target contexts above 8192 tokens.`
 - `cargo clippy --locked --features cuda -p candle-examples --example
   gpt-oss-performance -- -D warnings`: passed.
 - PowerShell parse validation for `scripts/gpt-oss/run-performance.ps1`:
   passed.
-- `pwsh -NoProfile -File scripts/gpt-oss/test-performance.ps1`: passed
-  `10` model-free qualification tests covering invalid and over-target plans,
-  cooperative cancellation classification, monitor failure, stale output,
-  and interruption after one completed case.
-- The owner-artifact performance command with explicit 32768-token target,
-  32 GiB weight budget, 8 GiB cache budget, 24 GiB total-device budget,
-  autoregressive mode, and 45-minute deadline exited `1` with the expected
-  non-success timeout classification. Its run directory retained incremental
-  timings and 2,414 monitor samples; it did not write the requested final
-  report.
+- The historical 32768-token performance command remains a retained timeout
+  record only; the current wrapper refuses targets above 8192 before model
+  execution, and the accepted native packet is narrower because of observed
+  physical-device accounting.
 - `pwsh -NoProfile -File scripts/gpt-oss/run-short-parity.ps1
   -ReferenceLogits C:\Users\jc816\AppData\Local\Temp\edgesymbio-gptoss-reference-20260920\reference-c8.logits`:
   passed in `685.41s` on `Cuda(CudaDevice(DeviceId(1)))`. The receipt records
@@ -249,22 +280,17 @@ slice:
   passed with 200 registered paths and 21 shared paths.
 - `bash scripts/tests/test-verify-fork-overlays.sh`: passed all 7 isolated
   regression cases.
-- The guarded publication helper passed for this slice and verified
-  `ded81e9be2d6c13406507ecc74842a48f83f4162` on `origin/main`. The remaining
-  substantive blocker is completion of a real owner-artifact performance
-  receipt under a deadline long enough for the declared 16384- and 32768-token
-  cases, or a separately declared narrower matrix.
+- The prior guarded publication helper verified `f470d2de` on `origin/main`;
+  the current bounded source slice still requires its final clean-tree gate
+  and direct publication.
 
 ## Exact next task
 
-If an owner-authorized performance receipt is still required, rerun the
-hardened characterization with a deadline sufficient for the declared matrix
-(or narrow the matrix explicitly), then retain the completed report and
-post-unload recovery samples. Keep Task 4 quantized text and split dense
-MMProj work separately scoped. Preserve this Task 3 executor and loader as
-opt-in paths; do not infer Q8/default or broad production support from the
-short CUDA receipt or partial performance samples alone.
+No further 32k performance work is in this bounded slice. Preserve the
+observed-safe optimized-release 2080 packet as optional Candle evidence, and
+keep Task 4 quantized text plus split dense MMProj separately scoped. Do not
+infer Q8/default or broad maintained production support from this packet.
 
 ---
 
-AI-edited: 2026-09-21; agent=Codex; task=gpt-oss-performance-qualification; change=published the hardened autoregressive harness, model-free tests, and exact owner-artifact timeout evidence without claiming a final performance receipt
+AI-edited: 2026-09-21; agent=Codex; task=gpt-oss-performance-qualification; change=recorded the observed-safe release packet, superseded the physical-ceiling diagnostic, and closed model-free verification

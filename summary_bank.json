@@ -106,7 +106,7 @@
       ]
     },
     "feature__gpt_oss_task3_performance": {
-      "description": "Bounded native GPT-OSS cold-load and warm-inference performance harness with explicit context target, resource sampling, and post-unload cleanup evidence.",
+      "description": "Bounded optimized-release GPT-OSS native packet accepted at 2080 total tokens (2048 prompt plus 32 generated) with exact 20,000,000,000-byte static+KV+workspace admission, fail-closed observed-device monitoring, identity evidence, larger-request refusal, stop reasons, sampling, and cleanup; the 8160-prompt diagnostic is superseded after a physical-ceiling sample.",
       "status": "active",
       "paths": [
         "candle-examples/examples/gpt-oss-performance.rs",
