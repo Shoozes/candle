@@ -50,7 +50,8 @@ Document every material conflict in `docs/lfm2-vl/DECISIONS.md`.
   `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Integration and publication branch: `main` on `Shoozes/candle`.
 - Current upstream integration base: Candle main at
-  `6f74e7c390c717f8fd34f23ce02aceb058173370`.
+  `aebc405d2b4bf42808387e0ca597bf7dad9b565f`. Historical release receipt
+  baselines remain immutable; see `docs/lfm2-vl/UPSTREAM_SYNC.md`.
 - Historical implementation branch: `feat/lfm2-vl-mmproj`; retain it as a
   checkpoint record rather than a second publication line.
 - First checkpoint: `LiquidAI/LFM2.5-VL-450M`.
@@ -241,4 +242,4 @@ The next Codex session must be able to continue from this file without reconstru
 Keep active tasks and their What/Why/When/Where/How/Done-when/Verification contract in `TODO.md`. Move completed details to `HISTORY.md`, recurring hazards to `FAILURE_LOG.md`, and never duplicate either into the summary bank.
 
 ---
-AI-edited: 2026-09-19T00:00:00-04:00 | agent=Codex/root | model=unknown | effort=high | task=guarded-publication | change=adopted Candle-owned clean-commit gitpush helper with ignored secrets
+AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence

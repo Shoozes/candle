@@ -1,98 +1,112 @@
-# Overlay vs Hugging Face sync inventory
+# Upstream integration — 2026-09-27
 
-Read-only. No merge. No gpt-oss overlay. No `candle-overlays-mvp-0.2.0` tag.
+## Source identities and scope
 
-Fetched 2026-09-18 against `C:\DevStuff\candle`.
+- Starting clean local/remote main: `8f27ddfbee47957c274341fd6d32ccabd4767f9f`.
+- Prior integrated upstream: `7c2e89295dad4aeebc6ef7a92c255360b6957c2c`.
+- Pinned merge target: `aebc405d2b4bf42808387e0ca597bf7dad9b565f`.
+- Integration uses a non-rewriting merge on canonical Windows main. The target
+  must be an ancestor of the delivered commit; publication uses only the
+  Candle-owned guarded helper.
+- Historical 0.2.0 receipt base `6f74e7c390c717f8fd34f23ce02aceb058173370`,
+  release tags, and model receipt identities remain immutable.
 
-| Clock | SHA | Note |
-| --- | --- | --- |
-| Local overlay `main` (unpublished S3 merge) | `25d676f5663f152cf9371b405236d75fe110d14f` | `--no-ff` of exact HF `#3950` onto `238cc176`. |
-| Published overlay `origin/main` | `238cc176e2a7283da88588fdef47276965d0022b` | Edge pin remains here until S4. |
-| Live HF integration base | `7c2e89295dad4aeebc6ef7a92c255360b6957c2c` | Selected S3 SHA. `#3950`. |
-| Prior overlay HF base (frozen 0.2.0 receipts) | `6f74e7c390c717f8fd34f23ce02aceb058173370` | Not the live union gate after S3. |
-| `huggingface/main` tip | `ddf1b879dc3a1760cbcb3f3c4a7c6467850cec4a` | 2026-09-04 `Remove ug (#3954)`. Do not merge. |
-| Compat baseline | `31f35b147389700ed2a178ee66a91c3cc25cc80d` | Candle 0.11.0. Not a sync target. |
+The 17 upstream commits bring CPU quantized repacking, broadcast batch and
+noncontiguous indexing corrections, CUDA vectorization/reduction/copy fixes,
+ONNX LogSoftmax default-axis correction, Mimi rotary correction, dependency
+updates, and CI security/cache changes. Ordinary inherited upstream changes
+are not fork-overlay paths.
 
-HF `main` has no gpt-oss paths. Overlay still has `candle-ug/`; the tip deleted it.
+## Deliberate fork differences
 
-HF `#3899` Mxfp4 core dtype: **absent** on this fetched tip (no `mxfp4` / `#3899` in `huggingface/main` history or tree). That is later C, not this slice.
+The fourth overlay, `docs/fork-compat/MOD_MANIFEST.md`, retains the public
+candle-ug crate, ug feature, UgIOp1, error conversion, device compile methods,
+and CUDA/Metal wiring removed upstream. Core/examples/candle-vlm retain onig,
+with workspace tokenizers 0.23.1 resolving to 0.23.2. This avoids silently
+changing the tokenizer contract for consumers.
 
-T2/T3 gpt-oss llama.cpp receipts remain gold. They are not Candle/Edge proof.
+The I32-to-F32 CUDA cast, MSVC conforming-preprocessor flags, GPT-OSS static
+kernel, tracked lock, Rust 1.97.1 pin, and private-runner fork restriction remain.
+Upstream action SHAs, per-job permissions, and caching are integrated while
+retaining the pinned compiler and locked Cargo CI commands.
 
-## 1. Edge would absorb `dca98495..2ec92ace`
+Cargo resolution changed 17 package entries: cudarc 0.19.10, cutile 0.3.1,
+Parquet/Arrow 60 and their required compression dependencies. No broad update,
+production dependency addition, or toolchain change was needed.
 
-13 overlay commits. Crate API Edge compiles:
+LFM2-VL/MMProj, SDXL LoRA/conditioning, and experimental GPT-OSS retain their
+independent owners. GPT-OSS acceptance remains bound to source
+`4a4699981ed55bb11e857c58923c67133559145d` and its observed-safe 2,080-token
+receipt. This integration does not relabel that receipt or prove new model
+parity, consumer acceptance, longer context, or production performance.
 
-| Path | Change | Public API break? |
-| --- | --- | --- |
-| `candle-transformers/src/models/lfm2.rs` | Test that deprecated `into_config` matches `try_into_config` | no |
-| `candle-transformers/src/models/lfm2/config.rs` | `#[deprecated]` on `into_config`; signature unchanged | no |
-| `candle-transformers/src/models/stable_diffusion/attention.rs` | Comment | no |
-| `candle-transformers/src/models/stable_diffusion/lora.rs` | `sort_by` → `sort_by_key` | no |
-| `candle-vlm/README.md` | `--offline` in example | no |
-| `candle-core`, `candle-nn` | untouched | no |
-| Remaining files | Overlay docs, 3B/Q8 proof-gap contracts, lock added on Candle side | no |
+## Verification
 
-No `lfm2` / `candle-vlm` public API break. P2 may bump Edge to `2ec92ace`.
+Native PowerShell 7 / MSVC Rust 1.97.1 verification (all commands below passed):
 
-## 2. Upstream `6f74e7c..ddf1b879`
+- Starting baseline: `pwsh -NoProfile -File .tools/verify-before-push.ps1`.
+- `cargo check --locked --offline -j 2 -p candle-core -p candle-nn -p candle-transformers -p candle-vlm`.
+- `cargo test --locked --offline -j 2 -p candle-core -p candle-nn -p candle-transformers -p candle-vlm --features candle-transformers/test-utils`.
+  Includes quantized repack/GEMV, stride-zero broadcast, noncontiguous indexing,
+  LFM2/SigLIP2/projector/processor fixtures, SDXL conditioning and rollback.
+- `cargo check --locked --offline -j 2 -p candle-core --features ug`.
+- `cargo check --locked --offline -j 2 -p candle-examples --example lfm2 --example quantized-lfm2 --example lfm2-vl`.
+- `cargo test --locked --offline -j 2 -p candle-examples --example lfm2-vl`:
+  33 passed, including dense/direct-Q8 and native fixture cache replay.
+- `cargo clippy --locked --offline -j 2 -p candle-core -p candle-nn -p candle-transformers -p candle-vlm --lib -- -D warnings`.
+- `cargo clippy --locked --offline -j 2 -p candle-examples --example lfm2 --example quantized-lfm2 --example lfm2-vl -- -D warnings`.
+- `cargo check --locked --offline -j 2 -p candle-datasets` verifies the updated
+  Parquet/Arrow graph without the live-network dataset tests.
+- `cargo clippy --locked --offline -j 2 -p candle-core -p candle-nn -p candle-transformers --features cuda --lib -- -D warnings`.
+  Upstream's small-reduction launch division was changed to div_ceil to satisfy
+  the strict pinned lint without overflow-prone addition; owned by compatibility.
+- ONNX: `cargo test --locked --offline -j 2 --manifest-path candle-onnx/Cargo.toml --test ops test_logsoftmax`: 1 passed.
+  PROTOC used cached protoc-bin-vendored-win32 3.2.0 (libprotoc 31.1).
+  The excluded crate's generated lock is retained only in ignored task evidence.
+- `cargo fmt --all -- --check`, `git diff --check HEAD`,
+  `pwsh scripts/lfm2-vl/verify-summary-bank.ps1`,
+  `python scripts/lfm2-vl/verify-module-layout.py`.
+- Git for Windows Bash: `scripts/tests/test-verify-fork-overlays.sh`
+  (12 checks); each of `scripts/{lfm2-vl,snapflash,gpt-oss}/verify-mod-manifest.sh`.
+- Eight manifest-bound fixture SHA-256 checks passed; all fixture paths are
+  byte-unchanged against the starting head. Exact prompt IDs passed in VLM tests.
+  Targeted native tokenizer feature resolution has only onig; the full workspace
+  also has existing WASM/dataset fancy-regex consumers.
 
-High-risk later commits (newest last):
+CUDA binaries were built with `cargo test --locked --offline -j 2` and
+`--no-run`, then run through `scripts/lfm2-vl/run-bounded-oracle.ps1`
+with 180-second/8-GiB process limits and `--test-threads=1`:
 
-| SHA | Subject | Flag |
-| --- | --- | --- |
-| `5814a6fa` | tokenizers `fancy-regex` over `onig` (#3952) | paired Edge `tokenizers` feature change |
-| `d4d130c8` | Add caching to rust ci (#3953) | after #3952 |
-| `e50eece1` | Bump cutile to v0.3.1 (#3959) | after #3952 |
-| `ddf1b879` | Remove ug (#3954) | deletes `candle-ug`; overlay still has it |
+- Core `--features cuda,ug --test custom_op_tests --test matmul_tests --test tensor_tests`:
+  7 / 22 / 90 passed. Includes ug_op, I32-to-F32, new BF16 offset/tail
+  casts, narrow-source scatter, strided operations and small reductions.
+- Transformers `--features cuda --lib`, filter `models::gpt_oss::cuda::tests`:
+  8 passed (synthetic parity, narrow views, cancellation and recovery).
+- Receipts/logs: ignored `artifacts/upstream-sync-20260927/`. All wrapper
+  receipts assert child exit 0 and PID absent after cleanup. No runtime retained.
+- Nonfatal MSVC LIBCMT conflict warnings were emitted during CUDA test linking;
+  test execution and strict CUDA library Clippy passed.
 
-Also in the 41-commit window: hf-hub 1.0, tokenizers 0.22.0 → 0.23.1 (still `onig` until #3952), CI feature-gates, cutile/MoE.
+Publication requires clean-main replay by `.tools/gitpush.ps1 -Yes`.
+The complete exact upstream delta is 210 paths across four registered overlays;
+feature inventories remain 163 LFM2-VL, 20 diffusion, and 35 GPT-OSS. The helper's
+default union gate now checks the pinned upstream exact delta, not the old rolling
+checkpoint. Both histories must remain ancestors of the published delivery.
 
-## 3. Shared paths (13)
+## Platform limits
 
-| Path | Classification |
-| --- | --- |
-| `.github/workflows/rust-ci.yml` | both |
-| `.gitignore` | ours-only |
-| `Cargo.lock` | ours-only |
-| `Cargo.toml` | both |
-| `CHANGELOG.md` | ours-only |
-| `candle-examples/Cargo.toml` | both |
-| `candle-transformers/Cargo.toml` | ours-only |
-| `candle-transformers/src/models/mod.rs` | ours-only |
-| `candle-transformers/src/models/stable_diffusion/mod.rs` | ours-only |
-| `docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md` | ours-only |
-| `rust-toolchain.toml` | ours-only |
-| `scripts/release/test-write-candle-overlays-receipt.ps1` | ours-only |
-| `scripts/release/write-candle-overlays-receipt.ps1` | ours-only |
-
-`both` = overlay-owned and HF touched after `6f74e7c`. `ours-only` = overlay-owned, HF did not touch.
-
-## Overlay fork-origin vs HF (extra collisions)
-
-HF also touched these LFM2-VL fork-origin paths: `.github/workflows/ci_cuda.yaml`, `README.md`, `candle-core/tests/custom_op_tests.rs`, `candle-examples/examples/lfm2/main.rs`, `candle-kernels/build.rs`. Keep overlay hunks (fork-PR CUDA skip, `cuda_i32_to_f32_cast`, MSVC `/Zc:preprocessor`).
-
-HF did **not** touch `lfm2.rs`, `quantized_lfm2.rs`, `models/mod.rs`, `gguf_file.rs`, `cast.cu`, or SnapFlash SDXL sources. Zero overlay-owned additions exist on HF `main`.
-
-## 4. Proposed next HF integration base (P3)
-
-**Proposed:** `7c2e89295dad4aeebc6ef7a92c255360b6957c2c`  
-`Config gate candle-examples' buildtime downloader (#3950)`.
-
-Reason: newest HF commit that still keeps `tokenizers` **`onig`** and still has `candle-ug`. `#3952` is the first rejected later commit.
-
-Rejected later (do not merge as floating `main`):
-
-- `5814a6fa` #3952 fancy-regex — would force an Edge `tokenizers` feature change (`onig` → `fancy-regex`)
-- `d4d130c8` #3953
-- `e50eece1` #3959
-- `ddf1b879` #3954 Remove ug
-
-`#3952` does **not** apply at the proposed SHA. Edge can keep `tokenizers` 0.22/`onig` until a later chosen base includes #3952. The proposed SHA already has workspace `tokenizers` 0.23.1 with `onig`; that is a version unify, not a backend switch.
-
-This SHA is merged locally as `25d676f5…` and is **not** S4-complete or
-published. Do not treat the merge as consumer-green until overlay and Edge
-compatibility gates pass. Keep the Edge pin on `238cc176…` until then.
+- Native Windows/MSVC is authoritative. Retained ug's cudarc 0.17.8 rejects
+  automatic CUDA 13.3 detection. CUDA 13.0 libraries also fail to link the newer
+  cudarc's cublasLt emulation symbols. The verified compatibility build uses
+  installed CUDA 13.3 libraries with process-local
+  `$env:CUDARC_CUDA_VERSION='13000'` (CUDA 13.0 API selection) for cuda,ug.
+  Maintained non-ug CUDA builds use normal CUDA 13.3 detection. No global
+  environment setting or dependency pin was changed.
+- Codex-Compat WSL offline replay could not resolve accelerate-src from its
+  empty registry cache. Rustup auto-installed pinned Rust 1.97.1 on the first
+  invocation; no further WSL provisioning is authorized by this sync.
+- No production model downloads/runs, consumer repinning, release tags, hosted
+  verification, Metal execution, or AArch64 execution are part of this task.
 
 ---
-AI-edited: 2026-09-18T00:35:00-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=p1-p3-inventory | change=recorded overlay vs HF path table and proposed 7c2e8929 integration base
+AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=recorded pinned integration and retained compatibility

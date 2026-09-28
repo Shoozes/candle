@@ -190,6 +190,30 @@ fn cuda_i32_to_f32_cast() -> Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "cuda")]
+#[test]
+fn cuda_bf16_cast_offsets_and_tails() -> Result<()> {
+    let device = Device::new_cuda(0)?;
+    // Exercise aligned vectors, scalar tails, and deliberately offset views.
+    for len in [1, 3, 8, 9, 31, 257] {
+        let input = Tensor::arange(0f32, (len + 2) as f32, &device)?;
+        for offset in [0, 1] {
+            let view = input.narrow(0, offset, len)?;
+            let expected = view
+                .to_device(&Device::Cpu)?
+                .to_dtype(DType::BF16)?
+                .to_dtype(DType::F32)?
+                .to_vec1::<f32>()?;
+            let actual = view
+                .to_dtype(DType::BF16)?
+                .to_dtype(DType::F32)?
+                .to_vec1::<f32>()?;
+            assert_eq!(actual, expected, "length={len}, offset={offset}");
+        }
+    }
+    Ok(())
+}
+
 struct InplaceAdd;
 
 impl candle_core::InplaceOp2 for InplaceAdd {

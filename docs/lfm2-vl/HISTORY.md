@@ -2,6 +2,17 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-09-27 — Pinned upstream integration with retained fork contracts
+
+Integrated upstream aebc405d (17 commits beyond 7c2e8929) while preserving
+ug/onig, all three feature overlays, CUDA/MSVC additions, Rust 1.97.1 and
+historical receipt identities. Added a separate compatibility manifest and
+exact-upstream default ownership gate, BF16 offset/tail cast regression, and
+strict-Clippy launch-count correction. Native CPU, fixture, rollback, ONNX
+and bounded synthetic CUDA proof is recorded in UPSTREAM_SYNC. WSL cache
+availability remains a secondary-lane limitation; no new model receipt,
+consumer pin, or tag is implied.
+
 ## 2026-09-21 — GPT-OSS observed-safe native performance packet
 
 - Narrowed the optional performance track to an optimized-release native
@@ -2222,4 +2233,4 @@ deferred to TODO C3; no network or toolchain install was substituted.
   documentation-only fast-forward successor.
 
 ---
-AI-edited: 2026-08-21T12:40:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-3b-q8-proof-gap | change=archived the completed proof-contract implementation without claiming production receipts
+AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence

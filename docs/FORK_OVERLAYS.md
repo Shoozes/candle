@@ -7,11 +7,11 @@ integration plan.
 
 ## Baseline modes
 
-The repository-wide verifier has two explicit baseline modes. The default and
+The repository-wide verifier has two explicit baseline modes. Explicit
 rolling-baseline mode checks the committed baseline-to-HEAD delta plus staged,
 unstaged, and untracked candidate paths, and retains ownership from both the
 current and baseline manifests so historic paths survive a rolling checkpoint.
-Upstream-baseline is the frozen exact-delta mode: it also rejects current
+The default upstream-baseline mode is exact-delta: it also rejects current
 manifest paths absent from that upstream delta. Git path inventories are
 NUL-delimited and use core.autocrlf=true with safe-CRLF warnings disabled so
 native Windows and WSL report the same candidate paths.
@@ -21,8 +21,9 @@ native Windows and WSL report the same candidate paths.
 | Overlay | Manifest | Current boundary |
 | --- | --- | --- |
 | LFM2-VL/MMProj | `docs/lfm2-vl/MOD_MANIFEST.md` | Proven model, loader, processor, fixture, and verification work |
+| Retained upstream compatibility | `docs/fork-compat/MOD_MANIFEST.md` | Public ug APIs and onig tokenizer selection |
 | SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic three-component SDXL LoRA transaction, controlled unsupported flash-attention failure, and exact residual/opt-in `text_time` UNet conditioning |
-| GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Hash-pinned GGUF admission/config normalization, packed MXFP4 storage/loading, bounded synthetic CPU proof, and opt-in packed CUDA proof; no live-model or production claim |
+| GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Packed CPU/CUDA interfaces and source-bound short-parity/2,080-token receipt; no new production claim from upstream sync |
 
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each
@@ -30,8 +31,8 @@ overlay-specific verifier may validate only its own paths, so unfinished work
 in one overlay cannot silently become release evidence for another. Historic
 registered paths remain valid across a rolling baseline while the verifiers
 still reject missing manifest files and any new unregistered path. The live
-union baseline is the clean published Candle `main` commit
-`d830e03078a29d39a1aacd741620475eb33b7609`. Frozen
+union baseline is the pinned upstream integration commit
+`aebc405d2b4bf42808387e0ca597bf7dad9b565f`. Frozen
 `candle-overlays-mvp-0.2.0` receipt scripts still encode
 the earlier `6f74e7c` identity and are not this slice.
 
@@ -67,8 +68,9 @@ Candle CPU reference -> packed CUDA proof -> independent EdgeSymbio review -> ow
 GPT-OSS remains an experiment and must not change the maintained Q8 product
 default or be treated as a production model integration until its external
 checkpoint, tokenizer, and numerical receipts are independently admitted. The
-CUDA result is bounded synthetic evidence on one named local device, not an
-exact-model or cross-device claim.
+sync CUDA result is bounded synthetic evidence on one named local device.
+Existing short-parity and 2,080-token model receipts retain the source identities
+in `docs/gpt-oss/STATUS.md`; they are not new sync or cross-device claims.
 
 ## Coordinated progress
 
@@ -109,6 +111,7 @@ it. Every change to such a path must state which overlay owns each hunk and
 must pass both affected focused gates plus the repository-wide overlay gate.
 
 <!-- shared-paths:start -->
+- `candle-core/tests/custom_op_tests.rs`
 - `.github/workflows/rust-ci.yml`
 - `.gitignore`
 - `Cargo.lock`
@@ -150,4 +153,4 @@ product policy remain outside the framework API.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-09-20 | agent=Codex | task=verify-fork-overlays | change=made rolling and frozen baseline semantics explicit and normalized cross-platform path inventories
+AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence

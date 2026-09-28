@@ -21,9 +21,10 @@ overlays described in [`docs/FORK_OVERLAYS.md`](./docs/FORK_OVERLAYS.md).
 Start repository work from
 [`docs/lfm2-vl/START_HERE.md`](./docs/lfm2-vl/START_HERE.md); current truth and
 remaining work live in [`STATUS.md`](./docs/lfm2-vl/STATUS.md) and
-[`TODO.md`](./docs/lfm2-vl/TODO.md). Current worker-track slice: Edge pin-adoption of published
-`4c1feb82eccd60a14f9f00f84ef6c9bdedcddd06` with `tokenizers` 0.23/`onig`.
-Do not open gpt-oss C0 until that pairing lands. Model weights, caches, runtime evidence, and downloads are
+[`TODO.md`](./docs/lfm2-vl/TODO.md). The pinned upstream integration and retained
+ug/onig compatibility are documented in [`UPSTREAM_SYNC.md`](./docs/lfm2-vl/UPSTREAM_SYNC.md).
+Experimental GPT-OSS acceptance remains independently source-bound.
+Model weights, caches, runtime evidence, and downloads are
 external inputs and are never part of normal source setup or publication.
 
 ## Get started
@@ -466,4 +467,4 @@ If you encounter an error like this one `called `Result::unwrap()` on an `Err` v
 `c:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin\curand64_10.dll` -> `curand.dll`
 
 ---
-AI-edited: 2026-08-13T20:08:58-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=repo-integrity | change=added the maintained-fork orientation and external-artifact boundary
+AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence

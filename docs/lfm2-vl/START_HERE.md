@@ -15,22 +15,16 @@ This is the live execution entry point for the Candle 0.11 LFM2.5-VL/MMProj exte
 
 ## Current Gate
 
-Selected product direction: Edge + this Shoozes/candle overlay. Edge Q8 stays
-the product default. GPT-OSS is a separate owner-authorized Candle-only
-experiment; its current packed CUDA proof boundary is tracked in
-`docs/gpt-oss/STATUS.md` and does not change the LFM2-VL product sequence.
-The bounded Task 3 result is synthetic/device-scoped; exact GPT-OSS model,
-tokenizer, and production claims remain closed. No training from this gate.
+Pinned upstream sync targets `aebc405d2b4bf42808387e0ca597bf7dad9b565f`.
+Read `UPSTREAM_SYNC.md` for integration proof, retained ug/onig contracts, and
+platform limitations. The older S3/S4 consumer pin is historical and is not a
+blocker for this owner-authorized Candle sync. Consumer repinning remains a
+separate task; do not merge an unreviewed floating upstream tip.
 
-**S3/S4 source is published** at
-`4c1feb82eccd60a14f9f00f84ef6c9bdedcddd06` (`origin/main`). Overlay and
-focused checks passed. **Next mutation for the LFM2-VL chain:** adopt that SHA
-in Edge together with `tokenizers` 0.23/`onig`. Do not merge floating
-`huggingface/main`. Do not retag `lfm2-vl-mvp-0.1.0`. Keep the Edge pin on
-`238cc176…` until then. The LFM2-VL/Edge C0 chain remains held until pin
-adoption; this does not suspend the separately registered GPT-OSS experiment.
-3B production proof, another llama.cpp fixture, MOSS, and release tagging are
-outside this chain.
+Q8 stays the product default. GPT-OSS is an independent experiment whose
+accepted 2,080-token receipt retains its original source identity; this sync
+does not prove new model parity. No production downloads, training, longer
+context qualification, or release tags are implied.
 
 The LFM2-VL implementation phases and the coordinated Candle/SnapFlash
 framework primitives are complete. Their detailed lineage and proof belong in
@@ -162,4 +156,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-09-19T00:00:00-04:00 | agent=Codex/root | model=unknown | effort=high | task=gpt-oss-c0-c1 | change=separated the authorized GPT-OSS experiment from the LFM2-VL pin hold
+AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence

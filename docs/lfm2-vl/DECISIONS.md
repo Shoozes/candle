@@ -1,5 +1,18 @@
 # LFM2.5-VL Decisions
 
+## 2026-09-27: Retain compatibility across pinned upstream merge
+
+Accepted: merge upstream aebc405d without rewriting history, retain public ug
+and onig despite upstream removal/backend replacement, and register their
+ownership independently of the three feature overlays. Keep Rust 1.97.1 and
+resolve only required upstream dependency changes. Live verification baselines
+advance; historical tags and model/release receipts do not.
+
+The ug CUDA lane uses CUDA 13.0 API selection with installed CUDA 13.3
+libraries because its retained cudarc 0.17.8 rejects automatic 13.3 detection.
+The normal non-ug lane uses 13.3. See UPSTREAM_SYNC for commands and failed
+alternatives; this does not silently change ug's public dependencies.
+
 ## D-0001: Direct Candle Fork
 
 Status: Accepted
@@ -1542,4 +1555,4 @@ production support. The CUDA narrowed-view regression is accepted on the
 existing native lane; the packed CUDA path remains opt-in.
 
 ---
-AI-edited: 2026-09-20T00:00:00-04:00 | agent=Codex | model=unknown | effort=high | task=gpt-oss-task3-cuda-assembly | change=bounded GGUF assembly and explicit CUDA narrowed-view materialization decision
+AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence

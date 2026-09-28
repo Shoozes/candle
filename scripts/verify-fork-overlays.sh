@@ -5,14 +5,15 @@ export LC_ALL=C
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 DEFAULT_REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd -P)"
 REPO_ROOT="${FORK_OVERLAYS_REPO_ROOT:-${DEFAULT_REPO_ROOT}}"
-DEFAULT_ROLLING_BASELINE="d830e03078a29d39a1aacd741620475eb33b7609"
-BASELINE_KIND="rolling"
+DEFAULT_UPSTREAM_BASELINE="aebc405d2b4bf42808387e0ca597bf7dad9b565f"
+BASELINE_KIND="upstream"
 BASELINE=""
 REGISTRY="${REPO_ROOT}/docs/FORK_OVERLAYS.md"
 MANIFESTS=(
     "docs/lfm2-vl/MOD_MANIFEST.md"
     "docs/snapflash/MOD_MANIFEST.md"
     "docs/gpt-oss/MOD_MANIFEST.md"
+    "docs/fork-compat/MOD_MANIFEST.md"
 )
 
 usage() {
@@ -58,7 +59,7 @@ while (($# > 0)); do
 done
 
 if [[ -z "$BASELINE" ]]; then
-    BASELINE="$DEFAULT_ROLLING_BASELINE"
+    BASELINE="$DEFAULT_UPSTREAM_BASELINE"
 fi
 
 GIT=(git -c core.autocrlf=true -c core.safecrlf=false)

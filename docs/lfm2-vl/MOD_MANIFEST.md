@@ -5,7 +5,7 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 ## Classification Rule
 
 - Model and compatibility baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
-- Live overlay baseline: Hugging Face `7c2e89295dad4aeebc6ef7a92c255360b6957c2c` after the S3 merge. Frozen `candle-overlays-mvp-0.2.0` receipts still encode `6f74e7c390c717f8fd34f23ce02aceb058173370`.
+- Live overlay baseline: Hugging Face `aebc405d2b4bf42808387e0ca597bf7dad9b565f` after the September 27 upstream sync. Frozen `candle-overlays-mvp-0.2.0` receipts still encode `6f74e7c390c717f8fd34f23ce02aceb058173370`.
 - Historical mod checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`; that branch is retained as evidence, not used as a second publication line.
 - Current release-candidate LFM2-VL overlay: 163 paths, exactly 17 fork-origin modifications and 146 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL.
 - A **fork-origin modification** is a path that exists in the current publication baseline and is intentionally changed by this mod.
@@ -227,4 +227,4 @@ commands are prohibited. The LFM2-VL verifier remains independently runnable
 and does not absorb unfinished diffusion paths.
 
 ---
-AI-edited: 2026-09-18T00:35:00-04:00 | agent=Grok/root | model=grok-4.6 | effort=high | task=p1-inventory | change=registered UPSTREAM_SYNC.md in the LFM2-VL overlay
+AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence

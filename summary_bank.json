@@ -18,6 +18,21 @@
     ]
   },
   "groups": {
+    "fork_compatibility": {
+      "description": "Retained upstream ug APIs, onig selection, and exact fork-delta ownership.",
+      "status": "active",
+      "paths": [
+        "docs/fork-compat/MOD_MANIFEST.md",
+        "docs/lfm2-vl/UPSTREAM_SYNC.md",
+        "docs/FORK_OVERLAYS.md",
+        "scripts/verify-fork-overlays.sh",
+        "candle-ug/Cargo.toml",
+        "candle-ug/src/lib.rs",
+        "candle-core/Cargo.toml",
+        "candle-core/src/custom_op.rs",
+        "candle-core/tests/custom_op_tests.rs"
+      ]
+    },
     "project_start": {
       "description": "Small first load for project policy, product contract, current execution, status, backlog, provenance, and context routing.",
       "status": "active",

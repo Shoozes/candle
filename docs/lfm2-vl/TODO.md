@@ -6,6 +6,11 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ## Active Candle backlog
 
+The 2026-09-27 pinned upstream sync is independent of the older consumer
+pin-adoption task below. Consumer pins and historical selection identities
+must be reviewed in their owning repository; they do not block Candle sync.
+Integration proof lives in `UPSTREAM_SYNC.md`.
+
 ### [ ] Edge pin-adoption of published S3/S4 SHA (not LFM2-VL C0)
 
 - What: Adopt published Shoozes/candle `4c1feb82eccd60a14f9f00f84ef6c9bdedcddd06`
@@ -364,4 +369,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-09-20T00:00:00-04:00 | agent=Codex | model=unknown | effort=high | task=gpt-oss-task3-cuda-assembly | change=closed the bounded GPT-OSS CUDA correction and GGUF assembly follow-up while preserving Task 4 scope
+AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence

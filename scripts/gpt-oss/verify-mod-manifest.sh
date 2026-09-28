@@ -4,7 +4,7 @@ export LC_ALL=C
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd -P)"
-BASELINE="${1:-7c2e89295dad4aeebc6ef7a92c255360b6957c2c}"
+BASELINE="${1:-aebc405d2b4bf42808387e0ca597bf7dad9b565f}"
 MANIFEST="${REPO_ROOT}/docs/gpt-oss/MOD_MANIFEST.md"
 cd -- "$REPO_ROOT"
 

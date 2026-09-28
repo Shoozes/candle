@@ -30,6 +30,10 @@ new_repo() {
     git -C "$root" config user.email "candle-overlay-test@invalid.local"
     git -C "$root" config core.autocrlf false
 
+    write_lines "$root/inherited.txt" "upstream implementation"
+    git -C "$root" add -- inherited.txt
+    git -C "$root" commit -q -m "test: upstream"
+
     write_lines "$root/docs/FORK_OVERLAYS.md" \
         "# Test fork overlay registry" \
         "<!-- shared-paths:start -->" \
@@ -48,6 +52,12 @@ new_repo() {
     write_lines "$root/docs/gpt-oss/MOD_MANIFEST.md" \
         "# Test GPT-OSS manifest" \
         '- `docs/gpt-oss/MOD_MANIFEST.md`'
+    write_lines "$root/docs/fork-compat/MOD_MANIFEST.md" \
+        "# Test compatibility manifest" \
+        '- `docs/FORK_OVERLAYS.md`' \
+        '- `docs/fork-compat/MOD_MANIFEST.md`' \
+        '- `compat.txt`'
+    write_lines "$root/compat.txt" "retained API"
     write_lines "$root/owned.txt" "base owned"
     write_lines "$root/staged.txt" "base staged"
     write_lines "$root/shared.txt" "base shared"
@@ -145,4 +155,24 @@ assert_status "upstream stale-path check" 1
 assert_contains "upstream stale-path check" "current overlay manifest paths are absent from the upstream delta"
 printf 'verify-fork-overlays case=upstream-stale-paths passed\n'
 
-printf 'verify-fork-overlays regression: 7 checks passed\n'
+write_lines "$baseline_root/compat.txt" "retained API updated"
+run_capture "$baseline_root" --rolling-baseline "$baseline_commit"
+assert_status "fourth overlay ownership" 0
+assert_contains "fourth overlay ownership" "overlays=4"
+printf 'verify-fork-overlays case=compatibility-owner passed\n'
+
+write_lines "$baseline_root/docs/fork-compat/MOD_MANIFEST.md" "# Missing compatibility ownership"
+run_capture "$baseline_root" --rolling-baseline "$baseline_commit"
+assert_status "historical compatibility ownership" 0
+run_capture "$baseline_root" --upstream-baseline "$baseline_commit"
+assert_status "exact upstream inventory still rejects stale owners" 1
+exact_root="$(new_repo exact-upstream)"
+exact_base="$(git -C "$exact_root" rev-parse HEAD^)"
+run_capture "$exact_root" --upstream-baseline "$exact_base"
+assert_status "inherited paths excluded from exact delta" 0
+assert_contains "exact upstream ownership" "overlays=4"
+printf '%s\n' '- `inherited.txt`' >>"$exact_root/docs/fork-compat/MOD_MANIFEST.md"
+run_capture "$exact_root" --upstream-baseline "$exact_base"
+assert_status "inherited path cannot become overlay owned" 1
+assert_contains "inherited stale owner" "inherited.txt"
+printf 'verify-fork-overlays regression: 12 checks passed\n'
