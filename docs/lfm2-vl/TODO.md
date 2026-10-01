@@ -6,6 +6,33 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ## Active Candle backlog
 
+### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
+
+- What: Admit an immutable trained text adapter for the accepted
+  `LFM2.5-2.6B-Q8_0.gguf` base, then prove serving behavior and quality.
+- Why: Candle's local synthetic LoRA mechanics do not establish competence,
+  training provenance, or safe Edge session switching.
+- When: After the focused Candle native adapter gate is green and GenUni has
+  produced a real retained adapter artifact; before enabling product routes.
+- Where: GenUni owns training, data/seed/config, held-out evaluation, and the
+  target manifest. Edge owns serialized adapter size/SHA-256 verification,
+  parsing, model lease, atomic switch, receipt, rollback, and API selection.
+  Candle owns only the quantized LFM2 hook and admission logic.
+- How: Bind the manifest to base SHA-256
+  `1e22128dfa128bdfb684da167e74e072d0a056baa7d06d9f280291e2839b0fc9`
+  and the exact tokenizer/conversion lineage. Provide canonical target names,
+  `[rank,input]` and `[output,rank]` F32 tensors, alpha, immutable adapter
+  filename/size/SHA-256, and training/evaluation provenance. Use one retained
+  file handle for hash/parse, load the base with
+  `from_gguf_with_base_sha256`, switch with `replace_lora_adapter`, and record
+  `active_lora_identity` in Edge receipts. Reject mismatch without fallback.
+- Done when: Same-base base/adapter/base sessions, cache reset, bounded
+  repeated-session memory, cancellation/recovery, held-out quality, and
+  unsupported paths have passing receipts on the selected native backend.
+- Verification: Exact-byte artifact hashes, model-generated target inventory,
+  focused Candle admission tests, Edge job/API replay, and independent held-out
+  comparison. No CUDA LoRA or 2.6B quality claim follows from synthetic tests.
+
 The 2026-09-27 pinned upstream sync is independent of the older consumer
 pin-adoption task below. Consumer pins and historical selection identities
 must be reviewed in their owning repository; they do not block Candle sync.

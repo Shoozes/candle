@@ -2,7 +2,26 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
-## 2026-09-27 — Pinned upstream integration with retained fork contracts
+## 2026-10-01 - Quantized LFM2 synthetic text-LoRA mechanics
+
+- Added a bounded additive F32 low-rank path beside retained GGUF `QMatMul`
+  projections. A complete GGUF reader hash binds the base identity before
+  switching; canonical target inventory and a caller byte ceiling govern
+  admission. Successful switches clear convolution and attention caches.
+- The tiny verified GGUF test exercised base, two distinct synthetic
+  adapters, return to base, failed switch preservation, malformed target,
+  shape, dtype, alpha, finite-value, and byte-bound rejection. Native release
+  `quantized_lfm2` tests passed 3/3; adjacent `lfm2_vl` tests passed 27/27.
+  Native locked/offline CPU check of core, nn, transformers, VLM, and the
+  quantized-LFM2 example passed. Formatting, summary-bank, LFM manifest, and
+  rolling overlay verification passed. No trained 2.6B adapter, competence
+  result, or CUDA adapter result is implied.
+- Exact release test executable:
+  `D:\CodexStorage\build\candle-qwen35-release\release\deps\candle_transformers-7d682dd44d99b7a3.exe`.
+  Bounded check report:
+  `artifacts/qwen35/cuda-lfm-lora-final-cpu-check.json`.
+
+## 2026-09-27 - Pinned upstream integration with retained fork contracts
 
 Integrated upstream aebc405d (17 commits beyond 7c2e8929) while preserving
 ug/onig, all three feature overlays, CUDA/MSVC additions, Rust 1.97.1 and

@@ -1,5 +1,36 @@
 # LFM2.5-VL Decisions
 
+## D-0068: Add hash-bound text LoRA beside quantized LFM2 linears
+
+Status: Local synthetic mechanics proven; real adapter admission and product quality pending.
+
+Decision:
+Keep each admitted GGUF `QMatMul` as the immutable base and add F32
+`B(Ax) * alpha/rank` only to canonical attention Q/K/V/output, FFN
+gate/up/down, and short-convolution input/output projections. Do not adapt
+convolution kernels, norms, embeddings, or the vocab head in this cut. The
+loader hashes the complete retained GGUF reader against an expected SHA-256
+before allowing adapter activation. Admit a complete declared target set,
+same-device rank-2 finite tensors, compatible dimensions, rank 1..256, and
+a caller byte ceiling no greater than 256 MiB before mutating the model.
+Successful replacement or removal increments a generation and clears both
+attention and convolution caches. Rejected replacement leaves the active
+adapter and caches intact.
+
+Why:
+This keeps the accepted Q8_0 base reusable and gives Edge an explicit
+session-switch boundary without full dequantization or in-place quantized
+weight mutation. Canonical targets are reported by the loaded model rather
+than inferred from checkpoint-specific widths.
+
+Consequences:
+The caller-provided adapter SHA-256 is an identity label, not a Candle
+verification of serialized adapter bytes. Edge must hash and parse one
+retained adapter artifact, verify its manifest and provenance, then pass the
+verified identity and tensors into this API. Synthetic switching does not
+establish real 2.6B adapter fidelity, quality, CUDA parity, or Edge admission.
+The frozen 0.2.0 release receipt is unchanged.
+
 ## 2026-09-27: Retain compatibility across pinned upstream merge
 
 Accepted: merge upstream aebc405d without rewriting history, retain public ug

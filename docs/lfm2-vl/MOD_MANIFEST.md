@@ -7,7 +7,7 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 - Model and compatibility baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Live overlay baseline: Hugging Face `aebc405d2b4bf42808387e0ca597bf7dad9b565f` after the September 27 upstream sync. Frozen `candle-overlays-mvp-0.2.0` receipts still encode `6f74e7c390c717f8fd34f23ce02aceb058173370`.
 - Historical mod checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`; that branch is retained as evidence, not used as a second publication line.
-- Current release-candidate LFM2-VL overlay: 163 paths, exactly 17 fork-origin modifications and 146 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL.
+- Current local LFM2-VL overlay: 164 paths, exactly 17 fork-origin modifications and 147 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL. Frozen 0.2.0 release receipts retain their original inventory.
 - A **fork-origin modification** is a path that exists in the current publication baseline and is intentionally changed by this mod.
 - A **mod-owned addition** is a path absent from the current publication baseline and created for this project.
 - “Mod-owned” describes repository provenance, not third-party authorship. External source and license provenance remains authoritative in `SOURCES.md` and `LICENSE_NOTES.md`.
@@ -35,7 +35,7 @@ Exactly these seventeen baseline files contain LFM2-VL or combined-release chang
 | `candle-transformers/Cargo.toml` | Add dependencies required by LFM2-VL loading and verification. |
 | `candle-transformers/src/models/lfm2.rs` | Normalize LFM2.5 configuration and add dense embedding-driven forwarding/cache support. |
 | `candle-transformers/src/models/mod.rs` | Register the new SigLIP2 and LFM2-VL model modules. |
-| `candle-transformers/src/models/quantized_lfm2.rs` | Add validated GGUF metadata, tied-output handling, embedding-driven forwarding, and cache support for hybrid execution. |
+| `candle-transformers/src/models/quantized_lfm2.rs` | Add validated GGUF metadata, tied-output handling, embedding-driven forwarding, cache support, and hash-bound text adapter switching for hybrid execution. |
 
 No other file from the integrated Candle publication baseline is part of the mod delta.
 
@@ -63,6 +63,7 @@ No other file from the integrated Candle publication baseline is part of the mod
 
 ### Transformer models and loaders
 
+- `candle-transformers/src/models/quantized_lfm2/lora.rs`
 - `candle-transformers/src/models/lfm2/config.rs`
 - `candle-transformers/src/models/lfm2/cache.rs`
 - `candle-transformers/src/models/lfm2/layers.rs`

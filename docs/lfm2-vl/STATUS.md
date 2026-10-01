@@ -49,9 +49,44 @@ regressions passed. Exact commands, evidence and platform limits are in
 clean delivery commit and records the exact remote identity in ignored
 `artifacts/publication/last-push.json`.
 
-Active implementation files: none. Feature-model source and fixture bytes are
-unchanged. The compatibility manifest accounts for retained APIs, the new cast
-regression and the strict-Clippy CUDA launch-count correction.
+For the current local text-adapter candidate, the native release
+`quantized_lfm2` test filter passed 3/3 and `lfm2_vl` passed 27/27 on
+2026-10-01. Locked/offline CPU checks passed for candle-core, candle-nn,
+candle-transformers, candle-vlm, and the quantized-LFM2 example; the bounded
+report is `artifacts/qwen35/cuda-lfm-lora-final-cpu-check.json`.
+`cargo fmt --all -- --check`, summary-bank, LFM manifest, and rolling overlay
+verifiers passed. The first compile failed on an implementation borrow error
+and was corrected; the initial non-elevated D: build could not open Cargo's
+lock under the sandbox, then the approved D: build passed. The first CPU
+check script invocation omitted its required filter and started no job.
+
+Active LFM2-VL local candidate: `candle-transformers/src/models/quantized_lfm2.rs`
+and `quantized_lfm2/lora.rs`, with owned manifest, decision, status, backlog,
+history, summary-bank, and shared overlay records. A bounded synthetic text
+LoRA path retains the GGUF QMatMul base, admits canonical linear targets and
+hash-bound base identity, and clears convolution/attention caches on successful
+switch. The accepted 2.6B Q8_0 base file at Edge was rehashed locally as
+`1e22128dfa128bdfb684da167e74e072d0a056baa7d06d9f280291e2839b0fc9`
+(2,874,779,648 bytes); this is an input identity check, not a trained-adapter
+or full-model LoRA proof. The compatibility manifest accounts
+for retained APIs, the new cast regression and the strict-Clippy CUDA
+launch-count correction.
+
+## 2026-10-01 closeout verification
+
+The native locked/offline `.tools/verify-before-push.ps1` gate passed on the
+complete candidate source: maintained core/nn/transformer/VLM and all three
+example checks, strict transformer Clippy, maintained tests (138 transformer
+tests passed, five external-model tests ignored), 33 LFM2-VL example tests,
+formatting, summary-bank, module-layout, overlay union, and Git whitespace.
+The focused LFM manifest separately passed 164 paths (17 fork modifications,
+147 additions); the rolling overlay gate passed at the pre-overlay baseline.
+The log is retained outside Git as
+`%TEMP%/codex-candle-closeout-20261001-gate-final.log`.
+
+Local checkpoint preparation preserves the original model/CUDA receipt source
+identities. This closeout ran no production model or CUDA proof. Source publication awaits a supported secure
+authentication route for the repository-owned publication helper.
 
 ## Known limitations and blockers
 
@@ -66,11 +101,17 @@ regression and the strict-Clippy CUDA launch-count correction.
 - Consumer repinning, production downloads, release tagging, GPT-OSS 32k,
   broader model/backend support, and post-release inherited panic/stub cleanup
   remain separate tasks. No consumer mutation follows implicitly from sync.
+- No trained, immutable LFM2.5-2.6B text adapter and held-out competence
+  evidence are available. Candle's adapter SHA label is caller supplied; Edge
+  must independently hash the retained serialized adapter bytes and own its
+  provenance, session lease, receipt, and recovery checks. CUDA LoRA and
+  real-model adapter numerical parity are unrun.
 
 ## Exact next task
 
-Select a separately authorized task from TODO; do not automatically
-download production inputs or repin consumers.
+The focused native text-adapter gate is complete. GenUni and Edge next own
+the real immutable adapter, held-out quality, and independently admitted
+serving contract in TODO. Do not download new inputs or repin consumers.
 
 ---
-AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled active state and preserved historical receipt boundaries
+AI-edited: 2026-10-01T17:47:56+00:00 | agent=Codex/candle_edge_closeout | model=unknown | effort=unknown | task=closeout | change=recorded native gate and remaining publication boundary

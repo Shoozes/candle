@@ -20,7 +20,7 @@ native Windows and WSL report the same candidate paths.
 
 | Overlay | Manifest | Current boundary |
 | --- | --- | --- |
-| LFM2-VL/MMProj | `docs/lfm2-vl/MOD_MANIFEST.md` | Proven model, loader, processor, fixture, and verification work |
+| LFM2-VL/MMProj | `docs/lfm2-vl/MOD_MANIFEST.md` | Proven model, loader, processor, fixture, and verification work; CPU hash-bound quantized-text adapter mechanics proven; real adapter qualification pending |
 | Retained upstream compatibility | `docs/fork-compat/MOD_MANIFEST.md` | Public ug APIs and onig tokenizer selection |
 | SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic three-component SDXL LoRA transaction, controlled unsupported flash-attention failure, and exact residual/opt-in `text_time` UNet conditioning |
 | GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Packed CPU/CUDA interfaces and source-bound short-parity/2,080-token receipt; no new production claim from upstream sync |

@@ -4,7 +4,13 @@ use candle::quantized::gguf_file;
 use candle::quantized::QMatMul;
 use candle::{bail, DType, Device, IndexOp, Result, Tensor};
 use candle_nn::{Conv1d, Conv1dConfig, Embedding, Module};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::io::{Read, Seek, SeekFrom};
+
+mod lora;
+use lora::{AdaptedLinear, PreparedPair};
+pub use lora::{Lfm2LoraAdapter, Lfm2LoraPair, Lfm2LoraTarget};
 
 fn get_qtensor<R: std::io::Seek + std::io::Read>(
     ct: &gguf_file::Content,
@@ -31,9 +37,9 @@ fn get_dequantized<R: std::io::Seek + std::io::Read>(
 
 #[derive(Debug, Clone)]
 struct Mlp {
-    w1: QMatMul,
-    w2: QMatMul,
-    w3: QMatMul,
+    w1: AdaptedLinear,
+    w2: AdaptedLinear,
+    w3: AdaptedLinear,
 }
 
 impl Module for Mlp {
@@ -46,10 +52,10 @@ impl Module for Mlp {
 
 #[derive(Debug, Clone)]
 struct AttentionLayer {
-    wq: QMatMul,
-    wk: QMatMul,
-    wv: QMatMul,
-    wo: QMatMul,
+    wq: AdaptedLinear,
+    wk: AdaptedLinear,
+    wv: AdaptedLinear,
+    wo: AdaptedLinear,
     q_norm: RmsNorm,
     k_norm: RmsNorm,
     n_head: usize,
@@ -65,8 +71,8 @@ struct AttentionLayer {
 
 #[derive(Debug, Clone)]
 struct ShortConvLayer {
-    in_proj: QMatMul,
-    out_proj: QMatMul,
+    in_proj: AdaptedLinear,
+    out_proj: AdaptedLinear,
     conv: Tensor,
     l_cache: usize,
     cache: Option<Tensor>,
@@ -263,6 +269,9 @@ pub struct ModelWeights {
     masks: HashMap<(usize, usize), Tensor>,
     span: tracing::Span,
     span_output: tracing::Span,
+    base_sha256: Option<String>,
+    active_adapter_sha256: Option<String>,
+    adapter_generation: u64,
 }
 
 /// Header metadata required to construct and pair a quantized LFM2 text model.
@@ -438,6 +447,52 @@ pub fn inspect_gguf_metadata(ct: &gguf_file::Content) -> Result<Lfm2GgufMetadata
 }
 
 impl ModelWeights {
+    /// Hash the complete retained GGUF reader before binding an adapter base identity.
+    pub fn from_gguf_with_base_sha256<R: Read + Seek>(
+        ct: gguf_file::Content,
+        reader: &mut R,
+        device: &Device,
+        expected_sha256: &str,
+        max_file_bytes: u64,
+    ) -> Result<Self> {
+        if !lora::valid_sha256(expected_sha256)
+            || max_file_bytes == 0
+            || max_file_bytes > 8_000_000_000
+        {
+            bail!("quantized LFM2 LoRA requires a SHA-256 and a 1..=8 GB file ceiling")
+        }
+        let saved = reader.stream_position().map_err(candle::Error::wrap)?;
+        let length = reader.seek(SeekFrom::End(0)).map_err(candle::Error::wrap)?;
+        if length > max_file_bytes {
+            bail!("quantized LFM2 GGUF exceeds caller file ceiling")
+        }
+        reader
+            .seek(SeekFrom::Start(0))
+            .map_err(candle::Error::wrap)?;
+        let mut digest = Sha256::new();
+        let mut buffer = vec![0u8; 1024 * 1024];
+        let mut remaining = length;
+        while remaining > 0 {
+            let count =
+                usize::try_from(remaining.min(buffer.len() as u64)).map_err(candle::Error::wrap)?;
+            reader
+                .read_exact(&mut buffer[..count])
+                .map_err(candle::Error::wrap)?;
+            digest.update(&buffer[..count]);
+            remaining -= count as u64;
+        }
+        reader
+            .seek(SeekFrom::Start(saved))
+            .map_err(candle::Error::wrap)?;
+        let actual = format!("{:x}", digest.finalize());
+        if !actual.eq_ignore_ascii_case(expected_sha256) {
+            bail!("quantized LFM2 GGUF SHA-256 does not match the admitted adapter base")
+        }
+        let mut model = Self::from_gguf(ct, reader, device)?;
+        model.base_sha256 = Some(actual);
+        Ok(model)
+    }
+
     pub fn from_gguf<R: std::io::Seek + std::io::Read>(
         ct: gguf_file::Content,
         reader: &mut R,
@@ -595,9 +650,18 @@ impl ModelWeights {
                     ],
                 )?;
                 Mlp {
-                    w1: QMatMul::from_qtensor(w1)?,
-                    w2: QMatMul::from_qtensor(w2)?,
-                    w3: QMatMul::from_qtensor(w3)?,
+                    w1: AdaptedLinear::new(
+                        format!("{prefix}.ffn_gate.weight"),
+                        QMatMul::from_qtensor(w1)?,
+                    )?,
+                    w2: AdaptedLinear::new(
+                        format!("{prefix}.ffn_down.weight"),
+                        QMatMul::from_qtensor(w2)?,
+                    )?,
+                    w3: AdaptedLinear::new(
+                        format!("{prefix}.ffn_up.weight"),
+                        QMatMul::from_qtensor(w3)?,
+                    )?,
                 }
             };
 
@@ -661,10 +725,22 @@ impl ModelWeights {
                 )?;
 
                 LayerKind::Attention(AttentionLayer {
-                    wq: QMatMul::from_qtensor(wq)?,
-                    wk: QMatMul::from_qtensor(wk)?,
-                    wv: QMatMul::from_qtensor(wv)?,
-                    wo: QMatMul::from_qtensor(wo)?,
+                    wq: AdaptedLinear::new(
+                        format!("{prefix}.attn_q.weight"),
+                        QMatMul::from_qtensor(wq)?,
+                    )?,
+                    wk: AdaptedLinear::new(
+                        format!("{prefix}.attn_k.weight"),
+                        QMatMul::from_qtensor(wk)?,
+                    )?,
+                    wv: AdaptedLinear::new(
+                        format!("{prefix}.attn_v.weight"),
+                        QMatMul::from_qtensor(wv)?,
+                    )?,
+                    wo: AdaptedLinear::new(
+                        format!("{prefix}.attn_output.weight"),
+                        QMatMul::from_qtensor(wo)?,
+                    )?,
                     q_norm: RmsNorm::from_qtensor(q_norm, rms_norm_eps)?,
                     k_norm: RmsNorm::from_qtensor(k_norm, rms_norm_eps)?,
                     n_head: head_count,
@@ -707,8 +783,14 @@ impl ModelWeights {
                     ],
                 )?;
                 LayerKind::ShortConv(ShortConvLayer {
-                    in_proj: QMatMul::from_qtensor(in_proj)?,
-                    out_proj: QMatMul::from_qtensor(out_proj)?,
+                    in_proj: AdaptedLinear::new(
+                        format!("{prefix}.shortconv.in_proj.weight"),
+                        QMatMul::from_qtensor(in_proj)?,
+                    )?,
+                    out_proj: AdaptedLinear::new(
+                        format!("{prefix}.shortconv.out_proj.weight"),
+                        QMatMul::from_qtensor(out_proj)?,
+                    )?,
                     conv,
                     l_cache,
                     cache: None,
@@ -733,6 +815,9 @@ impl ModelWeights {
             masks: HashMap::new(),
             span: tracing::span!(tracing::Level::TRACE, "model"),
             span_output: tracing::span!(tracing::Level::TRACE, "output"),
+            base_sha256: None,
+            active_adapter_sha256: None,
+            adapter_generation: 0,
         })
     }
 
@@ -765,6 +850,106 @@ impl ModelWeights {
 
     pub fn device(&self) -> &Device {
         self.tok_embeddings.embeddings().device()
+    }
+
+    pub fn lora_base_sha256(&self) -> Option<&str> {
+        self.base_sha256.as_deref()
+    }
+
+    pub fn active_lora_identity(&self) -> (Option<&str>, u64) {
+        (
+            self.active_adapter_sha256.as_deref(),
+            self.adapter_generation,
+        )
+    }
+
+    /// Canonical linear names and shapes supported by the additive adapter path.
+    pub fn lora_targets(&self) -> Vec<Lfm2LoraTarget> {
+        let mut targets = Vec::new();
+        for layer in &self.layers {
+            targets.extend([
+                layer.mlp.w1.target(),
+                layer.mlp.w2.target(),
+                layer.mlp.w3.target(),
+            ]);
+            match &layer.kind {
+                LayerKind::Attention(attn) => targets.extend([
+                    attn.wq.target(),
+                    attn.wk.target(),
+                    attn.wv.target(),
+                    attn.wo.target(),
+                ]),
+                LayerKind::ShortConv(conv) => {
+                    targets.extend([conv.in_proj.target(), conv.out_proj.target()]);
+                }
+            }
+        }
+        targets
+    }
+
+    /// Validate the complete caller-admitted tensor set before replacing any active pair.
+    pub fn replace_lora_adapter(
+        &mut self,
+        adapter: Lfm2LoraAdapter,
+        max_bytes: usize,
+    ) -> Result<()> {
+        let base = self.base_sha256.as_deref().ok_or_else(|| {
+            candle::Error::Msg("quantized LFM2 LoRA requires a hash-verified base load".into())
+        })?;
+        if self.tok_embeddings.embeddings().dtype() != DType::F32 {
+            bail!("quantized LFM2 LoRA currently requires an F32 execution graph")
+        }
+        let next_generation = self
+            .adapter_generation
+            .checked_add(1)
+            .ok_or_else(|| candle::Error::Msg("quantized LFM2 LoRA generation overflow".into()))?;
+        let (adapter_sha256, prepared) = lora::prepare(
+            adapter,
+            base,
+            &self.lora_targets(),
+            self.device(),
+            max_bytes,
+        )?;
+        self.set_lora_pairs(&prepared);
+        self.active_adapter_sha256 = Some(adapter_sha256);
+        self.adapter_generation = next_generation;
+        self.clear_cache();
+        Ok(())
+    }
+
+    pub fn clear_lora_adapter(&mut self) -> Result<()> {
+        let next_generation = self
+            .adapter_generation
+            .checked_add(1)
+            .ok_or_else(|| candle::Error::Msg("quantized LFM2 LoRA generation overflow".into()))?;
+        self.set_lora_pairs(&HashMap::new());
+        self.active_adapter_sha256 = None;
+        self.adapter_generation = next_generation;
+        self.clear_cache();
+        Ok(())
+    }
+
+    fn set_lora_pairs(&mut self, pairs: &HashMap<String, PreparedPair>) {
+        let set = |linear: &mut AdaptedLinear| {
+            linear.set(pairs.get(linear.name()).cloned());
+        };
+        for layer in &mut self.layers {
+            set(&mut layer.mlp.w1);
+            set(&mut layer.mlp.w2);
+            set(&mut layer.mlp.w3);
+            match &mut layer.kind {
+                LayerKind::Attention(attn) => {
+                    set(&mut attn.wq);
+                    set(&mut attn.wk);
+                    set(&mut attn.wv);
+                    set(&mut attn.wo);
+                }
+                LayerKind::ShortConv(conv) => {
+                    set(&mut conv.in_proj);
+                    set(&mut conv.out_proj);
+                }
+            }
+        }
     }
 
     pub fn clear_cache(&mut self) {
@@ -825,6 +1010,189 @@ mod tests {
     use candle::quantized::{GgmlDType, QMatMul, QTensor};
     use candle::{DType, Device, Tensor};
     use std::collections::HashMap;
+    use std::io::Cursor;
+
+    const TINY_TEXT_SHA256: &str =
+        "a26fa36c415b740a9fc508ed83401368957fe736dd7f77d3bf497da92d394875";
+
+    fn tiny_verified_model() -> Result<ModelWeights> {
+        let bytes = include_bytes!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../tests/fixtures/lfm2_vl_loader_tiny/text.gguf"
+        ));
+        let mut reader = Cursor::new(bytes.as_slice());
+        let gguf = gguf_file::Content::read(&mut reader)?;
+        ModelWeights::from_gguf_with_base_sha256(
+            gguf,
+            &mut reader,
+            &Device::Cpu,
+            TINY_TEXT_SHA256,
+            bytes.len() as u64,
+        )
+    }
+
+    fn tiny_adapter(
+        target: &Lfm2LoraTarget,
+        value: f32,
+        hash_digit: char,
+    ) -> Result<Lfm2LoraAdapter> {
+        let down = Tensor::from_vec(
+            vec![0.25f32; target.input_size],
+            (1, target.input_size),
+            &Device::Cpu,
+        )?;
+        let up = Tensor::from_vec(
+            vec![value; target.output_size],
+            (target.output_size, 1),
+            &Device::Cpu,
+        )?;
+        Ok(Lfm2LoraAdapter {
+            base_sha256: TINY_TEXT_SHA256.to_owned(),
+            adapter_sha256: hash_digit.to_string().repeat(64),
+            declared_targets: vec![target.name.clone()],
+            pairs: vec![Lfm2LoraPair {
+                target: target.name.clone(),
+                down,
+                up,
+                alpha: 1.0,
+            }],
+        })
+    }
+
+    #[test]
+    fn verified_tiny_lfm2_lora_switches_without_mutating_base_or_cache() -> Result<()> {
+        let mut model = tiny_verified_model()?;
+        assert_eq!(model.lora_base_sha256(), Some(TINY_TEXT_SHA256));
+        let target = model
+            .lora_targets()
+            .into_iter()
+            .find(|target| target.name == "blk.1.ffn_down.weight")
+            .ok_or_else(|| candle::Error::Msg("tiny FFN target absent".into()))?;
+        let ids = Tensor::from_slice(&[1u32, 2], (1, 2), &Device::Cpu)?;
+        let base = model.forward(&ids, 0)?.to_vec2::<f32>()?;
+        let bytes = include_bytes!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../tests/fixtures/lfm2_vl_loader_tiny/text.gguf"
+        ));
+        let mut reader = Cursor::new(bytes.as_slice());
+        let gguf = gguf_file::Content::read(&mut reader)?;
+        let mut unbound = ModelWeights::from_gguf(gguf, &mut reader, &Device::Cpu)?;
+        assert_eq!(unbound.forward(&ids, 0)?.to_vec2::<f32>()?, base);
+        assert!(unbound
+            .replace_lora_adapter(tiny_adapter(&target, 0.5, 'a')?, 4096)
+            .is_err());
+        assert!(
+            matches!(&model.layers[0].kind, LayerKind::ShortConv(conv) if conv.cache.is_some())
+        );
+        assert!(
+            matches!(&model.layers[1].kind, LayerKind::Attention(attn) if attn.kv_cache.is_some())
+        );
+
+        model.replace_lora_adapter(tiny_adapter(&target, 0.5, 'a')?, 4096)?;
+        assert_eq!(
+            model.active_lora_identity(),
+            (
+                Some("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                1
+            )
+        );
+        assert!(
+            matches!(&model.layers[0].kind, LayerKind::ShortConv(conv) if conv.cache.is_none())
+        );
+        assert!(
+            matches!(&model.layers[1].kind, LayerKind::Attention(attn) if attn.kv_cache.is_none())
+        );
+        let a = model.forward(&ids, 0)?.to_vec2::<f32>()?;
+        assert_ne!(a, base);
+
+        let mut invalid = tiny_adapter(&target, 0.75, 'c')?;
+        invalid.base_sha256 = "0".repeat(64);
+        assert!(model.replace_lora_adapter(invalid, 4096).is_err());
+        assert_eq!(model.active_lora_identity().1, 1);
+        assert!(
+            matches!(&model.layers[0].kind, LayerKind::ShortConv(conv) if conv.cache.is_some())
+        );
+        assert!(
+            matches!(&model.layers[1].kind, LayerKind::Attention(attn) if attn.kv_cache.is_some())
+        );
+
+        model.replace_lora_adapter(tiny_adapter(&target, -0.5, 'b')?, 4096)?;
+        assert!(
+            matches!(&model.layers[0].kind, LayerKind::ShortConv(conv) if conv.cache.is_none())
+        );
+        assert!(
+            matches!(&model.layers[1].kind, LayerKind::Attention(attn) if attn.kv_cache.is_none())
+        );
+        let b = model.forward(&ids, 0)?.to_vec2::<f32>()?;
+        assert_ne!(b, a);
+        model.clear_lora_adapter()?;
+        assert_eq!(model.active_lora_identity(), (None, 3));
+        assert!(
+            matches!(&model.layers[0].kind, LayerKind::ShortConv(conv) if conv.cache.is_none())
+        );
+        assert!(
+            matches!(&model.layers[1].kind, LayerKind::Attention(attn) if attn.kv_cache.is_none())
+        );
+        assert_eq!(model.forward(&ids, 0)?.to_vec2::<f32>()?, base);
+        Ok(())
+    }
+
+    #[test]
+    fn tiny_lfm2_lora_admission_rejects_wrong_inventory_and_tensors() -> Result<()> {
+        let bytes = include_bytes!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../tests/fixtures/lfm2_vl_loader_tiny/text.gguf"
+        ));
+        let mut reader = Cursor::new(bytes.as_slice());
+        let gguf = gguf_file::Content::read(&mut reader)?;
+        assert!(ModelWeights::from_gguf_with_base_sha256(
+            gguf,
+            &mut reader,
+            &Device::Cpu,
+            &"0".repeat(64),
+            bytes.len() as u64,
+        )
+        .is_err());
+        let mut model = tiny_verified_model()?;
+        let target = model
+            .lora_targets()
+            .into_iter()
+            .find(|target| target.name == "blk.1.ffn_down.weight")
+            .ok_or_else(|| candle::Error::Msg("tiny FFN target absent".into()))?;
+        let mut missing = tiny_adapter(&target, 0.5, 'a')?;
+        missing.declared_targets = vec!["blk.0.shortconv.conv.weight".into()];
+        assert!(model.replace_lora_adapter(missing, 4096).is_err());
+        let mut wrong_shape = tiny_adapter(&target, 0.5, 'a')?;
+        wrong_shape.pairs[0].down =
+            Tensor::ones((1, target.input_size + 1), DType::F32, &Device::Cpu)?;
+        assert!(model.replace_lora_adapter(wrong_shape, 4096).is_err());
+        let mut nonfinite = tiny_adapter(&target, 0.5, 'a')?;
+        nonfinite.pairs[0].up = Tensor::from_vec(
+            vec![f32::NAN; target.output_size],
+            (target.output_size, 1),
+            &Device::Cpu,
+        )?;
+        assert!(model.replace_lora_adapter(nonfinite, 4096).is_err());
+        let mut bad_alpha = tiny_adapter(&target, 0.5, 'a')?;
+        bad_alpha.pairs[0].alpha = f64::NAN;
+        assert!(model.replace_lora_adapter(bad_alpha, 4096).is_err());
+        let mut bad_dtype = tiny_adapter(&target, 0.5, 'a')?;
+        bad_dtype.pairs[0].down = bad_dtype.pairs[0].down.to_dtype(DType::F16)?;
+        assert!(model.replace_lora_adapter(bad_dtype, 4096).is_err());
+        let mut unsupported = tiny_adapter(&target, 0.5, 'a')?;
+        unsupported.pairs[0].target = "blk.0.shortconv.conv.weight".into();
+        unsupported.declared_targets = vec!["blk.0.shortconv.conv.weight".into()];
+        assert!(model.replace_lora_adapter(unsupported, 4096).is_err());
+        let mut duplicate = tiny_adapter(&target, 0.5, 'a')?;
+        duplicate.pairs.push(duplicate.pairs[0].clone());
+        duplicate.declared_targets.push(target.name.clone());
+        assert!(model.replace_lora_adapter(duplicate, 4096).is_err());
+        assert!(model
+            .replace_lora_adapter(tiny_adapter(&target, 0.5, 'a')?, 1)
+            .is_err());
+        assert_eq!(model.active_lora_identity(), (None, 0));
+        Ok(())
+    }
 
     fn assert_close(actual: &Tensor, expected: &Tensor, tolerance: f32) -> Result<()> {
         let max_abs = (actual - expected)?.abs()?.max_all()?.to_scalar::<f32>()?;
@@ -864,6 +1232,9 @@ mod tests {
             masks: HashMap::new(),
             span: tracing::span!(tracing::Level::TRACE, "test-model"),
             span_output: tracing::span!(tracing::Level::TRACE, "test-output"),
+            base_sha256: None,
+            active_adapter_sha256: None,
+            adapter_generation: 0,
         };
 
         let input_ids = Tensor::from_slice(&[1u32, 2u32], (1, 2), &device)?;
