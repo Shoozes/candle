@@ -189,6 +189,10 @@ pub fn try_fwd(
     if b_size == 0 || b_size > MMVQ_MAX_BATCH {
         return Ok(None);
     }
+    let ggml_q8_0 = w_dtype == GgmlDType::Q8_0 && super::k_quants::ggml_q8_0_activation();
+    if ggml_q8_0 && (b_size != 1 || input_dtype != DType::F32) {
+        return Ok(None);
+    }
 
     let (o1, o2) = match rhs_l.contiguous_offsets() {
         Some(offsets) => offsets,
@@ -300,19 +304,31 @@ pub fn try_fwd(
                     k_padded as i32,
                     b_size as i32,
                     stream_ptr,
+                    i32::from(ggml_q8_0),
                 );
-                let launcher = plain_launcher_f32(w_dtype).unwrap();
-                launcher(
-                    weight_ptr,
-                    scratch_ptr as *const std::ffi::c_void,
-                    out_ptr,
-                    k as i32,
-                    nrows as i32,
-                    stride_col_y,
-                    stride_col_dst,
-                    b_size as i32,
-                    stream_ptr,
-                );
+                if ggml_q8_0 {
+                    ffi::launch_mmvq_gguf_q8_0_cpu_order_f32(
+                        weight_ptr,
+                        scratch_ptr as *const std::ffi::c_void,
+                        out_ptr,
+                        k as i32,
+                        nrows as i32,
+                        stream_ptr,
+                    );
+                } else {
+                    let launcher = plain_launcher_f32(w_dtype).unwrap();
+                    launcher(
+                        weight_ptr,
+                        scratch_ptr as *const std::ffi::c_void,
+                        out_ptr,
+                        k as i32,
+                        nrows as i32,
+                        stride_col_y,
+                        stride_col_dst,
+                        b_size as i32,
+                        stream_ptr,
+                    );
+                }
             }
 
             let out_storage = CudaStorage::wrap_cuda_slice(out, dev.clone());

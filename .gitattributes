@@ -22,3 +22,6 @@
 
 /tests/fixtures/gpt_oss_task2/*.json text eol=lf
 /tests/fixtures/gpt_oss_task2/*.md text eol=lf
+
+/tests/fixtures/qwen35_codename_b/*.json text eol=lf
+/tests/fixtures/qwen35_codename_b/*.md text eol=lf

@@ -838,6 +838,11 @@ thread_local! {
 }
 
 impl QMatMul {
+    /// Uses ggml's x86 Q8_0 activation quantization for this CPU call only.
+    pub fn forward_ggml_q8_0(&self, xs: &Tensor) -> Result<Tensor> {
+        k_quants::with_ggml_q8_0_activation(|| crate::Module::forward(self, xs))
+    }
+
     pub fn from_arc(qtensor: std::sync::Arc<QTensor>) -> Result<Self> {
         let dequantize = match qtensor.dtype() {
             GgmlDType::F32 | GgmlDType::F16 | GgmlDType::BF16 => true,

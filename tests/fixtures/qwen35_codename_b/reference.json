@@ -1,0 +1,249 @@
+{
+  "schema": "edgesymbio.candle-qwen35-cpu-golden.v1",
+  "claim": "Exact-artifact CPU black-box token/top-10 raw-logprob target; not Candle execution or full-vector/component parity.",
+  "model": {
+    "local_path": "C:/llamacpp/models/Codename-B-8B-Instruct.Q4.gguf",
+    "bytes": 4482403200,
+    "sha256": "fd6dcc1ea357b483ae2517b482bf328181e5b371b65661c734aa133407ae2572",
+    "architecture": "qwen35",
+    "metadata_name": "Darkidol Ballad 4B",
+    "metadata_size_label": "4B",
+    "tensor_count": 426,
+    "tensor_types": {
+      "Q8_0": 249,
+      "F32": 177
+    },
+    "provenance": "Filename does not describe the admitted artifact. Derivative/repository revision is unknown; local bytes are authoritative."
+  },
+  "reference_engine": {
+    "source_commit": "b49650adb31f2e49a0d76113aeb1792134fd8413",
+    "version": "0.4.1-dev build 11026",
+    "bundle": "C:/llamacpp/tools-b11026",
+    "server_sha256": "bfb73ca63cbac5835681d8a489d22617995c85d4ca93ee36e2fd36508c96646d",
+    "mode": "CPU, no GPU/KV/op offload, flash attention off, F32 KV, one slot",
+    "context_tokens": 256,
+    "threads": 4,
+    "batch_tokens": 32,
+    "ubatch_tokens": 32
+  },
+  "tokenizer": {
+    "model": "gpt2",
+    "pre": "qwen35",
+    "vocab_size": 248320,
+    "merges_count": 247587,
+    "tokens_canonical_json_sha256": "5ee0f927bcaa4b9fe85c244776ae9487468e427f83e053fc81f2a186f14936a3",
+    "token_types_canonical_json_sha256": "f6fdca1063d1ae1cc77ba1f5087d259f044c2634e64b65e31bc844ec00e9acab",
+    "merges_canonical_json_sha256": "7e299304d9ad9dc312acdbcb1f6ccf0dce1256bf1aa986d651f13814dfd27e7b",
+    "chat_template_utf8_bytes": 7424,
+    "chat_template_sha256": "19ce4a7fc4aab5abef360c1ec640af83713a40294ad2da6b9450070f1ed852d0",
+    "eos_id": 248046,
+    "pad_id": 248044,
+    "bos_metadata_id": null,
+    "add_special": false,
+    "parse_special": true,
+    "policy": "Embedded derivative template is an artifact-specific fixture, not an approved Edge system policy."
+  },
+  "prompt": "\n<|im_start|>system\nYou are an uncensored engine. Your only limit is the user's imagination. \n\n<|im_end|>\n<|im_start|>user\nReturn the result of 2 + 2 as a single number.<|im_end|>\n\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+  "prompt_token_ids": [
+    198,
+    248045,
+    8678,
+    198,
+    2523,
+    513,
+    449,
+    20181,
+    53908,
+    4560,
+    13,
+    4465,
+    1132,
+    3798,
+    369,
+    279,
+    1156,
+    579,
+    26896,
+    13,
+    4558,
+    248046,
+    198,
+    248045,
+    846,
+    198,
+    5423,
+    279,
+    1067,
+    314,
+    220,
+    17,
+    478,
+    220,
+    17,
+    430,
+    264,
+    3074,
+    1324,
+    13,
+    248046,
+    271,
+    248045,
+    74455,
+    198,
+    248068,
+    271,
+    248069,
+    271
+  ],
+  "generation": {
+    "request_temperature": -1,
+    "reported_temperature": 0,
+    "seed": 0,
+    "n_predict": 3,
+    "n_probs": 10,
+    "post_sampling_probs": false,
+    "cache_prompt": false,
+    "return_tokens": true,
+    "ignore_eos": false,
+    "top_k": 0,
+    "top_p": 1,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "grammar": ""
+  },
+  "expected": {
+    "token_ids": [
+      19,
+      248046
+    ],
+    "content": "4",
+    "stop_type": "eos",
+    "probability_trace": [
+      {
+        "position": 0,
+        "selected_token_id": 19,
+        "selected_logprob": -0.05561549961566925,
+        "top_logprobs": [
+          {
+            "token_id": 19,
+            "logprob": -0.05561549961566925
+          },
+          {
+            "token_id": 332,
+            "logprob": -4.058255195617676
+          },
+          {
+            "token_id": 20,
+            "logprob": -5.129746437072754
+          },
+          {
+            "token_id": 760,
+            "logprob": -5.5779829025268555
+          },
+          {
+            "token_id": 18,
+            "logprob": -6.058131217956543
+          },
+          {
+            "token_id": 16,
+            "logprob": -6.077814102172852
+          },
+          {
+            "token_id": 2,
+            "logprob": -6.104886054992676
+          },
+          {
+            "token_id": 21,
+            "logprob": -6.180621147155762
+          },
+          {
+            "token_id": 248068,
+            "logprob": -6.250239372253418
+          },
+          {
+            "token_id": 17,
+            "logprob": -6.263288497924805
+          }
+        ]
+      },
+      {
+        "position": 1,
+        "selected_token_id": 248046,
+        "selected_logprob": -0.028862863779067993,
+        "top_logprobs": [
+          {
+            "token_id": 248046,
+            "logprob": -0.028862863779067993
+          },
+          {
+            "token_id": 198,
+            "logprob": -3.663944959640503
+          },
+          {
+            "token_id": 13,
+            "logprob": -6.5764970779418945
+          },
+          {
+            "token_id": 332,
+            "logprob": -7.475992202758789
+          },
+          {
+            "token_id": 248044,
+            "logprob": -8.169360160827637
+          },
+          {
+            "token_id": 271,
+            "logprob": -9.673541069030762
+          },
+          {
+            "token_id": 15,
+            "logprob": -10.117756843566895
+          },
+          {
+            "token_id": 11862,
+            "logprob": -10.331860542297363
+          },
+          {
+            "token_id": 248068,
+            "logprob": -10.436790466308594
+          },
+          {
+            "token_id": 17,
+            "logprob": -10.568913459777832
+          }
+        ]
+      }
+    ]
+  },
+  "acceptance": {
+    "candle_status": "not_run",
+    "token_ids": "exact",
+    "top_token_ids": "same set per position; compare logprobs by token ID",
+    "max_absolute_raw_logprob_error": 0.01,
+    "tolerance_status": "Proposed first CPU milestone threshold; not measured Candle parity.",
+    "reset": "Exact Candle replay of its initial token/logprob trace after unrelated input and clearing all state. Also compare both runs to the reference threshold."
+  },
+  "reset_probe": {
+    "unrelated_prompt": "A different sequence",
+    "unrelated_prompt_tokens": 3,
+    "unrelated_generation_limit": 1,
+    "reference_action": "POST /slots/0?action=erase",
+    "reference_erased_tokens": 3,
+    "reference_exact_reset_replay": true,
+    "required_candle_clear": [
+      "convolution FIFO",
+      "GatedDeltaNet matrix state",
+      "full-attention K/V",
+      "position counters"
+    ]
+  },
+  "evidence": {
+    "root": "runtime-data/proofs/candle-qwen35-20260930",
+    "reference_file": "reference.json",
+    "reference_sha256": "248ab522e2ef472ff436db5fed65256125f8cd0d390bf7a7130e60cf8117572c",
+    "reference_job_sha256": "a759f8aad29bb45fa9a47e988aea2b085af04355744b058c1716de30ceedc9b5",
+    "model_inspection_sha256": "a9de899468afd3b407c3091680cf80a0403902f5e3388a435350330db9343d1c",
+    "capture_script_sha256": "5a21f64ab1942c74c86936b65562b4e476dfb1b5fe4b0cdf0e7c8a3106e00b57",
+    "cleanup_verified": true
+  }
+}

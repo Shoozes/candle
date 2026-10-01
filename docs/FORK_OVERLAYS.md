@@ -24,6 +24,7 @@ native Windows and WSL report the same candidate paths.
 | Retained upstream compatibility | `docs/fork-compat/MOD_MANIFEST.md` | Public ug APIs and onig tokenizer selection |
 | SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic three-component SDXL LoRA transaction, controlled unsupported flash-attention failure, and exact residual/opt-in `text_time` UNet conditioning |
 | GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Packed CPU/CUDA interfaces and source-bound short-parity/2,080-token receipt; no new production claim from upstream sync |
+| Qwen3.5 GGUF compatibility | `docs/qwen35/MOD_MANIFEST.md` | Bounded Q8_0/F32 text admission, proven CPU parity, and scoped CUDA quantization under qualification; no Edge activation |
 
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each
@@ -111,6 +112,7 @@ it. Every change to such a path must state which overlay owns each hunk and
 must pass both affected focused gates plus the repository-wide overlay gate.
 
 <!-- shared-paths:start -->
+- `.gitattributes`
 - `candle-core/tests/custom_op_tests.rs`
 - `.github/workflows/rust-ci.yml`
 - `.gitignore`
@@ -118,6 +120,7 @@ must pass both affected focused gates plus the repository-wide overlay gate.
 - `Cargo.toml`
 - `CHANGELOG.md`
 - `candle-kernels/build.rs`
+- `candle-kernels/src/ffi.rs`
 - `candle-examples/Cargo.toml`
 - `candle-transformers/Cargo.toml`
 - `candle-transformers/src/models/mod.rs`
@@ -140,6 +143,10 @@ another overlay's implementation or proof. Generic public names are required
 in Candle. `Snapflash*`, EdgeSymbio report types, application paths, and
 product policy remain outside the framework API.
 
+The Qwen3.5 overlay owns only the scoped GGML Q8_0 activation parameter added
+to the existing MMVQ F32 declaration in `candle-kernels/src/ffi.rs`; GPT-OSS
+retains its independent declarations and qualification.
+
 ## Review contract
 
 1. Add a path to exactly one overlay manifest before staging it.
@@ -153,4 +160,4 @@ product policy remain outside the framework API.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence
+AI-edited: 2026-10-01T17:47:56+00:00 | agent=Codex/candle_edge_closeout | model=unknown | effort=unknown | task=closeout | change=recorded native gate and remaining publication boundary

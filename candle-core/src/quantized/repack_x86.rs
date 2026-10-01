@@ -42,6 +42,9 @@ pub(crate) enum PackedX86 {
 
 pub(crate) fn select(dtype: super::GgmlDType, m: usize, n: usize, k: usize) -> bool {
     use super::GgmlDType as D;
+    if dtype == D::Q8_0 && super::k_quants::ggml_q8_0_activation() {
+        return false;
+    }
     let Some(lv) = level() else {
         return false;
     };

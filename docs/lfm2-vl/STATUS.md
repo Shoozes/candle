@@ -68,7 +68,11 @@ hash-bound base identity, and clears convolution/attention caches on successful
 switch. The accepted 2.6B Q8_0 base file at Edge was rehashed locally as
 `1e22128dfa128bdfb684da167e74e072d0a056baa7d06d9f280291e2839b0fc9`
 (2,874,779,648 bytes); this is an input identity check, not a trained-adapter
-or full-model LoRA proof. The compatibility manifest accounts
+or full-model LoRA proof. The independent Qwen3.5 compatibility overlay currently
+owns `candle-transformers/src/models/qwen35/`, its artifact-specific fixture,
+and the shared registry/overlay records; see `docs/qwen35/STATUS.md` for its
+exact 4B CPU/CUDA trace and sealed 1,024-token context evidence. Edge's normal
+provider gate remains independently owned. The compatibility manifest accounts
 for retained APIs, the new cast regression and the strict-Clippy CUDA
 launch-count correction.
 
@@ -85,7 +89,9 @@ The log is retained outside Git as
 `%TEMP%/codex-candle-closeout-20261001-gate-final.log`.
 
 Local checkpoint preparation preserves the original model/CUDA receipt source
-identities. This closeout ran no production model or CUDA proof. Source publication awaits a supported secure
+identities. This closeout ran no production model or CUDA proof. Strict Clippy
+required only private observer aliases and equivalent iterator spelling in
+the independent Qwen overlay. Source publication awaits a supported secure
 authentication route for the repository-owned publication helper.
 
 ## Known limitations and blockers

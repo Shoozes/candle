@@ -879,7 +879,7 @@ mmvq_gguf_quantize_q8_1_f16(const half *__restrict__ x,
 extern "C" __global__ void
 mmvq_gguf_quantize_q8_1_f32(const float *__restrict__ x,
                             void *__restrict__ vy, const int kx,
-                            const int kx_padded) {
+                            const int kx_padded, const int ggml_q8_0_activation) {
   const int ix = blockDim.x * blockIdx.x + threadIdx.x;
   if (ix >= kx_padded) {
     return;
@@ -899,7 +899,11 @@ mmvq_gguf_quantize_q8_1_f32(const float *__restrict__ x,
   sum = warp_reduce_sum_f32(sum);
 
   const float d = amax / 127.0f;
-  const int8_t q = (amax == 0.0f) ? 0 : (int8_t)roundf(xi / d);
+  const int8_t q = (amax == 0.0f)
+                       ? 0
+                       : (ggml_q8_0_activation
+                              ? (int8_t)__float2int_rn(xi * (127.0f / amax))
+                              : (int8_t)roundf(xi / d));
 
   y[ib].qs[iqs] = q;
 
@@ -1038,12 +1042,57 @@ extern "C" void launch_mmvq_gguf_quantize_q8_1_f16(const void *x, void *vy,
 extern "C" void launch_mmvq_gguf_quantize_q8_1_f32(const void *x, void *vy,
                                                    int kx, int kx_padded,
                                                    int num_rows,
-                                                   void *stream) {
+                                                   void *stream,
+                                                   int ggml_q8_0_activation) {
   const int num_blocks_x =
       (kx_padded + CUDA_QUANTIZE_BLOCK_SIZE - 1) / CUDA_QUANTIZE_BLOCK_SIZE;
   dim3 grid(num_blocks_x, num_rows, 1);
   dim3 block(CUDA_QUANTIZE_BLOCK_SIZE, 1, 1);
   cudaStream_t s = static_cast<cudaStream_t>(stream);
   mmvq_gguf_quantize_q8_1_f32<<<grid, block, 0, s>>>(
-      (const float *)x, vy, kx, kx_padded);
+      (const float *)x, vy, kx, kx_padded, ggml_q8_0_activation);
+}
+
+// Q8_0 single-row path with the AVX2/FMA reduction order used by the scoped
+// GGML-compatible CPU projection. The activation is already Q8_1-packed with
+// Q8_0-compatible scale and bytes; its extra block sum is unused.
+extern "C" __global__ void mmvq_gguf_q8_0_cpu_order_f32(
+    const block_q8_0 *__restrict__ weights,
+    const block_q8_1 *__restrict__ activation, float *__restrict__ output,
+    int nblocks, int nrows) {
+  const int lane = threadIdx.x & 7;
+  const int row = blockIdx.x * (blockDim.x / 8) + threadIdx.x / 8;
+  float acc = 0.0f;
+  if (row < nrows) {
+    for (int block = 0; block < nblocks; ++block) {
+      const block_q8_0 &w = weights[row * nblocks + block];
+      const block_q8_1 &a = activation[block];
+      const float d = __half2float(w.d) * __half2float(__low2half(a.ds));
+      int sum = 0;
+      for (int index = 0; index < 4; ++index) {
+        const int offset = 4 * lane + index;
+        sum += int(w.qs[offset]) * int(a.qs[offset]);
+      }
+      acc = fmaf(d, float(sum), acc);
+    }
+  }
+  const int base = threadIdx.x & ~7;
+  const float s0 = __shfl_sync(0xffffffff, acc, base + 4) + __shfl_sync(0xffffffff, acc, base + 0);
+  const float s1 = __shfl_sync(0xffffffff, acc, base + 5) + __shfl_sync(0xffffffff, acc, base + 1);
+  const float s2 = __shfl_sync(0xffffffff, acc, base + 6) + __shfl_sync(0xffffffff, acc, base + 2);
+  const float s3 = __shfl_sync(0xffffffff, acc, base + 7) + __shfl_sync(0xffffffff, acc, base + 3);
+  if (lane == 0 && row < nrows) {
+    output[row] = (s0 + s2) + (s1 + s3);
+  }
+}
+
+extern "C" void launch_mmvq_gguf_q8_0_cpu_order_f32(
+    const void *weights, const void *activation, void *output, int kx,
+    int nrows, void *stream) {
+  dim3 grid((nrows + 31) / 32, 1, 1);
+  dim3 block(256, 1, 1);
+  cudaStream_t s = static_cast<cudaStream_t>(stream);
+  mmvq_gguf_q8_0_cpu_order_f32<<<grid, block, 0, s>>>(
+      (const block_q8_0 *)weights, (const block_q8_1 *)activation,
+      (float *)output, kx / QK8_0, nrows);
 }

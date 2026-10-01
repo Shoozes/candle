@@ -8,6 +8,27 @@ use crate::Result;
 use byteorder::{ByteOrder, LittleEndian};
 use half::{bf16, f16, slice::HalfFloatSliceExt};
 
+thread_local! {
+    static GGML_Q8_0_ACTIVATION: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+pub(crate) fn ggml_q8_0_activation() -> bool {
+    GGML_Q8_0_ACTIVATION.with(|flag| flag.get())
+}
+
+pub(crate) fn with_ggml_q8_0_activation<T>(operation: impl FnOnce() -> T) -> T {
+    struct Restore(bool);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            GGML_Q8_0_ACTIVATION.with(|flag| flag.set(self.0));
+        }
+    }
+    let restore = Restore(GGML_Q8_0_ACTIVATION.with(|flag| flag.replace(true)));
+    let result = operation();
+    drop(restore);
+    result
+}
+
 #[cfg(target_arch = "aarch64")]
 use super::repack::BlockQ4Kx8;
 
@@ -653,6 +674,7 @@ impl GgmlType for BlockQ8_0 {
 
         #[cfg(not(all(target_arch = "aarch64", target_feature = "neon")))]
         {
+            let ggml_activation = GGML_Q8_0_ACTIVATION.with(|flag| flag.get());
             let k = xs.len();
             debug_assert!(
                 k.is_multiple_of(Self::BLCK_SIZE),
@@ -674,10 +696,22 @@ impl GgmlType for BlockQ8_0 {
                     amax = amax.max(x.abs())
                 }
                 let d = amax / ((1 << 7) - 1) as f32;
-                let id = if d != 0f32 { 1. / d } else { 0. };
+                let id = if amax != 0f32 {
+                    if ggml_activation {
+                        127. / amax
+                    } else {
+                        1. / d
+                    }
+                } else {
+                    0.
+                };
                 ys.d = f16::from_f32(d);
                 for (y, &x) in ys.qs.iter_mut().zip(xs.iter()) {
-                    *y = f32::round(x * id) as i8
+                    *y = if ggml_activation {
+                        (x * id).round_ties_even() as i8
+                    } else {
+                        f32::round(x * id) as i8
+                    }
                 }
             }
         }
@@ -2815,3 +2849,27 @@ verify_block_sizes!(
     BlockQ4_0, BlockQ4_1, BlockQ5_0, BlockQ5_1, BlockQ8_0, BlockQ8_1, BlockQ2K, BlockQ3K, BlockQ4K,
     BlockQ5K, BlockQ6K, BlockQ8K, f32, f16, bf16
 );
+
+#[cfg(test)]
+mod ggml_q8_activation_tests {
+    use super::*;
+
+    #[test]
+    fn scoped_nearest_even_quantization_restores_default() {
+        let mut input = [0.0; QK8_0];
+        input[0] = 127.0;
+        input[1] = 2.5;
+        input[2] = -2.5;
+        let mut baseline = [BlockQ8_0::zeros()];
+        BlockQ8_0::from_float(&input, &mut baseline);
+        assert_eq!((baseline[0].qs[1], baseline[0].qs[2]), (3, -3));
+
+        let mut compatible = [BlockQ8_0::zeros()];
+        with_ggml_q8_0_activation(|| BlockQ8_0::from_float(&input, &mut compatible));
+        assert_eq!((compatible[0].qs[1], compatible[0].qs[2]), (2, -2));
+
+        let mut after = [BlockQ8_0::zeros()];
+        BlockQ8_0::from_float(&input, &mut after);
+        assert_eq!(after, baseline);
+    }
+}

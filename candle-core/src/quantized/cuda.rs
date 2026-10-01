@@ -849,10 +849,19 @@ impl QCudaStorage {
         storage: &CudaStorage,
         layout: &crate::Layout,
     ) -> Result<(CudaStorage, crate::Shape)> {
+        if self.dtype == GgmlDType::Q8_0
+            && super::k_quants::ggml_q8_0_activation()
+            && FORCE_DMMV.load(std::sync::atomic::Ordering::Relaxed)
+        {
+            crate::bail!("scoped GGML Q8_0 CUDA activation rejects forced dequantization")
+        }
         // Optimized MMVQ and MMQ paths (support most paths: BF16/F16/F32, batch 1-8, all quant types, reuses per-device workspace).
         if !FORCE_DMMV.load(std::sync::atomic::Ordering::Relaxed) {
             if let Some(result) = super::fast_mmvq::try_fwd(self, self_shape, storage, layout)? {
                 return Ok(result);
+            }
+            if self.dtype == GgmlDType::Q8_0 && super::k_quants::ggml_q8_0_activation() {
+                crate::bail!("scoped GGML Q8_0 CUDA activation requires the F32 MMVQ path")
             }
             if let Some(result) = super::fast_mmq::try_fwd(self, self_shape, storage, layout)? {
                 return Ok(result);

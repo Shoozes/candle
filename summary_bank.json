@@ -18,6 +18,38 @@
     ]
   },
   "groups": {
+    "feature__qwen35_gguf": {
+      "description": "Bounded Qwen3.5 GGUF Q8_0/F32 admission and the separately gated exact 4B CPU trace.",
+      "status": "active",
+      "paths": [
+        "docs/qwen35/STATUS.md",
+        "docs/qwen35/PERFORMANCE.md",
+        "docs/qwen35/HISTORY.md",
+        "docs/qwen35/DECISIONS.md",
+        "docs/qwen35/SOURCES.md",
+        "docs/qwen35/MOD_MANIFEST.md",
+        "candle-transformers/src/models/qwen35/mod.rs",
+        "candle-transformers/src/models/qwen35/admission.rs",
+        "candle-transformers/src/models/qwen35/cpu.rs",
+        "scripts/qwen35/run-bounded-parity.ps1",
+        "scripts/qwen35/run-bounded-performance.ps1",
+        "scripts/qwen35/probe-llama-batch.ps1",
+        "scripts/qwen35/llama-layer-probe.cpp",
+        "scripts/qwen35/run-bounded-layer-probe.ps1",
+        "tests/fixtures/qwen35_codename_b/reference.json",
+        "tests/fixtures/qwen35_codename_b/README.md"
+      ]
+    },
+    "feature__qwen35_q8_core": {
+      "description": "Scoped ggml-compatible Q8_0 activation path used by Qwen3.5 without changing default Candle callers.",
+      "status": "active",
+      "paths": [
+        "docs/qwen35/DECISIONS.md",
+        "candle-core/src/quantized/k_quants.rs",
+        "candle-core/src/quantized/mod.rs",
+        "candle-core/src/quantized/repack_x86.rs"
+      ]
+    },
     "fork_compatibility": {
       "description": "Retained upstream ug APIs, onig selection, and exact fork-delta ownership.",
       "status": "active",

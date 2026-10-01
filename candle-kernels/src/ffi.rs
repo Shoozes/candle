@@ -443,6 +443,15 @@ extern "C" {
         kx_padded: i32,
         num_rows: i32,
         stream: *mut c_void,
+        ggml_q8_0_activation: i32,
+    );
+    pub fn launch_mmvq_gguf_q8_0_cpu_order_f32(
+        weights: *const c_void,
+        activation: *const c_void,
+        output: *mut c_void,
+        kx: i32,
+        nrows: i32,
+        stream: *mut c_void,
     );
 
     // ============== Dense GGUF MMQ launchers (from mmq_gguf/) ==============
