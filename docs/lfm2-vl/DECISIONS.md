@@ -1,5 +1,23 @@
 # LFM2.5-VL Decisions
 
+## D-0070: Validate text-LoRA scale in the admitted F32 execution dtype
+
+Status: Accepted; focused regressions and the native maintained CPU gate pass.
+
+The quantized LFM2 adapter path admits an F32 execution graph. Validate
+`alpha/rank` after conversion to F32 before replacing any active pair or
+clearing caches. Reject infinity and zero caused by conversion, even when the
+original F64 coefficient is positive and finite. Keep the original F64 value
+for the existing execution formula; do not clamp or rewrite tensor values.
+
+Candle's CPU affine operation casts scalar coefficients to the tensor dtype.
+The former F64-only validation admitted both an overflowing coefficient and
+a coefficient that silently lost all effect in F32. Public replacement tests
+reproduce both cases and verify rejected admission preserves adapter identity,
+generation, masks, and exact cached continuation. F32 maximum and smallest
+positive subnormal coefficients remain admissible. This is a local admission
+contract; real 2.6B adapter quality, CUDA LoRA, and Edge serving remain separate.
+
 ## D-0069: Preserve LFM2 convolution history across cached chunks
 
 Status: Accepted; native CPU fixture, exact component, and maintained gates pass.
@@ -1603,4 +1621,4 @@ production support. The CUDA narrowed-view regression is accepted on the
 existing native lane; the packed CUDA path remains opt-in.
 
 ---
-AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=cached-forwarding | change=recorded causal-prefix and early position-validation contracts
+AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=lora-scale-closeout | change=recorded F32 coefficient admission without changing valid execution or external qualification

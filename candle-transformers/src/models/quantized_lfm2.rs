@@ -1218,6 +1218,79 @@ mod tests {
         Ok(())
     }
 
+    fn assert_lora_scale_rejected_without_mutating_state(alpha: f64) -> Result<()> {
+        let mut reference = tiny_verified_model()?;
+        let target = reference
+            .lora_targets()
+            .into_iter()
+            .find(|target| target.name == "blk.1.ffn_down.weight")
+            .ok_or_else(|| candle::Error::Msg("tiny FFN target absent".into()))?;
+        let ids = Tensor::from_slice(&[1u32, 2], (1, 2), &Device::Cpu)?;
+        let next = Tensor::from_slice(&[3u32], (1, 1), &Device::Cpu)?;
+        reference.replace_lora_adapter(tiny_adapter(&target, 0.5, 'a')?, 4096)?;
+        reference.forward(&ids, 0)?;
+        let expected = reference.forward(&next, 2)?;
+
+        let mut model = tiny_verified_model()?;
+        model.replace_lora_adapter(tiny_adapter(&target, 0.5, 'a')?, 4096)?;
+        model.forward(&ids, 0)?;
+        let mask_count = model.masks.len();
+        let mut invalid = tiny_adapter(&target, 0.75, 'b')?;
+        invalid
+            .pairs
+            .first_mut()
+            .ok_or_else(|| candle::Error::Msg("tiny adapter pair absent".into()))?
+            .alpha = alpha;
+        let error = model
+            .replace_lora_adapter(invalid, 4096)
+            .expect_err("an unrepresentable F32 scale must fail before adapter/cache mutation");
+        assert!(error.to_string().contains("F32 scale"), "{error}");
+        assert_eq!(
+            model.active_lora_identity(),
+            reference.active_lora_identity()
+        );
+        assert_eq!(model.masks.len(), mask_count);
+        assert!(
+            matches!(&model.layers[0].kind, LayerKind::ShortConv(conv) if conv.cache.is_some())
+        );
+        assert!(
+            matches!(&model.layers[1].kind, LayerKind::Attention(attn) if attn.kv_cache.is_some())
+        );
+        assert_close(&model.forward(&next, 2)?, &expected, 0.0)
+    }
+
+    #[test]
+    fn tiny_lfm2_lora_rejects_f32_scale_overflow_without_mutating_state() -> Result<()> {
+        assert_lora_scale_rejected_without_mutating_state(f64::MAX)
+    }
+
+    #[test]
+    fn tiny_lfm2_lora_rejects_f32_scale_underflow_without_mutating_state() -> Result<()> {
+        assert_lora_scale_rejected_without_mutating_state(f64::MIN_POSITIVE)
+    }
+
+    #[test]
+    fn tiny_lfm2_lora_admits_representable_f32_scale_boundaries() -> Result<()> {
+        for alpha in [f64::from(f32::MAX), f64::from(f32::from_bits(1))] {
+            let mut model = tiny_verified_model()?;
+            let target = model
+                .lora_targets()
+                .into_iter()
+                .find(|target| target.name == "blk.1.ffn_down.weight")
+                .ok_or_else(|| candle::Error::Msg("tiny FFN target absent".into()))?;
+            let mut adapter = tiny_adapter(&target, 0.5, 'a')?;
+            adapter
+                .pairs
+                .first_mut()
+                .ok_or_else(|| candle::Error::Msg("tiny adapter pair absent".into()))?
+                .alpha = alpha;
+            model.replace_lora_adapter(adapter, 4096)?;
+            assert_eq!(model.active_lora_identity().1, 1);
+            assert!(model.active_lora_identity().0.is_some());
+        }
+        Ok(())
+    }
+
     fn assert_close(actual: &Tensor, expected: &Tensor, tolerance: f32) -> Result<()> {
         let max_abs = (actual - expected)?.abs()?.max_all()?.to_scalar::<f32>()?;
         assert!(max_abs <= tolerance, "max absolute error {max_abs}");

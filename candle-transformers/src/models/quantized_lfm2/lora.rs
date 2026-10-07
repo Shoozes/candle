@@ -191,9 +191,10 @@ pub(crate) fn prepare(
             )
         }
         let scale = pair.alpha / *rank as f64;
-        if !scale.is_finite() || scale == 0.0 {
+        let execution_scale = scale as f32;
+        if !execution_scale.is_finite() || execution_scale == 0.0 {
             bail!(
-                "quantized LFM2 LoRA target {} has invalid scale",
+                "quantized LFM2 LoRA target {} has invalid F32 scale",
                 pair.target
             )
         }
