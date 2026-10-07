@@ -1,10 +1,11 @@
 //! Experimental GPT-OSS building blocks.
 //!
 //! This module is intentionally separate from the maintained LFM2-VL/Q8
-//! product path.  It currently provides configuration/checkpoint admission and
-//! a CPU reference for the packed MXFP4 MoE weights.  The CUDA executor is an
-//! explicit feature-gated synthetic proof boundary; no live checkpoint or
-//! generation support is claimed.
+//! product path. It provides checkpoint admission, packed MXFP4 ownership,
+//! a CPU reference, and an opt-in, feature-gated CUDA executor. Component
+//! fixtures and source-bound external short-parity/performance diagnostics
+//! have separate evidence boundaries recorded in `docs/gpt-oss/STATUS.md`.
+//! The maintained product default and broader qualification remain separate.
 
 mod checkpoint;
 mod config;

@@ -2,6 +2,206 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-10-07 - Quantized LFM2 F32 LoRA admission closeout
+
+Scoped local repair at native main baseline
+b274902312a39cbe1b0028141276f43e64b56096. The public replacement path now
+validates `alpha/rank` in F32 before changing the active adapter or caches.
+It retains the existing F64 execution coefficient and rejects conversion
+overflow/underflow. No clamp, dependency, kernel, model format, or consumer
+change was introduced; D-0070 records the admission decision.
+
+- The starting release `lfm2_lora` filter passed two tests. Adding the new
+  cases reproduced both failures on the former implementation (Cargo 101:
+  three passed, two failed). After repair, all five LoRA tests pass, including
+  preserved identity/generation, masks, both caches, and exact next-token
+  continuation after rejection. F32 maximum and smallest positive subnormal
+  admission are covered. The release `lfm2` filter passes all 46 neighbors.
+- Commands: `cargo test --locked --offline --release -p candle-transformers --lib lfm2_lora`
+  and `cargo test --locked --offline --release -p candle-transformers --lib lfm2`.
+  The focused release source index precedes a formatting-only assertion repair;
+  the maintained debug gate binds the final formatted source hashes.
+- Native CPU checks pass: `cargo fmt --all -- --check`;
+  `cargo check --locked --offline -p candle-core -p candle-nn -p candle-transformers -p candle-vlm`;
+  `cargo check --locked --offline -p candle-examples --example lfm2 --example quantized-lfm2 --example lfm2-vl`;
+  `cargo clippy --locked --offline -p candle-transformers --lib -- -D warnings`.
+- `cargo test --locked --offline -j 2 -p candle-core -p candle-transformers -p candle-vlm`
+  passes the full maintained CPU suite, including 146 transformer library
+  tests (five existing external-model ignores), five generation and eight
+  NMS tests, 37 VLM tests, and 45 core doctests (one existing ignore).
+  `cargo test --locked --offline -j 2 -p candle-examples --example lfm2-vl`
+  passes all 33 example tests.
+- The initial maintained run failed in 44 core doctests with E0460/E0462
+  dependency-loading errors when the 8 GiB job reached 8,760,901,632 bytes.
+  The narrow `cargo test --locked --offline -p candle-core --doc tensor::Tensor::full`
+  and complete retry both passed with process-local `RUST_TEST_THREADS=2`;
+  the full retry peaked at 1,399,197,696 bytes. No cache deletion or core/pin
+  repair was needed. The failed receipt/log are retained.
+- PowerShell 7, Rust/Cargo 1.97.1, native MSVC, locked/offline Cargo, two build
+  jobs, the existing D: target/temp, and 900-second/8-GiB Job Object bounds
+  were used. All eleven launched Cargo roots were absent after teardown.
+  Proof lives in `artifacts/lfm2-lora-scale/20261007-d56162f4/verification-summary.json`
+  (SHA-256 5d94423b97fda9e577bb5d6b99fe6d6ebfc5b93838460e20d63ccc45b932cbcc)
+  with source indexes and sealed receipt/log hashes. Retain the evidence and
+  owner-managed build cache; no service or endpoint was launched.
+- Native `pwsh -NoProfile -File scripts/lfm2-vl/verify-summary-bank.ps1`,
+  `python scripts/lfm2-vl/verify-module-layout.py`, both GPT/LFM mod-manifest
+  scripts, `bash scripts/verify-fork-overlays.sh` (236 paths, five overlays,
+  24 shared paths, ten task paths), whitespace, and local links/anchors pass.
+  Existing routes and path inventories remain unchanged.
+- Metadata-only inspection of the operator-supplied `D:\huggingface-cache`
+  found base snapshots, including LiquidAI/LFM2.5-2.6B-GGUF revision
+  84022ce711b28455e8c4fc364ce68c00cf995875, and no retained adapter/training/
+  held-out metadata in those snapshots. GenUni's inputs and Edge qualification
+  remain required by the unchanged active Done When contract. No production
+  weights, downloads, CUDA inference, or consumer repinning belongs to this
+  local prerequisite.
+- The owner authorized closeout and scoped publication through Candle's
+  guarded `.tools/gitpush.ps1 -Yes`. Its fresh clean-commit native gate and
+  exact remote identity belong to `artifacts/publication/last-push.json`.
+  The prior b2749023 publication receipt is preserved at
+  `artifacts/lfm2-lora-scale/20261007-d56162f4/prior-publication.json`.
+
+## 2026-10-07 - GPT-OSS evidence and handoff cleanup
+
+Documentation-only review, recheck, and cleanup at local main
+b274902312a39cbe1b0028141276f43e64b56096 plus the existing unpublished research
+note. GenAce MVP/LTS and GenUni's foundation retain priority.
+
+- Review followed Summary Bank routes for current handoff/overlay ownership,
+  GPT-OSS packed CUDA and diagnostic seams, and dense/quantized LFM2 cache
+  behavior, tests, and composite consumers. This was the selected current
+  batch, not a fresh runtime qualification of every inherited architecture.
+- Recheck confirmed the three prior LFM cache findings remain closed: current
+  source hashes, all nine receipt/log pairs, and the verification-summary seal
+  match the prior gate. Summary SHA-256 remains
+  f29bfb6cd565d6d75a015f47c46a946b296ca280bf68a45b0bd2cb4c42f8c4b3.
+  This pass inspected retained proof; it did not rerun those tests.
+- The external GPT-OSS short-parity receipt remains a passed uncommitted
+  candidate at tree 69830f1d244ef0d13b734ee48d5bf7243366c371.
+  The accepted performance packet still hashes to
+  616b188eadb04b27f7834a952d45a7cfd8ec9ff8a0b68413ce8a5aa468a71431,
+  with executed source 4a4699981ed55bb11e857c58923c67133559145d,
+  8/512/2048 prompt tokens plus 32 generated, and physical GPU peak
+  19,723,714,560 bytes within the existing 20,000,000,000-byte ceiling.
+- Cleanup reconciled stale synthetic-only/no-inference wording in the GPT-OSS
+  module documentation, STATUS, SOURCES, and MOD_MANIFEST. It separates assembly,
+  component fixtures, external short parity, and bounded performance from
+  maintained product/default and cross-device qualification.
+- LFM status now distinguishes the published cache batch and its resolved
+  publication receipt from this documentation candidate. Completed GPT-OSS
+  Tasks 2/3 were moved below verbatim; their old present-tense statements are
+  historical. Active Task 4 and the real immutable adapter gate were preserved.
+- Files: candle-transformers/src/models/gpt_oss/mod.rs documentation header;
+  docs/gpt-oss/STATUS.md, SOURCES.md, MOD_MANIFEST.md; and
+  docs/lfm2-vl/STATUS.md, TODO.md, HISTORY.md. No executable logic, kernel,
+  dependency pin, model input, source-reference pin, or receipt was changed.
+  No build, model/CUDA run, download, installation, commit, or publication
+  belongs to this slice. Native format, Summary Bank, GPT/LFM manifests,
+  overlay union, whitespace, local links/anchors, seven-file scope, unchanged
+  executable Rust, verbatim archive, and unchanged Task 4 checks passed.
+  The first sandboxed format check returned OS error 5; its approved retry
+  passed. Git Bash used explicit PATH and process-local safe.directory.
+  The initial archive fragment was corrected before its successful recheck.
+- Hunk ownership: GPT-OSS owns its module/evidence wording; LFM2-VL owns the
+  project handoff, backlog, and history organization. Existing shared-path
+  registration and publication inventories remain unchanged.
+
+### Archived completed GPT-OSS backlog contracts
+
+The following records retain the wording and gates from their original
+completion checkpoints; use GPT-OSS STATUS for the later evidence boundary.
+
+### [x] GPT-OSS Task 2: independent GGUF numerical and resource proof
+
+- What: Add independent numerical fixtures for the hash-pinned GPT-OSS GGUF
+  admission boundary, plus explicit token/cache byte bounds,
+  cancellation/rollback, and no-duplicate/load-leak evidence.
+- Why: Task 1 proves exact directory admission and tensor ownership but does
+  not prove runtime numerical behavior or bounded resource ownership.
+- When: Only after the Task 1 source and delivery commits are accepted; before
+  any packed CUDA executor or exact-model parity claim.
+- Where: `candle-transformers/src/models/gpt_oss/`, focused fixtures/tests,
+  `docs/gpt-oss/STATUS.md`, and the owned verification records. Keep the
+  selected production artifact external and do not add downloads or weights.
+- How: Use reference values generated independently of the implementation
+  under test, exercise bounded token/cache paths and cancellation rollback,
+  and record exact counts, byte ceilings, identities, and cleanup results.
+- Done when: Independent component values, resource bounds, rollback, and
+  duplicate/load-leak checks pass on native CPU with no Q8/default behavior
+  change; CUDA remains unopened until this gate is green. **Complete:** the
+  digest-pinned synthetic oracle and all resource/rollback/ownership checks
+  pass in the 27-test focused GPT-OSS run.
+- Verification: Focused GPT-OSS tests, locked native transformer checks,
+  summary-bank and overlay verifiers, `cargo fmt --all -- --check`,
+  `git diff --check`, and the full guarded publication gate.
+
+### [x] GPT-OSS Task 3: packed CUDA executor
+
+- What: Design and implement a packed CUDA executor for the admitted GPT-OSS
+  GGUF representation without silently densifying the major MXFP4 weights.
+- Why: CUDA work is ordered behind the independent CPU numerical and resource
+  proof and must not hide model, cache, or ownership defects.
+- When: Only after Task 2 is accepted and the owner authorizes this separate
+  gate; exact-product numerical parity remains separately gated from the
+  bounded assembly proof.
+- Where: `candle-transformers/src/models/gpt_oss/`, CUDA-gated kernels/tests,
+  and the GPT-OSS proof records. Do not change Edge/Harmony integration or the
+  maintained Q8 default.
+- How: Preserve the admitted tensor identity, prove packed-resident ownership,
+  match the independent CPU oracle on the available CUDA lane, and publish
+  explicit device memory, cancellation, rollback, and cleanup evidence.
+- Done when: CPU parity remains green, the packed CUDA path is opt-in and
+  feature-gated, no dense fallback is hidden, resource/cleanup receipts pass,
+  and production claims remain excluded without a numerical/tokenizer
+  inference receipt.
+  **Complete:** the native RTX 4090 lane passed direct packed-kernel,
+  attention/router component, uncached/cached forward, exact cache admission,
+  cancellation rollback, eviction/retry, typed failure, and pre-device static
+  budget checks at the pinned oracle tolerance.
+- Corrective follow-up in the current checkpointed slice is complete: the
+  expert helper's pure contribution contract is explicit, the zero-expert
+  post-MoE residual is asserted directly, an independently generated
+  two-layer CPU/reference/CUDA trace covers sliding/full attention, sinks,
+  unequal routing, and nontrivial positions, and packed CUDA narrowed views
+  match their materialized-copy path with launch guards.
+- The same bounded slice now assembles fused and converter-style split
+  synthetic GGUF fixtures, then the exact owner-selected artifact, through one
+  retained load session. It now normalizes the GGML MXFP4 wire layout before
+  execution, denies Windows write/delete sharing, keeps the identity-verified
+  handle through loading, and binds the registry lease to the live model/runtime
+  owner. CUDA validates all public config fields and commits staged cache state
+  only after synchronization, finite-output, and final-cancellation checks.
+  It proves `GptOssWeights` construction and registry cleanup without copying
+  model bytes into the repository; tokenizer, forward-logit, and production
+  parity remain deferred.
+- Current verification: the focused CPU run passed `37/37` with one ignored
+  exact-artifact test; the CUDA run passed `45/45` with one ignored test; the
+  owner-selected external-artifact assembly test passed in `613.20s`.
+- Short exact-parity follow-up is complete for its bounded CUDA gate: the
+  hash-bound runner matched all 20 tokenizer IDs, loaded the exact external
+  GGUF, constructed CUDA state, verified cancellation rollback, and passed
+  prefill/decode under exact top-1, top-k, mean, and total-variation criteria.
+  It also passed deterministic reset/replay and registry teardown. The raw
+  prefill full-row maximum `0.4869547` is retained as a clipped-tail
+  diagnostic; it does not fail the separately bounded criteria. The success
+  receipt is `artifacts/gpt-oss/short-parity/receipt.json`.
+- Verification: CPU focused/full gates first, then the authorized CUDA build,
+  numerical comparison, memory/cleanup receipt, summary-bank and overlay
+  verifiers, and guarded publication.
+  Performance follow-up: the bounded harness now defaults to optimized
+  release, records exact build/model/tokenizer/GPU/runtime identities, enforces
+  the exact 20,000,000,000-byte Edge ceiling with fail-closed observed-device
+  monitoring, refuses targets above 8192 total tokens, records checked
+  static+KV+workspace accounting, and preserves cancellation, stop reason,
+  incremental evidence, and cleanup attribution. Its model-free qualification
+  suite passes 16 tests. The accepted owner packet passes 8/512/2048 prompt
+  cases with a 32-token reserve at
+  `artifacts/gpt-oss/performance/bounded-release-packet-safe.json`. The clean
+  8160-prompt diagnostic is retained but superseded after a physical-ceiling
+  sample; the former 32k-matrix timeout remains historical, and no 16k/32k
+  optimization claim is made.
+
 ## 2026-10-07 - LFM2 cached forwarding review, repair, and recheck
 
 Complete on native Windows/MSVC Rust 1.97.1, PowerShell 7.6.6, local `main`
@@ -2335,4 +2535,4 @@ deferred to TODO C3; no network or toolchain install was substituted.
   documentation-only fast-forward successor.
 
 ---
-AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence
+AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=lora-scale-closeout | change=recorded native admission proof, retained review evidence, and archived completed contracts

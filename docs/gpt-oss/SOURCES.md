@@ -16,8 +16,10 @@ independent numerical receipt.
 
 The reference description states that each MXFP4 block contains 32 FP4 values
 packed into 16 U8 bytes, with a matching scale along the final tensor
-dimension. The Candle tests use deterministic synthetic payloads and do not
-identify or load a production model.
+dimension. Committed component fixtures use deterministic synthetic payloads.
+Separate opt-in external-artifact assembly, short-parity, and performance
+receipts are documented in `STATUS.md`; they do not broaden those fixtures'
+evidence boundary or change the pinned behavioral sources.
 
 The GGUF wire-format and converter behavior are pinned to `ggml-org/llama.cpp`
 commit `f072b103714dfa1eee531f80b24512faf38e3dd2`, resolved on 2026-09-20,
@@ -81,4 +83,4 @@ in this repository.
 
 ---
 
-AI-edited: 2026-09-19; agent=Codex; task=gpt-oss-c0-c1; change=pinned official source identity
+AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=evidence-cleanup | change=distinguished committed fixtures from separately admitted external diagnostics

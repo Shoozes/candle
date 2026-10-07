@@ -39,22 +39,27 @@ promote GPT-OSS to the product default.
   output checks, and final pre-commit cancellation are covered.
 - The exact owner-selected GGUF was read in place at the owner-provided path,
   admitted by its pinned SHA, and assembled into a CPU model object; it was
-  not copied into this checkout. Tokenizer, forward-logit, and production
-  numerical claims remain closed. CUDA execution evidence is still limited to
-  the synthetic fixture on the named local RTX 4090 lane.
+  not copied into this checkout. The later opt-in short CUDA receipt binds the
+  model and tokenizer identities and proves bounded prefill/decode, reset,
+  cancellation, and teardown. A separate optimized-release packet records
+  performance within 2,080 total tokens on the named Windows RTX 4090 lane.
+  Their executed source identities and tolerances remain in `STATUS.md`;
+  maintained product/default and cross-device qualification remain separate.
 - Candle's maintained Q8 path and LFM2-VL release boundary remain unchanged.
 
-The implementation remains production-execution-free at this boundary. The
-C2a loader admits one exact GGUF byte identity, normalizes its directory and
-serialized MXFP4 wire layout, and can assemble a live CPU model object through
-one retained file session without per-tensor reopen/rehash. The load lease is
-held by the live model/runtime owner; Q8_0 dense text dequantization and
-tokenizer/generation integration remain deferred. Task 2 exercises the
-synthetic CPU reference and bounded ownership contracts; Task 3 exercises an
-explicit opt-in CUDA executor over the same bounded weights. Exact assembly is
-proven, but an inference receipt is still required before any production parity
-claim. The bounded native performance packet now supplies an optimized-release
-2080-total-token measurement envelope (2048 prompt tokens plus a 32-token
+Assembly, synthetic component proof, external short parity, and performance
+are separate evidence boundaries. The C2a loader admits one exact GGUF byte
+identity, normalizes its directory and serialized MXFP4 wire layout, and can
+assemble a live CPU model object through one retained file session without
+per-tensor reopen/rehash. The load lease is held by the live model/runtime
+owner; Q8_0 dense text assembly and maintained product integration remain
+deferred. Task 2 exercises the synthetic CPU reference and bounded ownership
+contracts; Task 3 exercises an
+explicit opt-in CUDA executor over the same bounded weights. Exact assembly
+alone does not prove inference; the separately retained short-parity receipt
+establishes only its pinned numerical boundary. The native performance packet
+supplies an optimized-release 2080-total-token measurement envelope
+(2048 prompt tokens plus a 32-token
 reserve) under the exact 20,000,000,000-byte Edge ceiling with a fail-closed
 physical monitor; larger target contexts are intentionally refused by the
 wrapper, and the 8160-prompt diagnostic is retained only as superseded evidence.
@@ -157,4 +162,4 @@ remain outside this opt-in receipt.
 
 ---
 
-AI-edited: 2026-09-20; agent=Codex; task=verify-fork-overlays; change=registered the isolated repository-wide overlay regression suite
+AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=evidence-cleanup | change=reconciled bounded external diagnostics without expanding product qualification

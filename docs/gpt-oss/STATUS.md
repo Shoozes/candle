@@ -2,6 +2,11 @@
 
 ## Assignment state
 
+Documentation closeout (2026-10-07) reviewed native `main` at
+`b274902312a39cbe1b0028141276f43e64b56096`. The corrected evidence descriptions
+and deferred acceleration note preserve the executed source identities below;
+this closeout adds no production-model or CUDA qualification.
+
 - Current phase: Task 3 bounded native performance qualification is complete
   for the observed-safe 2080-token total-context envelope. Short parity remains
   accepted; the optimized-release packet proves the 8/512/2048 prompt cases
@@ -10,7 +15,7 @@
   contexts above 8192 tokens, but the clean 8160-prompt diagnostic exceeded the
   observed GPU ceiling and is not accepted. This optional Candle track does not
   change EdgeSymbio or symbio-code.
-- Current baseline before this slice: `main` at
+- Historical performance qualification baseline: `main` at
   `f470d2de1f9370815cab2f3ebf83ba81825f1716`, tree
   `154da36bce009ff058681113ce2ece9c24a9b71f`.
 - The bounded implementation checkpoint is `4a4699981ed55bb11e857c58923c67133559145d`;
@@ -143,9 +148,10 @@
   `7b583341fe16729127f6d5b94a7b09ccae97e1a1` and llama.cpp commit
   `f072b103714dfa1eee531f80b24512faf38e3dd2`; see `SOURCES.md`. The CUDA
   kernel itself is a fresh Candle-native implementation.
-- The maintained Q8/default path is unchanged. No Edge-owned Harmony/profile
-  integration, training, hidden download, exact product model load, or
-  tokenizer work was added.
+- The maintained Q8/default path is unchanged. External model loading and
+  tokenizer use belong to the explicit diagnostic examples above; no
+  Edge-owned Harmony/profile integration, training, or hidden download follows
+  from those receipts.
 
 ## Public boundary
 
@@ -163,12 +169,11 @@ device, resource limit, overflow, cancellation, invalid input, backend, and
 kernel failures. Forward work stages a cloned cache and commits it only after
 all checkpoints pass; Candle tensor/device handles provide cleanup ownership.
 
-The CUDA path is not wired into the GGUF product loader, tokenizer, generation
-CLI, or maintained Q8/LFM2-VL defaults. Q8_0 dense text assembly remains
-explicitly deferred. The exact artifact result proves bounded weight assembly
-and model construction, not tokenizer or production numerical support. The
-short-parity example is an explicit opt-in diagnostic seam and does not change
-the maintained product path.
+The maintained GGUF/Q8/LFM2-VL product routes do not select this CUDA executor.
+Q8_0 dense text assembly remains explicitly deferred. Exact artifact assembly
+and construction alone do not prove inference. The separate opt-in short-parity
+and performance examples load the admitted model and tokenizer for their
+source-bound diagnostic gates; they do not change the maintained product path.
 
 ## Known limitations and blockers
 
@@ -182,8 +187,10 @@ the maintained product path.
   and maintained production support remain unproven.
 - Only F32 activations are accepted by this executor. Quantized text and split
   dense MMProj execution are intentionally deferred to the next ordered task.
-- The CUDA receipt is a synthetic fixture result on one Windows RTX 4090
-  lane; it is not a cross-device matrix or a production throughput claim.
+- Synthetic CUDA component proof, the pinned external short-parity receipt,
+  and the 2,080-token performance packet are distinct results on one Windows
+  RTX 4090 lane. None establishes a cross-device matrix or maintained product
+  qualification.
 - The earlier owner-artifact 32k-matrix run
   `artifacts/gpt-oss/performance/runs/20260921T071321303Z-3cd84d87e5b8`
   remains historical partial evidence: it reached 8/512/2048/8192 and timed
@@ -206,7 +213,8 @@ the maintained product path.
 ## Last green verification
 
 Native Windows/MSVC, locked dependencies for this correction and assembly
-slice:
+slice. The runtime results below are historical; the documentation cleanup
+did not rerun builds or model/CUDA inference:
 
 - `cargo fmt --all -- --check`: passed.
 - `cargo check --locked -p candle-core`: passed.
@@ -283,9 +291,77 @@ slice:
   passed with 200 registered paths and 21 shared paths.
 - `bash scripts/tests/test-verify-fork-overlays.sh`: passed all 7 isolated
   regression cases.
-- The prior guarded publication helper verified `f470d2de` on `origin/main`;
-  the current bounded source slice still requires its final clean-tree gate
-  and direct publication.
+- At that performance closeout, the guarded helper had verified `f470d2de`
+  on `origin/main` and the bounded slice still awaited publication. This is
+  historical checkpoint state; the [current Candle handoff](../lfm2-vl/STATUS.md)
+  records later publication without relabeling these receipts.
+
+## Deferred optional acceleration research
+
+Reviewed 2026-10-07 against Candle `main` at
+`b274902312a39cbe1b0028141276f43e64b56096`. This note records future research;
+it establishes no speedup or new qualification. GenAce MVP/LTS and GenUni's
+current foundation retain priority. The short-parity and observed-safe
+2,080-token performance receipts above retain their executed source identities.
+The [module header](../../candle-transformers/src/models/gpt_oss/mod.rs) and
+manifest describe these separate evidence boundaries; documentation cleanup
+does not renew the runtime receipts.
+
+### Profile existing safe cases first
+
+At this source, the [packed kernel](../../candle-kernels/src/gpt_oss_mxfp4.cu)
+assigns each route/output to one thread and reduces K serially. The
+[CUDA executor](../../candle-transformers/src/models/gpt_oss/cuda.rs) accepts F32
+activations, processes prefill tokens individually, concatenates KV tensors,
+and allocates routing/activation intermediates. These are source observations,
+not measured bottlenecks. Candidate techniques are:
+
+- Prefill: bounded token chunks and grouping by expert to expose larger GEMMs,
+  preserving causal/sliding/sink attention and router ordering.
+- Low-batch decode: cooperative Ada packed-MXFP4 reduction; large-M prefill
+  throughput does not predict one-token latency.
+- Both: fusion and scratch/KV buffer reuse while preserving staged cache commit,
+  cancellation and packed expert ownership. Lower precision or activation
+  quantization needs separate numerical proof.
+
+Dense LFM2 has no GPT-OSS MoE routing requirement. Dense projection,
+attention/convolution fusion and buffer reuse are separate hypotheses;
+GGUF text and LFM2-VL vision/projector layouts need their own proof. Preserve
+LFM convolution history across chunks and cache-reset behavior.
+
+### Primary-source shortlist
+
+The linked revisions are research snapshots checked on 2026-10-07, not new
+dependency pins or replacement golden references. No library/kernel was built
+or run for this note. Preserve upstream license notices if code is later adapted.
+
+| Reference | Hardware, precision/layout and shape constraints | Build/runtime/license and evidence limit |
+| --- | --- | --- |
+| [DeepGEMM `057ca596`](https://github.com/deepseek-ai/DeepGEMM/blob/057ca5964aae0879ff2e0eb71ee05a3cb0ba3df7/README.md), [API exports](https://github.com/deepseek-ai/DeepGEMM/blob/057ca5964aae0879ff2e0eb71ee05a3cb0ba3df7/deep_gemm/__init__.py) | Published CUDA kernels require SM90/SM100, excluding the recorded [RTX 4090's Ada SM89](https://developer.nvidia.com/cuda/gpus). FP8/FP4/BF16 APIs have distinct operand, scale, layout and alignment requirements. M-grouped contiguous prefill fixes N/K and aligns expert segments; masked decode is separate. SM90 FP32 versus SM100 packed UE8M0 scales are not Candle's U8 blocks/scales. cuBLASLt exports and legacy A100 Triton imports do not qualify Ada MXFP4. | [MIT](https://github.com/deepseek-ai/DeepGEMM/blob/057ca5964aae0879ff2e0eb71ee05a3cb0ba3df7/LICENSE). Python/PyTorch extension and runtime JIT; published minima: Python 3.8, PyTorch 2.3, C++20, CUDA 12.9, CUTLASS 4.0. Mega MoE additionally uses PyTorch 2.9 symmetric memory, multiple processes and NVLink dispatch/combine. Reference ideas only for this single-4090 lane; native Windows/Candle integration is unproven. |
+| [CUTLASS 4.8.0 `0b55a2f6`](https://github.com/NVIDIA/cutlass/blob/0b55a2f691d69981583568fd9eb69687b1f0de8a/README.md), [functionality](https://github.com/NVIDIA/cutlass/blob/0b55a2f691d69981583568fd9eb69687b1f0de8a/media/docs/cpp/functionality.md) | SM80+ dense F16/BF16 and grouped-GEMM building blocks are candidates for Ada. Match each kernel's M/N/K, batch, layout, strides, alignment and tile limits. Dense or INT4 support does not establish packed MXFP4 support; changing Candle F32 activations requires parity. | [BSD-3-Clause](https://github.com/NVIDIA/cutlass/blob/0b55a2f691d69981583568fd9eb69687b1f0de8a/LICENSE.txt). C++17/CUDA templates need Candle launch integration. The README retains a C++ 3.x Windows-build warning despite newer CuTe DSL Windows support; prove the selected native MSVC/kernel slice. No Ada MXFP4 qualification or decode gain follows from library support. |
+| [llama.cpp `88dcc460` MMVQ](https://github.com/ggml-org/llama.cpp/blob/88dcc460d628698bb8305b98c200c34f1edfdc04/ggml/src/ggml-cuda/mmvq.cu), [packed dot](https://github.com/ggml-org/llama.cpp/blob/88dcc460d628698bb8305b98c200c34f1edfdc04/ggml/src/ggml-cuda/vecdotq.cuh), [MMQ](https://github.com/ggml-org/llama.cpp/blob/88dcc460d628698bb8305b98c200c34f1edfdc04/ggml/src/ggml-cuda/mmq.cu) | Ada-aware MMVQ dispatch and MXFP4/Q8_1 dot techniques are relevant decode references; MMQ has separate batching criteria. Native FP4 instructions are Blackwell-gated. Dispatch depends on type, batch, expert count and architecture. GGML nibble/block layouts and quantized Q8_1 activations differ from Candle's adjacent-nibble/F32 executor. | [MIT](https://github.com/ggml-org/llama.cpp/blob/88dcc460d628698bb8305b98c200c34f1edfdc04/LICENSE); upstream documents [Windows CMake/MSVC and CUDA builds](https://github.com/ggml-org/llama.cpp/blob/88dcc460d628698bb8305b98c200c34f1edfdc04/docs/build.md). Study bounded techniques before adopting a runtime. Conversion and activation-quantization parity, memory and overhead need proof; source support supplies no Candle speedup. |
+| [Triton `fa2e589b`](https://github.com/triton-lang/triton/blob/fa2e589b55706d0de73d25641840e134f20a2c65/README.md) | Upstream lists Linux and NVIDIA CC8.0+, making Ada a hardware candidate. Custom reduction/fusion kernels still need exact dtype, block/scale packing, strides, M/N/K and batch support. | [MIT](https://github.com/triton-lang/triton/blob/fa2e589b55706d0de73d25641840e134f20a2c65/LICENSE). Python/LLVM/JIT toolchain; at most a future Linux/WSL research path with compilation/cache costs included. No native Windows or Candle MXFP4 qualification. |
+
+### Admission for a future optional path
+
+1. Profile the existing admitted 8/512/2048-prompt plus 32-generated cases within
+   the observed-safe 2,080-token envelope. Select one measured bottleneck and
+   one optimization; report prefill throughput and low-batch decode latency
+   separately, with GPT-OSS MoE and dense LFM2 evaluated independently.
+2. Require exact device capability, driver/toolchain, compiled kernel, precision,
+   blocks/scales/layout/strides, shape/batch and context support, plus explicit
+   opt-in initially. Detection is not proof. Unsupported or unqualified cases
+   retain the existing default fallback before mutable execution.
+3. Bind independent component/router/expert/attention/logit, cache/reset and
+   cancellation parity to the exact kernel/library/Candle/model/tokenizer
+   versions. Keep existing tolerances. Require actual latency/throughput and
+   physical peak-memory evidence on the same inputs, including conversion,
+   packing, quantization, JIT, launches and allocations.
+4. Existing physical VRAM/proof budgets, quiet-host checks, cancellation and
+   process/lease ownership remain authoritative; this note adds no disk cap.
+   On runtime failure preserve the failure/uncertain state and cache ownership;
+   never silently retry another backend after cache mutation. Research does not
+   reorder Task 4 or open a product qualification gate.
 
 ## Exact next task
 
@@ -296,4 +372,4 @@ infer Q8/default or broad maintained production support from this packet.
 
 ---
 
-AI-edited: 2026-09-21; agent=Codex; task=gpt-oss-performance-qualification; change=recorded the observed-safe release packet, superseded the physical-ceiling diagnostic, and closed model-free verification
+AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=evidence-cleanup | change=reconciled historical evidence language while preserving deferred acceleration research

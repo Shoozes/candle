@@ -2,7 +2,40 @@
 
 ## Current phase and source
 
-Current local batch complete (2026-10-07): review, scoped repair, and recheck of LFM2
+Current phase (2026-10-07): local native CPU adapter-admission closeout is
+complete; real adapter quality and Edge qualification remain externally gated.
+The closeout baseline is native Windows `main` at
+`b274902312a39cbe1b0028141276f43e64b56096`; the candidate adds the named task changes.
+The quantized LFM2 LoRA admission path now rejects a scale that becomes
+infinity or zero in F32 before active-adapter/cache mutation. Three new tests
+cover overflow, underflow, preserved cached continuation, and representable
+F32 boundaries. Five focused LoRA tests, 46 neighboring LFM tests, and the
+broader native CPU gate pass. Changed source files are `quantized_lfm2.rs`
+and `quantized_lfm2/lora.rs`, with the existing
+GPT-OSS documentation cleanup and LFM status/backlog/history/decision records.
+No kernel, dependency, checkpoint format, or consumer application is changed.
+No implementation work remains active in this local batch. The owner authorized
+scoped publication through `.tools/gitpush.ps1 -Yes`; its fresh gate and exact
+commit/tree/remote identity are recorded in `artifacts/publication/last-push.json`.
+
+The real adapter/quality/Edge milestone remains externally gated: inspection
+of the supplied `D:\huggingface-cache` found the base-model snapshots but no
+adapter, training manifest, or held-out evaluation receipt. No production
+weights were read or downloaded, and no production/CUDA inference was run.
+
+Previous documentation batch complete (2026-10-07): native Windows `main` at
+`b274902312a39cbe1b0028141276f43e64b56096` plus documentation changes.
+Review/recheck cover the existing research note, GPT-OSS evidence descriptions,
+and the prior LFM cache findings. Cleanup reconciles qualification wording and
+archives completed backlog entries. Changed files are the GPT-OSS module's
+documentation header, `docs/gpt-oss/{STATUS,SOURCES,MOD_MANIFEST}.md`, and
+`docs/lfm2-vl/{STATUS,TODO,HISTORY}.md`. No executable logic is changed.
+At that documentation recheck, the LFM source hashes and all nine retained
+receipt/log pairs matched the sealed prior gate. That slice ran documentation
+and format checks; it did not rerun runtime tests or model/CUDA inference.
+The later LoRA change and its new source-bound proof are described above.
+
+Previous local batch complete (2026-10-07): review, scoped repair, and recheck of LFM2
 cached forwarding on native Windows `main` at
 `ee1139b15b9364676ae208ab3ccd24437666d87a`. The starting checkout was clean.
 The reviewed batch comprises
@@ -30,7 +63,10 @@ There is no current code/proof blocker. CUDA, production-model, and WSL replay
 were not run. The owner authorized closeout and scoped publication on
 2026-10-07. The guarded helper independently records the exact clean commit,
 tree, fresh native gate, and remote-main identity in
-`artifacts/publication/last-push.json`; publication requires its success receipt.
+`artifacts/lfm2-lora-scale/20261007-d56162f4/prior-publication.json`.
+This retained copy of the earlier `last-push.json` records successful
+publication of `b274902312a39cbe1b0028141276f43e64b56096` with native gate exit
+code zero and matching remote tip at publication time.
 Referenced task evidence and the existing D: build cache are deliberately
 retained; no task-owned service or endpoint remains running.
 
@@ -73,6 +109,40 @@ rewritten to the sync revision.
   inherited upstream files are not claimed as overlay additions.
 
 ## Last green verification and active files
+
+The 2026-10-07 LoRA closeout passed these native Windows/MSVC CPU checks,
+all with exit code zero:
+
+- `cargo fmt --all -- --check` (no build or inference).
+- `cargo test --locked --offline --release -p candle-transformers --lib lfm2_lora`:
+  five passed; the two new rejection tests first failed on the prior implementation.
+- `cargo test --locked --offline --release -p candle-transformers --lib lfm2`:
+  46 passed.
+- `cargo check --locked --offline -p candle-core -p candle-nn -p candle-transformers -p candle-vlm`.
+- `cargo check --locked --offline -p candle-examples --example lfm2 --example quantized-lfm2 --example lfm2-vl`.
+- `cargo clippy --locked --offline -p candle-transformers --lib -- -D warnings`.
+- `cargo test --locked --offline -j 2 -p candle-core -p candle-transformers -p candle-vlm`:
+  146 transformer library tests passed with five external-model ignores,
+  37 VLM tests passed, and 45 core doctests passed with one existing ignore.
+- `cargo test --locked --offline -j 2 -p candle-examples --example lfm2-vl`:
+  all 33 passed.
+
+The first maintained test run failed with Cargo exit 101 in 44 core doctests
+(E0460/E0462 dependency-loading errors) while the 8 GiB job reached
+8,760,901,632 bytes. A single failing doctest and the complete gate passed
+after setting process-local `RUST_TEST_THREADS=2`; the complete retry peaked
+at 1,399,197,696 bytes. No cache artifacts, pins, or core sources were changed.
+Exact commands, logs, source hashes, and all eleven receipt/log pairs are
+sealed in `artifacts/lfm2-lora-scale/20261007-d56162f4/verification-summary.json`.
+Summary SHA-256: `5d94423b97fda9e577bb5d6b99fe6d6ebfc5b93838460e20d63ccc45b932cbcc`.
+All launched Cargo root PIDs were absent after owned Job Object teardown.
+Retain this evidence and the existing owner-managed D: build cache. Summary
+Bank routes and overlay path inventories remain unchanged. Native Summary
+Bank, module layout, both GPT/LFM manifests, the 236-path overlay union,
+whitespace, and local link/anchor checks pass. The guarded helper repeats
+the maintained integrity gate on the final clean commit.
+The review/recheck archive and this admission result are in the dated
+`HISTORY.md` entries. CUDA, production-model, and WSL proof were not run.
 
 The starting maintained native gate and merged core, nn, transformer, VLM,
 test-utils rollback, example, ONNX, strict CPU/CUDA Clippy and bounded GPU
@@ -123,8 +193,9 @@ The log is retained outside Git as
 Local checkpoint preparation preserves the original model/CUDA receipt source
 identities. This closeout ran no production model or CUDA proof. Strict Clippy
 required only private observer aliases and equivalent iterator spelling in
-the independent Qwen overlay. Source publication awaits a supported secure
-authentication route for the repository-owned publication helper.
+the independent Qwen overlay. The later guarded publication receipt described
+above resolves the source publication boundary; the October 1 verification
+remains historical.
 
 ## Known limitations and blockers
 
@@ -139,11 +210,19 @@ authentication route for the repository-owned publication helper.
 - Consumer repinning, production downloads, release tagging, GPT-OSS 32k,
   broader model/backend support, and post-release inherited panic/stub cleanup
   remain separate tasks. No consumer mutation follows implicitly from sync.
-- No trained, immutable LFM2.5-2.6B text adapter and held-out competence
-  evidence are available. Candle's adapter SHA label is caller supplied; Edge
+- A trained, immutable LFM2.5-2.6B text adapter and held-out competence
+  evidence still need to be supplied for this gate. Candle's adapter SHA label
+  is caller supplied; Edge
   must independently hash the retained serialized adapter bytes and own its
   provenance, session lease, receipt, and recovery checks. CUDA LoRA and
   real-model adapter numerical parity are unrun.
+
+Documentation-only acceleration research (2026-10-07, reviewed at
+`b274902312a39cbe1b0028141276f43e64b56096`) is maintained in
+[GPT-OSS status](../gpt-oss/STATUS.md#deferred-optional-acceleration-research),
+with references in this file and `TODO.md`. It establishes no speedup or new
+product qualification. GenAce MVP/LTS and GenUni's current foundation retain
+priority; existing runtime receipts and the next adapter gate remain unchanged.
 
 ## Exact next task
 
@@ -153,4 +232,4 @@ the real immutable adapter, held-out quality, and independently admitted
 serving contract in TODO. Do not download new inputs or repin consumers.
 
 ---
-AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=cached-forwarding | change=recorded reviewed cache repairs, native proof, and next external adapter gate
+AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=lora-scale-closeout | change=recorded native admission proof and guarded publication ownership while preserving external qualification

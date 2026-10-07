@@ -32,6 +32,14 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 - Verification: Exact-byte artifact hashes, model-generated target inventory,
   focused Candle admission tests, Edge job/API replay, and independent held-out
   comparison. No CUDA LoRA or 2.6B quality claim follows from synthetic tests.
+- Current disposition (2026-10-07): Candle's F32 coefficient prerequisite now
+  rejects conversion overflow/underflow before adapter or cache mutation; its
+  five local LoRA tests, 46 neighboring LFM tests, and native maintained CPU
+  closeout pass. The operator-supplied `D:\huggingface-cache` contains base snapshots,
+  including the 2.6B GGUF revision `84022ce711b28455e8c4fc364ce68c00cf995875`,
+  but snapshot metadata inspection found no retained adapter, training manifest,
+  or held-out receipt. GenUni must supply those inputs before the unchanged
+  real-adapter/Edge Done When gate can be executed.
 
 The 2026-09-27 pinned upstream sync is independent of the older consumer
 pin-adoption task below. Consumer pins and historical selection identities
@@ -83,95 +91,11 @@ Integration proof lives in `UPSTREAM_SYNC.md`.
   summary/layout/overlay verifiers, `git diff --check`, clean status, guarded
   remote equality, and annotated-tag peel/asset comparison.
 
-### [x] GPT-OSS Task 2: independent GGUF numerical and resource proof
-
-- What: Add independent numerical fixtures for the hash-pinned GPT-OSS GGUF
-  admission boundary, plus explicit token/cache byte bounds,
-  cancellation/rollback, and no-duplicate/load-leak evidence.
-- Why: Task 1 proves exact directory admission and tensor ownership but does
-  not prove runtime numerical behavior or bounded resource ownership.
-- When: Only after the Task 1 source and delivery commits are accepted; before
-  any packed CUDA executor or exact-model parity claim.
-- Where: `candle-transformers/src/models/gpt_oss/`, focused fixtures/tests,
-  `docs/gpt-oss/STATUS.md`, and the owned verification records. Keep the
-  selected production artifact external and do not add downloads or weights.
-- How: Use reference values generated independently of the implementation
-  under test, exercise bounded token/cache paths and cancellation rollback,
-  and record exact counts, byte ceilings, identities, and cleanup results.
-- Done when: Independent component values, resource bounds, rollback, and
-  duplicate/load-leak checks pass on native CPU with no Q8/default behavior
-  change; CUDA remains unopened until this gate is green. **Complete:** the
-  digest-pinned synthetic oracle and all resource/rollback/ownership checks
-  pass in the 27-test focused GPT-OSS run.
-- Verification: Focused GPT-OSS tests, locked native transformer checks,
-  summary-bank and overlay verifiers, `cargo fmt --all -- --check`,
-  `git diff --check`, and the full guarded publication gate.
-
-### [x] GPT-OSS Task 3: packed CUDA executor
-
-- What: Design and implement a packed CUDA executor for the admitted GPT-OSS
-  GGUF representation without silently densifying the major MXFP4 weights.
-- Why: CUDA work is ordered behind the independent CPU numerical and resource
-  proof and must not hide model, cache, or ownership defects.
-- When: Only after Task 2 is accepted and the owner authorizes this separate
-  gate; exact-product numerical parity remains separately gated from the
-  bounded assembly proof.
-- Where: `candle-transformers/src/models/gpt_oss/`, CUDA-gated kernels/tests,
-  and the GPT-OSS proof records. Do not change Edge/Harmony integration or the
-  maintained Q8 default.
-- How: Preserve the admitted tensor identity, prove packed-resident ownership,
-  match the independent CPU oracle on the available CUDA lane, and publish
-  explicit device memory, cancellation, rollback, and cleanup evidence.
-- Done when: CPU parity remains green, the packed CUDA path is opt-in and
-  feature-gated, no dense fallback is hidden, resource/cleanup receipts pass,
-  and production claims remain excluded without a numerical/tokenizer
-  inference receipt.
-  **Complete:** the native RTX 4090 lane passed direct packed-kernel,
-  attention/router component, uncached/cached forward, exact cache admission,
-  cancellation rollback, eviction/retry, typed failure, and pre-device static
-  budget checks at the pinned oracle tolerance.
-- Corrective follow-up in the current checkpointed slice is complete: the
-  expert helper's pure contribution contract is explicit, the zero-expert
-  post-MoE residual is asserted directly, an independently generated
-  two-layer CPU/reference/CUDA trace covers sliding/full attention, sinks,
-  unequal routing, and nontrivial positions, and packed CUDA narrowed views
-  match their materialized-copy path with launch guards.
-- The same bounded slice now assembles fused and converter-style split
-  synthetic GGUF fixtures, then the exact owner-selected artifact, through one
-  retained load session. It now normalizes the GGML MXFP4 wire layout before
-  execution, denies Windows write/delete sharing, keeps the identity-verified
-  handle through loading, and binds the registry lease to the live model/runtime
-  owner. CUDA validates all public config fields and commits staged cache state
-  only after synchronization, finite-output, and final-cancellation checks.
-  It proves `GptOssWeights` construction and registry cleanup without copying
-  model bytes into the repository; tokenizer, forward-logit, and production
-  parity remain deferred.
-- Current verification: the focused CPU run passed `37/37` with one ignored
-  exact-artifact test; the CUDA run passed `45/45` with one ignored test; the
-  owner-selected external-artifact assembly test passed in `613.20s`.
-- Short exact-parity follow-up is complete for its bounded CUDA gate: the
-  hash-bound runner matched all 20 tokenizer IDs, loaded the exact external
-  GGUF, constructed CUDA state, verified cancellation rollback, and passed
-  prefill/decode under exact top-1, top-k, mean, and total-variation criteria.
-  It also passed deterministic reset/replay and registry teardown. The raw
-  prefill full-row maximum `0.4869547` is retained as a clipped-tail
-  diagnostic; it does not fail the separately bounded criteria. The success
-  receipt is `artifacts/gpt-oss/short-parity/receipt.json`.
-- Verification: CPU focused/full gates first, then the authorized CUDA build,
-  numerical comparison, memory/cleanup receipt, summary-bank and overlay
-  verifiers, and guarded publication.
-  Performance follow-up: the bounded harness now defaults to optimized
-  release, records exact build/model/tokenizer/GPU/runtime identities, enforces
-  the exact 20,000,000,000-byte Edge ceiling with fail-closed observed-device
-  monitoring, refuses targets above 8192 total tokens, records checked
-  static+KV+workspace accounting, and preserves cancellation, stop reason,
-  incremental evidence, and cleanup attribution. Its model-free qualification
-  suite passes 16 tests. The accepted owner packet passes 8/512/2048 prompt
-  cases with a 32-token reserve at
-  `artifacts/gpt-oss/performance/bounded-release-packet-safe.json`. The clean
-  8160-prompt diagnostic is retained but superseded after a physical-ceiling
-  sample; the former 32k-matrix timeout remains historical, and no 16k/32k
-  optimization claim is made.
+Completed GPT-OSS Tasks 2 and 3 are
+[archived in HISTORY](HISTORY.md#2026-10-07---gpt-oss-evidence-and-handoff-cleanup).
+Their current source-bound acceptance limits remain in
+[GPT-OSS status](../gpt-oss/STATUS.md#accepted-capability-rows).
+Task 4 and maintained product qualification remain separately gated.
 
 ### [ ] GPT-OSS Task 4: quantized text plus split dense MMProj
 
@@ -247,6 +171,13 @@ Integration proof lives in `UPSTREAM_SYNC.md`.
   `git diff --check`, and the bounded external oracle/Candle receipt audit.
 
 ## Sequencing holds
+
+Deferred GPT-OSS-focused optional acceleration research is maintained in
+[GPT-OSS status](../gpt-oss/STATUS.md#deferred-optional-acceleration-research).
+Profile existing safe cases before selecting one optimization; exact support
+detection, explicit opt-in and version-bound parity/memory/performance proof
+must precede admission. GenAce MVP/LTS and GenUni's current foundation retain
+priority; this note does not reorder Task 4 or current product gates.
 
 - Optional LFM2-VL captioning in SnapFlash waits for the diffusion runtime and
   numerical ControlNet boundary; it must use Candle's public hybrid loader and
@@ -396,4 +327,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence
+AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=lora-scale-closeout | change=recorded the local F32 prerequisite and retained the external adapter/quality gate
