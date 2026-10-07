@@ -2,6 +2,89 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-10-07 - LFM2 cached forwarding review, repair, and recheck
+
+Complete on native Windows/MSVC Rust 1.97.1, PowerShell 7.6.6, local `main`
+at `ee1139b15b9364676ae208ab3ccd24437666d87a` plus the named working-tree
+changes. The starting checkout was clean; review/repair stayed local. The owner
+subsequently authorized closeout, a scoped commit, and guarded publication.
+
+- Review used the current Summary Bank and selected source for dense/quantized
+  LFM2, the LoRA hook, hybrid/composite consumers, Qwen admission/cache handoff,
+  and local proof ownership. It did not requalify production models, CUDA,
+  consumer applications, or unrelated inherited architectures.
+- Rechecked defects: both short-convolution paths ignored cached inputs when
+  a continuation contained more than one token. A hand-calculated three-tap
+  oracle exposed an exact error of 24 in both paths. Quantized forwarding
+  also reached a late RoPE error for an overflowing position span instead of
+  rejecting it before allocation and convolution-state mutation. Those three
+  regression cases failed before the production repair and pass afterward.
+- Repairs retain the preceding kernel-width-minus-one inputs for cached
+  chunks, save the combined input tail, restart convolution state at position
+  zero, and check quantized position arithmetic/context before mask or layer
+  work. Public forwarding signatures, loader formats, LoRA behavior, and
+  inherited architectures remain unchanged.
+- Five new tests cover the exact component oracle and single-token restart in
+  both towers, official dense hidden-state fixtures across mixed chunk
+  lengths, quantized prefix equivalence, overflow/one-over rejection with
+  exact cache recovery, and an accepted full-context boundary. The starting
+  focused gate passed 38/38; the repaired focused gate passed 43/43. The final
+  maintained run passed 143 transformer tests with five external-model tests
+  ignored, 37 VLM tests, core unit/integration/doc tests, and 33 LFM2-VL example
+  tests. No failed current-source gate remains.
+
+Exact successful commands from the canonical checkout:
+
+```powershell
+cargo test --release --locked --offline -p candle-transformers lfm2 --lib
+cargo check --locked --offline -p candle-core -p candle-nn -p candle-transformers -p candle-vlm
+cargo check --locked --offline -p candle-examples --example lfm2 --example quantized-lfm2 --example lfm2-vl
+cargo clippy --locked --offline -p candle-transformers --lib -- -D warnings
+cargo test --release --locked --offline -p candle-core -p candle-transformers -p candle-vlm
+cargo test --release --locked --offline -p candle-examples --example lfm2-vl
+cargo fmt --all -- --check
+pwsh -NoProfile -File scripts/lfm2-vl/verify-summary-bank.ps1
+python -B scripts/lfm2-vl/verify-module-layout.py
+git diff --check
+```
+
+Git for Windows Bash also ran `bash scripts/lfm2-vl/verify-mod-manifest.sh`
+and `bash scripts/verify-fork-overlays.sh`: 164 LFM paths (17 modifications,
+147 additions), fixture attributes, and all 236 paths across five overlays
+passed at the pinned upstream baseline. Summary Bank routes and publication
+paths did not change; their existing budgets and ownership remain valid.
+
+Cargo ran offline with two build jobs, incremental compilation disabled, and
+the existing D: target/temp directories. The repository's
+`scripts/lfm2-vl/run-bounded-oracle.ps1` owned each process tree under an 8 GiB
+Job Object limit. All nine launches, including the expected regression
+failures, exited and their root PIDs were absent after cleanup. The final
+source-file hashes were unchanged across the complete maintained gate.
+
+The exact command arrays, exit codes, timings, memory observations, log
+hashes, and candidate source hashes are sealed in
+`artifacts/lfm2-cache/20261007-e7e19aff/verification-summary.json`, SHA-256
+`f29bfb6cd565d6d75a015f47c46a946b296ca280bf68a45b0bd2cb4c42f8c4b3`.
+Evidence remains ignored. No production download, model/CUDA run, WSL replay,
+consumer change, release tag, or new production acceptance is implied.
+The next existing work record is real LFM2.5-2.6B adapter qualification in
+`TODO.md`: GenUni must supply immutable training/held-out evidence before
+Edge's admitted base/adapter/base, resource, cancellation, and recovery gate.
+
+Closeout rechecked all three current Rust source hashes, the sealed proof
+summary and all nine receipts, and confirmed every prior owned root PID was
+absent. A fresh public `git fetch origin main` observed local/remote parity at
+the baseline above, an empty index, and exactly six task-owned modified paths.
+Summary Bank already routes the implementations and tests; no route rewrite
+or pack regeneration is needed. Referenced receipts/logs and the existing D:
+build cache remain deliberately retained. Publication uses only
+`.tools/gitpush.ps1 -Yes`, which reruns the native locked/offline gate on the
+clean commit and verifies remote main before writing its separate ignored
+receipt. That receipt, rather than the earlier working-tree proof, identifies
+the saved commit. No release tag or deployment is part of this closeout.
+
+AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=cached-forwarding | change=recorded bounded review, repaired defects, exact native verification, and remaining qualification boundary
+
 ## 2026-10-01 - Quantized LFM2 synthetic text-LoRA mechanics
 
 - Added a bounded additive F32 low-rank path beside retained GGUF `QMatMul`

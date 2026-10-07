@@ -188,7 +188,7 @@ impl AttentionLayer {
 }
 
 impl ShortConvLayer {
-    fn forward(&mut self, xs: &Tensor, _index_pos: usize) -> Result<Tensor> {
+    fn forward(&mut self, xs: &Tensor, index_pos: usize) -> Result<Tensor> {
         let (b_sz, seq_len, hidden) = xs.dims3()?;
         let bcx = self.in_proj.forward(xs)?.transpose(1, 2)?;
         let b = bcx.narrow(1, 0, hidden)?;
@@ -204,10 +204,15 @@ impl ShortConvLayer {
             conv_weight = conv_weight.t()?.contiguous()?;
         }
         let conv_weight = conv_weight.contiguous()?;
+        let cached_state = if index_pos > 0 {
+            self.cache.clone()
+        } else {
+            None
+        };
 
         let mut conv_out = if seq_len == 1 {
-            let mut state = if let Some(cache) = &self.cache {
-                cache.clone()
+            let mut state = if let Some(cache) = cached_state {
+                cache
             } else {
                 Tensor::zeros((b_sz, hidden, self.l_cache), bx.dtype(), bx.device())?
             };
@@ -224,6 +229,13 @@ impl ShortConvLayer {
                 .sum_keepdim(2)?
                 .contiguous()?
         } else {
+            let (conv_input, prefix_len) = match cached_state {
+                Some(state) if self.l_cache > 1 => (
+                    Tensor::cat(&[state.narrow(2, 1, self.l_cache - 1)?, bx.clone()], 2)?,
+                    self.l_cache - 1,
+                ),
+                _ => (bx.clone(), 0),
+            };
             let conv = Conv1d::new(
                 conv_weight
                     .reshape((hidden, 1, self.l_cache))?
@@ -235,13 +247,14 @@ impl ShortConvLayer {
                     ..Default::default()
                 },
             );
-            let mut out = conv.forward(&bx.contiguous()?)?;
-            out = out.narrow(2, 0, seq_len)?;
+            let out = conv
+                .forward(&conv_input.contiguous()?)?
+                .narrow(2, prefix_len, seq_len)?;
 
             if self.l_cache > 0 {
-                let (_, _, cur_len) = bx.dims3()?;
+                let cur_len = conv_input.dim(2)?;
                 let start = cur_len.saturating_sub(self.l_cache);
-                let mut cache_src = bx.narrow(2, start, cur_len - start)?;
+                let mut cache_src = conv_input.narrow(2, start, cur_len - start)?;
                 if cache_src.dims3()?.2 < self.l_cache {
                     let pad = self.l_cache - cache_src.dims3()?.2;
                     let zeros =
@@ -822,7 +835,9 @@ impl ModelWeights {
     }
 
     fn mask(&mut self, seq_len: usize, index_pos: usize, device: &Device) -> Result<Tensor> {
-        let kv_len = index_pos + seq_len;
+        let kv_len = index_pos.checked_add(seq_len).ok_or_else(|| {
+            candle::Error::Msg("quantized LFM2 sequence position overflow".into())
+        })?;
         if let Some(mask) = self.masks.get(&(seq_len, kv_len)) {
             Ok(mask.clone())
         } else {
@@ -966,6 +981,15 @@ impl ModelWeights {
         let (_b_sz, seq_len, _) = input_embeds.dims3()?;
         if seq_len == 0 {
             candle::bail!("quantized LFM2 cannot forward an empty sequence")
+        }
+        let end_pos = index_pos.checked_add(seq_len).ok_or_else(|| {
+            candle::Error::Msg("quantized LFM2 sequence position overflow".into())
+        })?;
+        if end_pos > self.metadata.context_length {
+            candle::bail!(
+                "quantized LFM2 sequence positions [{index_pos}, {end_pos}) exceed context_length {}",
+                self.metadata.context_length
+            )
         }
         let mask = if seq_len == 1 {
             None
@@ -1197,6 +1221,105 @@ mod tests {
     fn assert_close(actual: &Tensor, expected: &Tensor, tolerance: f32) -> Result<()> {
         let max_abs = (actual - expected)?.abs()?.max_all()?.to_scalar::<f32>()?;
         assert!(max_abs <= tolerance, "max absolute error {max_abs}");
+        Ok(())
+    }
+
+    #[test]
+    fn cached_forward_keeps_short_convolution_history() -> Result<()> {
+        let device = Device::Cpu;
+        let projection = Tensor::from_slice(
+            &[1f32, 0., 0., 1., 1., 0., 0., 1., 1., 0., 0., 1.],
+            (6, 2),
+            &device,
+        )?;
+        let identity = Tensor::from_slice(&[1f32, 0., 0., 1.], (2, 2), &device)?;
+        let input = Tensor::from_slice(
+            &[
+                1f32, 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14.,
+            ],
+            (1, 7, 2),
+            &device,
+        )?;
+        // Each output is x times the sum of the last three squared inputs.
+        let expected = Tensor::from_slice(
+            &[
+                1f32, 8., 30., 80., 175., 336., 581., 928., 1395., 2000., 2761., 3696., 4823.,
+                6160.,
+            ],
+            (1, 7, 2),
+            &device,
+        )?;
+        for chunks in [vec![1, 2, 2, 2], vec![2, 1, 3, 1], vec![3, 2, 2]] {
+            let mut conv = ShortConvLayer {
+                in_proj: AdaptedLinear::new("in".into(), QMatMul::Tensor(projection.clone()))?,
+                out_proj: AdaptedLinear::new("out".into(), QMatMul::Tensor(identity.clone()))?,
+                conv: Tensor::ones((2, 3), DType::F32, &device)?,
+                l_cache: 3,
+                cache: None,
+            };
+            let mut position = 0;
+            for length in chunks {
+                let actual = conv.forward(&input.narrow(1, position, length)?, position)?;
+                assert_close(&actual, &expected.narrow(1, position, length)?, 0.0)?;
+                position += length;
+            }
+            assert_close(
+                &conv.forward(&input.narrow(1, 0, 1)?, 0)?,
+                &expected.narrow(1, 0, 1)?,
+                0.0,
+            )?;
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn cached_forward_matches_quantized_prefixes() -> Result<()> {
+        let ids = Tensor::from_slice(&[1u32, 4, 7, 3, 8, 12, 2], (1, 7), &Device::Cpu)?;
+        let mut reference = tiny_verified_model()?;
+        for chunks in [vec![1, 2, 2, 2], vec![2, 1, 3, 1], vec![3, 2, 2]] {
+            let mut model = tiny_verified_model()?;
+            let mut position = 0;
+            for length in chunks {
+                reference.clear_cache();
+                let expected = reference.forward(&ids.narrow(1, 0, position + length)?, 0)?;
+                let chunk = model.embed_tokens(&ids.narrow(1, position, length)?)?;
+                let actual = model.forward_embeds(&chunk, position)?;
+                assert_close(&actual, &expected, 1e-4)?;
+                position += length;
+            }
+            assert_eq!(position, ids.dim(1)?);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn cached_forward_rejects_invalid_positions_without_mutating_state() -> Result<()> {
+        let ids = Tensor::from_slice(&[1u32, 2], (1, 2), &Device::Cpu)?;
+        let next = Tensor::from_slice(&[3u32], (1, 1), &Device::Cpu)?;
+        let mut reference = tiny_verified_model()?;
+        reference.forward(&ids, 0)?;
+        let expected = reference.forward(&next, 2)?;
+        let context = reference.metadata().context_length;
+        for (position, length, message) in [
+            (usize::MAX, 2, "sequence position overflow"),
+            (context - 1, 2, "exceed context_length"),
+            (context, 1, "exceed context_length"),
+        ] {
+            let mut model = tiny_verified_model()?;
+            model.forward(&ids, 0)?;
+            let mask_count = model.masks.len();
+            let embeds = model.embed_tokens(&ids.narrow(1, 0, length)?)?;
+            let error = model.forward_embeds(&embeds, position).unwrap_err();
+            assert!(error.to_string().contains(message), "{error}");
+            assert_eq!(model.masks.len(), mask_count);
+            assert_close(&model.forward(&next, 2)?, &expected, 0.0)?;
+        }
+        let mut model = tiny_verified_model()?;
+        let full_context = Tensor::ones((1, context), DType::U32, &Device::Cpu)?;
+        assert_eq!(
+            model.forward(&full_context, 0)?.dims(),
+            [1, model.vocab_size()]
+        );
         Ok(())
     }
 

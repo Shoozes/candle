@@ -211,7 +211,13 @@ impl ShortConv {
         })
     }
 
-    fn forward(&self, x: &Tensor, block_idx: usize, cache: &mut Cache) -> Result<Tensor> {
+    fn forward(
+        &self,
+        x: &Tensor,
+        index_pos: usize,
+        block_idx: usize,
+        cache: &mut Cache,
+    ) -> Result<Tensor> {
         let _enter = self.span.enter();
         let (b_sz, seq_len, _) = x.dims3()?;
 
@@ -226,11 +232,16 @@ impl ShortConv {
 
         // Prepare conv weight: squeeze to (hidden_size, l_cache) for element-wise, or keep for Conv1d
         let conv_weight = self.conv_weight.squeeze(1)?;
+        let cached_state = if cache.use_kv_cache && index_pos > 0 {
+            cache.conv_states[block_idx].clone()
+        } else {
+            None
+        };
 
         let conv_out = if seq_len == 1 {
             // Token-by-token generation: use cached state
-            let mut state = match &cache.conv_states[block_idx] {
-                Some(s) => s.clone(),
+            let mut state = match cached_state {
+                Some(state) => state,
                 None => Tensor::zeros(
                     (b_sz, self.hidden_size, self.l_cache),
                     bx.dtype(),
@@ -255,7 +266,14 @@ impl ShortConv {
                 .sum_keepdim(2)?
                 .contiguous()?
         } else {
-            // Prefill: use Conv1d
+            // Retain the causal prefix when continuing with more than one token.
+            let (conv_input, prefix_len) = match cached_state {
+                Some(state) if self.l_cache > 1 => (
+                    Tensor::cat(&[state.narrow(2, 1, self.l_cache - 1)?, bx.clone()], 2)?,
+                    self.l_cache - 1,
+                ),
+                _ => (bx.clone(), 0),
+            };
             let conv = Conv1d::new(
                 self.conv_weight.clone(),
                 None,
@@ -265,14 +283,16 @@ impl ShortConv {
                     ..Default::default()
                 },
             );
-            let mut out = conv.forward(&bx)?;
-            out = out.narrow(2, 0, seq_len)?;
+            let out = conv
+                .forward(&conv_input.contiguous()?)?
+                .narrow(2, prefix_len, seq_len)?;
 
             // Update cache with last l_cache tokens
             if cache.use_kv_cache && self.l_cache > 0 {
-                let start = seq_len.saturating_sub(self.l_cache);
-                let cache_len = seq_len - start;
-                let mut cache_src = bx.narrow(2, start, cache_len)?;
+                let input_len = conv_input.dim(2)?;
+                let start = input_len.saturating_sub(self.l_cache);
+                let cache_len = input_len - start;
+                let mut cache_src = conv_input.narrow(2, start, cache_len)?;
                 if cache_len < self.l_cache {
                     let pad = self.l_cache - cache_len;
                     let zeros = Tensor::zeros(
@@ -354,7 +374,7 @@ impl DecoderLayer {
 
         let x = match &self.kind {
             LayerKind::Attention(attn) => attn.forward(&x, index_pos, block_idx, cache)?,
-            LayerKind::ShortConv(conv) => conv.forward(&x, block_idx, cache)?,
+            LayerKind::ShortConv(conv) => conv.forward(&x, index_pos, block_idx, cache)?,
         };
 
         let x = (x + residual)?;

@@ -2,6 +2,38 @@
 
 ## Current phase and source
 
+Current local batch complete (2026-10-07): review, scoped repair, and recheck of LFM2
+cached forwarding on native Windows `main` at
+`ee1139b15b9364676ae208ab3ccd24437666d87a`. The starting checkout was clean.
+The reviewed batch comprises
+`candle-transformers/src/models/lfm2.rs`,
+`candle-transformers/src/models/lfm2/layers.rs`, and
+`candle-transformers/src/models/quantized_lfm2.rs`, with status, decision,
+and history records. No implementation work remains active in this batch.
+Both towers preserve convolution history across multi-token continuations
+and restart it at position zero. Quantized position overflow and context
+excess fail before mask allocation or cache mutation. The exact component,
+official dense fixture, quantized prefix, and rejected-span recovery checks
+pass. Public forwarding signatures and LoRA admission remain intact.
+
+The native locked/offline baseline passed 38 LFM2 tests; five new regressions
+bring the focused gate to 43 passing tests. Final maintained tests passed,
+including 143 transformer tests (five external-model tests ignored), 37 VLM
+tests, and all 33 LFM2-VL example tests. Core/nn/transformer/VLM and all three
+LFM2 example checks, strict transformer Clippy, formatting, layout, Summary
+Bank, LFM manifest, overlay union, and whitespace checks passed. Exact commands
+and failure-to-pass evidence are in the dated `HISTORY.md` entry. The sealed
+summary is `artifacts/lfm2-cache/20261007-e7e19aff/verification-summary.json`,
+SHA-256 `f29bfb6cd565d6d75a015f47c46a946b296ca280bf68a45b0bd2cb4c42f8c4b3`.
+All nine owned Cargo process trees exited and their root PIDs were absent.
+There is no current code/proof blocker. CUDA, production-model, and WSL replay
+were not run. The owner authorized closeout and scoped publication on
+2026-10-07. The guarded helper independently records the exact clean commit,
+tree, fresh native gate, and remote-main identity in
+`artifacts/publication/last-push.json`; publication requires its success receipt.
+Referenced task evidence and the existing D: build cache are deliberately
+retained; no task-owned service or endpoint remains running.
+
 Upstream stabilization: integrated pinned Hugging Face main
 `aebc405d2b4bf42808387e0ca597bf7dad9b565f` while retaining the fork's public
 contracts. Starting clean local/remote main:
@@ -49,7 +81,7 @@ regressions passed. Exact commands, evidence and platform limits are in
 clean delivery commit and records the exact remote identity in ignored
 `artifacts/publication/last-push.json`.
 
-For the current local text-adapter candidate, the native release
+For the checkpointed text-adapter slice, the native release
 `quantized_lfm2` test filter passed 3/3 and `lfm2_vl` passed 27/27 on
 2026-10-01. Locked/offline CPU checks passed for candle-core, candle-nn,
 candle-transformers, candle-vlm, and the quantized-LFM2 example; the bounded
@@ -60,7 +92,7 @@ and was corrected; the initial non-elevated D: build could not open Cargo's
 lock under the sandbox, then the approved D: build passed. The first CPU
 check script invocation omitted its required filter and started no job.
 
-Active LFM2-VL local candidate: `candle-transformers/src/models/quantized_lfm2.rs`
+Checkpointed LFM2-VL text-adapter support: `candle-transformers/src/models/quantized_lfm2.rs`
 and `quantized_lfm2/lora.rs`, with owned manifest, decision, status, backlog,
 history, summary-bank, and shared overlay records. A bounded synthetic text
 LoRA path retains the GGUF QMatMul base, admits canonical linear targets and
@@ -115,9 +147,10 @@ authentication route for the repository-owned publication helper.
 
 ## Exact next task
 
-The focused native text-adapter gate is complete. GenUni and Edge next own
+The local cached-forwarding repair and focused native text-adapter gate are
+complete. GenUni and Edge next own
 the real immutable adapter, held-out quality, and independently admitted
 serving contract in TODO. Do not download new inputs or repin consumers.
 
 ---
-AI-edited: 2026-10-01T17:47:56+00:00 | agent=Codex/candle_edge_closeout | model=unknown | effort=unknown | task=closeout | change=recorded native gate and remaining publication boundary
+AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=cached-forwarding | change=recorded reviewed cache repairs, native proof, and next external adapter gate

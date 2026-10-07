@@ -464,6 +464,99 @@ mod tests {
     }
 
     #[test]
+    fn cached_forward_keeps_short_convolution_history() -> Result<()> {
+        let device = Device::Cpu;
+        let projection = Tensor::from_slice(
+            &[1f32, 0., 0., 1., 1., 0., 0., 1., 1., 0., 0., 1.],
+            (6, 2),
+            &device,
+        )?;
+        let identity = Tensor::from_slice(&[1f32, 0., 0., 1.], (2, 2), &device)?;
+        let conv = ShortConv {
+            in_proj: Linear::from_weights(projection, None),
+            out_proj: Linear::from_weights(identity, None),
+            conv_weight: Tensor::ones((2, 1, 3), DType::F32, &device)?,
+            l_cache: 3,
+            hidden_size: 2,
+            span: tracing::span!(tracing::Level::TRACE, "test-shortconv"),
+        };
+        let input = Tensor::from_slice(
+            &[
+                1f32, 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14.,
+            ],
+            (1, 7, 2),
+            &device,
+        )?;
+        // Each output is x times the sum of the last three squared inputs.
+        let expected = Tensor::from_slice(
+            &[
+                1f32, 8., 30., 80., 175., 336., 581., 928., 1395., 2000., 2761., 3696., 4823.,
+                6160.,
+            ],
+            (1, 7, 2),
+            &device,
+        )?;
+        for chunks in [vec![1, 2, 2, 2], vec![2, 1, 3, 1], vec![3, 2, 2]] {
+            let mut cache = Cache::new(true, DType::F32, &tiny_config(true), &device)?;
+            let mut position = 0;
+            for length in chunks {
+                let actual =
+                    conv.forward(&input.narrow(1, position, length)?, position, 0, &mut cache)?;
+                assert_close(
+                    &actual,
+                    &expected.narrow(1, position, length)?,
+                    0.0,
+                    "cached short-convolution oracle",
+                )?;
+                position += length;
+            }
+            let restarted = conv.forward(&input.narrow(1, 0, 1)?, 0, 0, &mut cache)?;
+            assert_close(
+                &restarted,
+                &expected.narrow(1, 0, 1)?,
+                0.0,
+                "single-token restart clears convolution history",
+            )?;
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn cached_forward_matches_unchunked_fixture() -> Result<()> {
+        let device = Device::Cpu;
+        let weights = VarBuilder::from_slice_safetensors(TINY_FIXTURE, DType::F32, &device)?;
+        let model = Model::new_from_parts(
+            &tiny_config(true),
+            weights.pp("weights").pp("model").pp("language_model"),
+            None,
+        )?;
+        let tensors = candle::safetensors::load_buffer(TINY_FIXTURE, &device)?;
+        let input = tensors
+            .get("stage.multimodal.merged_embeddings")
+            .ok_or_else(|| candle::Error::Msg("missing tiny merged embeddings".into()))?;
+        let expected = tensors
+            .get("stage.language.hidden_states")
+            .ok_or_else(|| candle::Error::Msg("missing tiny language hidden states".into()))?;
+        for chunks in [vec![1, 2, 2], vec![2, 1, 2], vec![2, 2, 1], vec![3, 2]] {
+            let mut cache = Cache::new(true, DType::F32, &tiny_config(true), &device)?;
+            let mut position = 0;
+            for length in chunks {
+                let chunk = input.narrow(1, position, length)?;
+                let actual = model.forward_hidden(&chunk, position, &mut cache)?;
+                assert_close(
+                    &actual,
+                    &expected.narrow(1, position, length)?,
+                    1e-3,
+                    "chunked cached hidden states vs official fixture",
+                )?;
+                position += length;
+            }
+            assert_eq!(position, input.dim(1)?);
+        }
+        Ok(())
+    }
+
+    #[test]
     fn fixture_proves_dense_embedding_and_cached_decode_parity() -> Result<()> {
         let device = Device::Cpu;
         let weights_vb = VarBuilder::from_slice_safetensors(TINY_FIXTURE, DType::F32, &device)?;

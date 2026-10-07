@@ -1,5 +1,22 @@
 # LFM2.5-VL Decisions
 
+## D-0069: Preserve LFM2 convolution history across cached chunks
+
+Status: Accepted; native CPU fixture, exact component, and maintained gates pass.
+
+Dense and quantized LFM2 carry the previous `conv_l_cache - 1` causal inputs
+into a multi-token continuation and retain the tail of that combined input
+for the next call. Position zero starts fresh convolution state, matching the
+attention cache's existing restart behavior. Public forwarding signatures,
+checkpoint formats, and LoRA admission remain unchanged.
+
+Quantized forwarding checks the complete position span against its admitted
+context before mask construction or layer mutation. Rejected spans preserve
+the prior caches. An exact three-tap component oracle covers mixed chunk
+lengths and single-token restart; the pinned official dense fixture and tiny
+GGUF prefix comparisons cover the integrated paths. This is CPU correctness
+evidence and does not refresh production or CUDA acceptance.
+
 ## D-0068: Add hash-bound text LoRA beside quantized LFM2 linears
 
 Status: Local synthetic mechanics proven; real adapter admission and product quality pending.
@@ -1586,4 +1603,4 @@ production support. The CUDA narrowed-view regression is accepted on the
 existing native lane; the packed CUDA path remains opt-in.
 
 ---
-AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence
+AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=cached-forwarding | change=recorded causal-prefix and early position-validation contracts
