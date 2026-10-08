@@ -47,22 +47,29 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   selecting any adapter investment; exposed development results cannot qualify
   unseen competence. Completed preparation identities and original proof are
   [in HISTORY](HISTORY.md#2026-10-08---genuni-and-edge-diagnostic-preparation).
-- Exact next batch: Obtain acceptance of the prepared eight-call CPU/C-output
-  invocation and current `bridge-contract.json`, recheck pins/counters, then
-  retain every failed/refused/unknown attempt and verify owned cleanup. The
-  frozen 384/2048 public views and sampler differences stay explicit; no retry
-  or cropping. Review actual explanations/citations before any quality claim.
-  The proposed resource policy remains 8 GiB server/1 GiB client Jobs, 32 GiB
-  physical preflight/16 GiB reserve, 40 GiB commit preflight, 25 GiB C free and
-  64 MiB runtime outputs. Exact execution approval is still absent.
-  Selected work and fresh model-free preparation are retained at
-  `artifacts/adapter-coordination/20261008-stock-diagnostic-w1/work-record.json`.
-  The owner-authorized documentation snapshot preserves this incomplete batch;
-  publication does not satisfy its runtime or real-adapter Done When criteria.
+- Actual Work attempt (2026-10-08): One authenticated API owner session stopped
+  at support refusal before request creation/submission. Seven views remained
+  unattempted, no model call or retry occurred. All eight slots stay in the
+  denominator; import/scorer replay retain them unbound with no semantic grades.
+  Evidence: `artifacts/adapter-coordination/20261008-stock-diagnostic-w1/`.
+- Exact next boundary: Edge must reconcile its regular-file admission with the
+  supplied HF snapshot symlink and required GGUF filename, and make the
+  cleanup-copy hook idempotent across repeated client retirement. Preserve
+  hashes, original failed receipts and storage/resource bounds; do not silently
+  stage 2.8 GiB outside the 64 MiB budget.
+  Prove readiness and refusal/cancellation cleanup, then prepare a new reviewed
+  packet and fresh admission. The consumed first approval/run root cannot be
+  reused. The frozen 384/2048 views, sampler policy and no-retry rule stay binding.
+- Remaining Done When: Collect actual bound responses and review explanations/
+  citations after the Edge gates pass. The real trained adapter and held-out
+  quality criteria above are unchanged and incomplete.
 - Cleanup proof: `artifacts/adapter-coordination/20261008-cleanup-c1/` records
   the reproduced frozen-input gap, stricter importer and 13 native protocol
   tests over all eight retained-file views. These are authored controls, no
   model, training or adapter qualification. Keep the six-Python catalog intact.
+  The subsequent `20261008-config-bound-c2/` proof closes the first configuration
+  read before its allocation guard: one regression plus the thirteen neighbors
+  pass. Use the refreshed importer contract for any future exact approval.
 
 The 2026-09-27 pinned upstream sync is independent of the older consumer
 pin-adoption task below. Consumer pins and historical selection identities
@@ -350,4 +357,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=adapter-coordination-publication | change=preserved diagnostic and adapter acceptance while saving verified progress
+AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=diagnostic-closeout-publish | change=preserved acceptance and confirmed next Edge-owned prerequisite

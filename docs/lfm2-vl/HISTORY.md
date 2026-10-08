@@ -39,20 +39,22 @@ server/client Jobs, 32/16-GiB physical preflight/reserve, 40/8-GiB commit
 preflight/live floor, 25-GiB C free and 64-MiB outputs; D remains read-only.
 Execution approval was absent and no old exception transferred.
 
-The original bridge passes eight authored mappings and two negative controls,
-with no owner receipts. Native formatting, Summary Bank, manifest, 236-path
-overlay, whitespace and link checks are retained in `native-checks.json` in
-the same Candle evidence directory. Rust sources and original adapter
-acceptance stayed unchanged; runtime tests were not rerun. No model call,
-training, install, commit or push occurred. Referenced evidence is retained;
-actual responses still require typed association and manual citation review.
+Original protocol/native verification is retained in
+`artifacts/adapter-coordination/20261008-edge-a9234115/`; the thirteen retained-file
+controls and subsequent first-read regression are preserved in
+`20261008-cleanup-c1/` and `20261008-config-bound-c2/`. The four-document snapshot
+published at 4f2a068e is recorded in `20261008-publication-p1/`.
 
-The subsequent review/cleanup repaired the owned ignored importer and passed
-13 retained-file protocol tests. Baseline snapshots, current pins and compact
-receipts are retained in `artifacts/adapter-coordination/20261008-cleanup-c1/`.
-The owner authorized a four-document progress snapshot; its closeout record is
-`artifacts/adapter-coordination/20261008-publication-p1/`. Diagnostic and adapter
-acceptance remain open; ignored code and evidence are retained locally.
+The admitted owner batch then stopped at its first capabilities check: the HF
+snapshot symlink failed Edge's regular-file admission, and repeated retirement
+collided with exclusive cleanup-copy creation. One API session existed; no
+model request/call occurred and seven views remained unattempted. Import and
+exact scorer replay retained all eight unbound. Original failed receipts,
+independent PID/port observations and the Edge-owned next boundary are retained
+in `artifacts/adapter-coordination/20261008-stock-diagnostic-w1/`. No quality or
+adapter acceptance follows, and the consumed approval/run cannot be reused.
+GenUni's read-only recheck confirmed both defects and the eight-slot disposition.
+The subsequent three-document closeout proof is retained in `20261008-publication-p2/`.
 
 ## 2026-10-07 - Quantized LFM2 F32 LoRA admission closeout
 
@@ -2587,4 +2589,4 @@ deferred to TODO C3; no network or toolchain install was substituted.
   documentation-only fast-forward successor.
 
 ---
-AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=adapter-coordination-publication | change=preserved completed preparation and scoped repair proof
+AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=diagnostic-closeout-publish | change=retained refusal proof and completed peer recheck
