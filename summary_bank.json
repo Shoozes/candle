@@ -471,7 +471,14 @@
       "status": "archived",
       "_archive_note": "Retained for historical lookup; current Git ownership is routed separately and Gknome adoption is outside the product backlog.",
       "paths": [
-        "docs/lfm2-vl/HISTORY.md",
+        "docs/lfm2-vl/HISTORY.md"
+      ]
+    },
+    "workflow__historical_phase_guide": {
+      "description": "Archived bootstrap and completed phase execution guide; opt in for reconstruction of the original implementation sequence.",
+      "status": "archived",
+      "_archive_note": "Independent of Gknome adoption and current Git ownership; live startup uses START_HERE.md.",
+      "paths": [
         "docs/lfm2-vl/history/BOOTSTRAP_AND_PHASE_GUIDE.md"
       ]
     },
@@ -621,6 +628,48 @@
         "docs/lfm2-vl/MOD_MANIFEST.md",
         "scripts/lfm2-vl/verify-module-layout.py",
         "docs/lfm2-vl/MODULE_LAYOUT.md"
+      ]
+    },
+    "feature__lfm2_d1": {
+      "description": "Reusable non-generative LFM d1 questions, pinned prompt/alias/readout policy, native Q8 admission, independent session prefills, standalone explicit-input runner and small reference goldens. Expand to feature__lfm2_text and feature__gguf_mmproj for storage/load changes.",
+      "status": "active",
+      "paths": [
+        "docs/lfm2-vl/D1.md",
+        "candle-vlm/Cargo.toml",
+        "candle-vlm/src/lib.rs",
+        "candle-core/src/quantized/native_q8.rs",
+        "candle-core/src/quantized/native_q8_cpu.rs",
+        "candle-kernels/src/native_q8_f32.cu",
+        "candle-vlm/src/image/bicubic.rs",
+        "candle-transformers/src/models/lfm2_d1.rs",
+        "candle-transformers/src/models/lfm2_vl/linear.rs",
+        "candle-vlm/src/lfm2_d1/image_cap.rs",
+        "candle-vlm/src/lfm2_d1/mod.rs",
+        "candle-vlm/src/lfm2_d1/prompt.rs",
+        "candle-vlm/src/lfm2_d1/render_state.rs",
+        "candle-vlm/src/lfm2_d1/session.rs",
+        "candle-vlm/src/lfm2_d1/tests.rs",
+        "candle-vlm/src/lfm2_d1/types.rs",
+        "candle-examples/examples/lfm2-d1/files.rs",
+        "candle-examples/examples/lfm2-d1/main.rs",
+        "candle-examples/examples/lfm2-d1/README.md",
+        "tools/lfm2_vl/d1/export_policy_goldens.py",
+        "tools/lfm2_vl/d1/prepare_study.py",
+        "tools/lfm2_vl/d1/reference-lock.json",
+        "tools/lfm2_vl/d1/verify_run.py",
+        "tools/lfm2_vl/d1/test_verify_run.py",
+        "tools/lfm2_vl/d1/cpu_oracle.py",
+        "tools/lfm2_vl/d1/oracle_weights.py",
+        "tools/lfm2_vl/d1/test_oracle_weights.py",
+        "tools/lfm2_vl/d1/export_resize_goldens.py",
+        "tools/lfm2_vl/d1/compare_runs.py",
+        "docs/lfm2-vl/licenses/TORCH_LICENSE.txt",
+        "tests/fixtures/lfm2_d1_tiny/torchvision-bicubic.json",
+        "tests/fixtures/lfm2_d1_tiny/bicubic.json",
+        "tests/fixtures/lfm2_d1_tiny/manifest.json",
+        "tests/fixtures/lfm2_d1_tiny/policy.json",
+        "tests/fixtures/lfm2_d1_tiny/README.md",
+        "tests/fixtures/lfm2_d1_tiny/tokenizer.json"
       ]
     }
   },

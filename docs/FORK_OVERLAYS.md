@@ -112,6 +112,8 @@ it. Every change to such a path must state which overlay owns each hunk and
 must pass both affected focused gates plus the repository-wide overlay gate.
 
 <!-- shared-paths:start -->
+- `candle-core/src/quantized/mod.rs`
+- `candle-core/src/quantized/cuda.rs`
 - `.gitattributes`
 - `candle-core/tests/custom_op_tests.rs`
 - `.github/workflows/rust-ci.yml`
@@ -147,6 +149,15 @@ The Qwen3.5 overlay owns only the scoped GGML Q8_0 activation parameter added
 to the existing MMVQ F32 declaration in `candle-kernels/src/ffi.rs`; GPT-OSS
 retains its independent declarations and qualification.
 
+The LFM2-VL overlay owns d1's call-scoped native-Q8 admission and dispatch
+accounting hunks in `quantized/mod.rs` and `quantized/cuda.rs`. Qwen3.5 retains
+its independent GGML activation scope and kernels. D1 rendering and consumer
+neutral session behavior belong to `candle-vlm`; applications own process and
+resource admission, studies and package/pin provenance. Its CPU parity and CUDA
+qualification boundary is recorded in `docs/lfm2-vl/D1.md`.
+Its opt-in direct-F32 Q8 kernel is registered in `candle-kernels/src/lib.rs`;
+existing module identities and ordinary quantized dispatch remain unchanged.
+
 ## Review contract
 
 1. Add a path to exactly one overlay manifest before staging it.
@@ -160,4 +171,4 @@ retains its independent declarations and qualification.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-10-01T17:47:56+00:00 | agent=Codex/candle_edge_closeout | model=unknown | effort=unknown | task=closeout | change=recorded native gate and remaining publication boundary
+AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=lfm2-d1 | change=recorded reusable d1 implementation and bounded proof

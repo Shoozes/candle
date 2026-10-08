@@ -74,6 +74,7 @@ accelerate = [
     "candle-transformers/accelerate",
 ]
 cuda = [
+    "candle-vlm/cuda",
     "candle/cuda",
     "candle-nn/cuda",
     "candle-transformers/cuda",

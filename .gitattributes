@@ -20,6 +20,10 @@
 /tests/fixtures/lfm2_vl_loader_tiny/*.md text eol=lf
 /tests/fixtures/lfm2_vl_loader_tiny/*.gguf -text
 
+/tests/fixtures/lfm2_d1_tiny/*.json text eol=lf
+/tests/fixtures/lfm2_d1_tiny/*.md text eol=lf
+/docs/lfm2-vl/licenses/*.txt text eol=lf
+
 /tests/fixtures/gpt_oss_task2/*.json text eol=lf
 /tests/fixtures/gpt_oss_task2/*.md text eol=lf
 

@@ -55,6 +55,7 @@ pub mod helium;
 pub mod hiera;
 pub mod jina_bert;
 pub mod lfm2;
+pub mod lfm2_d1;
 pub mod lfm2_vl;
 pub mod llama;
 pub mod llama2_c;

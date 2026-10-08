@@ -1,0 +1,25 @@
+{
+  "schema": "candle.d1_fixture.v1",
+  "files": {
+    "bicubic.json": {
+      "bytes": 3007,
+      "sha256": "753508ed336c0001d7727a0cbdbbeba6235b61cf339498d822580c0e2997e0bc"
+    },
+    "policy.json": {
+      "bytes": 14054,
+      "sha256": "c1109defac0d169dafb1721c9d5dec7e2cbd8a6f634d63b02cf4969bb6a265c7"
+    },
+    "README.md": {
+      "bytes": 2305,
+      "sha256": "92a9a3d6c3085a0a896328f9384c71ae2bfaf47bb5ae572f4ffdc5c6bf4b5f42"
+    },
+    "tokenizer.json": {
+      "bytes": 2580,
+      "sha256": "06809b124a7001c581ce270fbcbbc53e77c55621dbf43479f75392c4447c16dc"
+    },
+    "torchvision-bicubic.json": {
+      "bytes": 30505,
+      "sha256": "4617051f18a5b75eba08ad778636b451f8799915d6ca004cb7977f6c4b8c8628"
+    }
+  }
+}

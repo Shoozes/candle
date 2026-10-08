@@ -2,7 +2,58 @@
 
 ## Current phase and source
 
-Current phase (2026-10-08): Closeout of the stock CPU diagnostic progress
+Current phase (2026-10-08): Complete with verified limitations locally;
+owner-authorized closeout and guarded publication of the reusable LFM d1 batch.
+The source lineage starts at native `main`
+`313a1cd9166b8db5abfb9420d0780ac1f7fd925f`. All 65 reviewed task paths matched
+the sealed cleanup receipt before this documentation closeout. Active
+implementation files: none. The owner requested this batch's scoped commit
+and push through Candle's `.tools/gitpush.ps1`.
+
+The helper emits exact commit/tree/remote-main identity and its fresh clean-head
+native gate only after verified publication, in
+`artifacts/publication/last-push.json`. A retained copy plus this batch's source
+inventory, staged review, commands and resource accounting belongs to
+`artifacts/lfm2-d1/20261008-closeout-publish-p1/`. Publication is established by
+that remote-equality receipt, rather than by a self-referential source SHA here.
+
+Cleanup rejects manually constructed duplicate Noul criteria and oversized
+render-contributing question payloads before tokenizer work. The offline study
+verifier checks finite normalized probabilities, ordered complete typed answers,
+selection/confidence, expected rubric scores/legends and actual work counts.
+Six negative controls now run in the guarded local verification helper.
+
+Last green verification in this cleanup: native locked/offline helper, 499 Rust
+tests/eight explicit ignores, maintained libraries/four examples, strict CPU
+Clippy and strict CUDA d1 Clippy. The 13 focused d1 tests and six Python receipt
+controls pass. Both retained studies replay with 60 typed answers per device,
+unchanged readout bounds and quality, and zero new production forwards. Final
+documentation, Summary Bank and overlay inventory checks are recorded with the
+cleanup source in `artifacts/lfm2-d1/20261008-review-cleanup-r1/`.
+
+Prior numerical proof remains bound to its immutable implementation snapshot:
+independent CPU six-prefill logits max 1.7166e-5, projected-feature cosine
+0.999999999997; all 60 CPU/CUDA study logits max 2.7657e-5. Each corrected
+20-case study used 60 language/four vision forwards and zero output tokens.
+Quality on both devices remains 13/20 choices, 14/20 booleans and 10/20 rubric
+ranges, with no invented accuracy threshold. Model/kernel math is unchanged.
+All prior owned model/reference Jobs have verified release; the complete
+222-forward retained-artifact ledger and source-bound receipts remain in
+[D1.md](D1.md).
+
+Known limitations: optional `Codex-Compat` WSL proof lacks cached `accelerate-src`;
+the existing CUDA MSVC LNK4098 warning and consumer acceptance boundary remain.
+No dependency fetch or production model replay occurred during cleanup.
+The exact next task in `TODO.md` is GenEye-owned pin/lock/package integration
+and acceptance using the verified published Candle identity. Consumer sources,
+provider defaults, release tags and model study admission remain separately
+scoped. Closeout also repairs CRLF in three tiny d1 fixture JSON files, corrects
+their manifest/tokenizer hash metadata and makes the Windows grep byte guard
+literal. Its new native fixture-identity regression reproduced the defect, then
+all 14 focused d1 tests passed (one explicit ignore). Golden case data, model
+and kernel math remain unchanged; no production run was started.
+
+Previous phase (2026-10-08): Closeout of the stock CPU diagnostic progress
 snapshot; runtime and real-adapter acceptance remain blocked at an Edge-owned
 integration boundary. The native `main` closeout baseline is
 `4f2a068e65cd1a5eb7d3bd931c8705d2e460f27e`. The owner authorized publication of
@@ -291,4 +342,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=diagnostic-closeout-publish | change=closed scoped progress and retained verified Edge-owned blockers
+AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=d1-closeout-publish | change=bound owner-authorized d1 publication to the guarded identity receipt

@@ -1,0 +1,842 @@
+{
+  "schema": "candle.d1_policy_goldens.v1",
+  "reference_revision": "051bcc464b01b9f92942b364d9586b0ef5912432",
+  "prompt_sha256": "a20b5f52e41a6d29e694bb8c861a5a4803ce3eb69364edad79511ccf8edb5c31",
+  "tokenizers": "0.22.2",
+  "tokenizer_sha256": "06809b124a7001c581ce270fbcbbc53e77c55621dbf43479f75392c4447c16dc",
+  "cases": [
+    {
+      "name": "unicode-order",
+      "state": {
+        "z": "café\n雪",
+        "a": [
+          true,
+          null,
+          2
+        ]
+      },
+      "question": {
+        "type": "noul",
+        "instructions": "Ready?"
+      },
+      "images": 0,
+      "text": "<|startoftext|><|im_start|>user\n{\n  \"z\": \"café\\n雪\",\n  \"a\": [\n    true,\n    null,\n    2\n  ]\n}\n\n\nQUESTION:\nReady?\n\nReply with yes or no only.<|im_end|>\n<|im_start|>assistant\n",
+      "input_ids": [
+        7,
+        8,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        20,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        16,
+        0,
+        17,
+        0,
+        0,
+        9,
+        8,
+        0
+      ],
+      "groups": [
+        [
+          16,
+          24,
+          25
+        ],
+        [
+          17,
+          26,
+          27
+        ]
+      ],
+      "logits": [
+        0.0,
+        0.03125,
+        0.0625,
+        0.09375,
+        0.125,
+        0.15625,
+        0.1875,
+        0.21875,
+        0.25,
+        0.28125,
+        0.3125,
+        0.34375,
+        0.375,
+        0.40625,
+        0.4375,
+        0.46875,
+        0.5,
+        0.53125,
+        0.5625,
+        0.59375,
+        0.625,
+        0.65625,
+        0.6875,
+        0.71875,
+        0.75,
+        0.78125,
+        0.8125,
+        0.84375,
+        0.875,
+        0.90625,
+        0.9375,
+        0.96875
+      ],
+      "probabilities": [
+        0.48438008427698437,
+        0.5156199157230156
+      ]
+    },
+    {
+      "name": "empty-criteria",
+      "state": "hello",
+      "question": {
+        "type": "noul",
+        "instructions": "Ready?",
+        "criteria": {}
+      },
+      "images": 0,
+      "text": "<|startoftext|><|im_start|>user\nhello\n\n\nQUESTION:\nReady?\n\nReply with yes or no only.<|im_end|>\n<|im_start|>assistant\n",
+      "input_ids": [
+        7,
+        8,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        16,
+        0,
+        17,
+        0,
+        0,
+        9,
+        8,
+        0
+      ],
+      "groups": [
+        [
+          16,
+          24,
+          25
+        ],
+        [
+          17,
+          26,
+          27
+        ]
+      ],
+      "logits": [
+        0.0,
+        0.03125,
+        0.0625,
+        0.09375,
+        0.125,
+        0.15625,
+        0.1875,
+        0.21875,
+        0.25,
+        0.28125,
+        0.3125,
+        0.34375,
+        0.375,
+        0.40625,
+        0.4375,
+        0.46875,
+        0.5,
+        0.53125,
+        0.5625,
+        0.59375,
+        0.625,
+        0.65625,
+        0.6875,
+        0.71875,
+        0.75,
+        0.78125,
+        0.8125,
+        0.84375,
+        0.875,
+        0.90625,
+        0.9375,
+        0.96875
+      ],
+      "probabilities": [
+        0.48438008427698437,
+        0.5156199157230156
+      ]
+    },
+    {
+      "name": "null-criteria-value",
+      "state": null,
+      "question": {
+        "type": "noul",
+        "instructions": "Ready?",
+        "criteria": {
+          "true": null
+        }
+      },
+      "images": 2,
+      "text": "<|startoftext|><|im_start|>user\n<image><image>Ready?\nYes: None\nNo: None\n\nReply with yes or no only.<|im_end|>\n<|im_start|>assistant\n",
+      "input_ids": [
+        7,
+        8,
+        0,
+        3,
+        3,
+        0,
+        0,
+        24,
+        0,
+        0,
+        26,
+        0,
+        0,
+        0,
+        0,
+        16,
+        0,
+        17,
+        0,
+        0,
+        9,
+        8,
+        0
+      ],
+      "groups": [
+        [
+          16,
+          24,
+          25
+        ],
+        [
+          17,
+          26,
+          27
+        ]
+      ],
+      "logits": [
+        0.0,
+        0.03125,
+        0.0625,
+        0.09375,
+        0.125,
+        0.15625,
+        0.1875,
+        0.21875,
+        0.25,
+        0.28125,
+        0.3125,
+        0.34375,
+        0.375,
+        0.40625,
+        0.4375,
+        0.46875,
+        0.5,
+        0.53125,
+        0.5625,
+        0.59375,
+        0.625,
+        0.65625,
+        0.6875,
+        0.71875,
+        0.75,
+        0.78125,
+        0.8125,
+        0.84375,
+        0.875,
+        0.90625,
+        0.9375,
+        0.96875
+      ],
+      "probabilities": [
+        0.48438008427698437,
+        0.5156199157230156
+      ]
+    },
+    {
+      "name": "choice-order-tie",
+      "state": "hello",
+      "question": {
+        "type": "choice",
+        "instructions": "Pick",
+        "criteria": {
+          "second_option": "",
+          "first": null
+        }
+      },
+      "images": 0,
+      "text": "<|startoftext|><|im_start|>user\nhello\n\n\nQUESTION:\nPick\n\nOptions:\nA second option\nB first\n\nReply with the option code only.<|im_end|>\n<|im_start|>assistant\n",
+      "input_ids": [
+        7,
+        8,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        10,
+        0,
+        0,
+        11,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        9,
+        8,
+        0
+      ],
+      "groups": [
+        [
+          10
+        ],
+        [
+          11
+        ]
+      ],
+      "logits": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "probabilities": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "native-letter-labels",
+      "state": "hello",
+      "question": {
+        "type": "choice",
+        "instructions": "Pick",
+        "criteria": {
+          " C ": null,
+          "A": "alpha"
+        }
+      },
+      "images": 1,
+      "text": "<|startoftext|><|im_start|>user\n<image>hello\n\n\nQUESTION:\nPick\n\nOptions:\nC  C \nA alpha\n\nReply with the option code only.<|im_end|>\n<|im_start|>assistant\n",
+      "input_ids": [
+        7,
+        8,
+        0,
+        3,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12,
+        12,
+        10,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        9,
+        8,
+        0
+      ],
+      "groups": [
+        [
+          12
+        ],
+        [
+          10
+        ]
+      ],
+      "logits": [
+        0.0,
+        0.03125,
+        0.0625,
+        0.09375,
+        0.125,
+        0.15625,
+        0.1875,
+        0.21875,
+        0.25,
+        0.28125,
+        0.3125,
+        0.34375,
+        0.375,
+        0.40625,
+        0.4375,
+        0.46875,
+        0.5,
+        0.53125,
+        0.5625,
+        0.59375,
+        0.625,
+        0.65625,
+        0.6875,
+        0.71875,
+        0.75,
+        0.78125,
+        0.8125,
+        0.84375,
+        0.875,
+        0.90625,
+        0.9375,
+        0.96875
+      ],
+      "probabilities": [
+        0.5156199157230156,
+        0.48438008427698437
+      ]
+    },
+    {
+      "name": "combining-marks-are-not-letter-labels",
+      "state": "hello",
+      "question": {
+        "type": "choice",
+        "instructions": "Pick",
+        "criteria": {
+          "ͅ": null,
+          "゙": null
+        }
+      },
+      "images": 0,
+      "text": "<|startoftext|><|im_start|>user\nhello\n\n\nQUESTION:\nPick\n\nOptions:\nA ͅ\nB ゙\n\nReply with the option code only.<|im_end|>\n<|im_start|>assistant\n",
+      "input_ids": [
+        7,
+        8,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        10,
+        0,
+        11,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        9,
+        8,
+        0
+      ],
+      "groups": [
+        [
+          10
+        ],
+        [
+          11
+        ]
+      ],
+      "logits": [
+        0.0,
+        0.03125,
+        0.0625,
+        0.09375,
+        0.125,
+        0.15625,
+        0.1875,
+        0.21875,
+        0.25,
+        0.28125,
+        0.3125,
+        0.34375,
+        0.375,
+        0.40625,
+        0.4375,
+        0.46875,
+        0.5,
+        0.53125,
+        0.5625,
+        0.59375,
+        0.625,
+        0.65625,
+        0.6875,
+        0.71875,
+        0.75,
+        0.78125,
+        0.8125,
+        0.84375,
+        0.875,
+        0.90625,
+        0.9375,
+        0.96875
+      ],
+      "probabilities": [
+        0.49218813572079556,
+        0.5078118642792044
+      ]
+    },
+    {
+      "name": "python-label-whitespace",
+      "state": "hello",
+      "question": {
+        "type": "choice",
+        "instructions": "Pick",
+        "criteria": {
+          "\u001cC\u001f": null,
+          "A": null
+        }
+      },
+      "images": 0,
+      "text": "<|startoftext|><|im_start|>user\nhello\n\n\nQUESTION:\nPick\n\nOptions:\nC \u001cC\u001f\nA A\n\nReply with the option code only.<|im_end|>\n<|im_start|>assistant\n",
+      "input_ids": [
+        7,
+        8,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12,
+        0,
+        12,
+        0,
+        10,
+        10,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        9,
+        8,
+        0
+      ],
+      "groups": [
+        [
+          12
+        ],
+        [
+          10
+        ]
+      ],
+      "logits": [
+        0.0,
+        0.03125,
+        0.0625,
+        0.09375,
+        0.125,
+        0.15625,
+        0.1875,
+        0.21875,
+        0.25,
+        0.28125,
+        0.3125,
+        0.34375,
+        0.375,
+        0.40625,
+        0.4375,
+        0.46875,
+        0.5,
+        0.53125,
+        0.5625,
+        0.59375,
+        0.625,
+        0.65625,
+        0.6875,
+        0.71875,
+        0.75,
+        0.78125,
+        0.8125,
+        0.84375,
+        0.875,
+        0.90625,
+        0.9375,
+        0.96875
+      ],
+      "probabilities": [
+        0.5156199157230156,
+        0.48438008427698437
+      ]
+    },
+    {
+      "name": "expected-score",
+      "state": {
+        "x": 1
+      },
+      "question": {
+        "type": "score",
+        "instructions": "Rate",
+        "criteria": [
+          "low",
+          "middle",
+          "high"
+        ]
+      },
+      "images": 0,
+      "text": "<|startoftext|><|im_start|>user\n{\n  \"x\": 1\n}\n\n\nQUESTION:\nRate\n\n0 low\n1 middle\n2 high\n\nReply with a single digit 0-2 only.<|im_end|>\n<|im_start|>assistant\n",
+      "input_ids": [
+        7,
+        8,
+        0,
+        0,
+        0,
+        0,
+        0,
+        19,
+        0,
+        0,
+        0,
+        0,
+        18,
+        0,
+        19,
+        0,
+        20,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        18,
+        0,
+        20,
+        0,
+        0,
+        9,
+        8,
+        0
+      ],
+      "groups": [
+        [
+          18
+        ],
+        [
+          19
+        ],
+        [
+          20
+        ]
+      ],
+      "logits": [
+        0.0,
+        0.03125,
+        0.0625,
+        0.09375,
+        0.125,
+        0.15625,
+        0.1875,
+        0.21875,
+        0.25,
+        0.28125,
+        0.3125,
+        0.34375,
+        0.375,
+        0.40625,
+        0.4375,
+        0.46875,
+        0.5,
+        0.53125,
+        0.5625,
+        0.59375,
+        0.625,
+        0.65625,
+        0.6875,
+        0.71875,
+        0.75,
+        0.78125,
+        0.8125,
+        0.84375,
+        0.875,
+        0.90625,
+        0.9375,
+        0.96875
+      ],
+      "probabilities": [
+        0.32297260195878397,
+        0.33322485287380715,
+        0.34380254516740894
+      ]
+    },
+    {
+      "name": "float-json",
+      "state": {
+        "small": 1e-05,
+        "big": 1e+20,
+        "negative_zero": -0.0,
+        "integer_float": 1.0
+      },
+      "question": {
+        "type": "noul",
+        "instructions": "Ready?"
+      },
+      "images": 0,
+      "text": "<|startoftext|><|im_start|>user\n{\n  \"small\": 1e-05,\n  \"big\": 1e+20,\n  \"negative_zero\": -0.0,\n  \"integer_float\": 1.0\n}\n\n\nQUESTION:\nReady?\n\nReply with yes or no only.<|im_end|>\n<|im_start|>assistant\n",
+      "input_ids": [
+        7,
+        8,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        18,
+        0,
+        18,
+        0,
+        0,
+        0,
+        0,
+        19,
+        0,
+        18,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        16,
+        0,
+        17,
+        0,
+        0,
+        9,
+        8,
+        0
+      ],
+      "groups": [
+        [
+          16,
+          24,
+          25
+        ],
+        [
+          17,
+          26,
+          27
+        ]
+      ],
+      "logits": [
+        0.0,
+        0.03125,
+        0.0625,
+        0.09375,
+        0.125,
+        0.15625,
+        0.1875,
+        0.21875,
+        0.25,
+        0.28125,
+        0.3125,
+        0.34375,
+        0.375,
+        0.40625,
+        0.4375,
+        0.46875,
+        0.5,
+        0.53125,
+        0.5625,
+        0.59375,
+        0.625,
+        0.65625,
+        0.6875,
+        0.71875,
+        0.75,
+        0.78125,
+        0.8125,
+        0.84375,
+        0.875,
+        0.90625,
+        0.9375,
+        0.96875
+      ],
+      "probabilities": [
+        0.48438008427698437,
+        0.5156199157230156
+      ]
+    }
+  ]
+}

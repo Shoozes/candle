@@ -22,6 +22,7 @@ target/
 
 *tokenizer*.json
 !tests/fixtures/lfm2_vl_loader_tiny/tokenizer.json
+!tests/fixtures/lfm2_d1_tiny/tokenizer.json
 *.npz
 
 perf.data

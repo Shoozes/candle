@@ -815,6 +815,10 @@ pub enum QMatMul {
     TensorF16(Tensor),
 }
 
+mod native_q8;
+mod native_q8_cpu;
+pub use native_q8::{with_native_q8_0, NativeQ8Execution};
+
 thread_local! {
     static DEQUANTIZE_ALL: bool = {
         match std::env::var("CANDLE_DEQUANTIZE_ALL") {
@@ -873,6 +877,9 @@ impl QMatMul {
     }
 
     pub fn forward_via_f16(&self, xs: &Tensor) -> Result<Tensor> {
+        if native_q8::required() {
+            crate::bail!("native Q8 execution rejects dense F16 matmul")
+        }
         let w = self.dequantize_f16()?;
         let in_dtype = xs.dtype();
         let w = match *xs.dims() {
@@ -1212,6 +1219,10 @@ impl crate::CustomOp1 for QTensor {
                 let mut dst_storage = vec![0f32; dst_shape.elem_count()];
 
                 let mkn = (dst_shape.elem_count() / n, k, n);
+                if native_q8::required() {
+                    native_q8_cpu::matmul(self_storage.as_ref(), mkn, slice, &mut dst_storage)?;
+                    return Ok((crate::CpuStorage::F32(dst_storage), dst_shape));
+                }
                 let used_packed = repack::try_matmul_f32(
                     self_storage.as_ref(),
                     &self.repacked_qs,
@@ -1291,8 +1302,25 @@ impl crate::CustomOp1 for QTensor {
 
 impl crate::Module for QMatMul {
     fn forward(&self, xs: &Tensor) -> Result<Tensor> {
+        if native_q8::required() {
+            if xs.dtype() != crate::DType::F32 {
+                crate::bail!("native Q8 execution requires F32 activations")
+            }
+            match self {
+                Self::QTensor(weight) if weight.dtype() == GgmlDType::Q8_0 => {}
+                _ => crate::bail!(
+                    "native Q8 execution rejects dequantized or non-Q8_0 linear weights"
+                ),
+            }
+        }
         match self {
-            Self::QTensor(t) => xs.apply_op1_no_bwd(t.as_ref()),
+            Self::QTensor(t) => {
+                let output = xs.apply_op1_no_bwd(t.as_ref())?;
+                if t.device().is_cpu() {
+                    native_q8::record(0)?;
+                }
+                Ok(output)
+            }
             Self::Tensor(w) => {
                 let w = match *xs.dims() {
                     [b1, b2, _, _] => w.broadcast_left((b1, b2))?.t()?,

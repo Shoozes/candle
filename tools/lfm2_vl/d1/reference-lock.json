@@ -1,0 +1,157 @@
+{
+  "schema": "candle.lfm_d1_reference.v1",
+  "policy": "lfm-d1-systemone-v1",
+  "metadata_revision": "051bcc464b01b9f92942b364d9586b0ef5912432",
+  "gguf_revision": "bb1e436ea78eb96a3f1acb6da865f70c2fbeb563",
+  "reference_files": [
+    {
+      "file": "api.py",
+      "bytes": 3478,
+      "sha256": "94e9f82eabfdf92c4abe1153e9a6dc4dd9821f9cc2fec3221e79e70723d8ada0"
+    },
+    {
+      "file": "config.json",
+      "bytes": 2773,
+      "sha256": "0cbac0f580bd8036ef94ac83aa632a57a170e66d20f381ef47c3f6486c9a3e8c"
+    },
+    {
+      "file": "modeling_d1.py",
+      "bytes": 1335,
+      "sha256": "7fc6a001f80fc2d146f2a51128478f3b3bd4f1423a3ac129bc10f3fd0caf1d98"
+    },
+    {
+      "file": "prompt.py",
+      "bytes": 12478,
+      "sha256": "a20b5f52e41a6d29e694bb8c861a5a4803ce3eb69364edad79511ccf8edb5c31"
+    },
+    {
+      "file": "runner.py",
+      "bytes": 11776,
+      "sha256": "24d3ae718e9f9717771c0df39c93d324d00aa27bf3e12bab085c0922096cb0dd"
+    }
+  ],
+  "files": [
+    {
+      "repository": "LiquidAI/d1-3B-GGUF",
+      "revision": "bb1e436ea78eb96a3f1acb6da865f70c2fbeb563",
+      "file": "d1-3B-Q8_0.gguf",
+      "bytes": 2874781280,
+      "sha256": "2f0942d5a5f64cf69c3356d2be439b71644b1f0eb3a580912a5a0179eeaba77d"
+    },
+    {
+      "repository": "LiquidAI/d1-3B-GGUF",
+      "revision": "bb1e436ea78eb96a3f1acb6da865f70c2fbeb563",
+      "file": "mmproj-d1-3B-Q8_0.gguf",
+      "bytes": 583109728,
+      "sha256": "2505920ce464b7c54acd8b7b74a931c0c671f06d0c8833760b2fbceeb253e92a"
+    },
+    {
+      "repository": "LiquidAI/d1-3B-GGUF",
+      "revision": "bb1e436ea78eb96a3f1acb6da865f70c2fbeb563",
+      "file": "LICENSE",
+      "bytes": 10574,
+      "sha256": "4d28ca14dedc0b3d0fcc2b3339f0e79931faa33874f3d24f522183a8fc70068c"
+    },
+    {
+      "repository": "LiquidAI/d1-3B-GGUF",
+      "revision": "bb1e436ea78eb96a3f1acb6da865f70c2fbeb563",
+      "file": "README.md",
+      "bytes": 2875,
+      "sha256": "f9778e5b65c650618b23f24839708d395660af6da5c29c7da1efac71123e3f3b"
+    },
+    {
+      "repository": "LiquidAI/d1-3B",
+      "revision": "051bcc464b01b9f92942b364d9586b0ef5912432",
+      "file": "tokenizer.json",
+      "bytes": 17905750,
+      "sha256": "8096ecb9f54599d756c8de728a598a340bc1e43c0deb77ddd62456c38349fcee"
+    },
+    {
+      "repository": "LiquidAI/d1-3B",
+      "revision": "051bcc464b01b9f92942b364d9586b0ef5912432",
+      "file": "processor_config.json",
+      "bytes": 824,
+      "sha256": "b9b82ad34a69e2f70a9033741e11f82b8a98bb5f8e6c13b3b2d5efdd3935d916"
+    },
+    {
+      "repository": "LiquidAI/d1-3B",
+      "revision": "051bcc464b01b9f92942b364d9586b0ef5912432",
+      "file": "chat_template.jinja",
+      "bytes": 5436,
+      "sha256": "86f4770449a4797c9b4212d110b0cc70fb993c1ce960095bcfb12eea22f61cca"
+    }
+  ],
+  "llamacpp_reference": {
+    "tag": "b11490",
+    "commit": "9c2e0e491a822adae1f0b1c831adb4160057d24f"
+  },
+  "execution": {
+    "activations": "f32",
+    "text_major_linears": "native-q8_0",
+    "vision_q8_tensors": 137,
+    "vision_source_f16_linears": 27,
+    "embedding": "existing floating lookup",
+    "calibration": "identity",
+    "sampling": "none"
+  },
+  "comparison_policy": {
+    "input_ids": "exact",
+    "readout_goldens_abs": 1e-06,
+    "q8_projected_features_min_cosine": 0.9999,
+    "cpu_cuda_last_logits_max_abs": 0.02,
+    "scope": "D1 uses the selected existing quantized-hybrid limits; frozen before production measurement. Study correctness is a separate measured outcome.",
+    "cpu_reference_last_logits_max_abs": 0.02,
+    "processor_f32_max_abs": 2e-05
+  },
+  "pillow_algorithm": {
+    "repository": "python-pillow/Pillow",
+    "version": "11.3.0",
+    "commit": "89f1f4626a2aaf5f3d5ca6437f41def2998fbe09",
+    "files": [
+      {
+        "file": "src/libImaging/Resample.c",
+        "bytes": 29357,
+        "sha256": "2d1b1ec85be5712981caaad0d6c56f243aa71ef0aefbc925e23a9bac32111e66"
+      },
+      {
+        "file": "LICENSE",
+        "bytes": 1453,
+        "sha256": "17f240ae101143707e5e7303a5d800450d9ccc7475b463cedb555cefdb3c6ece"
+      }
+    ]
+  },
+  "pillow_fixture_runtime": "12.3.0",
+  "torchvision_uint8_resize": {
+    "torch_commit": "a1cb3cc05d46d198467bebbb6e8fba50a325d4e7",
+    "torchvision_commit": "824e8c8726b65fd9d5abdc9702f81c2b0c4c0dc8",
+    "files": [
+      {
+        "repository": "pytorch/pytorch",
+        "commit": "a1cb3cc05d46d198467bebbb6e8fba50a325d4e7",
+        "file": "aten/src/ATen/native/cpu/UpSampleKernel.cpp",
+        "bytes": 82454,
+        "sha256": "e3b7bf13fecd1af33e1c6d7dfb441d97590b71075194d040c5ad325814fdac1f",
+        "url": "https://raw.githubusercontent.com/pytorch/pytorch/a1cb3cc05d46d198467bebbb6e8fba50a325d4e7/aten/src/ATen/native/cpu/UpSampleKernel.cpp"
+      },
+      {
+        "repository": "pytorch/pytorch",
+        "commit": "a1cb3cc05d46d198467bebbb6e8fba50a325d4e7",
+        "file": "aten/src/ATen/native/cpu/UpSampleKernelAVXAntialias.h",
+        "bytes": 58178,
+        "sha256": "733b5563dfc5290fef8ec3fc5701504647d430e4632f8c0dbccc7f24b48d0996",
+        "url": "https://raw.githubusercontent.com/pytorch/pytorch/a1cb3cc05d46d198467bebbb6e8fba50a325d4e7/aten/src/ATen/native/cpu/UpSampleKernelAVXAntialias.h"
+      },
+      {
+        "repository": "pytorch/pytorch",
+        "commit": "a1cb3cc05d46d198467bebbb6e8fba50a325d4e7",
+        "file": "LICENSE",
+        "bytes": 3464,
+        "sha256": "a8a2c6b67cf8a597ffaa5c82380a6bd1b82629c0417e00673d8013d662eb500a",
+        "url": "https://raw.githubusercontent.com/pytorch/pytorch/a1cb3cc05d46d198467bebbb6e8fba50a325d4e7/LICENSE"
+      }
+    ],
+    "backend": "torchvision.transforms.v2.functional.resize uint8 CPU",
+    "golden_runtime": "Torch 2.8.0+cpu, TorchVision 0.23.0+cpu"
+  },
+  "pillow_fixture_replay_runtime": "11.3.0 exact byte replay"
+}

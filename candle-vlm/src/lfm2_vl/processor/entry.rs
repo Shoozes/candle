@@ -2,7 +2,7 @@ impl Lfm2VlProcessor {
 
     pub fn new(config: Lfm2VlProcessorConfig) -> Result<Self> {
         config.validate()?;
-        Ok(Self { config })
+        Ok(Self { config, bicubic: false })
     }
 
     pub fn from_json(json: &str) -> Result<Self> {
@@ -15,6 +15,14 @@ impl Lfm2VlProcessor {
 
     pub fn config(&self) -> &Lfm2VlProcessorConfig {
         &self.config
+    }
+
+    /// Select the pinned d1 TorchVision bicubic image-resize policy.
+    pub fn with_bicubic_resize(mut self) -> Self { self.bicubic = true; self }
+
+    fn resize(&self, image: &RgbImage, width: usize, height: usize) -> Result<RgbImage> {
+        if self.bicubic { crate::image::resize_bicubic_antialias(image, width, height) }
+        else { resize_bilinear_antialias(image, width, height) }
     }
 
     /// Process images in input order into the packed format consumed by the

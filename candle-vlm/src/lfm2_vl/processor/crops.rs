@@ -24,7 +24,7 @@ impl Lfm2VlProcessor {
             let resized = if resized_width == width && resized_height == height {
                 rgb
             } else {
-                resize_bilinear_antialias(&rgb, resized_width, resized_height)?
+                self.resize(&rgb, resized_width, resized_height)?
             };
             let crop = self.make_crop(&resized, image_index, CropKind::Whole)?;
             Ok(ImageWork {
@@ -58,7 +58,7 @@ impl Lfm2VlProcessor {
             .tile_size
             .checked_mul(rows)
             .ok_or_else(|| candle::Error::Msg("LFM2-VL tiled height overflow".into()))?;
-        let resized = resize_bilinear_antialias(image, resized_width, resized_height)?;
+        let resized = self.resize(image, resized_width, resized_height)?;
         let tile_width = self.config.tile_size;
         let tile_height = self.config.tile_size;
         let tile_count = rows
@@ -97,7 +97,7 @@ impl Lfm2VlProcessor {
             let thumbnail = if thumbnail_width == width && thumbnail_height == height {
                 image.clone()
             } else {
-                resize_bilinear_antialias(image, thumbnail_width, thumbnail_height)?
+                self.resize(image, thumbnail_width, thumbnail_height)?
             };
             crops.push(self.make_crop(&thumbnail, image_index, CropKind::Thumbnail)?);
         }

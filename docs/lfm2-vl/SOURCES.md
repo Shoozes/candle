@@ -204,5 +204,44 @@ or executed for INT-5B or its lower-precision cast-order follow-up.
 - The official F16 and Q8_0 headers resolve physical GGUF orientation: Candle presents non-patch matrices directly in `[out, in]`; only `v.patch_embd.weight` needs the converter-defined inverse from `[V,3,16,16]` to packed `[V,768]`.
 - The official headers omit `clip.vision.preproc_min_tiles`, `clip.vision.preproc_max_tiles`, and `clip.vision.preproc_image_size`; pinned official `processor_config.json` values and architecture defaults remain authoritative unless an explicit processor document overrides them.
 
+
+## LiquidAI d1 System One policy
+
+The reusable decision policy is reference-only, freshly implemented in Candle.
+`LiquidAI/d1-3B` at `051bcc464b01b9f92942b364d9586b0ef5912432` pins
+`api.py`, `prompt.py`, `runner.py`, `modeling_d1.py` and `config.json`.
+Its D1Model subclasses the existing LFM2-VL model with tied embeddings; it adds
+no learned decision head. The exact tokenizer, processor and chat template use
+that same revision. The retained Q8 model/projector come from
+`LiquidAI/d1-3B-GGUF` at `bb1e436ea78eb96a3f1acb6da865f70c2fbeb563`.
+Exact file identities and pre-measurement bounds are in
+`tools/lfm2_vl/d1/reference-lock.json`. The LFM Open License remains the artifact
+license; no production weights are committed or downloaded by this batch.
+
+Prompt/alias goldens execute only the hash-verified official Python policy,
+using tokenizers 0.22.2; no remote model code or model forward is executed by the
+exporter or offline verifier. Full model parity continues to use the existing
+pinned Transformers authority and requires its actual reference environment.
+
+The image pre-cap contract references Pillow 11.3 `Resample.c`, repository
+`python-pillow/Pillow`, commit `89f1f4626a2aaf5f3d5ca6437f41def2998fbe09`.
+The Candle-native RGB implementation uses its bicubic coefficients, support and
+per-pass byte rounding. Copyright/license notices are retained in
+`licenses/PILLOW_LICENSE.txt` (MIT-CMU). The original Pillow 12.3.0 byte fixtures
+were replayed exactly under the locked Pillow 11.3.0 environment.
+
+D1's subsequent processor resize uses TorchVision v2 native uint8 bicubic,
+not its v1 F32 convenience path. The numerical reference is PyTorch 2.8.0 at
+`a1cb3cc05d46d198467bebbb6e8fba50a325d4e7`, files
+`aten/src/ATen/native/cpu/UpSampleKernel.cpp` and
+`aten/src/ATen/native/cpu/UpSampleKernelAVXAntialias.h`; TorchVision 0.23.0 is
+`824e8c8726b65fd9d5abdc9702f81c2b0c4c0dc8`. File hashes are retained in the d1
+reference lock. The small Candle-native integer implementation references its
+F64 coefficient construction, signed fixed-point precision and per-pass byte
+rounding; no SIMD source block was copied. PyTorch's BSD-style license is retained
+in `licenses/TORCH_LICENSE.txt`. Fresh v2 goldens and all four retained study
+processor tensors pass under the pinned environment. D1 numerical/quality claims
+and source-bound receipts are limited to [D1.md](D1.md).
+
 ---
-AI-edited: 2026-08-13T04:34:15-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=int-5b-cast-order | change=recorded the pinned lower-precision cast-order authority
+AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=lfm2-d1 | change=recorded reusable d1 implementation and bounded proof

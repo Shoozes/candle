@@ -9,6 +9,7 @@ pub struct Mmproj {
     dtype: DType,
     gguf_execution: Option<GgufMmprojExecution>,
     native_quantized_tensor_count: usize,
+    source_float_linear_names: Vec<String>,
 }
 
 impl Mmproj {
@@ -34,6 +35,7 @@ impl Mmproj {
             dtype,
             gguf_execution,
             native_quantized_tensor_count,
+            source_float_linear_names: Vec::new(),
         }
     }
 
@@ -121,6 +123,7 @@ impl Mmproj {
             dtype,
             gguf_execution: None,
             native_quantized_tensor_count: 0,
+            source_float_linear_names: Vec::new(),
         })
     }
 
@@ -181,6 +184,16 @@ impl Mmproj {
 
     pub fn native_quantized_tensor_count(&self) -> usize {
         self.native_quantized_tensor_count
+    }
+
+    /// Major linears that were floating-point tensors in the source GGUF.
+    pub fn source_float_linear_names(&self) -> &[String] {
+        &self.source_float_linear_names
+    }
+
+    pub(super) fn with_source_float_linears(mut self, names: Vec<String>) -> Self {
+        self.source_float_linear_names = names;
+        self
     }
 }
 
@@ -291,6 +304,10 @@ impl QuantizedLfm2VlModel {
 
     pub fn clear_cache(&mut self) {
         self.text.clear_cache();
+    }
+
+    pub fn require_native_q8_text_linears(&self) -> Result<usize> {
+        self.text.require_native_q8_linears()
     }
 
     pub fn pairing_report(&self) -> &PairingReport {

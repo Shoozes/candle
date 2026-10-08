@@ -2588,5 +2588,37 @@ deferred to TODO C3; no network or toolchain install was substituted.
   repository-rule mutation occurred. This state-record update is the
   documentation-only fast-forward successor.
 
+## 2026-10-08 d1 CPU/CUDA
+
+120 study forwards; [API, qualification and proof](D1.md).
+
+## 2026-10-08 d1 review and scoped cleanup
+
+Three findings closed; 499 Rust tests, six receipt controls and 120 retained
+typed-answer replays pass. [Cleanup proof and next handoff](D1.md#review-and-scoped-cleanup).
+
+## 2026-10-08 d1 publication closeout
+
+The owner requested paired Closeout and Publish for the reviewed reusable d1
+batch. Before mutation, all 65 task hashes matched the sealed cleanup receipt,
+the index was empty and a fresh fetch showed local/remote `main` equal at
+`313a1cd9166b8db5abfb9420d0780ac1f7fd925f`. The pinned prompt baseline passed.
+Closeout updates the five affected documentation records and preserves all
+numerical source and prior proof. Its staged-byte audit caught CRLF in three
+authored d1 JSON fixtures, hidden by Windows grep text mode. The raw-byte grep
+guard and native fixture-identity regression reproduced that failure; LF repair
+and corrected manifest/policy hashes then passed all 14 focused d1 tests with
+one explicit ignore. Parsed tokenizer/resize and golden case data are unchanged.
+Its named-file staging review and native clean-head gate precede the guarded
+exact fast-forward push.
+
+The successful publication identity is defined by the helper's
+`artifacts/publication/last-push.json`, retained with the independent source
+binding and closure result in `artifacts/lfm2-d1/20261008-closeout-publish-p1/`.
+Credentials remain helper-owned. Referenced evidence, the approved local
+reference environment and rebuildable caches are retained; this closeout owns
+no service or production model Job and performs no repository/evidence deletion.
+GenEye pin/lock/package adoption remains the next bounded consumer task.
+
 ---
-AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=diagnostic-closeout-publish | change=retained refusal proof and completed peer recheck
+AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=d1-closeout-publish | change=archived the owner-authorized guarded d1 publication closeout

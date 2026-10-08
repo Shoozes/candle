@@ -41,6 +41,12 @@ impl Lfm2VlPrompt {
         &self.tokenizer
     }
 
+    pub(crate) fn disable_tokenizer_controls(&mut self) -> Result<()> {
+        self.tokenizer.with_padding(None);
+        self.tokenizer.with_truncation(None).map_err(|error| candle::Error::Msg(error.to_string()))?;
+        Ok(())
+    }
+
     /// Expand user-provided sentinels without moving them.
     pub fn expand(&self, text: &str, images: &ProcessedVisionBatch) -> Result<ExpandedPrompt> {
         let sentinel_count = text.match_indices(IMAGE_SENTINEL).count();

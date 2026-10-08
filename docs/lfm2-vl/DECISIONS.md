@@ -1620,5 +1620,45 @@ not tokenizer compatibility, forward-logit parity, quantized text, or
 production support. The CUDA narrowed-view regression is accepted on the
 existing native lane; the packed CUDA path remains opt-in.
 
+
+## D-0068: Reusable d1 policy, native source mix and independent prefills
+
+Status: Accepted; independent CPU and CUDA parity/study qualification passed.
+
+Decision:
+Place typed ordered requests, pinned rendering/tokenizer policy and `D1Session`
+in `candle-vlm`; place answer-slot tensor pooling/normalization in
+`candle-transformers::models::lfm2_d1`. Use sequential fresh prefills and one
+immutable image encoding per request, identity calibration and zero output tokens.
+Consumers own process/resource admission and study orchestration.
+
+Preserve the exact retained projector's 137 Q8 tensors and 27 original F16
+feed-forward matrices, as explicitly selected by the owner. Width 4304 cannot
+form unpadded Q8 rows. Keep Q8 storage native, multiply F32 activations directly,
+report the floating matrices and reject forced dense Q8 execution. The first
+independent CPU oracle found that Candle's usual activation requantization
+exceeded the frozen logit bound. D1 therefore selects call-scoped native CPU/CUDA
+Q8/F32 kernels, with no dense weight buffer or activation quantization. Flatten
+checked projector rows and restore exact output shapes. Call-scoped guard/counters leave ordinary Candle callers
+unchanged. The shared Qwen activation policy remains independently owned.
+
+The retained d1 processor selects bicubic (`resample=3`). Its pinned TorchVision
+v2 CPU uint8 backend constructs F64 coefficients, quantizes signed fixed-point
+weights and rounds/clamps bytes between passes. A v1 floating resize golden is
+not equivalent. D1 selects this native byte policy explicitly; existing LFM2-VL
+bilinear defaults remain intact. Both text and image tokenization disable
+padding/truncation controls so the final prefill slot is the answer slot.
+
+Freeze the selected quantized-hybrid bounds before production measurement:
+exact input IDs, readout absolute error 1e-6, projected-feature cosine 0.9999 and
+CPU/CUDA last-logit maximum absolute error 0.02. Accuracy is measured without an
+invented threshold. Each corrected device study completes 60 forwards; all
+qualification calls are separately counted in the retained work ledger.
+Probability/readout replay does not replace independent model/component parity.
+CUDA execution waits for that CPU gate.
+Policy/source/artifact pins, receipts and remaining work are in [D1.md](D1.md).
+The prior 42-request consumer study is closed. Publication requires a separately
+authorized batch; this implementation neither commits nor pushes.
+
 ---
-AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=lora-scale-closeout | change=recorded F32 coefficient admission without changing valid execution or external qualification
+AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=lfm2-d1 | change=recorded reusable d1 implementation and bounded proof

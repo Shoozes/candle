@@ -8,6 +8,10 @@ keywords.workspace = true
 categories.workspace = true
 license.workspace = true
 
+[features]
+default = []
+cuda = ["candle/cuda", "candle-transformers/cuda"]
+
 [dependencies]
 candle = { workspace = true }
 candle-transformers = { workspace = true }

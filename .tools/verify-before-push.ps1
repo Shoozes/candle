@@ -73,7 +73,7 @@ try {
     Invoke-Step "maintained library check" {
         & cargo check --locked --offline -j 2 -p candle-core -p candle-nn -p candle-transformers -p candle-vlm
     }
-    foreach ($example in @("lfm2", "quantized-lfm2", "lfm2-vl")) {
+    foreach ($example in @("lfm2", "quantized-lfm2", "lfm2-vl", "lfm2-d1")) {
         Invoke-Step "example check: $example" {
             & cargo check --locked --offline -j 2 -p candle-examples --example $example
         }
@@ -87,6 +87,9 @@ try {
     Invoke-Step "LFM2-VL example tests" {
         & cargo test --locked --offline -j 2 -p candle-examples --example lfm2-vl
     }
+    Invoke-Step "d1 clippy" {
+        & cargo clippy --locked --offline -j 2 -p candle-vlm --lib -p candle-examples --example lfm2-d1 -- -D warnings
+    }
     Invoke-Step "summary bank" {
         & pwsh -NoProfile -File (Join-Path $repoRoot "scripts\lfm2-vl\verify-summary-bank.ps1")
     }
@@ -97,6 +100,14 @@ try {
             & $python[0] (Join-Path $repoRoot "scripts\lfm2-vl\verify-module-layout.py")
         } else {
             & $python[0] @($python[1..($python.Count - 1)]) (Join-Path $repoRoot "scripts\lfm2-vl\verify-module-layout.py")
+        }
+    }
+
+    Invoke-Step "d1 typed receipt controls" {
+        if ($python.Count -eq 1) {
+            & $python[0] -B (Join-Path $repoRoot "tools\lfm2_vl\d1\test_verify_run.py") -v
+        } else {
+            & $python[0] @($python[1..($python.Count - 1)]) -B (Join-Path $repoRoot "tools\lfm2_vl\d1\test_verify_run.py") -v
         }
     }
 

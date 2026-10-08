@@ -56,4 +56,5 @@ struct ImageBudget {
 #[derive(Clone, Debug)]
 pub struct Lfm2VlProcessor {
     config: Lfm2VlProcessorConfig,
+    bicubic: bool,
 }

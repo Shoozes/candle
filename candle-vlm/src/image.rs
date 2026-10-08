@@ -9,6 +9,9 @@
 use candle::Result;
 use image::{DynamicImage, RgbImage};
 
+mod bicubic;
+pub use bicubic::resize_bicubic_antialias;
+
 #[derive(Clone, Debug)]
 struct ResizeWeights {
     indices: Vec<usize>,

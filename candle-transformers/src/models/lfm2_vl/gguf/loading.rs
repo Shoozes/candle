@@ -177,12 +177,18 @@ impl Mmproj {
             .map_err(|_| {
                 candle::Error::Msg("GGUF MMProj Q8 tensor-map allocation failed".into())
             })?;
+        let mut source_float_linear_names = Vec::new();
         for (gguf_name, expected_tensor) in &expected {
             let quantized = content.tensor(reader, gguf_name, device).map_err(|error| {
                 candle::Error::Msg(format!(
                     "failed to read GGUF MMProj tensor {gguf_name:?}: {error}"
                 ))
             })?;
+            if expected_tensor.quantized_linear
+                && matches!(quantized.dtype(), GgmlDType::F32 | GgmlDType::F16 | GgmlDType::BF16)
+            {
+                source_float_linear_names.push(gguf_name.clone());
+            }
             if execution == GgufMmprojExecution::Q8_0
                 && expected_tensor.quantized_linear
                 && quantized.dtype() == GgmlDType::Q8_0
@@ -308,6 +314,7 @@ impl Mmproj {
             manifest: None,
             gguf: Some(gguf_metadata),
         };
+        source_float_linear_names.sort();
         Ok(Mmproj::from_parts(
             vision_tower,
             projector,
@@ -318,7 +325,7 @@ impl Mmproj {
             device,
             Some(execution),
             native_quantized_tensor_count,
-        ))
+        ).with_source_float_linears(source_float_linear_names))
     }
 }
 

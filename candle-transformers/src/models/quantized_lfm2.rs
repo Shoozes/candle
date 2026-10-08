@@ -855,6 +855,36 @@ impl ModelWeights {
         &self.metadata
     }
 
+    /// Validate retained Q8_0 storage for all language-model major linears.
+    pub fn require_native_q8_linears(&self) -> Result<usize> {
+        if !matches!(&self.output, QMatMul::QTensor(weight) if weight.dtype() == candle::quantized::GgmlDType::Q8_0)
+        {
+            bail!("native Q8 LFM2 requires a retained Q8_0 output matrix")
+        }
+        if self.active_lora_identity().0.is_some() {
+            bail!("native Q8 base-model admission does not accept an active LoRA adapter")
+        }
+        let mut count = 1usize;
+        for layer in &self.layers {
+            let mut linears = vec![&layer.mlp.w1, &layer.mlp.w2, &layer.mlp.w3];
+            match &layer.kind {
+                LayerKind::Attention(layer) => {
+                    linears.extend([&layer.wq, &layer.wk, &layer.wv, &layer.wo])
+                }
+                LayerKind::ShortConv(layer) => linears.extend([&layer.in_proj, &layer.out_proj]),
+            }
+            for linear in linears {
+                if !linear.is_native_q8() {
+                    bail!("native Q8 LFM2 requires retained Q8_0 major linear weights")
+                }
+                count = count
+                    .checked_add(1)
+                    .ok_or_else(|| candle::Error::Msg("Q8 linear count overflow".into()))?;
+            }
+        }
+        Ok(count)
+    }
+
     pub fn hidden_size(&self) -> usize {
         self.tok_embeddings.hidden_size()
     }

@@ -31,6 +31,11 @@ framework primitives are complete. Their detailed lineage and proof belong in
 `HISTORY.md`, `PARITY.md`, and `docs/FORK_OVERLAYS.md`; do not copy those
 snapshots back into this entry point.
 
+The reusable LFM d1 batch has verified local proof and owner-authorized guarded
+publication. The helper's exact remote-equality receipt identifies its source
+checkpoint. GenEye-owned adoption is the first contract in `TODO.md`; use the
+API/proof in `D1.md` and the publication closeout recorded in `HISTORY.md`.
+
 The combined-overlay 0.2.0 source checkpoint was clean-head verified and
 published to `origin/main` at
 `e2c6565d2970de7a9e507b7759a608d3a2c827e7`. Its tracked lock/toolchain,
@@ -88,10 +93,12 @@ cargo check --locked --offline -p candle-examples --example quantized-lfm2
 cargo check --locked --offline -p candle-examples --example lfm2-vl
 ```
 
-Then replay the portable baseline in WSL when its local cache is available:
+Then replay the portable baseline in WSL when its local cache is available.
+The installed distro observed on 2026-10-08 is `Codex-Compat`; its current
+offline cache lacks `accelerate-src`, so this optional lane remains blocked:
 
 ```powershell
-wsl.exe -d NVIDIA-Workbench --cd /mnt/c/DevStuff/candle bash -lc "CARGO_TARGET_DIR=/home/workbench/code/candle-lfm2-vl/target bash scripts/lfm2-vl/verify-baseline.sh"
+wsl.exe -d Codex-Compat --cd /mnt/c/DevStuff/candle bash -lc "CARGO_NET_OFFLINE=true CARGO_TARGET_DIR=/mnt/c/DevStuff/candle/artifacts/wsl-target bash scripts/lfm2-vl/verify-baseline.sh"
 ```
 
 These commands perform compilation and tests only. They do not authorize dependency downloads, model execution, hosted CI, commits, pushes, or PRs. Hosted CI is not a release authority for this fork; required evidence is local native Windows proof plus an explicitly labeled WSL replay when practical. A missing offline dependency is a blocked lane to record in `STATUS.md`, not permission to fetch it implicitly.
@@ -163,4 +170,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=adapter-coordination-publication | change=routed current preparation proof and retained explicit execution gates
+AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=d1-closeout-publish | change=routed the published-identity handoff to the GenEye adoption contract

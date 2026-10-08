@@ -5,6 +5,12 @@ for Candle's LFM2.5-VL/MMProj integration. The public `lfm2_vl` module owns
 SigLIP2 NaFlex crop/patch preparation, image-token expansion, and the checked
 image-span contracts used by the example runner.
 
+The public `lfm2_d1` module adds typed Noul/Choice/Score decisions through fresh
+independent prefills, optional image reuse, zero generated tokens, partial
+failures and native Q8 dispatch receipts. See [the d1 contract](../docs/lfm2-vl/D1.md)
+and [local example](../candle-examples/examples/lfm2-d1/README.md) for explicit
+loading and current CPU/CUDA qualification limits. `cuda` is optional.
+
 ## Supported boundary
 
 The current release evidence covers the `LiquidAI/LFM2.5-VL-450M` and
@@ -86,4 +92,4 @@ for checkpoint preparation, native and GGUF/MMProj forms, device placement,
 bounded inference, JSON evidence, and local verification commands.
 
 ---
-AI-edited: 2026-08-13T13:36:16-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=hybrid-loader-hardening | change=documented bounded fail-fast tokenizer and processor admission
+AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=lfm2-d1 | change=recorded reusable d1 implementation and bounded proof

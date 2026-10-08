@@ -849,6 +849,17 @@ impl QCudaStorage {
         storage: &CudaStorage,
         layout: &crate::Layout,
     ) -> Result<(CudaStorage, crate::Shape)> {
+        if super::native_q8::required()
+            && (self.dtype != GgmlDType::Q8_0
+                || FORCE_DMMV.load(std::sync::atomic::Ordering::Relaxed))
+        {
+            crate::bail!("native Q8 CUDA execution rejects forced dense or non-Q8_0 matmul")
+        }
+        if super::native_q8::required() {
+            let result = self.native_f32_q8(self_shape, storage, layout)?;
+            super::native_q8::record(4)?;
+            return Ok(result);
+        }
         if self.dtype == GgmlDType::Q8_0
             && super::k_quants::ggml_q8_0_activation()
             && FORCE_DMMV.load(std::sync::atomic::Ordering::Relaxed)
@@ -858,12 +869,14 @@ impl QCudaStorage {
         // Optimized MMVQ and MMQ paths (support most paths: BF16/F16/F32, batch 1-8, all quant types, reuses per-device workspace).
         if !FORCE_DMMV.load(std::sync::atomic::Ordering::Relaxed) {
             if let Some(result) = super::fast_mmvq::try_fwd(self, self_shape, storage, layout)? {
+                super::native_q8::record(1)?;
                 return Ok(result);
             }
             if self.dtype == GgmlDType::Q8_0 && super::k_quants::ggml_q8_0_activation() {
                 crate::bail!("scoped GGML Q8_0 CUDA activation requires the F32 MMVQ path")
             }
             if let Some(result) = super::fast_mmq::try_fwd(self, self_shape, storage, layout)? {
+                super::native_q8::record(2)?;
                 return Ok(result);
             }
         }
@@ -879,11 +892,13 @@ impl QCudaStorage {
             [b, _k] => *b <= max_bm,
             _ => false,
         };
-        if use_vec_kernel {
+        let result = if use_vec_kernel {
             self.dequantize_matmul_vec(self_shape, storage, layout)
         } else {
             self.dequantize_matmul(self_shape, storage, layout)
-        }
+        }?;
+        super::native_q8::record(3)?;
+        Ok(result)
     }
 
     pub fn data(&self) -> Result<Vec<u8>> {
@@ -907,6 +922,81 @@ impl QCudaStorage {
 }
 
 impl QCudaStorage {
+    fn native_f32_q8(
+        &self,
+        shape: &crate::Shape,
+        storage: &CudaStorage,
+        layout: &crate::Layout,
+    ) -> Result<(CudaStorage, crate::Shape)> {
+        let (columns, width) = shape.dims2()?;
+        let (rows, input_width) = match *layout.shape().dims() {
+            [rows, width] => (rows, width),
+            [batch, rows, width] => (
+                batch
+                    .checked_mul(rows)
+                    .ok_or_else(|| crate::Error::Msg("native Q8 row count overflow".into()))?,
+                width,
+            ),
+            _ => crate::bail!("native Q8/F32 CUDA requires matrix or batched-matrix input"),
+        };
+        let cells = rows
+            .checked_mul(columns)
+            .ok_or_else(|| crate::Error::Msg("native Q8 output size overflow".into()))?;
+        let bytes = columns
+            .checked_mul(width / 32)
+            .and_then(|count| count.checked_mul(34))
+            .ok_or_else(|| crate::Error::Msg("native Q8 storage size overflow".into()))?;
+        if input_width != width
+            || width == 0
+            || !width.is_multiple_of(32)
+            || cells == 0
+            || self.data.len != bytes
+        {
+            crate::bail!("native Q8/F32 CUDA dimensions or storage do not match")
+        }
+        let input = storage.as_cuda_slice::<f32>()?;
+        let (start, end) = layout.contiguous_offsets().ok_or_else(|| {
+            crate::Error::RequiresContiguous {
+                op: "native-q8-f32",
+            }
+            .bt()
+        })?;
+        let input = input.slice(start..end);
+        let grid = u32::try_from(cells.div_ceil(4)).map_err(crate::Error::wrap)?;
+        if grid > i32::MAX as u32 {
+            crate::bail!("native Q8/F32 CUDA grid exceeds its limit")
+        }
+        let mut output = self.device.alloc_zeros::<f32>(cells)?;
+        let function = self
+            .device
+            .get_or_load_func("native_q8_f32_matmul", &candle_kernels::NATIVE_Q8_F32)?;
+        let config = cudarc::driver::LaunchConfig {
+            grid_dim: (grid, 1, 1),
+            block_dim: (32, 4, 1),
+            shared_mem_bytes: 0,
+        };
+        let mut builder = function.builder();
+        builder.arg(&self.data.inner);
+        builder.arg(&input);
+        builder.arg(&mut output);
+        barg!(
+            builder,
+            i64::try_from(rows).map_err(crate::Error::wrap)?,
+            i64::try_from(width).map_err(crate::Error::wrap)?,
+            i64::try_from(columns).map_err(crate::Error::wrap)?
+        );
+        unsafe { builder.launch(config) }.w()?;
+        drop(builder);
+        let mut result_shape = layout.shape().dims().to_vec();
+        if let Some(last) = result_shape.last_mut() {
+            *last = columns;
+        }
+        Ok((
+            CudaStorage::wrap_cuda_slice(output, self.device.clone()),
+            result_shape.into(),
+        ))
+    }
+
     fn dequantize_matmul_vec(
         &self,
         self_shape: &crate::Shape,
@@ -928,7 +1018,11 @@ impl QCudaStorage {
             crate::bail!("mismatch on matmul dim {self_shape:?} {:?}", rhs_l.shape())
         }
 
-        let out = if FORCE_DMMV.load(std::sync::atomic::Ordering::Relaxed) {
+        let force_dense = FORCE_DMMV.load(std::sync::atomic::Ordering::Relaxed);
+        if force_dense && super::native_q8::required() {
+            crate::bail!("native Q8 CUDA execution rejects forced dense matmul")
+        }
+        let out = if force_dense {
             dequantize_mul_mat_vec(&self.data, &rhs, self.dtype, ncols, nrows, self.device())?
         } else {
             mul_mat_vec_via_q8_1(
@@ -964,7 +1058,11 @@ impl QCudaStorage {
             crate::bail!("mismatch on matmul dim {self_shape:?} {:?}", layout.shape())
         }
 
-        let out = if FORCE_DMMV.load(std::sync::atomic::Ordering::Relaxed) {
+        let force_dense = FORCE_DMMV.load(std::sync::atomic::Ordering::Relaxed);
+        if force_dense && super::native_q8::required() {
+            crate::bail!("native Q8 CUDA execution rejects forced dense matmul")
+        }
+        let out = if force_dense {
             let data_f32 = self.dequantize(n * k)?;
             let rhs_l = crate::Layout::new((k, n).into(), vec![1, k], 0).broadcast_as((b, k, n))?;
             storage.matmul(&data_f32, (b, m, n, k), layout, &rhs_l)?

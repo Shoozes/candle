@@ -50,6 +50,10 @@ pub(crate) struct AdaptedLinear {
 }
 
 impl AdaptedLinear {
+    pub(crate) fn is_native_q8(&self) -> bool {
+        matches!(&self.base, QMatMul::QTensor(weight) if weight.dtype() == candle::quantized::GgmlDType::Q8_0)
+    }
+
     pub(crate) fn new(name: String, base: QMatMul) -> Result<Self> {
         let dims = match &base {
             QMatMul::QTensor(tensor) => tensor.shape().dims(),

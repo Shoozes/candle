@@ -35,6 +35,7 @@ fixture_roots=(
     tests/fixtures/lfm2_vl_processor_tiny
     tests/fixtures/lfm2_vl_mmproj_tiny
     tests/fixtures/lfm2_vl_loader_tiny
+    tests/fixtures/lfm2_d1_tiny
 )
 
 mapfile -t fixture_text_files < <(
@@ -76,7 +77,8 @@ for path in "${fixture_text_files[@]}"; do
         exit 1
     fi
 done
-if LC_ALL=C grep -Il $'\r' "${fixture_text_files[@]}"; then
+# Windows grep must inspect raw bytes rather than strip CR in text mode.
+if LC_ALL=C grep -U -Il $'\r' "${fixture_text_files[@]}"; then
     printf 'error: fixture text file contains a carriage-return byte\n' >&2
     exit 1
 fi
@@ -121,13 +123,13 @@ while IFS= read -r path; do
     fi
 done <"$MANIFEST_PATHS"
 
-if [[ "$modified_count" -ne 17 ]]; then
-    printf 'error: expected exactly 17 LFM2-VL fork-origin modifications, found %s\n' "$modified_count" >&2
+if [[ "$modified_count" -ne 20 ]]; then
+    printf 'error: expected exactly 20 LFM2-VL fork-origin modifications, found %s\n' "$modified_count" >&2
     exit 1
 fi
 
-if [[ "$added_count" -ne 147 ]]; then
-    printf 'error: expected exactly 147 LFM2-VL additions, found %s\n' "$added_count" >&2
+if [[ "$added_count" -ne 181 ]]; then
+    printf 'error: expected exactly 181 LFM2-VL additions, found %s\n' "$added_count" >&2
     exit 1
 fi
 
