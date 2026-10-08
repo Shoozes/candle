@@ -2,7 +2,51 @@
 
 ## Current phase and source
 
-Current phase (2026-10-07): local native CPU adapter-admission closeout is
+Current phase (2026-10-08): closeout of verified adapter-coordination progress;
+the owner authorized publication of `STATUS.md`, `TODO.md`, `START_HERE.md`
+and `HISTORY.md` through Candle's guarded helper. The native `main` closeout
+baseline is `237a01d66c8048a81292840a09bdd5fef76e7532`; the helper receipt at
+`artifacts/publication/last-push.json` owns the exact published commit and tree.
+The importer, tests and evidence remain deliberately retained under ignored
+`artifacts/adapter-coordination/`. Rust source and public APIs are unchanged.
+
+Candle's F32 adapter coefficient/cache prerequisite remains source-bound to its
+prior CPU gate. No real trained 2.6B adapter or selected training/held-out plan
+was found in the inspected GenUni roots; its retained jobs were setup-only.
+The verified Q8 base in `D:\huggingface-cache` and native HF base at
+`C:\llamacpp\models\LFM2.5-2.6B-hf` are separate from trained adapter evidence.
+Completed identities and preparation proof are
+[recorded in HISTORY](HISTORY.md#2026-10-08---genuni-and-edge-diagnostic-preparation).
+
+The exact eight-view stock CPU diagnostic stays pending. All public inputs fit
+384 output tokens under the 2048 context limit, maximum total 1998. GenUni's
+49-test Windows/WSL proof and Edge's ten-test collector proof retain their
+original source identities. Preparation and this progress closeout made no
+model calls or training claim; the diagnostic remains unexecuted.
+
+Review reproduced a new defect: the importer accepted changed input-binding
+identity/dispatch fields and its prior controls did not exercise retained files.
+Cleanup now rehashes the frozen binding, copied evidence, actual export and
+selected GenUni dependency sources; checks API/request/raw-HTTP/run/terminal
+association and cleanup; and rejects duplicate/nonfinite/oversized JSON.
+Thirteen native protocol tests pass, including all eight retained-file views,
+failed/unknown terminals, altered identities/evidence and resource/cleanup failure.
+These are authored controls, never model execution or semantic-quality evidence.
+
+Current cleanup proof: `artifacts/adapter-coordination/20261008-cleanup-c1/`.
+The prior importer/contract/handoff are preserved in its `baseline/` snapshot;
+current source inventory and compact run receipts are referenced by `proof.jsonl`.
+Native formatting, Summary Bank, LFM manifest and 236-path overlay checks pass.
+The history route fits its existing budget after condensing this handoff.
+Exact execution and fresh resource acceptance remain pending for the separate
+CPU/C-output policy; the active real-adapter Done When contract is unchanged.
+The selected work record and fresh successful eight-view/330-pin preparation
+are retained in `artifacts/adapter-coordination/20261008-stock-diagnostic-w1/`.
+Exact diagnostic approval remains absent; no runtime root or model call exists.
+Publication closeout and retained ownership are recorded in
+`artifacts/adapter-coordination/20261008-publication-p1/`. No owned model
+process, endpoint or scratch remains; referenced evidence is retained for replay.
+Previous local closeout (2026-10-07): native CPU adapter-admission closeout is
 complete; real adapter quality and Edge qualification remain externally gated.
 The closeout baseline is native Windows `main` at
 `b274902312a39cbe1b0028141276f43e64b56096`; the candidate adds the named task changes.
@@ -227,9 +271,19 @@ priority; existing runtime receipts and the next adapter gate remain unchanged.
 ## Exact next task
 
 The local cached-forwarding repair and focused native text-adapter gate are
-complete. GenUni and Edge next own
-the real immutable adapter, held-out quality, and independently admitted
-serving contract in TODO. Do not download new inputs or repin consumers.
+complete. Obtain explicit acceptance of the exact prepared eight-call CPU/C-output
+invocation and proposed resource policy, binding the current bridge contract.
+Then recheck fresh counters and source pins before Edge's 384/2048 diagnostic.
+Recreate each live request with deadline creation plus 30 seconds; retain
+every terminal/refused/uncertain attempt and
+verify owned cleanup, import only bound results and review explanations/citations.
+The current observation fits the separately proposed CPU policy; it does not
+pass the immutable original RAM/D proposal. Observe actual stock behavior
+before selecting any adapter training plan; these exposed cases cannot
+establish unseen model competence.
+If training is selected, GenUni's real immutable
+adapter/provenance/held-out gate and Edge's serving contract in TODO remain
+unchanged. New downloads or consumer repins require their own scope.
 
 ---
-AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=lora-scale-closeout | change=recorded native admission proof and guarded publication ownership while preserving external qualification
+AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=adapter-coordination-publication | change=recorded verified progress scope and retained the unfinished diagnostic gate

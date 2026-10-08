@@ -2,6 +2,58 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-10-08 - GenUni and Edge diagnostic preparation
+
+Preparation used native `main` `237a01d66c8048a81292840a09bdd5fef76e7532`.
+GenUni found no retained trained 2.6B adapter or selected training/held-out
+plan in the inspected producer roots. Cached Q8 and native HF files are base
+inputs; native execution, conversion lineage and adapter quality remain
+unqualified. Producer findings and base identities are retained in
+`artifacts/adapter-coordination/20261007-c74b9fea/coordination.json`.
+
+GenUni prepared four Candle Rust cases with eight numbered/unnumbered views.
+Candle verified source pins and outcomes in that directory's
+`source-outcome-review.json`. The reviewer authored the original repair;
+these are exposed development controls, with no independent unseen or
+model-choice claim. The existing six-case Python catalog remains separate.
+The proposal-specific manual rubric and scorer proof are retained in
+`artifacts/adapter-coordination/20261008-edge-a9234115/handoff.json` and its
+referenced GenUni leaf. Its prior Windows and WSL2 `Codex-Compat` proof passes
+32 manual-scorer and 17 association tests per lane. Process and request
+creation clocks are distinct; requests have a 30-second deadline.
+
+Edge's frozen export preserves production rails, empty-think prefill,
+top-k 50 and repetition penalty 1.05 over 64 tokens. Candle verified 326
+bindings, including 309 source files and the CPU API. Three original
+512-output views exceed context 2048. The retained `policy-decision.json`
+selects a uniform 384 reserve: all eight fit, maximum total 1998, with
+unchanged prompt/token-ID hashes. The original proposal/export is preserved.
+
+The pending CPU packet is Edge's
+`runtime-data/proofs/stock-q8-candle-invocation-20261008-01/`, manifest
+SHA-256 `82e54ffd5696f96adfc7b55f5582a8b395ca162e250225a100c206fbf5cb9f47`.
+Its ten offline collector tests and Candle's model-free preparation pass;
+330 pins cover all eight views. Original 48-GiB physical/100-GiB D-free
+floors failed observation. The separate CPU/C-output proposal uses 8/1-GiB
+server/client Jobs, 32/16-GiB physical preflight/reserve, 40/8-GiB commit
+preflight/live floor, 25-GiB C free and 64-MiB outputs; D remains read-only.
+Execution approval was absent and no old exception transferred.
+
+The original bridge passes eight authored mappings and two negative controls,
+with no owner receipts. Native formatting, Summary Bank, manifest, 236-path
+overlay, whitespace and link checks are retained in `native-checks.json` in
+the same Candle evidence directory. Rust sources and original adapter
+acceptance stayed unchanged; runtime tests were not rerun. No model call,
+training, install, commit or push occurred. Referenced evidence is retained;
+actual responses still require typed association and manual citation review.
+
+The subsequent review/cleanup repaired the owned ignored importer and passed
+13 retained-file protocol tests. Baseline snapshots, current pins and compact
+receipts are retained in `artifacts/adapter-coordination/20261008-cleanup-c1/`.
+The owner authorized a four-document progress snapshot; its closeout record is
+`artifacts/adapter-coordination/20261008-publication-p1/`. Diagnostic and adapter
+acceptance remain open; ignored code and evidence are retained locally.
+
 ## 2026-10-07 - Quantized LFM2 F32 LoRA admission closeout
 
 Scoped local repair at native main baseline
@@ -2535,4 +2587,4 @@ deferred to TODO C3; no network or toolchain install was substituted.
   documentation-only fast-forward successor.
 
 ---
-AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=lora-scale-closeout | change=recorded native admission proof, retained review evidence, and archived completed contracts
+AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=adapter-coordination-publication | change=preserved completed preparation and scoped repair proof

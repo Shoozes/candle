@@ -42,9 +42,16 @@ Annotated tag `lfm2-vl-mvp-0.1.0` remains the immutable first-MVP snapshot at
 `ff885586f6d44a3d9b9ac1724032cdf5f0155384`; never move or reuse it. The new
 candidate uses the distinct `candle-overlays-mvp-0.2.0` namespace. Native
 Windows/MSVC is release authority and WSL2/Linux is a secondary replay.
-Production models and caches are external inputs and are currently absent
-after operator cleanup; retained hash-bound parity remains valid, but no new
-model run or download is implied.
+Production models and caches are external inputs. The current adapter
+coordination found retained 2.6B Q8 and native HF base files; see `STATUS.md`
+for current findings and the prepared GenUni/Edge stock diagnostic.
+All eight public views fit its explicit 384-output/2048-context policy; actual
+model calls still require acceptance of the exact invocation/resource proposal
+and fresh call admission. The stricter retained-file importer and authored
+protocol proof are described in `STATUS.md`; actual semantic review follows
+an approved run.
+Retained hash-bound parity remains valid; artifact discovery establishes no
+new inference or trained-adapter qualification.
 
 ## One-Task Contract
 
@@ -156,4 +163,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence
+AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=adapter-coordination-publication | change=routed current preparation proof and retained explicit execution gates

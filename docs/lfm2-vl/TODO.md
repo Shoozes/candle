@@ -40,6 +40,29 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   but snapshot metadata inspection found no retained adapter, training manifest,
   or held-out receipt. GenUni must supply those inputs before the unchanged
   real-adapter/Edge Done When gate can be executed.
+- Producer prerequisite (2026-10-08): No real trained 2.6B adapter, selected
+  training/held-out plan or quality thresholds were found in the inspected
+  GenUni roots. Its verified Q8/native HF bases and setup-only jobs do not
+  supply those artifacts. Complete the stock diagnostic prerequisite before
+  selecting any adapter investment; exposed development results cannot qualify
+  unseen competence. Completed preparation identities and original proof are
+  [in HISTORY](HISTORY.md#2026-10-08---genuni-and-edge-diagnostic-preparation).
+- Exact next batch: Obtain acceptance of the prepared eight-call CPU/C-output
+  invocation and current `bridge-contract.json`, recheck pins/counters, then
+  retain every failed/refused/unknown attempt and verify owned cleanup. The
+  frozen 384/2048 public views and sampler differences stay explicit; no retry
+  or cropping. Review actual explanations/citations before any quality claim.
+  The proposed resource policy remains 8 GiB server/1 GiB client Jobs, 32 GiB
+  physical preflight/16 GiB reserve, 40 GiB commit preflight, 25 GiB C free and
+  64 MiB runtime outputs. Exact execution approval is still absent.
+  Selected work and fresh model-free preparation are retained at
+  `artifacts/adapter-coordination/20261008-stock-diagnostic-w1/work-record.json`.
+  The owner-authorized documentation snapshot preserves this incomplete batch;
+  publication does not satisfy its runtime or real-adapter Done When criteria.
+- Cleanup proof: `artifacts/adapter-coordination/20261008-cleanup-c1/` records
+  the reproduced frozen-input gap, stricter importer and 13 native protocol
+  tests over all eight retained-file views. These are authored controls, no
+  model, training or adapter qualification. Keep the six-Python catalog intact.
 
 The 2026-09-27 pinned upstream sync is independent of the older consumer
 pin-adoption task below. Consumer pins and historical selection identities
@@ -327,4 +350,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=lora-scale-closeout | change=recorded the local F32 prerequisite and retained the external adapter/quality gate
+AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=adapter-coordination-publication | change=preserved diagnostic and adapter acceptance while saving verified progress
