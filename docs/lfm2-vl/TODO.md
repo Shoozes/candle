@@ -6,24 +6,6 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ## Active Candle backlog
 
-### [ ] Integrate pinned upstream and publish scoped CPU execution options
-
-- What: Merge upstream `c68b2499` while retaining our fork contracts, and add
-  Auto/GenericTiled/GenericRowwise CPU execution with pre-load example validation.
-- Why: Integrate normalization regression coverage and generic prefill tiling
-  while keeping optimized repacks, native d1 Q8/F32 and explicit legacy replay.
-- When: Selected by the owner on 2026-10-09 before the independent d1 batches.
-- Where: Quantized core, quantized-LFM2 example, compatibility inventory and
-  current integration records; exact routes are in `feature__cpu_quantized_matmul`.
-- How: Non-rewriting merge, scoped forward commits, checked buffer/scratch
-  boundaries, deterministic parity/timing and guarded clean-main publication.
-- Done when: Both histories are ancestors, the pinned upstream behind count is
-  zero, the fork remains ahead, the native gate and affected compatibility proof
-  pass, and remote main equals the verified local commit.
-- Verification: Targeted quantized/normalization tests, frozen release benchmark,
-  native maintained gate, ug and bounded authored CUDA proof, exact overlay
-  inventories and `.tools/gitpush.ps1`; no production model forwards.
-
 ### [ ] Scale d1 CPU single-row Q8 projection across output columns
 
 - What: Improve one-row answer-projection scheduling with the same Q8/F32 math.

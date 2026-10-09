@@ -3,7 +3,13 @@
 ## Current phase and source
 
 Current phase (2026-10-09): Complete with verified limitations locally;
-owner-authorized upstream sync and CPU options await guarded publication.
+owner-authorized upstream sync and CPU options are qualified at
+`34830c195df9143fe1c997d7682fc4e0cd5bdc93`. The closeout forward commit's
+guarded publication identity and remote/main equality are owned by
+`artifacts/upstream-sync-20261009-cpu-options/publication-receipt.json`, retained
+only after helper success. Source-bound local proof is `proof.json` in that
+directory, SHA-256
+`b4c7c1d46e5003c719d465f37a53dbe6196182fbcbe482fea1553e57cb6c8e3e`.
 Starting clean/published source:
 `f93a4111ae41683b548758225940f80de6cd37e8`. The non-rewriting merge is
 `e445e88d8ff803c5889eedd895e7c689b2ad4115`; upstream target `c68b2499` is
@@ -12,8 +18,7 @@ an ancestor. Current native gate: 512 Rust tests passed, 12 explicit ignores,
 strict CPU/CUDA Clippy, ug check and bounded authored CUDA tests pass. Generic
 tiled prefill is about 1.10–1.33 times faster in frozen synthetic CPU timings;
 this does not measure d1's strict native path. WSL replay is unavailable because
-its offline cache lacks accelerate-src. Active code work: none; closeout and
-publication records are being finalized. Exact proof, limits and commands:
+its offline cache lacks accelerate-src. Active work: none. Exact proof, limits and commands:
 `UPSTREAM_SYNC.md`, with retained evidence under
 `artifacts/upstream-sync-20261009-cpu-options/`. No production model calls,
 downloads, dependency changes or release tags.
@@ -388,8 +393,8 @@ priority; existing runtime receipts and the next adapter gate remain unchanged.
 
 Candle's next bounded task is the CPU single-row d1 projection profiling and
 scheduling item in `TODO.md`; optional loading modes remain a separate batch.
-The current upstream/CPU-option batch requires its guarded publication receipt
-before completion. The independent Edge adapter handoff remains as follows.
+Completion of the upstream/CPU-option batch is bound to the guarded publication
+receipt above. The independent Edge adapter handoff remains as follows.
 
 Edge owns the next bounded repair: provide a consumer-compatible regular
 artifact binding with the required GGUF filename while preserving the base

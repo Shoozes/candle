@@ -35,8 +35,11 @@ The reusable LFM d1 API is published at Candle `3300bef20be161e63816b8820c845264
 GenEye's consumer integration is published at `48bf4de746ebbfe4226cb8bb79fd37e3c8e96e4e`,
 and its producer API compatibility review is closed. GenEye's separate LTS
 release gate remains open and owner-managed. The next active Candle item is
-CPU one-row d1 projection profiling/scheduling in `TODO.md`; local CUDA prefill
-qualification is complete and selected for owner-authorized guarded publication.
+CPU one-row d1 projection profiling/scheduling in `TODO.md`; CUDA prefill
+qualification is published at `f93a4111ae41683b548758225940f80de6cd37e8`.
+The subsequent pinned upstream/CPU-options batch is qualified at `34830c19`;
+its final guarded publication identity is owned by the current source-bound
+receipt recorded in `STATUS.md`.
 Use `STATUS.md` for the exact publication receipt, `D1.md` for the API and
 consumer evidence, and `HISTORY.md` for completed publication records.
 

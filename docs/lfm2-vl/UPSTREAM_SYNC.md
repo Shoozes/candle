@@ -87,6 +87,12 @@ The WSL `Codex-Compat` offline replay returned exit 101: its cache lacks
 CUDA linking emitted the existing nonfatal MSVC LIBCMT conflict warning.
 Metal and AArch64 execution are unrun on this host.
 
+Implementation source: `34830c195df9143fe1c997d7682fc4e0cd5bdc93`.
+Source/evidence binding: `proof.json`, SHA-256
+`b4c7c1d46e5003c719d465f37a53dbe6196182fbcbe482fea1553e57cb6c8e3e`.
+The final closeout source and successful clean-head gate are bound by
+`publication-receipt.json` in the same root after guarded helper success.
+
 ### Frozen generic CPU component timing
 
 Authored inputs, Q4K/Q8_0, `n=2040`, `k=2048`, 16 worker threads, three

@@ -2,6 +2,38 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-10-09 - Pinned upstream and CPU quantized execution options
+
+Preserved published `f93a4111ae41683b548758225940f80de6cd37e8` and integrated
+official `c68b24997319b8d76e5a4e775dab197c7f26322a` through merge
+`e445e88d8ff803c5889eedd895e7c689b2ad4115`. Implementation commit
+`34830c195df9143fe1c997d7682fc4e0cd5bdc93` adds synchronous scoped
+Auto/GenericTiled/GenericRowwise CPU execution, checked generic buffer/scratch
+boundaries and pre-load quantized-LFM2 example validation. Native d1 Q8/F32,
+Qwen rounding, optimized Auto repacks, ug/onig, model defaults and dependency
+pins remain. Normalization now matches upstream and its overlay entry is removed.
+
+Native gate: 512 Rust passes, 12 explicit ignores and 6 Python passes.
+Focused normalization/CLI/scope tests, strict CPU/CUDA Clippy and ug check pass.
+Bounded CUDA proof: 5 option tests, 3 native Q8 tests and 7 ug/custom-op tests
+pass; all Job PIDs were absent after cleanup. The overlay regression's stale
+four-overlay fixture was repaired, then all 12 checks passed. Current union:
+276 paths, 5 overlays, 27 shared; LFM inventory remains 203/20/183.
+
+Frozen authored release timings show tiled prefill 1.10–1.33 times faster than
+row-wise for the selected Q4K/Q8 shapes on Ryzen 9 7950X; single-row timings
+are essentially unchanged. These 636 synthetic matrix operations do not
+measure d1's native path or real-model latency. WSL offline replay is unavailable
+because its cache lacks accelerate-src; CUDA links retain the nonfatal LIBCMT
+warning. No downloads, new model inference, consumer changes or tags occurred.
+
+Exact commands, timings and limits are in `UPSTREAM_SYNC.md`. Retained source
+and evidence binding: `artifacts/upstream-sync-20261009-cpu-options/proof.json`,
+SHA-256 `b4c7c1d46e5003c719d465f37a53dbe6196182fbcbe482fea1553e57cb6c8e3e`.
+The final closeout commit's successful guarded publication identity is owned by
+`artifacts/upstream-sync-20261009-cpu-options/publication-receipt.json`; this
+file is retained only after helper success and remote/main equality.
+
 ## 2026-10-08 - GenUni and Edge diagnostic preparation
 
 Preparation used native `main` `237a01d66c8048a81292840a09bdd5fef76e7532`.
@@ -2788,4 +2820,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-closeout-publish | change=recorded scoped closeout, source-bound proof reuse and guarded publication contract
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=archived verified CPU options and publication binding
