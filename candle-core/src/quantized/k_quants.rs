@@ -2451,6 +2451,43 @@ impl GgmlType for BlockQ8K {
 /// matches the 16-row src1 blocking of `ggml_compute_forward_mul_mat`.
 const MATMUL_ROW_TILE: usize = 16;
 
+fn validate_matmul<T: GgmlType>(
+    (m, k, n): (usize, usize, usize),
+    lhs_len: usize,
+    rhs_len: usize,
+    dst_len: usize,
+) -> Result<(usize, usize)> {
+    if T::BLCK_SIZE == 0 || T::BLCK_SIZE != T::VecDotType::BLCK_SIZE {
+        crate::bail!("CPU quantized matmul has invalid or mismatched block sizes")
+    }
+    if !k.is_multiple_of(T::BLCK_SIZE) {
+        crate::bail!(
+            "CPU quantized matmul width {k} is not aligned to {}",
+            T::BLCK_SIZE
+        )
+    }
+    let lhs_count = m
+        .checked_mul(k)
+        .ok_or_else(|| crate::Error::Msg("CPU quantized lhs size overflow".into()))?;
+    let dst_count = m
+        .checked_mul(n)
+        .ok_or_else(|| crate::Error::Msg("CPU quantized dst size overflow".into()))?;
+    let blocks = k / T::BLCK_SIZE;
+    let rhs_count = n
+        .checked_mul(blocks)
+        .ok_or_else(|| crate::Error::Msg("CPU quantized rhs size overflow".into()))?;
+    if lhs_len != lhs_count {
+        crate::bail!("unexpected lhs length {lhs_len}, expected {lhs_count} ({m},{k},{n})")
+    }
+    if rhs_len < rhs_count {
+        crate::bail!("rhs too small: {rhs_len} < {rhs_count}")
+    }
+    if dst_len < dst_count {
+        crate::bail!("dst too small: {dst_len} < {dst_count}")
+    }
+    Ok((blocks, dst_count))
+}
+
 // https://github.com/ggml-org/llama.cpp/blob/aa3ee0eb0b80efca126cedf9bcb4fb5864b46ce3/ggml/src/ggml-cpu/ggml-cpu.c#L1205
 pub fn matmul<T: GgmlType>(
     (m, k, n): (usize, usize, usize),
@@ -2458,26 +2495,17 @@ pub fn matmul<T: GgmlType>(
     rhs_t: &[T],
     dst: &mut [f32],
 ) -> Result<()> {
-    debug_assert_eq!(
-        T::BLCK_SIZE,
-        T::VecDotType::BLCK_SIZE,
-        "Mismatched block sizes"
-    );
-    // Real asserts rather than debug ones: the workers below write `dst` through a raw pointer,
-    // so an undersized `dst` would otherwise be written out of bounds instead of panicking.
-    assert_eq!(
-        m * k,
-        lhs.len(),
-        "unexpected lhs length {} ({m},{k},{n})",
-        lhs.len()
-    );
-    assert!(
-        dst.len() >= m * n,
-        "dst too small: {} < {}",
-        dst.len(),
-        m * n
-    );
-    let k_in_blocks = k.div_ceil(T::BLCK_SIZE);
+    super::cpu_matmul_mode::validate_native()?;
+    let mode = super::cpu_matmul_mode::current();
+    let (k_in_blocks, dst_count) =
+        validate_matmul::<T>((m, k, n), lhs.len(), rhs_t.len(), dst.len())?;
+    if m == 0 || n == 0 {
+        return Ok(());
+    }
+    if k == 0 {
+        dst[..dst_count].fill(0.);
+        return Ok(());
+    }
 
     // Thread-local scratch buffer reused across calls to avoid per-matmul
     // heap allocation of the quantized LHS.
@@ -2489,20 +2517,31 @@ pub fn matmul<T: GgmlType>(
 
     let elem_size = std::mem::size_of::<T::VecDotType>();
     // Required scratch buffer length in u64
-    let required_scratch_len = (m * k_in_blocks * elem_size).div_ceil(8);
+    let lhs_blocks = m
+        .checked_mul(k_in_blocks)
+        .ok_or_else(|| crate::Error::Msg("CPU quantized scratch block count overflow".into()))?;
+    let scratch_bytes = lhs_blocks
+        .checked_mul(elem_size)
+        .filter(|&bytes| bytes <= isize::MAX as usize)
+        .ok_or_else(|| crate::Error::Msg("CPU quantized scratch byte size overflow".into()))?;
+    if elem_size == 0 || std::mem::align_of::<T::VecDotType>() > std::mem::align_of::<u64>() {
+        crate::bail!("CPU quantized scratch type has unsupported size or alignment")
+    }
+    let required_scratch_len = scratch_bytes.div_ceil(8);
 
     LHS_SCRATCH.with(|cell| -> Result<()> {
         let mut scratch = cell.borrow_mut();
         if scratch.len() < required_scratch_len {
+            let additional = required_scratch_len - scratch.len();
+            scratch
+                .try_reserve_exact(additional)
+                .map_err(crate::Error::msg)?;
             scratch.resize(required_scratch_len, 0);
         }
         // SAFETY: u64 ensures sufficient alignment. Resize ensures sufficient size.
         // All elements written before reading.
         let lhs_b: &mut [T::VecDotType] = unsafe {
-            std::slice::from_raw_parts_mut(
-                scratch.as_mut_ptr() as *mut T::VecDotType,
-                m * k_in_blocks,
-            )
+            std::slice::from_raw_parts_mut(scratch.as_mut_ptr() as *mut T::VecDotType, lhs_blocks)
         };
         // f32, f16, and bf16 support direct copy
         if T::DIRECT_COPY {
@@ -2589,6 +2628,18 @@ pub fn matmul<T: GgmlType>(
             return Ok(());
         }
 
+        if mode == super::CpuQuantizedMatmulMode::GenericRowwise {
+            for row_idx in 0..m {
+                pool.execute_chunked(quads_total, |range| {
+                    for quad_idx in range {
+                        dot_quad(row_idx, quad_idx * 4)
+                    }
+                });
+                dot_tail(row_idx);
+            }
+            return Ok(());
+        }
+
         // Prefill: the work items are (row tile, column quad) pairs, row tile major, so that a
         // worker walking a range of items keeps one tile of quantized lhs rows hot in L1 and
         // reads each weight quad once per tile instead of once per row.
@@ -2596,7 +2647,7 @@ pub fn matmul<T: GgmlType>(
         pool.execute_chunked(row_tiles * quads_total, |range| {
             for item in range {
                 let row_start = (item / quads_total) * MATMUL_ROW_TILE;
-                let row_end = m.min(row_start + MATMUL_ROW_TILE);
+                let row_end = m.min(row_start.saturating_add(MATMUL_ROW_TILE));
                 let col = (item % quads_total) * 4;
                 for row_idx in row_start..row_end {
                     dot_quad(row_idx, col)
@@ -2716,13 +2767,29 @@ pub fn matmul_f16<T: GgmlType>(
     dst: &mut [f16],
 ) -> Result<()> {
     let (m, k, n) = mkn;
-    if m * k != lhs.len() {
-        crate::bail!("unexpected lhs length {} {mkn:?}", lhs.len());
+    super::cpu_matmul_mode::validate_native()?;
+    if super::cpu_matmul_mode::current() != super::CpuQuantizedMatmulMode::Auto {
+        crate::bail!("explicit generic CPU quantized matmul requires F32 or BF16 activations; use Auto for F16")
+    }
+    let (k_in_lhs_blocks, dst_count) =
+        validate_matmul::<T>(mkn, lhs.len(), rhs_t.len(), dst.len())?;
+    if m == 0 || n == 0 {
+        return Ok(());
+    }
+    if k == 0 {
+        dst[..dst_count].fill(f16::ZERO);
+        return Ok(());
     }
 
-    let k_in_lhs_blocks = k.div_ceil(T::BLCK_SIZE);
-    let k_in_rhs_blocks = k.div_ceil(T::VecDotType::BLCK_SIZE);
-    let mut lhs_b = vec![T::VecDotType::zeros(); m * k_in_lhs_blocks];
+    let k_in_rhs_blocks = k_in_lhs_blocks;
+    let lhs_blocks = m
+        .checked_mul(k_in_lhs_blocks)
+        .ok_or_else(|| crate::Error::Msg("CPU quantized scratch block count overflow".into()))?;
+    let mut lhs_b = Vec::new();
+    lhs_b
+        .try_reserve_exact(lhs_blocks)
+        .map_err(crate::Error::msg)?;
+    lhs_b.resize(lhs_blocks, T::VecDotType::zeros());
     for row_idx in 0..m {
         let lhs_b = &mut lhs_b[row_idx * k_in_lhs_blocks..(row_idx + 1) * k_in_lhs_blocks];
         let lhs = &lhs[row_idx * k..(row_idx + 1) * k];

@@ -1,5 +1,24 @@
 # LFM2.5-VL Decisions
 
+## D-0073: Preserve native admission while selecting generic CPU schedulers
+
+Status: Accepted by the owner on 2026-10-09; native and bounded CUDA component
+verification pass. WSL offline replay is unavailable due to a missing cached dependency.
+
+Integrate upstream `c68b2499` without rewriting our published history. Use
+thread-local synchronous Auto/GenericTiled/GenericRowwise scopes. Auto retains
+native d1 Q8/F32 and existing optimized repacks before the tiled generic
+fallback; explicit generic modes bypass repacks and reject F16 activations.
+A forced generic CPU operation inside strict native Q8 returns an error.
+Dense/accelerator dispatch and Qwen's independent GGML rounding scope are unchanged.
+
+The upstream normalization implementation is equivalent to our existing
+alias/Init behavior and is adopted unconditionally. Upstream's generic short
+output panic is deliberately adapted to checked Result errors, including
+shape/block/scratch bounds, before unsafe writes. Deterministic mode parity
+and component timings qualify generic scheduling, not new model accuracy.
+No lazy loading, lower-bit model or production inference is part of this batch.
+
 ## D-0070: Validate text-LoRA scale in the admitted F32 execution dtype
 
 Status: Accepted; focused regressions and the native maintained CPU gate pass.
@@ -1726,4 +1745,4 @@ it consumed zero model forwards. Quality and consumer package acceptance remain
 separately owned. No publication follows from this local qualification.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cuda-performance | change=recorded qualified CUDA row/tap reuse and opt-in timing
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution

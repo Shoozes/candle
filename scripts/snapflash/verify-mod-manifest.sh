@@ -4,7 +4,7 @@ export LC_ALL=C
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd -P)"
-BASELINE="${1:-aebc405d2b4bf42808387e0ca597bf7dad9b565f}"
+BASELINE="${1:-c68b24997319b8d76e5a4e775dab197c7f26322a}"
 MANIFEST="${REPO_ROOT}/docs/snapflash/MOD_MANIFEST.md"
 cd -- "$REPO_ROOT"
 

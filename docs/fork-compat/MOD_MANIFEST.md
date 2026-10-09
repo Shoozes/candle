@@ -1,6 +1,6 @@
 # Retained Upstream Compatibility Manifest
 
-Live upstream baseline: `aebc405d2b4bf42808387e0ca597bf7dad9b565f`.
+Live upstream baseline: `c68b24997319b8d76e5a4e775dab197c7f26322a`.
 These intentional differences retain our public API and tokenizer contract
 after upstream removed ug and selected fancy-regex. This overlay is independent
 of LFM2-VL, diffusion, and experimental GPT-OSS model ownership.
@@ -19,6 +19,11 @@ failed detection/link alternatives and bounded runtime receipts.
 
 ## Owned paths
 
+- `candle-core/src/quantized/cpu_matmul_mode.rs`
+- `candle-core/src/quantized/k_quants.rs`
+- `candle-core/src/quantized/mod.rs`
+- `candle-core/tests/cpu_quantized_matmul_tests.rs`
+- `candle-core/tests/quantized_tests.rs`
 - `docs/fork-compat/MOD_MANIFEST.md`
 - `Cargo.toml`
 - `candle-core/Cargo.toml`
@@ -40,5 +45,10 @@ existing feature-overlay owners. The CUDA backend uses div_ceil for the
 upstream small-reduction launch count to pass the pinned strict Clippy gate
 without overflow-prone addition. Other inherited upstream files are not owned here.
 
+CPU-option hunks own scoped Auto/GenericTiled/GenericRowwise selection and
+checked generic buffer/scratch boundaries. Quantized tests adapt upstream's
+undersized-output panic to a controlled error and prove deterministic mode
+parity. Qwen rounding and LFM2-VL native Q8/F32 hunks retain their owners.
+
 ---
-AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=registered retained public APIs
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution

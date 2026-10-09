@@ -21,7 +21,7 @@ native Windows and WSL report the same candidate paths.
 | Overlay | Manifest | Current boundary |
 | --- | --- | --- |
 | LFM2-VL/MMProj | `docs/lfm2-vl/MOD_MANIFEST.md` | Proven model, loader, processor, fixture, and verification work; CPU hash-bound quantized-text adapter mechanics proven; real adapter qualification pending |
-| Retained upstream compatibility | `docs/fork-compat/MOD_MANIFEST.md` | Public ug APIs and onig tokenizer selection |
+| Retained upstream compatibility | `docs/fork-compat/MOD_MANIFEST.md` | Public ug APIs, onig tokenizer selection and scoped CPU quantized execution options |
 | SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic three-component SDXL LoRA transaction, controlled unsupported flash-attention failure, and exact residual/opt-in `text_time` UNet conditioning |
 | GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Packed CPU/CUDA interfaces and source-bound short-parity/2,080-token receipt; no new production claim from upstream sync |
 | Qwen3.5 GGUF compatibility | `docs/qwen35/MOD_MANIFEST.md` | Bounded Q8_0/F32 text admission, proven CPU parity, and scoped CUDA quantization under qualification; no Edge activation |
@@ -33,7 +33,7 @@ in one overlay cannot silently become release evidence for another. Historic
 registered paths remain valid across a rolling baseline while the verifiers
 still reject missing manifest files and any new unregistered path. The live
 union baseline is the pinned upstream integration commit
-`aebc405d2b4bf42808387e0ca597bf7dad9b565f`. Frozen
+`c68b24997319b8d76e5a4e775dab197c7f26322a`. Frozen
 `candle-overlays-mvp-0.2.0` receipt scripts still encode
 the earlier `6f74e7c` identity and are not this slice.
 
@@ -112,6 +112,7 @@ it. Every change to such a path must state which overlay owns each hunk and
 must pass both affected focused gates plus the repository-wide overlay gate.
 
 <!-- shared-paths:start -->
+- `candle-core/src/quantized/k_quants.rs`
 - `candle-core/src/quantized/mod.rs`
 - `candle-core/src/quantized/cuda.rs`
 - `.gitattributes`
@@ -145,6 +146,13 @@ another overlay's implementation or proof. Generic public names are required
 in Candle. `Snapflash*`, EdgeSymbio report types, application paths, and
 product policy remain outside the framework API.
 
+Fork compatibility owns the CPU execution selector, checked generic matmul
+boundaries and tiled/row-wise selection in `quantized/k_quants.rs` and
+`quantized/mod.rs`. Qwen3.5 retains the independent GGML activation rounding
+scope; LFM2-VL retains strict native Q8/F32 execution and accounting. Explicit
+generic modes cannot bypass native CPU admission. Inherited upstream tiling and
+normalization fixes are source integration, not separate overlay ownership.
+
 The Qwen3.5 overlay owns only the scoped GGML Q8_0 activation parameter added
 to the existing MMVQ F32 declaration in `candle-kernels/src/ffi.rs`; GPT-OSS
 retains its independent declarations and qualification.
@@ -173,4 +181,4 @@ the one-row kernel and Qwen's separate MMVQ/MMQ branch retain their behavior.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cuda-performance | change=recorded strict four-row CUDA reuse ownership
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution

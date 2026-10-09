@@ -1,5 +1,19 @@
 # LFM2.5-VL Sources
 
+## October 9 upstream CPU and normalization integration
+
+- Repository: `huggingface/candle`; license: MIT OR Apache-2.0, retaining the
+  repository license files and existing source attribution.
+- Pinned revision: `c68b24997319b8d76e5a4e775dab197c7f26322a`.
+- Integrated source: `candle-core/src/quantized/k_quants.rs` and quantized
+  tests (generic 16-row prefill); `candle-nn/src/layer_norm.rs` and its tests
+  (normalization lookup fix at `5ba5d5b468b5b1df40e82dd3d556987bedeea041`).
+- Adaptation: scoped generic scheduler choice and checked Result errors replace
+  panic/unchecked buffer boundaries. Original dot arithmetic and attribution
+  remain. Norm implementation matches the pinned upstream byte identity.
+- Proof boundary: deterministic component tests and timings, not production
+  checkpoint or model-oracle parity. See `UPSTREAM_SYNC.md` for current evidence.
+
 ## Lock Boundary
 
 The source lock was taken at `2026-08-10T02:56:01Z`, extended with official
@@ -244,4 +258,4 @@ processor tensors pass under the pinned environment. D1 numerical/quality claims
 and source-bound receipts are limited to [D1.md](D1.md).
 
 ---
-AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=lfm2-d1 | change=recorded reusable d1 implementation and bounded proof
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution

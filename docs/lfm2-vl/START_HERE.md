@@ -15,7 +15,7 @@ This is the live execution entry point for the Candle 0.11 LFM2.5-VL/MMProj exte
 
 ## Current Gate
 
-Pinned upstream sync targets `aebc405d2b4bf42808387e0ca597bf7dad9b565f`.
+Pinned upstream sync targets `c68b24997319b8d76e5a4e775dab197c7f26322a`.
 Read `UPSTREAM_SYNC.md` for integration proof, retained ug/onig contracts, and
 platform limitations. The older S3/S4 consumer pin is historical and is not a
 blocker for this owner-authorized Candle sync. Consumer repinning remains a
@@ -174,4 +174,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-closeout-publish | change=linked guarded publication identity and preserved next CPU work
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution

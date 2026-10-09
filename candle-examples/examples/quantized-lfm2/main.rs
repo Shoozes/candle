@@ -10,7 +10,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use tokenizers::Tokenizer;
 
-use candle::quantized::gguf_file;
+use candle::quantized::{gguf_file, with_cpu_quantized_matmul_mode, CpuQuantizedMatmulMode};
 use candle::Tensor;
 use candle_transformers::generation::{LogitsProcessor, Sampling};
 
@@ -18,6 +18,30 @@ use candle_examples::token_output_stream::TokenOutputStream;
 use candle_transformers::models::quantized_lfm2::ModelWeights;
 
 const DEFAULT_PROMPT: &str = "Explain how Rotary Position Embeddings work in transformers.";
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
+enum CpuMatmul {
+    Auto,
+    GenericTiled,
+    GenericRowwise,
+}
+
+impl CpuMatmul {
+    fn mode(self) -> CpuQuantizedMatmulMode {
+        match self {
+            Self::Auto => CpuQuantizedMatmulMode::Auto,
+            Self::GenericTiled => CpuQuantizedMatmulMode::GenericTiled,
+            Self::GenericRowwise => CpuQuantizedMatmulMode::GenericRowwise,
+        }
+    }
+
+    fn validate(self, is_cpu: bool) -> Result<()> {
+        if self != Self::Auto && !is_cpu {
+            anyhow::bail!("--cpu-quantized-matmul generic modes require a CPU device; select --cpu")
+        }
+        Ok(())
+    }
+}
 
 #[derive(Clone, Debug, Copy, PartialEq, Eq, ValueEnum)]
 enum Which {
@@ -89,6 +113,10 @@ struct Args {
     /// Run on CPU rather than GPU even if a GPU is available.
     #[arg(long)]
     cpu: bool,
+
+    /// CPU F32/BF16 quantized scheduler; explicit generic modes bypass optimized repacks.
+    #[arg(long, value_enum, default_value = "auto")]
+    cpu_quantized_matmul: CpuMatmul,
 
     /// Penalty to be applied for repeating tokens, 1. means no penalty.
     #[arg(long, default_value_t = 1.1)]
@@ -170,10 +198,19 @@ fn guess_eos_id(tokenizer: &Tokenizer) -> Option<u32> {
 }
 
 fn main() -> Result<()> {
+    let args = Args::parse();
+    let device = candle_examples::device(args.cpu)?;
+    args.cpu_quantized_matmul.validate(device.is_cpu())?;
+    with_cpu_quantized_matmul_mode(args.cpu_quantized_matmul.mode(), || {
+        run(args, device).map_err(candle::Error::msg)
+    })?;
+    Ok(())
+}
+
+fn run(args: Args, device: candle::Device) -> Result<()> {
     use tracing_chrome::ChromeLayerBuilder;
     use tracing_subscriber::prelude::*;
 
-    let args = Args::parse();
     let _guard = if args.tracing {
         let (chrome_layer, guard) = ChromeLayerBuilder::new().build();
         tracing_subscriber::registry().with(chrome_layer).init();
@@ -197,7 +234,6 @@ fn main() -> Result<()> {
     let model_path = args.model_path()?;
     let mut file = std::fs::File::open(&model_path)?;
     let start = std::time::Instant::now();
-    let device = candle_examples::device(args.cpu)?;
 
     let gguf = gguf_file::Content::read(&mut file).map_err(|e| e.with_path(model_path.clone()))?;
     let mut total_size_in_bytes = 0;
@@ -342,4 +378,25 @@ fn main() -> Result<()> {
         sampled as f64 / dt.as_secs_f64(),
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cpu_scheduler_cli_defaults_and_validation() -> Result<()> {
+        assert_eq!(
+            Args::try_parse_from(["lfm2"])?.cpu_quantized_matmul,
+            CpuMatmul::Auto
+        );
+        for value in ["generic-tiled", "generic-rowwise"] {
+            let args = Args::try_parse_from(["lfm2", "--cpu-quantized-matmul", value])?;
+            assert!(args.cpu_quantized_matmul.validate(false).is_err());
+            args.cpu_quantized_matmul.validate(true)?;
+        }
+        CpuMatmul::Auto.validate(false)?;
+        assert!(Args::try_parse_from(["lfm2", "--cpu-quantized-matmul", "unknown"]).is_err());
+        Ok(())
+    }
 }

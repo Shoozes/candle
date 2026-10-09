@@ -57,6 +57,9 @@ new_repo() {
         '- `docs/FORK_OVERLAYS.md`' \
         '- `docs/fork-compat/MOD_MANIFEST.md`' \
         '- `compat.txt`'
+    write_lines "$root/docs/qwen35/MOD_MANIFEST.md" \
+        "# Test Qwen3.5 manifest" \
+        '- `docs/qwen35/MOD_MANIFEST.md`'
     write_lines "$root/compat.txt" "retained API"
     write_lines "$root/owned.txt" "base owned"
     write_lines "$root/staged.txt" "base staged"
@@ -158,7 +161,7 @@ printf 'verify-fork-overlays case=upstream-stale-paths passed\n'
 write_lines "$baseline_root/compat.txt" "retained API updated"
 run_capture "$baseline_root" --rolling-baseline "$baseline_commit"
 assert_status "fourth overlay ownership" 0
-assert_contains "fourth overlay ownership" "overlays=4"
+assert_contains "fourth overlay ownership" "overlays=5"
 printf 'verify-fork-overlays case=compatibility-owner passed\n'
 
 write_lines "$baseline_root/docs/fork-compat/MOD_MANIFEST.md" "# Missing compatibility ownership"
@@ -170,7 +173,7 @@ exact_root="$(new_repo exact-upstream)"
 exact_base="$(git -C "$exact_root" rev-parse HEAD^)"
 run_capture "$exact_root" --upstream-baseline "$exact_base"
 assert_status "inherited paths excluded from exact delta" 0
-assert_contains "exact upstream ownership" "overlays=4"
+assert_contains "exact upstream ownership" "overlays=5"
 printf '%s\n' '- `inherited.txt`' >>"$exact_root/docs/fork-compat/MOD_MANIFEST.md"
 run_capture "$exact_root" --upstream-baseline "$exact_base"
 assert_status "inherited path cannot become overlay owned" 1

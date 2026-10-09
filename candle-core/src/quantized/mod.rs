@@ -818,6 +818,8 @@ pub enum QMatMul {
 mod native_q8;
 mod native_q8_cpu;
 pub use native_q8::{with_native_q8_0, NativeQ8Execution};
+mod cpu_matmul_mode;
+pub use cpu_matmul_mode::{with_cpu_quantized_matmul_mode, CpuQuantizedMatmulMode};
 
 thread_local! {
     static DEQUANTIZE_ALL: bool = {
@@ -916,6 +918,10 @@ impl QTensor {
     /// Fused m==1 matmul over same-dtype tensors sharing one lhs (e.g. qkv or gate+up in
     /// decode): one lhs quantization and one parallel region. None when unsupported.
     pub fn gemv_fused_shared_lhs(ts: &[&Self], lhs: &Tensor) -> Result<Option<Vec<Tensor>>> {
+        if lhs.device().is_cpu() && cpu_matmul_mode::current() != CpuQuantizedMatmulMode::Auto {
+            cpu_matmul_mode::validate_native()?;
+            return Ok(None);
+        }
         #[cfg(target_arch = "aarch64")]
         {
             if ts.is_empty() || !lhs.device().is_cpu() || lhs.dtype() != crate::DType::F32 {
@@ -1180,6 +1186,13 @@ fn narrow_bf16(src: &[f32]) -> Vec<half::bf16> {
 
 const WIDEN_CHUNK: usize = 32 * 1024;
 
+fn cpu_matmul_output<T: Clone>(count: usize, zero: T) -> Result<Vec<T>> {
+    let mut output = Vec::new();
+    output.try_reserve_exact(count).map_err(crate::Error::msg)?;
+    output.resize(count, zero);
+    Ok(output)
+}
+
 impl crate::CustomOp1 for QTensor {
     fn name(&self) -> &'static str {
         "qmatmul"
@@ -1199,11 +1212,33 @@ impl crate::CustomOp1 for QTensor {
         if src_shape.rank() < 2 {
             crate::bail!("input tensor has only one dimension {layout:?}")
         }
+        cpu_matmul_mode::validate_native()?;
+        let mode = cpu_matmul_mode::current();
+        if storage.dtype() == DType::F16 && mode != CpuQuantizedMatmulMode::Auto {
+            crate::bail!("explicit generic CPU quantized matmul requires F32 or BF16 activations; use Auto for F16")
+        }
         let mut dst_shape = src_shape.dims().to_vec();
-        let last_k = dst_shape.pop().unwrap();
+        let last_k = dst_shape
+            .pop()
+            .ok_or_else(|| crate::Error::Msg("missing input width".into()))?;
         if last_k != k {
             crate::bail!("input tensor {layout:?} incompatible with {:?}", self.shape)
         }
+        let m = dst_shape
+            .iter()
+            .try_fold(1usize, |rows, &dim| rows.checked_mul(dim))
+            .ok_or_else(|| crate::Error::Msg("CPU quantized input row count overflow".into()))?;
+        let lhs_len = m
+            .checked_mul(k)
+            .ok_or_else(|| crate::Error::Msg("CPU quantized input size overflow".into()))?;
+        let dst_len = m
+            .checked_mul(n)
+            .ok_or_else(|| crate::Error::Msg("CPU quantized output size overflow".into()))?;
+        let start = layout.start_offset();
+        let end = start
+            .checked_add(lhs_len)
+            .ok_or_else(|| crate::Error::Msg("CPU quantized input offset overflow".into()))?;
+        let mkn = (m, k, n);
         dst_shape.push(n);
         let dst_shape = Shape::from(dst_shape);
         #[allow(clippy::infallible_destructuring_match)]
@@ -1211,25 +1246,37 @@ impl crate::CustomOp1 for QTensor {
             QStorage::Cpu(storage) => storage,
             QStorage::Metal(_) | QStorage::Cuda(_) => crate::bail!("Invalid storage"),
         };
+        let dtype = self_storage.dtype();
+        let weight_bytes = n
+            .checked_mul(k / dtype.block_size())
+            .and_then(|blocks| blocks.checked_mul(dtype.type_size()));
+        if !k.is_multiple_of(dtype.block_size())
+            || weight_bytes != Some(self_storage.storage_size_in_bytes())
+        {
+            crate::bail!("CPU quantized weight dimensions or storage do not match")
+        }
         match storage.dtype() {
             DType::F32 => {
                 let slice = storage.as_slice::<f32>()?;
-                let slice =
-                    &slice[layout.start_offset()..layout.start_offset() + src_shape.elem_count()];
-                let mut dst_storage = vec![0f32; dst_shape.elem_count()];
-
-                let mkn = (dst_shape.elem_count() / n, k, n);
+                let slice = slice.get(start..end).ok_or_else(|| {
+                    crate::Error::Msg("CPU quantized input exceeds storage".into())
+                })?;
+                let mut dst_storage = cpu_matmul_output(dst_len, 0f32)?;
                 if native_q8::required() {
                     native_q8_cpu::matmul(self_storage.as_ref(), mkn, slice, &mut dst_storage)?;
                     return Ok((crate::CpuStorage::F32(dst_storage), dst_shape));
                 }
-                let used_packed = repack::try_matmul_f32(
-                    self_storage.as_ref(),
-                    &self.repacked_qs,
-                    mkn,
-                    slice,
-                    &mut dst_storage,
-                )?;
+                let used_packed = mode == CpuQuantizedMatmulMode::Auto
+                    && m > 0
+                    && k > 0
+                    && n > 0
+                    && repack::try_matmul_f32(
+                        self_storage.as_ref(),
+                        &self.repacked_qs,
+                        mkn,
+                        slice,
+                        &mut dst_storage,
+                    )?;
                 if used_packed {
                     return Ok((crate::CpuStorage::F32(dst_storage), dst_shape));
                 }
@@ -1239,32 +1286,32 @@ impl crate::CustomOp1 for QTensor {
             }
             DType::F16 => {
                 let slice = storage.as_slice::<f16>()?;
-                let slice =
-                    &slice[layout.start_offset()..layout.start_offset() + src_shape.elem_count()];
-                let mut dst_storage = vec![f16::ZERO; dst_shape.elem_count()];
-                self_storage.matmul_t_f16(
-                    (dst_shape.elem_count() / n, k, n),
-                    slice,
-                    &mut dst_storage,
-                )?;
+                let slice = slice.get(start..end).ok_or_else(|| {
+                    crate::Error::Msg("CPU quantized input exceeds storage".into())
+                })?;
+                let mut dst_storage = cpu_matmul_output(dst_len, f16::ZERO)?;
+                self_storage.matmul_t_f16(mkn, slice, &mut dst_storage)?;
                 Ok((crate::CpuStorage::F16(dst_storage), dst_shape))
             }
             DType::BF16 => {
                 // widen to f32 once and take the repacked path; output stays bf16
                 let slice = storage.as_slice::<half::bf16>()?;
-                let slice =
-                    &slice[layout.start_offset()..layout.start_offset() + src_shape.elem_count()];
+                let slice = slice.get(start..end).ok_or_else(|| {
+                    crate::Error::Msg("CPU quantized input exceeds storage".into())
+                })?;
                 let lhs = widen_bf16(slice);
-                let mut dst_storage = vec![0f32; dst_shape.elem_count()];
-
-                let mkn = (dst_shape.elem_count() / n, k, n);
-                let used_packed = repack::try_matmul_f32(
-                    self_storage.as_ref(),
-                    &self.repacked_qs,
-                    mkn,
-                    &lhs,
-                    &mut dst_storage,
-                )?;
+                let mut dst_storage = cpu_matmul_output(dst_len, 0f32)?;
+                let used_packed = mode == CpuQuantizedMatmulMode::Auto
+                    && m > 0
+                    && k > 0
+                    && n > 0
+                    && repack::try_matmul_f32(
+                        self_storage.as_ref(),
+                        &self.repacked_qs,
+                        mkn,
+                        &lhs,
+                        &mut dst_storage,
+                    )?;
                 if !used_packed {
                     self_storage.matmul_t(mkn, &lhs, &mut dst_storage)?;
                 }

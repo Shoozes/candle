@@ -18,6 +18,20 @@
     ]
   },
   "groups": {
+    "feature__cpu_quantized_matmul": {
+      "description": "Scoped CPU Auto/tiled/row-wise selection, checked generic buffers, deterministic parity and frozen component timing. Expand to candle-core/tests/quantized_tests.rs for upstream/repack regression coverage; native Q8 retains independent admission.",
+      "status": "active",
+      "paths": [
+        "docs/lfm2-vl/UPSTREAM_SYNC.md",
+        "docs/fork-compat/MOD_MANIFEST.md",
+        "candle-core/src/quantized/cpu_matmul_mode.rs",
+        "candle-core/src/quantized/k_quants.rs",
+        "candle-core/src/quantized/mod.rs",
+        "candle-core/tests/cpu_quantized_matmul_tests.rs",
+        "candle-examples/examples/quantized-lfm2/main.rs",
+        "candle-nn/tests/layer_norm.rs"
+      ]
+    },
     "feature__qwen35_gguf": {
       "description": "Bounded Qwen3.5 GGUF Q8_0/F32 admission and the separately gated exact 4B CPU trace.",
       "status": "active",

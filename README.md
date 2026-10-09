@@ -24,6 +24,8 @@ remaining work live in [`STATUS.md`](./docs/lfm2-vl/STATUS.md) and
 [`TODO.md`](./docs/lfm2-vl/TODO.md). The pinned upstream integration and retained
 ug/onig compatibility are documented in [`UPSTREAM_SYNC.md`](./docs/lfm2-vl/UPSTREAM_SYNC.md).
 Experimental GPT-OSS acceptance remains independently source-bound.
+CPU quantized execution can be scoped to automatic, generic tiled or generic
+row-wise scheduling; see the [API and example options](./docs/lfm2-vl/UPSTREAM_SYNC.md).
 Model weights, caches, runtime evidence, and downloads are
 external inputs and are never part of normal source setup or publication.
 
@@ -467,4 +469,4 @@ If you encounter an error like this one `called `Result::unwrap()` on an `Err` v
 `c:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin\curand64_10.dll` -> `curand.dll`
 
 ---
-AI-edited: 2026-09-27 | agent=Codex | model=unknown | effort=unknown | task=upstream-sync | change=reconciled pinned integration and compatibility evidence
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution

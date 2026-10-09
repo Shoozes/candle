@@ -3,7 +3,22 @@
 ## Current phase and source
 
 Current phase (2026-10-09): Complete with verified limitations locally;
-owner-authorized closeout and guarded publication of the verified d1 batch.
+owner-authorized upstream sync and CPU options await guarded publication.
+Starting clean/published source:
+`f93a4111ae41683b548758225940f80de6cd37e8`. The non-rewriting merge is
+`e445e88d8ff803c5889eedd895e7c689b2ad4115`; upstream target `c68b2499` is
+an ancestor. Current native gate: 512 Rust tests passed, 12 explicit ignores,
+6 Python receipt-control tests passed; focused normalization and CLI tests,
+strict CPU/CUDA Clippy, ug check and bounded authored CUDA tests pass. Generic
+tiled prefill is about 1.10–1.33 times faster in frozen synthetic CPU timings;
+this does not measure d1's strict native path. WSL replay is unavailable because
+its offline cache lacks accelerate-src. Active code work: none; closeout and
+publication records are being finalized. Exact proof, limits and commands:
+`UPSTREAM_SYNC.md`, with retained evidence under
+`artifacts/upstream-sync-20261009-cpu-options/`. No production model calls,
+downloads, dependency changes or release tags.
+
+The prior completed d1 closeout and publication record follows.
 The implementation baseline is
 `e87dffea82fef39fe4f41096575762bbc1720162`. The scoped candidate changes
 `candle-transformers/src/models/lfm2_d1.rs`,
@@ -215,7 +230,7 @@ code zero and matching remote tip at publication time.
 Referenced task evidence and the existing D: build cache are deliberately
 retained; no task-owned service or endpoint remains running.
 
-Upstream stabilization: integrated pinned Hugging Face main
+Historical September 27 upstream stabilization: integrated pinned Hugging Face main
 `aebc405d2b4bf42808387e0ca597bf7dad9b565f` while retaining the fork's public
 contracts. Starting clean local/remote main:
 `8f27ddfbee47957c274341fd6d32ccabd4767f9f`.
@@ -371,6 +386,11 @@ priority; existing runtime receipts and the next adapter gate remain unchanged.
 
 ## Exact next task
 
+Candle's next bounded task is the CPU single-row d1 projection profiling and
+scheduling item in `TODO.md`; optional loading modes remain a separate batch.
+The current upstream/CPU-option batch requires its guarded publication receipt
+before completion. The independent Edge adapter handoff remains as follows.
+
 Edge owns the next bounded repair: provide a consumer-compatible regular
 artifact binding with the required GGUF filename while preserving the base
 hash/storage policy, and make the invocation's cleanup-copy hook idempotent.
@@ -385,4 +405,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-closeout-publish | change=bound guarded d1 publication to fresh closeout and immutable performance proof
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution

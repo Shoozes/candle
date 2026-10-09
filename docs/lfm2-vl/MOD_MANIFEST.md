@@ -5,7 +5,7 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 ## Classification Rule
 
 - Model and compatibility baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
-- Live overlay baseline: Hugging Face `aebc405d2b4bf42808387e0ca597bf7dad9b565f` after the September 27 upstream sync. Frozen `candle-overlays-mvp-0.2.0` receipts still encode `6f74e7c390c717f8fd34f23ce02aceb058173370`.
+- Live overlay baseline: Hugging Face `c68b24997319b8d76e5a4e775dab197c7f26322a` after the October 9 upstream sync. Frozen `candle-overlays-mvp-0.2.0` receipts still encode `6f74e7c390c717f8fd34f23ce02aceb058173370`.
 - Historical mod checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`; that branch is retained as evidence, not used as a second publication line.
 - Current local LFM2-VL overlay: 203 paths, exactly 20 fork-origin modifications and 183 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL. Frozen 0.2.0 release receipts retain their original inventory.
 - A **fork-origin modification** is a path that exists in the current publication baseline and is intentionally changed by this mod.
@@ -28,10 +28,10 @@ Exactly these twenty baseline files contain LFM2-VL or combined-release changes:
 | `candle-core/src/quantized/gguf_file.rs` | Add bounded GGUF directory parsing and validation used by direct MMProj loading. |
 | `candle-examples/Cargo.toml` | Wire the new LFM2-VL example to its runtime and fixture dependencies. |
 | `candle-examples/examples/lfm2/main.rs` | Preserve and prove current LFM2.5 text configuration compatibility. |
+| `candle-examples/examples/quantized-lfm2/main.rs` | Demonstrate scoped CPU quantized scheduling with pre-load device validation. |
 | `candle-core/tests/custom_op_tests.rs` | Prove the CUDA I32-to-F32 cast used by packed vision masks. |
 | `candle-kernels/build.rs` | Pass MSVC's conforming-preprocessor switch through nvcc for CUDA 13.3/CCCL builds. |
 | `candle-kernels/src/cast.cu` | Add the CUDA I32-to-F32 cast required by packed vision mask validation. |
-| `candle-nn/src/layer_norm.rs` | Keep HF `weight`/`gamma` and `bias`/`beta` aliases while restoring Init fallback for overlay native fixtures. |
 | `candle-transformers/Cargo.toml` | Add dependencies required by LFM2-VL loading and verification. |
 | `candle-transformers/src/models/lfm2.rs` | Normalize LFM2.5 configuration and add dense embedding-driven forwarding/cache support. |
 | `candle-transformers/src/models/mod.rs` | Register the new SigLIP2 and LFM2-VL model modules. |
@@ -270,4 +270,4 @@ commands are prohibited. The LFM2-VL verifier remains independently runnable
 and does not absorb unfinished diffusion paths.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cuda-performance | change=registered opt-in d1 timing and native CUDA reuse ownership
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution
