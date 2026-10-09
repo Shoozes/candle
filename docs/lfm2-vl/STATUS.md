@@ -2,6 +2,27 @@
 
 ## Current phase and source
 
+Current selected batch (2026-10-09): Complete with verified limitations locally;
+CPU single-row native Q8/F32 scheduling is qualified for guarded publication,
+starting from clean published `7425c84338f5185052995856a6652b2ab306332d`.
+Baseline authored projection profile is retained in
+`artifacts/lfm2-d1/20261009-cpu-single-row/`: the 2048-wide/128000-column
+single-row baseline median is about 23.6 ms on either one or sixteen workers.
+The qualified paired sixteen-worker median improves from 23.2192 to 3.7279 ms
+(about 6.2 times faster). Exact old/new parity, independent scalar bounds,
+multi-row performance, public dispatch and retained readout replay pass.
+The native gate passes 515 Rust tests (13 explicit ignores) and six Python
+controls; strict Clippy and bounded CUDA regression pass. Active work: none.
+Source/evidence binding: `artifacts/lfm2-d1/20261009-cpu-single-row/proof.json`,
+SHA-256 `6b211a591fe5f093402fa07c866b83ee0dfa9593f40722aad67bfb89e1173fbf`.
+The successful clean-head commit/tree/remote identity is owned by
+`publication-receipt.json` in the same root, retained only after guarded helper
+success. All seven measured/replay/regression Jobs exited zero and released
+their PIDs. WSL's unchanged offline dependency gap remains an unrun secondary
+lane; no new production model calls, accuracy or request-latency claim, downloads
+or consumed allowance reuse. Exact commands and scope are in `D1.md`.
+
+The previously published upstream/CPU-options batch follows.
 Current phase (2026-10-09): Complete with verified limitations locally;
 owner-authorized upstream sync and CPU options are qualified at
 `34830c195df9143fe1c997d7682fc4e0cd5bdc93`. The closeout forward commit's
@@ -391,10 +412,10 @@ priority; existing runtime receipts and the next adapter gate remain unchanged.
 
 ## Exact next task
 
-Candle's next bounded task is the CPU single-row d1 projection profiling and
-scheduling item in `TODO.md`; optional loading modes remain a separate batch.
-Completion of the upstream/CPU-option batch is bound to the guarded publication
-receipt above. The independent Edge adapter handoff remains as follows.
+Candle's next bounded task is optional d1 loading modes in `TODO.md`; settle
+that public loading contract before implementation. The CPU single-row task
+is archived in `HISTORY.md` and its completion is bound to the current guarded
+publication receipt above. The independent Edge adapter handoff remains as follows.
 
 Edge owns the next bounded repair: provide a consumer-compatible regular
 artifact binding with the required GGUF filename while preserving the base
@@ -410,4 +431,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cpu-single-row | change=qualified native CPU projection and preserved Q8/F32 proof

@@ -2,6 +2,41 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-10-09 - Native d1 CPU single-row projection speedup
+
+Selected from the published `7425c84338f5185052995856a6652b2ab306332d`
+checkpoint. The frozen authored profile established that one 128000-column
+Q8/F32 vocabulary row uses one worker and costs about 23.6 ms regardless of
+one/sixteen available workers. Large one-row calls now use disjoint 256-column
+tasks with immutable Q8 storage/F32 inputs; small and single-worker calls keep
+row scheduling, and multi-row calls retain four-row weight reuse. AVX row
+counts are specialized without changing FMA/block/group/reduction order.
+
+Two numerical-correct scheduling candidates regressed unchanged call shapes;
+their diagnostics are retained. The qualified implementation preserves exact
+legacy parity for nontrivial F32 values and improves the paired wide projection
+from 23.2192 to 3.7279 ms, about 6.2 times, with non-overlapping ranges.
+Selected multi-row cases improve and small/single-worker performance remains
+essentially unchanged. These are component timings, not model/request latency.
+
+Native gate: 515 Rust passes, 13 explicit ignores, six Python receipt-control
+passes; strict maintained library Clippy and bounded CUDA regression pass.
+Three focused CPU tests cover exact/scalar parity, boundaries, malformed inputs,
+offsets/batches, unchanged Q8 bytes and dispatch counts. Retained readout replay
+passes 120 vectors with error `2.4232748696562112e-8` under `1e-6`; all 162
+input hashes remain unchanged. Five profiles, replay and CUDA regression use
+bounded Jobs, all exited zero and released their PIDs. Profile peak stays below
+286 MiB under 8 GiB. No new model calls, downloads, training or consumer changes.
+The existing WSL offline cache gap remains a secondary unrun limitation.
+
+Exact scope/commands/timings: `D1.md`. Source/evidence binding:
+`artifacts/lfm2-d1/20261009-cpu-single-row/proof.json`, SHA-256
+`6b211a591fe5f093402fa07c866b83ee0dfa9593f40722aad67bfb89e1173fbf`.
+The final commit's successful guarded publication is bound by
+`publication-receipt.json` in that root after helper success and remote equality.
+Current union: 277 paths, five overlays, 27 shared; LFM inventory: 204/20/184.
+Optional loading modes are the next independently scoped Candle task.
+
 ## 2026-10-09 - Pinned upstream and CPU quantized execution options
 
 Preserved published `f93a4111ae41683b548758225940f80de6cd37e8` and integrated
@@ -2820,4 +2855,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=archived verified CPU options and publication binding
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cpu-single-row | change=archived qualified CPU projection and source-bound proof

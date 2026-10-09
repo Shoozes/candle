@@ -1,5 +1,23 @@
 # LFM2.5-VL Decisions
 
+## D-0074: Parallelize large native CPU Q8/F32 single-row projections
+
+Status: Selected by the owner on 2026-10-09; authored component qualification
+and retained readout replay, native gate, Clippy and bounded CUDA regression pass.
+
+Use disjoint 256-column tasks only for one-row projections with at least 1 MiB
+of retained Q8 weights and more than one worker. Keep small/single-worker row
+scheduling and multi-row four-row reuse. Specialize AVX row counts one through
+four, preserving every scale, FMA, block/group order and lane reduction.
+Two earlier numerical-correct candidates regressed unchanged call shapes;
+the frozen profile matrix rejects them. The qualified candidate retains exact
+legacy parity and improves the wide projection about 6.2 times on this host.
+
+No public API, loading contract, calibration, generic CPU mode, accelerator
+dispatch or source precision policy changes. Component timing plus exact
+readout replay does not claim new model quality or whole-request latency.
+Original production receipts remain source-bound and their allowances closed.
+
 ## D-0073: Preserve native admission while selecting generic CPU schedulers
 
 Status: Accepted by the owner on 2026-10-09; native and bounded CUDA component
@@ -1745,4 +1763,4 @@ it consumed zero model forwards. Quality and consumer package acceptance remain
 separately owned. No publication follows from this local qualification.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cpu-single-row | change=qualified native CPU projection and preserved Q8/F32 proof

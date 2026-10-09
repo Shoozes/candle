@@ -165,7 +165,10 @@ resource admission, studies and package/pin provenance. Its CPU parity and CUDA
 qualification boundary is recorded in `docs/lfm2-vl/D1.md`.
 Its opt-in direct-F32 Q8 kernel is registered in `candle-kernels/src/lib.rs`;
 existing module identities and ordinary quantized dispatch remain unchanged.
-LFM2-VL owns the four-row reuse dispatch within that strict native-Q8 branch;
+LFM2-VL owns CPU single-row column scheduling in `native_q8_cpu.rs`: large
+one-row projections share immutable Q8 blocks/F32 inputs across disjoint
+output tiles; the existing dot/reduction order and multi-row reuse remain.
+LFM2-VL owns the four-row CUDA reuse dispatch within that strict native-Q8 branch;
 the one-row kernel and Qwen's separate MMVQ/MMQ branch retain their behavior.
 
 ## Review contract
@@ -181,4 +184,4 @@ the one-row kernel and Qwen's separate MMVQ/MMQ branch retain their behavior.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cpu-single-row | change=qualified native CPU projection and preserved Q8/F32 proof

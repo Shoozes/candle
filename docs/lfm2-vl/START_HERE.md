@@ -34,8 +34,10 @@ snapshots back into this entry point.
 The reusable LFM d1 API is published at Candle `3300bef20be161e63816b8820c845264acb1942d`.
 GenEye's consumer integration is published at `48bf4de746ebbfe4226cb8bb79fd37e3c8e96e4e`,
 and its producer API compatibility review is closed. GenEye's separate LTS
-release gate remains open and owner-managed. The next active Candle item is
-CPU one-row d1 projection profiling/scheduling in `TODO.md`; CUDA prefill
+release gate remains open and owner-managed. CPU one-row projection has been
+profiled and qualified with exact Q8/F32 parity and retained readout replay;
+see `D1.md` and `STATUS.md` for source-bound proof and publication identity.
+The next active Candle item is optional d1 loading modes in `TODO.md`; CUDA prefill
 qualification is published at `f93a4111ae41683b548758225940f80de6cd37e8`.
 The subsequent pinned upstream/CPU-options batch is qualified at `34830c19`;
 its final guarded publication identity is owned by the current source-bound
@@ -177,4 +179,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cpu-single-row | change=qualified native CPU projection and preserved Q8/F32 proof

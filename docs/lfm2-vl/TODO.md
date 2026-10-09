@@ -6,21 +6,6 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ## Active Candle backlog
 
-### [ ] Scale d1 CPU single-row Q8 projection across output columns
-
-- What: Improve one-row answer-projection scheduling with the same Q8/F32 math.
-- Why: Four-row tiling in `native_q8_cpu.rs` leaves one vocabulary row in one
-  Rayon work chunk.
-- When: After phase profiling confirms its cost, in a separate CPU batch.
-- Where: `candle-core/src/quantized/native_q8_cpu.rs`, native Q8 tests and the
-  existing d1 readout/session tests.
-- How: Measure one-row and multi-row cases, then use bounded column tiling with
-  disjoint output ownership. Preserve weight reuse and ordinary Candle dispatch.
-- Done when: A measured one-row improvement preserves numerical/memory bounds
-  and the admitted multi-row behavior; model quality remains separately measured.
-- Verification: Authored Q8/F32 comparisons, release component timing,
-  retained readout replay and the native gate. Real-model calls need new admission.
-
 ### [ ] Select and qualify optional d1 loading modes
 
 - What: Assess early quant-inventory admission, text-only/lazy vision loading
@@ -397,4 +382,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cpu-single-row | change=qualified native CPU projection and preserved Q8/F32 proof

@@ -18,6 +18,18 @@
     ]
   },
   "groups": {
+    "workflow__d1_cpu_projection": {
+      "description": "Native Q8/F32 single-row column scheduling, frozen authored profiling, exact scheduler/scalar parity and retained readout replay; expand to feature__lfm2_d1 for session controls.",
+      "status": "active",
+      "paths": [
+        "docs/lfm2-vl/D1.md",
+        "candle-core/src/quantized/native_q8.rs",
+        "candle-core/src/quantized/native_q8_cpu.rs",
+        "candle-core/src/quantized/native_q8_cpu/tests.rs",
+        "candle-transformers/src/models/lfm2_d1.rs",
+        "candle-vlm/src/lfm2_d1/tests.rs"
+      ]
+    },
     "feature__cpu_quantized_matmul": {
       "description": "Scoped CPU Auto/tiled/row-wise selection, checked generic buffers, deterministic parity and frozen component timing. Expand to candle-core/tests/quantized_tests.rs for upstream/repack regression coverage; native Q8 retains independent admission.",
       "status": "active",

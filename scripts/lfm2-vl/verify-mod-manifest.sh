@@ -128,8 +128,8 @@ if [[ "$modified_count" -ne 20 ]]; then
     exit 1
 fi
 
-if [[ "$added_count" -ne 183 ]]; then
-    printf 'error: expected exactly 183 LFM2-VL additions, found %s\n' "$added_count" >&2
+if [[ "$added_count" -ne 184 ]]; then
+    printf 'error: expected exactly 184 LFM2-VL additions, found %s\n' "$added_count" >&2
     exit 1
 fi
 
