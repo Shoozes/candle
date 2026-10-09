@@ -2,56 +2,45 @@
 
 ## Current phase and source
 
-Current phase (2026-10-08): Complete with verified limitations locally;
-owner-authorized closeout and guarded publication of the reusable LFM d1 batch.
-The source lineage starts at native `main`
-`313a1cd9166b8db5abfb9420d0780ac1f7fd925f`. All 65 reviewed task paths matched
-the sealed cleanup receipt before this documentation closeout. Active
-implementation files: none. The owner requested this batch's scoped commit
-and push through Candle's `.tools/gitpush.ps1`.
+Current phase (2026-10-09): Complete with verified limitations. Candle's reusable
+d1 implementation is published at `3300bef20be161e63816b8820c845264acb1942d`
+(tree `e45304a19f74d5e094f9adaed19e4b485cfb872f`). GenEye's consumer integration
+is published at `48bf4de746ebbfe4226cb8bb79fd37e3c8e96e4e` with that exact Candle
+pin; its producer API P2 finding is closed. GenEye's LTS release approval was
+not issued. Candle implementation files under active work: none. This local
+recheck updates only `D1.md`, `START_HERE.md`, `TODO.md`, `HISTORY.md`, and this
+status handoff.
 
-The helper emits exact commit/tree/remote-main identity and its fresh clean-head
-native gate only after verified publication, in
-`artifacts/publication/last-push.json`. A retained copy plus this batch's source
-inventory, staged review, commands and resource accounting belongs to
-`artifacts/lfm2-d1/20261008-closeout-publish-p1/`. Publication is established by
-that remote-equality receipt, rather than by a self-referential source SHA here.
+Candle's guarded publication receipt and the independent 65-file source binding
+remain in `artifacts/lfm2-d1/20261008-closeout-publish-p1/`. The receipt records
+the clean-head native gate (500 Rust tests, eight explicit ignores, six Python
+receipt controls), d1-focused tests (14 passed, one explicit ignore), strict
+CUDA d1 Clippy, fixture byte-identity guard and Summary Bank verification. These
+are retained checks from the exact published source, not rerun during this
+documentation pass. The 120 retained typed answers replay with no new production
+forwards; numerical proof remains bound to the original implementation snapshot.
+This documentation pass ran the Summary Bank verifier and `git diff --check`;
+it did not run Cargo tests or model inference.
 
-Cleanup rejects manually constructed duplicate Noul criteria and oversized
-render-contributing question payloads before tokenizer work. The offline study
-verifier checks finite normalized probabilities, ordered complete typed answers,
-selection/confidence, expected rubric scores/legends and actual work counts.
-Six negative controls now run in the guarded local verification helper.
+GenEye's published consumer acceptance used its separate closed 44-request
+allowance with zero retries, 132 language forwards, ten vision forwards and zero
+generated tokens. CPU and CUDA each returned all 20 corrected study results;
+the observed counts remain 13/20 choices, 14/20 booleans and 10/20 rubric
+ranges, with no invented accuracy threshold. The initial CPU batch ended with a
+control-channel stop failure after results completed; separate graceful-stop
+and parent-exit cleanup checks passed. The existing GenEye 0.5.0 LTS remains
+unchanged; a future LTS needs a selected clean published candidate, existing
+vision-profile qualification and fresh exact-package release evidence. See
+[D1.md](D1.md#consumer-handoff) and GenEye's retained evidence root for details.
 
-Last green verification in this cleanup: native locked/offline helper, 499 Rust
-tests/eight explicit ignores, maintained libraries/four examples, strict CPU
-Clippy and strict CUDA d1 Clippy. The 13 focused d1 tests and six Python receipt
-controls pass. Both retained studies replay with 60 typed answers per device,
-unchanged readout bounds and quality, and zero new production forwards. Final
-documentation, Summary Bank and overlay inventory checks are recorded with the
-cleanup source in `artifacts/lfm2-d1/20261008-review-cleanup-r1/`.
-
-Prior numerical proof remains bound to its immutable implementation snapshot:
-independent CPU six-prefill logits max 1.7166e-5, projected-feature cosine
-0.999999999997; all 60 CPU/CUDA study logits max 2.7657e-5. Each corrected
-20-case study used 60 language/four vision forwards and zero output tokens.
-Quality on both devices remains 13/20 choices, 14/20 booleans and 10/20 rubric
-ranges, with no invented accuracy threshold. Model/kernel math is unchanged.
-All prior owned model/reference Jobs have verified release; the complete
-222-forward retained-artifact ledger and source-bound receipts remain in
-[D1.md](D1.md).
-
-Known limitations: optional `Codex-Compat` WSL proof lacks cached `accelerate-src`;
-the existing CUDA MSVC LNK4098 warning and consumer acceptance boundary remain.
-No dependency fetch or production model replay occurred during cleanup.
-The exact next task in `TODO.md` is GenEye-owned pin/lock/package integration
-and acceptance using the verified published Candle identity. Consumer sources,
-provider defaults, release tags and model study admission remain separately
-scoped. Closeout also repairs CRLF in three tiny d1 fixture JSON files, corrects
-their manifest/tokenizer hash metadata and makes the Windows grep byte guard
-literal. Its new native fixture-identity regression reproduced the defect, then
-all 14 focused d1 tests passed (one explicit ignore). Golden case data, model
-and kernel math remain unchanged; no production run was started.
+The previous Candle closeout repaired CRLF in three tiny d1 fixture JSON files,
+corrected their manifest/tokenizer hashes and made the Windows grep byte guard
+literal. Its native fixture-identity regression reproduced the defect, then all
+14 focused d1 tests passed (one explicit ignore). Golden data and model/kernel
+math remain unchanged. Known limitations are the optional `Codex-Compat` WSL
+cache missing `accelerate-src` and the existing CUDA MSVC LNK4098 warning. The
+first remaining Candle task is the conditional real-adapter qualification in
+`TODO.md`; it still depends on its recorded producer artifacts and Edge gates.
 
 Previous phase (2026-10-08): Closeout of the stock CPU diagnostic progress
 snapshot; runtime and real-adapter acceptance remain blocked at an Edge-owned
@@ -342,4 +331,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=d1-closeout-publish | change=bound owner-authorized d1 publication to the guarded identity receipt
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=geneye-d1-recheck-cleanup | change=recorded published GenEye consumer acceptance and the separate LTS gate

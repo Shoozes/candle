@@ -6,34 +6,6 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ## Active Candle backlog
 
-The owner-authorized Candle d1 publication closeout and its identity contract
-are [recorded in HISTORY](HISTORY.md#2026-10-08-d1-publication-closeout).
-GenEye adoption requires the guarded helper's matching remote-main receipt.
-
-### [ ] GenEye adoption of the published reusable d1 API
-
-- What: Hand GenEye the exact published Candle identity, public d1 contract and
-  source-bound receipts, then integrate the library in its owned worker.
-- Why: Consumer package provenance and process/resource behavior require proof
-  in GenEye after Candle's library qualification.
-- When: After Candle's guarded remote-equality receipt for the reviewed d1
-  source checkpoint and separate authorization for GenEye's consumer
-  integration and any new model study.
-- Where: GenEye owns its six-package Candle pin, standalone lock, packaged-worker
-  provenance, process isolation, resource admission and study orchestration.
-  Candle owns `candle_vlm::lfm2_d1` and its tensor readout primitive.
-- How: Use explicit local retained artifacts, sequential fresh prefills,
-  identity calibration and immutable image-feature reuse through the public
-  session. Preserve partial failures, actual forward counts and zero generated
-  tokens in consumer receipts. Update pin, lock and package identity together.
-- Done when: GenEye's worker consumes the exact published library revision;
-  pin/lock/package provenance agrees, and its owned acceptance proves typed
-  question handling, cancellation/cleanup and resource boundaries. Product
-  default changes and production study admission remain separately scoped.
-- Verification: GenEye's native consumer tests, package/source identity checks
-  and owner-admitted study receipts. The consumed 42-request allowance remains
-  closed; reuse Candle's retained proof without relabeling its source identity.
-
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
 - What: Admit an immutable trained text adapter for the accepted
@@ -385,4 +357,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=d1-closeout-publish | change=archived the selected publication contract and kept GenEye adoption bounded
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=geneye-d1-recheck-cleanup | change=removed the completed GenEye adoption task from the active backlog

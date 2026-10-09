@@ -2618,7 +2618,12 @@ binding and closure result in `artifacts/lfm2-d1/20261008-closeout-publish-p1/`.
 Credentials remain helper-owned. Referenced evidence, the approved local
 reference environment and rebuildable caches are retained; this closeout owns
 no service or production model Job and performs no repository/evidence deletion.
-GenEye pin/lock/package adoption remains the next bounded consumer task.
+At this closeout, GenEye pin/lock/package adoption remained the next bounded
+consumer task; see the following entry for its disposition.
+
+## 2026-10-09 GenEye d1 consumer adoption
+
+GenEye published its scoped worker integration at `48bf4de746ebbfe4226cb8bb79fd37e3c8e96e4e`, pinned to Candle `3300bef20be161e63816b8820c845264acb1942d`. The producer compatibility review closed its P2 finding. Under its 44-request allowance, the consumer produced 20/20 accepted study results on each device; the original CPU batch retained a failed terminal stop after outputs completed, with separate cleanup checks passing. GenEye's existing LTS remains unchanged; release qualification is still GenEye-owned. Measurements, terminal limitations and receipts are recorded in [D1.md](D1.md#consumer-handoff) and `D:\GenEye-evidence\candle-d1-adoption-20261009`.
 
 ---
-AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=d1-closeout-publish | change=archived the owner-authorized guarded d1 publication closeout
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=geneye-d1-recheck-cleanup | change=recorded the published GenEye d1 consumer handoff and remaining LTS gate
