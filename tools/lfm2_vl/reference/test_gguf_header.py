@@ -16,6 +16,8 @@ if str(HERE) not in sys.path:
 
 from inspect_gguf_header import (
     GgufHeaderError,
+    MAX_HEADER_BYTES,
+    MAX_METADATA_ARRAY_ELEMENTS,
     inspect_gguf_header,
     main,
     summarize_gguf_header,
@@ -104,6 +106,82 @@ def test_full_file_mode_hashes_only_the_payload_free_header(tmp_path: Path):
         "matches_declared_file_size": True,
     }
     assert summarize_gguf_header(result)["file"] == result["file"]
+
+
+def test_explicit_limits_accept_large_vocabulary_without_payload_reads(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    count = 128_000
+    metadata = (
+        _string("tokenizer.ggml.tokens")
+        + struct.pack("<IIQ", 9, 8, count)
+        + _string("x" * 32) * count
+    )
+    tensor = _string("token_embd.weight") + struct.pack("<IQQIQ", 2, 32, count, 8, 0)
+    header = b"GGUF" + struct.pack("<IQQ", 3, 1, 1) + metadata + tensor
+    header += bytes((-len(header)) % 32)
+    path = tmp_path / "large-vocabulary.gguf"
+    path.write_bytes(header)
+    with path.open("r+b") as stream:
+        stream.truncate(len(header) + count * 34)
+
+    with pytest.raises(GgufHeaderError, match="array length 128000 exceeds bound 65536"):
+        inspect_gguf_header(path, full_file=True)
+    with pytest.raises(GgufHeaderError, match="prefix ended"):
+        inspect_gguf_header(path, full_file=True, max_array_elements=131_072)
+    result = inspect_gguf_header(
+        path, full_file=True, max_array_elements=131_072, max_header_bytes=8 * 1024 * 1024
+    )
+    assert len(result["gguf"]["metadata"]["tokenizer.ggml.tokens"]) == count
+    assert result["prefix"]["bytes"] == len(header)
+    assert result["prefix"]["sha256"] == hashlib.sha256(header).hexdigest()
+    assert result["prefix"]["contains_tensor_payload"] is False
+    assert result["file"]["matches_declared_file_size"] is True
+    assert main([
+        str(path), "--full-file", "--max-array-elements", "131072",
+        "--max-header-bytes", str(8 * 1024 * 1024), "--summary-only",
+    ]) == 0
+    assert json.loads(capsys.readouterr().out)["prefix"] == result["prefix"]
+
+
+@pytest.mark.parametrize("argument,maximum", [
+    ("max_header_bytes", MAX_HEADER_BYTES),
+    ("max_array_elements", MAX_METADATA_ARRAY_ELEMENTS),
+])
+@pytest.mark.parametrize("value", [0, -1, True, 1.5, "above"])
+def test_invalid_limits_fail_before_opening_input(
+    tmp_path: Path, argument: str, maximum: int, value
+):
+    if value == "above":
+        value = maximum + 1
+    with pytest.raises(GgufHeaderError, match="must be an integer"):
+        inspect_gguf_header(tmp_path / "absent.gguf", **{argument: value})
+
+
+def test_custom_array_limit_precedes_element_reads(tmp_path: Path):
+    path = tmp_path / "declared-only.gguf"
+    path.write_bytes(
+        b"GGUF" + struct.pack("<IQQ", 3, 0, 1)
+        + _string("array") + struct.pack("<IIQ", 9, 8, 3)
+    )
+    with pytest.raises(GgufHeaderError, match="array length 3 exceeds bound 2"):
+        inspect_gguf_header(path, max_array_elements=2)
+
+
+def test_merge_array_can_exceed_the_vocabulary_array_limit(tmp_path: Path):
+    count = 293_320
+    header = (
+        b"GGUF" + struct.pack("<IQQ", 3, 0, 1)
+        + _string("tokenizer.ggml.merges") + struct.pack("<IIQ", 9, 8, count)
+        + _string("a b") * count
+    )
+    header += bytes((-len(header)) % 32)
+    path = tmp_path / "merges.gguf"
+    path.write_bytes(header)
+    with pytest.raises(GgufHeaderError, match="array length 293320 exceeds bound 131072"):
+        inspect_gguf_header(path, max_array_elements=131_072)
+    result = inspect_gguf_header(path, max_array_elements=524_288)
+    assert len(result["gguf"]["metadata"]["tokenizer.ggml.merges"]) == count
 
 
 def test_cli_stdout_escapes_unicode_for_windows_code_pages(

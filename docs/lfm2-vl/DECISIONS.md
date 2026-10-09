@@ -1621,9 +1621,12 @@ production support. The CUDA narrowed-view regression is accepted on the
 existing native lane; the packed CUDA path remains opt-in.
 
 
-## D-0068: Reusable d1 policy, native source mix and independent prefills
+## D-0071: Reusable d1 policy, native source mix and independent prefills
 
 Status: Accepted; independent CPU and CUDA parity/study qualification passed.
+
+Numbering: Reassigned from the duplicate D-0068 during 2026-10-09 cleanup;
+original frozen receipts retain their identities.
 
 Decision:
 Place typed ordered requests, pinned rendering/tokenizer policy and `D1Session`
@@ -1661,4 +1664,66 @@ The prior 42-request consumer study is closed. Publication requires a separately
 authorized batch; this implementation neither commits nor pushes.
 
 ---
-AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=lfm2-d1 | change=recorded reusable d1 implementation and bounded proof
+## D-0072: Cancel the common d1 vocabulary normalizer and bound diagnostics explicitly
+
+Status: Accepted for the scoped admission/readout cleanup.
+
+Decision:
+Validate positive d1 limits and supported devices before local loading, and
+reuse those checks for existing-hybrid construction. Preserve the current
+Q8/native projector mix and all question/session behavior.
+
+Validate the complete F32 vocabulary for finite values, then max-pool raw token
+aliases and normalize option scores in F64. The vocabulary log-normalizer is a
+common additive term and cancels from this distribution. Eliminating its F32
+calculation removes redundant device work/host copying and intermediate overflow
+for finite F32 extremes. The frozen 1e-6 readout tolerance and pinned policy ID
+remain unchanged; previous receipts retain their original floating evaluation.
+
+Keep GGUF inspector defaults at 4 MiB/65,536, with explicit positive limits
+bounded by 32 MiB/1,048,576. Valid d1 metadata needs limits for both vocabulary
+and its larger merge list. Full-file inspection still reads and hashes only
+the bounded aligned header, with no tensor-payload admission or inference claim.
+
+Consequences:
+The native release readout benchmark measures only the component; GPU tiling,
+CPU projection scheduling, alternate embedding/loading modes and lower-bit
+weights remain separate tasks. No new production forwards, model download,
+default-provider change or publication belongs to this cleanup.
+
+---
+## D-0073: Reuse Q8 rows and batch causal taps while preserving execution contracts
+
+Status: Accepted; local component and revised model qualification passed.
+
+Decision:
+Use four-row register reuse in the call-scoped Q8/F32 CUDA branch, with the
+original lane accumulation/reduction and one-row kernel retained. Warp-uniform
+tail guards preserve participation in every full-mask shuffle; the semantics
+are checked against NVIDIA's pinned [CUDA 13.0.2 programming guide](https://docs.nvidia.com/cuda/archive/13.0.2/cuda-c-programming-guide/index.html#warp-shuffle-functions).
+This is a fresh implementation, not adapted external kernel code.
+
+For quantized-LFM2 CUDA F32 multi-token prefill, calculate the causal depthwise
+convolution with tap-wise tensor operations across channels. General grouped
+convolution splits channels into separate backend operations, which dominates
+the measured d1 prefill. Keep CPU/non-F32/single-token paths and cache admission
+unchanged. The new primitive remains internal to quantized LFM2; it does not
+change general Candle convolution or unrelated architectures.
+
+Expose opt-in synchronized timing through a new method and timing structs.
+Keep the existing trace enum and ordinary methods stable. Phase timing includes
+caller observation separately; normal execution incurs no profiling fences.
+
+Consequences:
+Authored component improvements are insufficient for acceptance. The first
+candidate passes model parity but fails to establish a warm corpus improvement.
+Its consumed 132-forward allowance remains closed. A separately approved
+72-forward qualification/study/profile allowance proves the revised source:
+the warm corpus median decreases by 89.34%, within all frozen numerical,
+storage, work-count and memory bounds. Both allowances are now closed. A
+launcher path failure before request/model admission is separately retained;
+it consumed zero model forwards. Quality and consumer package acceptance remain
+separately owned. No publication follows from this local qualification.
+
+---
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cuda-performance | change=recorded qualified CUDA row/tap reuse and opt-in timing

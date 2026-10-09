@@ -1,7 +1,9 @@
+use super::profiling::{measure, Phase};
 use super::{
     D1Limits, D1PolicyV1, DecisionFailure, DecisionRequest, DecisionResponse, ExecutionReport,
     PreparedQuestion,
 };
+use super::{D1QuestionTiming, D1Timings};
 use crate::lfm2_vl::{
     load_lfm2_vl_hybrid, Lfm2VlHybridLoadOptions, Lfm2VlMmprojExecution, LoadedLfm2VlHybrid,
 };
@@ -40,6 +42,8 @@ pub struct D1Session {
 }
 
 pub fn load_d1_q8(options: D1LoadOptions<'_>) -> Result<D1Session> {
+    validate_limits(&options.limits)?;
+    validate_devices(options.hybrid.text_device, options.hybrid.vision_device)?;
     for name in ["CANDLE_DEQUANTIZE_ALL", "CANDLE_DEQUANTIZE_ALL_F16"] {
         if std::env::var_os(name).is_some_and(|value| !value.is_empty() && value != "0") {
             candle::bail!("d1 native Q8 loading rejects {name}")
@@ -57,24 +61,34 @@ pub fn load_d1_q8(options: D1LoadOptions<'_>) -> Result<D1Session> {
     )
 }
 
+fn validate_limits(limits: &D1Limits) -> Result<()> {
+    if limits.max_questions == 0
+        || limits.max_options == 0
+        || limits.max_prompt_bytes == 0
+        || limits.max_context_tokens == Some(0)
+    {
+        candle::bail!("d1 limits must be positive")
+    }
+    Ok(())
+}
+
+fn validate_devices(text: &candle::Device, vision: &candle::Device) -> Result<()> {
+    for device in [text, vision] {
+        if !device.is_cpu() && !device.is_cuda() {
+            candle::bail!("d1 supports CPU and CUDA devices")
+        }
+    }
+    Ok(())
+}
+
 impl D1Session {
     pub fn from_hybrid(
         mut loaded: LoadedLfm2VlHybrid,
         policy: D1PolicyV1,
         limits: D1Limits,
     ) -> Result<Self> {
-        if limits.max_questions == 0
-            || limits.max_options == 0
-            || limits.max_prompt_bytes == 0
-            || limits.max_context_tokens == Some(0)
-        {
-            candle::bail!("d1 limits must be positive")
-        }
-        for device in [loaded.model.text_device(), loaded.model.vision_device()] {
-            if !device.is_cpu() && !device.is_cuda() {
-                candle::bail!("d1 supports CPU and CUDA devices")
-            }
-        }
+        validate_limits(&limits)?;
+        validate_devices(loaded.model.text_device(), loaded.model.vision_device())?;
         loaded.prompt.disable_tokenizer_controls()?;
         loaded.processor = loaded.processor.with_bicubic_resize();
         let text_quantized_linears = loaded.model.require_native_q8_text_linears()?;
@@ -202,8 +216,36 @@ impl D1Session {
         request: &DecisionRequest,
         images: &[DynamicImage],
         cancelled: impl Fn() -> bool,
-        mut observe: impl FnMut(D1TraceEvent<'_>) -> Result<()>,
+        observe: impl FnMut(D1TraceEvent<'_>) -> Result<()>,
     ) -> std::result::Result<DecisionResponse, DecisionFailure> {
+        self.decide_observed(request, images, cancelled, observe, None)
+    }
+
+    /// Reset and fill timings, including attempted phases on failure.
+    /// Synchronization changes profiling latency; ordinary calls do not synchronize.
+    pub fn decide_traced_profiled(
+        &mut self,
+        request: &DecisionRequest,
+        images: &[DynamicImage],
+        cancelled: impl Fn() -> bool,
+        observe: impl FnMut(D1TraceEvent<'_>) -> Result<()>,
+        timings: &mut D1Timings,
+    ) -> std::result::Result<DecisionResponse, DecisionFailure> {
+        *timings = D1Timings::default();
+        self.decide_observed(request, images, cancelled, observe, Some(timings))
+    }
+
+    fn decide_observed(
+        &mut self,
+        request: &DecisionRequest,
+        images: &[DynamicImage],
+        cancelled: impl Fn() -> bool,
+        mut observe: impl FnMut(D1TraceEvent<'_>) -> Result<()>,
+        mut timings: Option<&mut D1Timings>,
+    ) -> std::result::Result<DecisionResponse, DecisionFailure> {
+        let started = timings.as_ref().map(|_| std::time::Instant::now());
+        let text_device = self.loaded.model.text_device().clone();
+        let vision_device = self.loaded.model.vision_device().clone();
         let mut response = DecisionResponse {
             planned_questions: request.questions.0.len(),
             unattempted_questions: request.questions.0.len(),
@@ -212,67 +254,88 @@ impl D1Session {
         };
         let mut question_index = None;
         let result = (|| -> Result<()> {
-            let plans = self.prepare(request, images.len())?;
+            let plans = measure(&mut timings, Phase::Preparation, None, || {
+                self.prepare(request, images.len())
+            })?;
             if cancelled() {
                 candle::bail!("d1 request cancelled before preparation")
             }
-            let processed = if images.is_empty() {
-                None
-            } else {
-                let capped = images
-                    .iter()
-                    .map(|image| super::image_cap::cap_pixels(image, super::image_cap::MAX_PIXELS))
-                    .collect::<Result<Vec<_>>>()?;
-                Some(
-                    self.loaded
-                        .processor
-                        .process(&capped, self.loaded.model.vision_device())?,
-                )
-            };
+            let processed = measure(
+                &mut timings,
+                Phase::ImageProcessing,
+                Some(&vision_device),
+                || {
+                    Ok(if images.is_empty() {
+                        None
+                    } else {
+                        let capped = images
+                            .iter()
+                            .map(|image| {
+                                super::image_cap::cap_pixels(image, super::image_cap::MAX_PIXELS)
+                            })
+                            .collect::<Result<Vec<_>>>()?;
+                        Some(
+                            self.loaded
+                                .processor
+                                .process(&capped, self.loaded.model.vision_device())?,
+                        )
+                    })
+                },
+            )?;
             if let Some(processed) = &processed {
-                observe(D1TraceEvent::ProcessedImages(processed))?;
+                measure(&mut timings, Phase::Observation, None, || {
+                    observe(D1TraceEvent::ProcessedImages(processed))
+                })?;
             }
-            let mut expanded = Vec::new();
-            for (_, _, rendered) in &plans {
-                let (ids, spans) = match &processed {
-                    Some(processed) => {
-                        let prompt = self.loaded.prompt.expand(rendered, processed)?;
-                        (prompt.input_ids, prompt.image_spans)
+            let expanded = measure(&mut timings, Phase::Tokenization, None, || {
+                let mut expanded = Vec::new();
+                for (_, _, rendered) in &plans {
+                    let (ids, spans) = match &processed {
+                        Some(processed) => {
+                            let prompt = self.loaded.prompt.expand(rendered, processed)?;
+                            (prompt.input_ids, prompt.image_spans)
+                        }
+                        None => {
+                            let ids = self
+                                .tokenizer
+                                .encode(rendered.as_str(), false)
+                                .map_err(|error| candle::Error::Msg(error.to_string()))?;
+                            (ids.get_ids().to_vec(), Vec::new())
+                        }
+                    };
+                    let limit = self
+                        .limits
+                        .max_context_tokens
+                        .unwrap_or(self.loaded.model.context_length())
+                        .min(self.loaded.model.context_length());
+                    if ids.is_empty() || ids.len() > limit {
+                        candle::bail!("d1 prompt has {} tokens outside 1..={limit}", ids.len())
                     }
-                    None => {
-                        let ids = self
-                            .tokenizer
-                            .encode(rendered.as_str(), false)
-                            .map_err(|error| candle::Error::Msg(error.to_string()))?;
-                        (ids.get_ids().to_vec(), Vec::new())
-                    }
-                };
-                let limit = self
-                    .limits
-                    .max_context_tokens
-                    .unwrap_or(self.loaded.model.context_length())
-                    .min(self.loaded.model.context_length());
-                if ids.is_empty() || ids.len() > limit {
-                    candle::bail!("d1 prompt has {} tokens outside 1..={limit}", ids.len())
+                    expanded.push((ids, spans));
                 }
-                expanded.push((ids, spans));
-            }
+                Ok(expanded)
+            })?;
             let encoded = match &processed {
                 Some(processed) => {
                     if cancelled() {
                         candle::bail!("d1 request cancelled before vision forward")
                     }
                     response.usage.vision_forwards = 1;
-                    let (result, dispatch) = with_native_q8_0(|| {
-                        self.loaded.model.encode_images_with_limits(
-                            processed,
-                            1,
-                            &self.loaded.processor.config().vision_limits,
-                        )
-                    });
-                    response.execution.accumulate(dispatch)?;
-                    let encoded = result?;
-                    observe(D1TraceEvent::ImageFeatures(&encoded))?;
+                    let encoded =
+                        measure(&mut timings, Phase::Vision, Some(&vision_device), || {
+                            let (result, dispatch) = with_native_q8_0(|| {
+                                self.loaded.model.encode_images_with_limits(
+                                    processed,
+                                    1,
+                                    &self.loaded.processor.config().vision_limits,
+                                )
+                            });
+                            response.execution.accumulate(dispatch)?;
+                            result
+                        })?;
+                    measure(&mut timings, Phase::Observation, None, || {
+                        observe(D1TraceEvent::ImageFeatures(&encoded))
+                    })?;
                     Some(encoded)
                 }
                 None => None,
@@ -284,34 +347,62 @@ impl D1Session {
                 if cancelled() {
                     candle::bail!("d1 request cancelled before question {index}")
                 }
-                observe(D1TraceEvent::QuestionInput {
-                    index,
-                    text: &rendered,
-                    ids: &ids,
+                if let Some(timings) = timings.as_deref_mut() {
+                    timings.questions.push(D1QuestionTiming {
+                        index,
+                        ..Default::default()
+                    });
+                }
+                measure(&mut timings, Phase::Observation, None, || {
+                    observe(D1TraceEvent::QuestionInput {
+                        index,
+                        text: &rendered,
+                        ids: &ids,
+                    })
                 })?;
-                let input =
-                    Tensor::new(ids.as_slice(), self.loaded.model.text_device())?.unsqueeze(0)?;
-                response.unattempted_questions -= 1;
-                response.usage.language_forwards += 1;
-                response.usage.input_tokens = response
-                    .usage
-                    .input_tokens
-                    .checked_add(ids.len() as u64)
-                    .ok_or_else(|| candle::Error::Msg("d1 input token counter overflow".into()))?;
-                let (result, dispatch) = with_native_q8_0(|| {
-                    self.loaded.model.prefill(&input, &spans, encoded.as_ref())
-                });
-                response.execution.accumulate(dispatch)?;
-                let logits = result?.i(0)?;
-                observe(D1TraceEvent::AnswerLogits {
-                    index,
-                    logits: &logits,
+                let logits = measure(
+                    &mut timings,
+                    Phase::Prefill(index),
+                    Some(&text_device),
+                    || {
+                        let input = Tensor::new(ids.as_slice(), self.loaded.model.text_device())?
+                            .unsqueeze(0)?;
+                        response.unattempted_questions -= 1;
+                        response.usage.language_forwards += 1;
+                        response.usage.input_tokens = response
+                            .usage
+                            .input_tokens
+                            .checked_add(ids.len() as u64)
+                            .ok_or_else(|| {
+                                candle::Error::Msg("d1 input token counter overflow".into())
+                            })?;
+                        let (result, dispatch) = with_native_q8_0(|| {
+                            self.loaded.model.prefill(&input, &spans, encoded.as_ref())
+                        });
+                        response.execution.accumulate(dispatch)?;
+                        result?.i(0)
+                    },
+                )?;
+                measure(&mut timings, Phase::Observation, None, || {
+                    observe(D1TraceEvent::AnswerLogits {
+                        index,
+                        logits: &logits,
+                    })
                 })?;
-                response.answers.0.push((name, plan.readout(&logits)?));
+                let answer = measure(
+                    &mut timings,
+                    Phase::Readout(index),
+                    Some(&text_device),
+                    || plan.readout(&logits),
+                )?;
+                response.answers.0.push((name, answer));
             }
             Ok(())
         })();
         self.loaded.model.clear_cache();
+        if let (Some(timings), Some(started)) = (timings, started) {
+            timings.total_ms = started.elapsed().as_secs_f64() * 1000.;
+        }
         match result {
             Ok(()) => Ok(response),
             Err(error) => Err(DecisionFailure {

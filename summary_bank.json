@@ -86,6 +86,7 @@
         "candle-transformers/src/models/lfm2.rs",
         "candle-transformers/src/models/quantized_lfm2.rs",
         "candle-transformers/src/models/quantized_lfm2/lora.rs",
+        "candle-transformers/src/models/quantized_lfm2/shortconv.rs",
         "candle-examples/examples/lfm2/main.rs",
         "tests/fixtures/lfm2_vl_tiny/README.md",
         "tests/fixtures/lfm2_vl_tiny/manifest.json",
@@ -631,7 +632,7 @@
       ]
     },
     "feature__lfm2_d1": {
-      "description": "Reusable non-generative LFM d1 questions, pinned prompt/alias/readout policy, native Q8 admission, independent session prefills, standalone explicit-input runner and small reference goldens. Expand to feature__lfm2_text and feature__gguf_mmproj for storage/load changes.",
+      "description": "Reusable d1 API, prompt/readout policy, native Q8 admission, independent prefills, explicit-input runner, benchmarks/replay and small goldens. Expand to workflow__d1_reference_parity for oracle/export tooling, workflow__d1_cuda_performance for CUDA prefill, feature__lfm2_text and feature__gguf_mmproj for storage/load changes, and workflow__gguf_artifact_inspection for metadata diagnostics.",
       "status": "active",
       "paths": [
         "docs/lfm2-vl/D1.md",
@@ -646,6 +647,7 @@
         "candle-vlm/src/lfm2_d1/image_cap.rs",
         "candle-vlm/src/lfm2_d1/mod.rs",
         "candle-vlm/src/lfm2_d1/prompt.rs",
+        "candle-vlm/src/lfm2_d1/profiling.rs",
         "candle-vlm/src/lfm2_d1/render_state.rs",
         "candle-vlm/src/lfm2_d1/session.rs",
         "candle-vlm/src/lfm2_d1/tests.rs",
@@ -653,16 +655,9 @@
         "candle-examples/examples/lfm2-d1/files.rs",
         "candle-examples/examples/lfm2-d1/main.rs",
         "candle-examples/examples/lfm2-d1/README.md",
-        "tools/lfm2_vl/d1/export_policy_goldens.py",
-        "tools/lfm2_vl/d1/prepare_study.py",
         "tools/lfm2_vl/d1/reference-lock.json",
         "tools/lfm2_vl/d1/verify_run.py",
         "tools/lfm2_vl/d1/test_verify_run.py",
-        "tools/lfm2_vl/d1/cpu_oracle.py",
-        "tools/lfm2_vl/d1/oracle_weights.py",
-        "tools/lfm2_vl/d1/test_oracle_weights.py",
-        "tools/lfm2_vl/d1/export_resize_goldens.py",
-        "tools/lfm2_vl/d1/compare_runs.py",
         "docs/lfm2-vl/licenses/TORCH_LICENSE.txt",
         "tests/fixtures/lfm2_d1_tiny/torchvision-bicubic.json",
         "tests/fixtures/lfm2_d1_tiny/bicubic.json",
@@ -670,6 +665,37 @@
         "tests/fixtures/lfm2_d1_tiny/policy.json",
         "tests/fixtures/lfm2_d1_tiny/README.md",
         "tests/fixtures/lfm2_d1_tiny/tokenizer.json"
+      ]
+    },
+    "workflow__d1_cuda_performance": {
+      "description": "Strict Q8/F32 CUDA row reuse, quantized LFM2 causal prefill convolution, synchronized phase timing and the standalone d1 timing runner. Expand to feature__lfm2_d1 for policy/session controls and workflow__d1_reference_parity for oracle/study replay.",
+      "status": "active",
+      "paths": [
+        "docs/lfm2-vl/D1.md",
+        "candle-core/src/quantized/cuda.rs",
+        "candle-core/src/quantized/native_q8.rs",
+        "candle-kernels/src/native_q8_f32.cu",
+        "candle-transformers/src/models/quantized_lfm2.rs",
+        "candle-transformers/src/models/quantized_lfm2/shortconv.rs",
+        "candle-vlm/src/lfm2_d1/profiling.rs",
+        "candle-vlm/src/lfm2_d1/session.rs",
+        "candle-examples/examples/lfm2-d1/main.rs",
+        "candle-examples/examples/lfm2-d1/README.md"
+      ]
+    },
+    "workflow__d1_reference_parity": {
+      "description": "Pinned d1 oracle operands, policy/resize golden exporters, study preparation and CPU/CUDA trace comparison. Expand to feature__lfm2_d1 for public API/fixtures and workflow__reference_environment for interpreter pins.",
+      "status": "active",
+      "paths": [
+        "docs/lfm2-vl/D1.md",
+        "tools/lfm2_vl/d1/reference-lock.json",
+        "tools/lfm2_vl/d1/export_policy_goldens.py",
+        "tools/lfm2_vl/d1/prepare_study.py",
+        "tools/lfm2_vl/d1/cpu_oracle.py",
+        "tools/lfm2_vl/d1/oracle_weights.py",
+        "tools/lfm2_vl/d1/test_oracle_weights.py",
+        "tools/lfm2_vl/d1/export_resize_goldens.py",
+        "tools/lfm2_vl/d1/compare_runs.py"
       ]
     }
   },

@@ -2626,4 +2626,166 @@ consumer task; see the following entry for its disposition.
 GenEye published its scoped worker integration at `48bf4de746ebbfe4226cb8bb79fd37e3c8e96e4e`, pinned to Candle `3300bef20be161e63816b8820c845264acb1942d`. The producer compatibility review closed its P2 finding. Under its 44-request allowance, the consumer produced 20/20 accepted study results on each device; the original CPU batch retained a failed terminal stop after outputs completed, with separate cleanup checks passing. GenEye's existing LTS remains unchanged; release qualification is still GenEye-owned. Measurements, terminal limitations and receipts are recorded in [D1.md](D1.md#consumer-handoff) and `D:\GenEye-evidence\candle-d1-adoption-20261009`.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=geneye-d1-recheck-cleanup | change=recorded the published GenEye d1 consumer handoff and remaining LTS gate
+## 2026-10-09 d1 admission and readout cleanup
+
+The read-only review/recheck observed clean `main` at
+`e87dffea82fef39fe4f41096575762bbc1720162`; no intervening implementation fixes
+had landed. The scoped cleanup validates d1 limits/devices before file loading,
+adds explicit bounded GGUF inspection ceilings with preserved defaults, and
+removes redundant vocabulary normalization/copying from alias readout. Original
+model/kernel math, Q8/source-floating storage, session behavior and production
+receipts remain unchanged. Finite F32 extremes and unselected nonfinite logits
+have regressions; existing question/golden/partial-failure tests remain green.
+
+Rust 1.97.1/MSVC release readout timing uses six three-alias groups, three warm-ups
+and five samples of 100 calls. At 128,000 entries, the CPU median changes from
+400.830 to 31.512 microseconds, with ranges 363.593–414.497 and 30.628–32.524.
+The baseline adds only the ignored benchmark to the published primitive;
+this is not end-to-end or CUDA timing and performs no model forward.
+Native replay of all 120 retained CPU/CUDA vectors has maximum
+probability/derived-score error `2.4232748696562112e-8` under the existing `1e-6`
+bound, with unchanged selections and boolean thresholds. Old receipts are not
+rewritten or relabeled.
+
+All following commands ran locally with exit 0:
+
+- `cargo test --release --locked --offline -j 2 -p candle-transformers --lib models::lfm2_d1 -- --include-ignored --test-threads=1 --nocapture`: baseline three and final five tensor/benchmark tests pass.
+- `cargo test --release --locked --offline -j 2 -p candle-vlm --lib lfm2_d1 -- --nocapture`: 15 pass, two explicit ignores.
+- With `CANDLE_D1_READOUT_ROOT=C:\DevStuff\candle\artifacts\lfm2-d1\20261008-implementation`, `cargo test --release --locked --offline -j 2 -p candle-vlm --lib d1_retained_readout_matches_published_answers -- --ignored --nocapture`: one replay passes, 120 vectors, zero model forwards.
+- `.venv/Scripts/python.exe -B -m pytest -q -p no:cacheprovider tools/lfm2_vl/reference`: 100 pass in the pinned Python 3.10.11 environment.
+- `python -B tools/lfm2_vl/d1/test_verify_run.py -v`: six receipt controls pass.
+- `python -B tools/lfm2_vl/reference/inspect_gguf_header.py C:\DevStuff\GenEye\runtime-data\models\d1-3b-q8\d1-3B-Q8_0.gguf --full-file --max-header-bytes 16777216 --max-array-elements 524288 --summary-only`: the retained 266-tensor file has the matching extent and zero payload reads. The earlier 131,072 ceiling correctly refused its 293,320-entry merge array; no hard ceiling was weakened.
+- `cargo test --locked --offline -j 2 -p candle-transformers --features cuda --lib d1_cuda_readout_matches_cpu_and_checks_unselected_logits -- --nocapture`: one native CUDA component test passes.
+- `cargo clippy --locked --offline -j 2 -p candle-vlm --lib -p candle-examples --example lfm2-d1 --features cuda -- -D warnings`: passes; CUDA keeps the existing MSVC `LNK4098` warning.
+- `pwsh -NoProfile -File .tools/verify-before-push.ps1`: format, maintained library/four-example checks, strict CPU Clippy, 503 Rust tests/ten explicit ignores, six receipt controls, module layout, Summary Bank, overlay union and whitespace pass. This invokes no publisher.
+
+The d1 context route reached 255.2 KiB under its 256 KiB ceiling. Offline
+oracle/export tooling now has a focused parity route; runtime/contract/test
+paths remain in the feature route (217.5 KiB); the parity route is 61.1 KiB.
+The Summary Bank, mod-manifest and overlay verifiers passed after this split.
+Duplicate d1 decision numbering was corrected to D-0071/D-0072; older LoRA and
+convolution entries and frozen receipts retain their identities. TODO puts strict CUDA prefill work first,
+then CPU one-row scheduling and selected optional loading modes. GenEye retains
+its own LTS/product acceptance; the real-adapter contract remains conditional.
+All task test/compiler processes exited. Reused build/reference caches and
+referenced production evidence are retained. No production models were run,
+weights downloaded or owner files deleted. No staging, commits, branch changes
+or publication occurred. The cleanup remains an unpublished local candidate.
+
+---
+## 2026-10-09 d1 CUDA prefill investigation and local implementation
+
+The selected first TODO starts at `e87dffea82fef39fe4f41096575762bbc1720162`
+with the preceding admission/readout cleanup preserved. Four-row native Q8/F32
+CUDA reuse, opt-in synchronized phase timing and CUDA F32 causal tap-wise
+convolution are implemented locally. No publication or consumer checkout edit
+occurred. The revised model-performance Done When gate is complete locally
+under its separately approved fresh 72-forward allowance.
+
+The first explicitly approved allowance completed 44 requests, 132 language and
+ten vision forwards, with zero output tokens/retries. Its baseline study and
+first candidate each completed 20/20 cases. All 60 CUDA candidate logits equal
+baseline exactly; retained CPU maximum error is `2.765655517578125e-5` under
+`0.02`, feature cosine is `0.999999999989375` above `0.9999`, and independent
+readout error is `1.3877787807814457e-16` under `1e-6`. Choices, boolean thresholds
+and quality counts remain unchanged. Qualification/profile calls are separate
+from study counts. All four Jobs exited 0, verified PID release and stayed below
+16 GiB; the largest peak was 6,467,903,488 bytes.
+
+The four-row-only candidate does not establish a whole-request improvement:
+warm corpus medians are 6,452.3081/7,583.1928 ms, while paired medians disagree.
+Synchronized profiling found about 1,800 ms per language prefill and about
+0.1 ms per answer readout. The generic grouped convolution dispatches separately
+per hidden channel. The revised internal quantized-LFM2 CUDA F32 path batches
+causal taps across channels, preserving CPU/non-F32/single-token behavior and
+causal cache history. Its authored 2,048-channel/256-position/three-tap median
+changes from 81.9567 to 0.0922 ms; this is component proof only.
+
+Current-task commands executed locally with exit 0:
+
+- `cargo test --release --locked --offline -j 2 -p candle-core --features cuda --lib native_q8 -- --include-ignored --test-threads=1 --nocapture`: four tests including an explicit benchmark. Multi-row medians change from 0.679850/1.972080/0.216480 to 0.355770/1.133000/0.127200 ms; one-row medians are 0.317690/0.315000 ms.
+- `cargo test --locked --offline -j 2 -p candle-vlm --lib lfm2_d1`: 16 pass, two external-evidence ignores.
+- `cargo test --locked --offline -j 2 -p candle-vlm --features cuda --lib d1_cuda -- --nocapture`: two session/profiling tests pass, including optional images, cancellation, observer failure and recovery.
+- `pwsh -NoProfile -File artifacts/lfm2-d1/20261009-cuda-performance/run-proof.ps1`: the approved four bounded Jobs and source-bound parity/readout replay pass. Its allowance is consumed and closed.
+- `pwsh -NoProfile -File artifacts/lfm2-d1/20261009-cuda-performance/run-final-proof-v2.ps1`: the final qualification, study and profile pass under the fresh 72-forward allowance. The initial `run-final-proof.ps1` exited 1 because PowerShell's automatic `$input` variable erased the request filename; its child failed before request reading or model admission. The separate failure/Job receipt is retained with zero model forwards; the corrected first model attempt retains a fresh output root.
+- `cargo test --locked --offline -j 2 -p candle-transformers --lib causal_depthwise_cpu -- --nocapture`: authored CPU grouped-reference comparison passes before CUDA proof.
+- `cargo test --release --locked --offline -j 2 -p candle-transformers --features cuda --lib causal_depthwise -- --include-ignored --test-threads=1 --nocapture`: three reference/timing tests pass.
+- `cargo test --locked --offline -j 2 -p candle-transformers --features cuda --lib cached_cuda_forward_keeps_short_convolution_history -- --nocapture`: one chunk-history regression passes.
+- `cargo clippy --locked --offline -j 2 -p candle-vlm --lib -p candle-examples --example lfm2-d1 --features cuda -- -D warnings`: final source passes.
+- `cargo build --release --locked --offline -j 2 -p candle-examples --example lfm2-d1 --features cuda`: final candidate builds; existing MSVC LNK4098 remains.
+- `pwsh -NoProfile -File .tools/verify-before-push.ps1`: formatting, maintained library/four-example checks, strict CPU Clippy, 505 Rust tests/ten explicit ignores, six typed receipt controls, module layout, Summary Bank, overlay union and whitespace pass. No publisher is invoked.
+- `pwsh -NoProfile -File scripts/lfm2-vl/verify-summary-bank.ps1`, `bash scripts/lfm2-vl/verify-mod-manifest.sh`, `bash scripts/verify-fork-overlays.sh` and `git diff --check`: final documentation/routes/inventory pass. The mod-manifest verifier initially refused the new 183 additions against its old 181 guard; the explicit guard was updated for the two registered modules without relaxing its exact inventory requirement.
+
+The final standalone study completes 20/20 cases with 60 language/four vision
+forwards. Warm median changes from 6,452.3081 to 687.7071 ms (89.34% reduction,
+about 9.4 times faster); paired warm timing agrees at 89.43%. Text/image medians
+change from 6,383.3404/6,814.3017 to 671.4360/1,143.5240 ms; loading remains
+about 2.8 seconds. Comparisons use unprofiled identical sequential inputs and
+include trace writing; diagnostics include synchronization/first-request effects.
+No GenEye worker/package latency claim follows. Final CPU/CUDA last-logit error
+is `2.574920654296875e-5`, projected-feature cosine `0.999999999989375`, and
+readout error `1.1102230246251565e-16`, all within the original frozen bounds.
+Final CUDA versus baseline logit/probability errors are
+`1.621246337890625e-5`/`9.306214628912457e-7`. Choices, boolean thresholds and
+13/14/10 study quality counts are unchanged; there is no quality threshold.
+
+Both allowances are now closed: 68 admitted requests, 204 language/16 vision
+forwards, zero output tokens/model retries. Three studies total 180 language
+forwards; qualification and profile calls each total 12. Seven model Jobs exit
+0 and verify release; maximum peak is 6,543,790,080 bytes below 16 GiB. The
+separate setup-failure Job also verifies release and consumed no model work.
+All test/build/verifier processes exited. Final observed GPU memory is 932 MiB;
+no owned model process remains. Prior optional WSL proof is not replayed here.
+
+Proof uses `artifacts/lfm2-d1/20261009-cuda-performance/` with its allowance,
+source/runtime identities, actual run reports, component logs, `measurements.json`,
+`final-measurements.json`, `final-execution-source.json`
+and Job release receipts. Existing frozen inputs, CPU traces, baseline executable
+and reference environment are reused at their original identities. Current model
+weights were not downloaded or copied. Referenced evidence and caches remain;
+no deletion, staging, commit, branch/worktree change or publication occurred.
+TODO removes the completed CUDA gate and keeps CPU one-row scheduling and
+optional loading as separate priorities. Source publication and GenEye adoption
+remain separately authorized stages. The new timing/convolution modules are
+registered; the local LFM inventory is 203 paths and the overlay union is 273.
+
+---
+## 2026-10-09 d1 closeout and guarded publication
+
+The owner paired Closeout and Publish for the verified admission/readout and
+CUDA prefill batch. Native `main` and freshly fetched `origin/main` both started
+at `e87dffea82fef39fe4f41096575762bbc1720162`, with an empty index and no outgoing
+commits. The explicit 25-path allowlist contains only this task's source, tests,
+documentation, context routes and inventory verifier; prior owner changes are
+preserved. No branch/worktree transfer or history rewrite is needed.
+
+Fresh closeout runs
+`cargo test --locked --offline -j 2 -p candle-transformers --lib models::lfm2_d1`
+(four passed, one explicit benchmark ignore) and
+`.venv/Scripts/python.exe -B -m pytest -q -p no:cacheprovider tools/lfm2_vl/reference/test_gguf_header.py`
+(22 passed), both exit 0. The measured runtime/reference source matches all
+44 selected hashes, and nine retained proof references match their digests and
+sizes. All eight recorded Job PIDs remain absent. Model/component proof is reused
+at its original source/input identities; no new model call or consumed allowance
+is reopened. Repository routes, module ownership, exact inventory and whitespace
+are verified before named-file staging.
+
+The reviewed commit is published through `.tools/gitpush.ps1 -Yes`. The helper
+owns authentication, runs the required locked/offline native gate on the clean
+commit, checks its unchanged tree and remote ancestry, and pushes that exact
+commit to `Shoozes/candle` main. Successful commit/tree/remote-tip and gate outcome
+are defined by `artifacts/publication/last-push.json`, retained with the independent
+current-source binding and closeout result in
+`artifacts/lfm2-d1/20261009-d1-closeout-publish/`. Original model receipts remain
+unchanged. Publication is progress preservation, not GenEye package/LTS acceptance
+or release-tag creation.
+
+This closeout owns no service or model Job. Its test/verifier processes are
+synchronous and exit; referenced model proof, the pinned reference environment
+and reusable build caches remain deliberately retained. No owner file or evidence
+is deleted, and no production weight is copied or downloaded. CPU one-row
+projection and optional loading remain the next independent TODO batches;
+GenEye's adoption of this published source remains separately owned.
+
+---
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-closeout-publish | change=recorded scoped closeout, source-bound proof reuse and guarded publication contract

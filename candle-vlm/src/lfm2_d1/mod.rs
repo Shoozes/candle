@@ -1,11 +1,13 @@
 //! Local, non-generative LFM d1 decisions using independent question prefills.
 
 mod image_cap;
+mod profiling;
 mod prompt;
 mod render_state;
 mod session;
 mod types;
 
+pub use profiling::{D1QuestionTiming, D1Timings};
 pub use prompt::{D1PolicyV1, PreparedQuestion};
 pub use session::D1TraceEvent;
 pub use session::{load_d1_q8, D1LoadOptions, D1Session};

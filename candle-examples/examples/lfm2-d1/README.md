@@ -25,10 +25,17 @@ IDs, final logits and the first image request's processor/features. Failures kee
 partial answers/work counts and remaining case IDs. JSON output preserves the
 public answer and option order. No output tokens are generated.
 
+`--profile` adds opt-in `timings` to each case: preparation, image processing,
+tokenization, vision, each question's prefill/readout, and trace observation.
+It synchronizes device work at phase boundaries. Use unprofiled runs for
+latency comparison; profiled totals include synchronization overhead. Trace
+writing is measured in observation time. Model loading remains in `loaded.json`;
+case elapsed time also includes image reading and plan-file writing.
+
 Run the executable through `scripts/lfm2-vl/run-bounded-oracle.ps1` for a bounded
 native Job with deadline, memory limit, process identity and verified release.
 The caller owns admission and isolation. See [D1.md](../../../docs/lfm2-vl/D1.md)
 for policy, API, source pins and qualification limits.
 
 ---
-AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=lfm2-d1 | change=documented standalone explicit-input runner
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cuda-performance | change=documented opt-in synchronized phase timing

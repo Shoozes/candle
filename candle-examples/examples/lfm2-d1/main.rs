@@ -5,7 +5,7 @@ mod files;
 use anyhow::{Context, Result};
 use candle::{DType, Device};
 use candle_vlm::lfm2_d1::{
-    load_d1_q8, D1Limits, D1LoadOptions, D1TraceEvent, DecisionFailure, DecisionRequest,
+    load_d1_q8, D1Limits, D1LoadOptions, D1Timings, D1TraceEvent, DecisionFailure, DecisionRequest,
     DecisionResponse,
 };
 use candle_vlm::lfm2_vl::{Lfm2VlHybridLoadOptions, Lfm2VlMmprojExecution, Lfm2VlMmprojSource};
@@ -38,6 +38,8 @@ struct Args {
     context: usize,
     #[arg(long)]
     trace: bool,
+    #[arg(long)]
+    profile: bool,
 }
 
 #[derive(Deserialize)]
@@ -60,6 +62,8 @@ struct CaseResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     question_index: Option<usize>,
     response: DecisionResponse,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    timings: Option<D1Timings>,
 }
 
 #[derive(Serialize)]
@@ -161,6 +165,7 @@ fn run(args: &Args) -> Result<()> {
         let case_root = args.out.join(format!("case-{index:03}"));
         fs::create_dir(&case_root)?;
         let started = Instant::now();
+        let mut timings = args.profile.then(D1Timings::default);
         let images = input
             .images
             .iter()
@@ -174,6 +179,7 @@ fn run(args: &Args) -> Result<()> {
                 &case_root,
                 args.trace,
                 !results.iter().any(|value: &CaseResult| value.had_image),
+                timings.as_mut(),
             ),
             Err(error) => Err(DecisionFailure {
                 message: error.to_string(),
@@ -202,6 +208,7 @@ fn run(args: &Args) -> Result<()> {
             error,
             question_index,
             response,
+            timings,
         };
         files::write_json(&case_root.join("result.json"), &record)?;
         println!("{}", serde_json::to_string(&record)?);
@@ -243,6 +250,7 @@ fn run_case(
     case_root: &std::path::Path,
     trace: bool,
     trace_images: bool,
+    timings: Option<&mut D1Timings>,
 ) -> std::result::Result<DecisionResponse, DecisionFailure> {
     let preparation = (|| -> Result<()> {
         let plans = session.prepare(&input.request, images.len())?;
@@ -264,40 +272,41 @@ fn run_case(
             }),
         });
     }
-    session.decide_traced(
-        &input.request,
-        images,
-        || false,
-        |event| {
-            if !trace {
-                return Ok(());
-            }
-            let outcome = match event {
-                D1TraceEvent::QuestionInput { index, text, ids } => files::write_json(
-                    &case_root.join(format!("question-{index}.json")),
-                    &json!({"text":text,"input_ids":ids}),
-                ),
-                D1TraceEvent::AnswerLogits { index, logits } => files::write_tensor(
-                    &case_root.join(format!("logits-{index}.safetensors")),
-                    "logits",
-                    logits,
-                ),
-                D1TraceEvent::ProcessedImages(processed) if trace_images => files::write_tensors(
-                    &case_root.join("processor.safetensors"),
-                    &[
-                        ("pixels", &processed.pixel_values),
-                        ("mask", &processed.pixel_attention_mask),
-                        ("spatial", &processed.spatial_shapes),
-                    ],
-                ),
-                D1TraceEvent::ImageFeatures(encoded) if trace_images => files::write_tensor(
-                    &case_root.join("features.safetensors"),
-                    "features",
-                    &encoded.embeddings,
-                ),
-                _ => Ok(()),
-            };
-            outcome.map_err(|error| candle::Error::Msg(error.to_string()))
-        },
-    )
+    let observe = |event: D1TraceEvent<'_>| {
+        if !trace {
+            return Ok(());
+        }
+        let outcome = match event {
+            D1TraceEvent::QuestionInput { index, text, ids } => files::write_json(
+                &case_root.join(format!("question-{index}.json")),
+                &json!({"text":text,"input_ids":ids}),
+            ),
+            D1TraceEvent::AnswerLogits { index, logits } => files::write_tensor(
+                &case_root.join(format!("logits-{index}.safetensors")),
+                "logits",
+                logits,
+            ),
+            D1TraceEvent::ProcessedImages(processed) if trace_images => files::write_tensors(
+                &case_root.join("processor.safetensors"),
+                &[
+                    ("pixels", &processed.pixel_values),
+                    ("mask", &processed.pixel_attention_mask),
+                    ("spatial", &processed.spatial_shapes),
+                ],
+            ),
+            D1TraceEvent::ImageFeatures(encoded) if trace_images => files::write_tensor(
+                &case_root.join("features.safetensors"),
+                "features",
+                &encoded.embeddings,
+            ),
+            _ => Ok(()),
+        };
+        outcome.map_err(|error| candle::Error::Msg(error.to_string()))
+    };
+    match timings {
+        Some(timings) => {
+            session.decide_traced_profiled(&input.request, images, || false, observe, timings)
+        }
+        None => session.decide_traced(&input.request, images, || false, observe),
+    }
 }

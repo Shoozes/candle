@@ -22,6 +22,8 @@ MAX_PREFIX_BYTES = 4 * 1024 * 1024
 MAX_STRING_BYTES = 1024 * 1024
 MAX_ENTRIES = 16_384
 MAX_ARRAY_ELEMENTS = 65_536
+MAX_HEADER_BYTES = 32 * 1024 * 1024
+MAX_METADATA_ARRAY_ELEMENTS = 1024 * 1024
 MAX_VALUE_DEPTH = 16
 MAX_TENSOR_DIMS = 4
 
@@ -66,9 +68,16 @@ class GgufHeaderError(ValueError):
 
 
 class _Reader:
-    def __init__(self, data: bytes | mmap.mmap, *, limit: int | None = None):
+    def __init__(
+        self,
+        data: bytes | mmap.mmap,
+        *,
+        limit: int,
+        max_array_elements: int,
+    ):
         self.data = data
-        self.limit = len(data) if limit is None else min(len(data), limit)
+        self.limit = min(len(data), limit)
+        self.max_array_elements = max_array_elements
         self.offset = 0
 
     def read(self, size: int) -> bytes:
@@ -164,9 +173,9 @@ def _read_value(reader: _Reader, version: int, value_type: int, depth: int) -> A
     elif value_type == 9:
         element_type = reader.u32()
         length = _read_length(reader, version)
-        if length > MAX_ARRAY_ELEMENTS:
+        if length > reader.max_array_elements:
             raise GgufHeaderError(
-                f"GGUF array length {length} exceeds bound {MAX_ARRAY_ELEMENTS}"
+                f"GGUF array length {length} exceeds bound {reader.max_array_elements}"
             )
         return [
             _read_value(reader, version, element_type, depth + 1)
@@ -211,10 +220,13 @@ def _inspect_gguf_data(
     source_revision: str | None = None,
     byte_range: str | None = None,
     full_file_bytes: int | None = None,
+    max_header_bytes: int = MAX_PREFIX_BYTES,
+    max_array_elements: int = MAX_ARRAY_ELEMENTS,
 ) -> dict[str, Any]:
     reader = _Reader(
         data,
-        limit=MAX_PREFIX_BYTES if full_file_bytes is not None else None,
+        limit=max_header_bytes,
+        max_array_elements=max_array_elements,
     )
     if reader.read(4) != b"GGUF":
         raise GgufHeaderError("invalid GGUF magic")
@@ -331,14 +343,22 @@ def inspect_gguf_header(
     source_revision: str | None = None,
     byte_range: str | None = None,
     full_file: bool = False,
+    max_header_bytes: int = MAX_PREFIX_BYTES,
+    max_array_elements: int = MAX_ARRAY_ELEMENTS,
 ) -> dict[str, Any]:
     """Return stable metadata from a bounded prefix or local full GGUF file."""
 
+    for label, value, maximum in (
+        ("header byte limit", max_header_bytes, MAX_HEADER_BYTES),
+        ("metadata array limit", max_array_elements, MAX_METADATA_ARRAY_ELEMENTS),
+    ):
+        if type(value) is not int or not 1 <= value <= maximum:
+            raise GgufHeaderError(f"GGUF {label} must be an integer in 1..{maximum}")
     path = path.resolve()
     size = path.stat().st_size
-    if size == 0 or (not full_file and size > MAX_PREFIX_BYTES):
+    if size == 0 or (not full_file and size > max_header_bytes):
         noun = "GGUF file" if full_file else "GGUF header prefix"
-        maximum = "unbounded" if full_file else str(MAX_PREFIX_BYTES)
+        maximum = "unbounded" if full_file else str(max_header_bytes)
         raise GgufHeaderError(f"{noun} size {size} is outside 1..{maximum} bytes")
     if not full_file:
         return _inspect_gguf_data(
@@ -346,6 +366,8 @@ def inspect_gguf_header(
             source_url=source_url,
             source_revision=source_revision,
             byte_range=byte_range,
+            max_header_bytes=max_header_bytes,
+            max_array_elements=max_array_elements,
         )
 
     with path.open("rb") as handle, mmap.mmap(
@@ -357,6 +379,8 @@ def inspect_gguf_header(
             source_revision=source_revision,
             byte_range=byte_range,
             full_file_bytes=size,
+            max_header_bytes=max_header_bytes,
+            max_array_elements=max_array_elements,
         )
 
 
@@ -396,6 +420,21 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--source-revision")
     parser.add_argument("--byte-range")
     parser.add_argument(
+        "--max-header-bytes",
+        type=int,
+        default=MAX_PREFIX_BYTES,
+        help=f"header byte ceiling (default {MAX_PREFIX_BYTES}; maximum {MAX_HEADER_BYTES})",
+    )
+    parser.add_argument(
+        "--max-array-elements",
+        type=int,
+        default=MAX_ARRAY_ELEMENTS,
+        help=(
+            f"metadata array ceiling (default {MAX_ARRAY_ELEMENTS}; "
+            f"maximum {MAX_METADATA_ARRAY_ELEMENTS})"
+        ),
+    )
+    parser.add_argument(
         "--full-file",
         action="store_true",
         help=(
@@ -433,6 +472,8 @@ def main(argv: list[str] | None = None) -> int:
         source_revision=args.source_revision,
         byte_range=args.byte_range,
         full_file=args.full_file,
+        max_header_bytes=args.max_header_bytes,
+        max_array_elements=args.max_array_elements,
     )
     if args.summary_only:
         result = summarize_gguf_header(result)

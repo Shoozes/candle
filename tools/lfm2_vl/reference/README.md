@@ -294,7 +294,18 @@ The committed `tests/fixtures/lfm2_vl_mmproj_tiny/` bundle is derived byte-for-b
 
 ## Bounded GGUF header inspection
 
-`inspect_gguf_header.py` is a stdlib-only parser for a local bounded GGUF prefix. It validates magic, version, counts, string/array lengths, dimensions, dtypes, alignment, and header completeness, then reports both raw GGUF dimensions and Candle logical shapes. It never fetches a URL itself. For an already-local complete GGUF, `--full-file` memory-maps the file but bounds parser access to 4 MiB and hashes only the exact prefix through `tensor_data_offset`; the result separately reports physical file bytes and whether they match the declared tensor extent. JSON printed to a Windows console is ASCII-escaped; use `--output <path> --quiet` to retain the full UTF-8 report without duplicating a large tokenizer inventory into wrapper logs.
+`inspect_gguf_header.py` is a stdlib-only parser for a local bounded GGUF prefix. It validates magic, version, counts, string/array lengths, dimensions, dtypes, alignment, and header completeness, then reports both raw GGUF dimensions and Candle logical shapes. It never fetches a URL itself. For an already-local complete GGUF, `--full-file` memory-maps the file but bounds parser access and hashes only the exact prefix through `tensor_data_offset`; the result separately reports physical file bytes and whether they match the declared tensor extent. Defaults remain a 4 MiB header and 65,536 elements per metadata array. Explicit `--max-header-bytes` and `--max-array-elements` accept positive integer ceilings up to 32 MiB and 1,048,576 elements. Invalid ceilings fail before opening the input. JSON printed to a Windows console is ASCII-escaped; use `--output <path> --quiet` to retain the full UTF-8 report without duplicating a large tokenizer inventory into wrapper logs.
+
+The retained d1 Q8 text header has 128,000 vocabulary entries, 293,320 merges
+and an 8,240,736-byte aligned header. Local inspection needs both ceilings;
+the vocabulary size alone does not bound the merge list:
+
+```powershell
+python -B tools/lfm2_vl/reference/inspect_gguf_header.py C:\models\d1-3B-Q8_0.gguf --full-file --max-header-bytes 16777216 --max-array-elements 524288 --summary-only
+```
+
+This reads zero tensor-payload bytes. It is metadata inspection rather than
+complete-artifact hash admission, model loading or inference qualification.
 
 For the pinned official 450M F16 and Q8_0 MMProj files, the complete aligned header is exactly bytes `0-12735` and tensor data starts at byte `12736`. Keep the temporary prefix outside the repository and request only that exact range:
 
@@ -342,4 +353,4 @@ malformed manifest JSON, artifact identity ambiguity, exact oracle/native
 artifact matching, and platform-specific environment selection.
 
 ---
-AI-edited: 2026-08-21T12:40:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=lfm2-3b-q8-proof-gap | change=documented 3B locking, custom-code admission, and hybrid comparison commands
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-admission-readout-cleanup | change=documented explicit bounded header and array inspection ceilings

@@ -962,14 +962,27 @@ impl QCudaStorage {
             .bt()
         })?;
         let input = input.slice(start..end);
-        let grid = u32::try_from(cells.div_ceil(4)).map_err(crate::Error::wrap)?;
+        let tiled = rows >= 4;
+        let work_items = if tiled {
+            rows.div_ceil(4)
+                .checked_mul(columns)
+                .ok_or_else(|| crate::Error::Msg("native Q8 tile count overflow".into()))?
+        } else {
+            cells
+        };
+        let grid = u32::try_from(work_items.div_ceil(4)).map_err(crate::Error::wrap)?;
         if grid > i32::MAX as u32 {
             crate::bail!("native Q8/F32 CUDA grid exceeds its limit")
         }
         let mut output = self.device.alloc_zeros::<f32>(cells)?;
+        let name = if tiled {
+            "native_q8_f32_matmul_rows4"
+        } else {
+            "native_q8_f32_matmul"
+        };
         let function = self
             .device
-            .get_or_load_func("native_q8_f32_matmul", &candle_kernels::NATIVE_Q8_F32)?;
+            .get_or_load_func(name, &candle_kernels::NATIVE_Q8_F32)?;
         let config = cudarc::driver::LaunchConfig {
             grid_dim: (grid, 1, 1),
             block_dim: (32, 4, 1),

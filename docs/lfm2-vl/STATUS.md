@@ -2,25 +2,77 @@
 
 ## Current phase and source
 
-Current phase (2026-10-09): Complete with verified limitations. Candle's reusable
-d1 implementation is published at `3300bef20be161e63816b8820c845264acb1942d`
-(tree `e45304a19f74d5e094f9adaed19e4b485cfb872f`). GenEye's consumer integration
-is published at `48bf4de746ebbfe4226cb8bb79fd37e3c8e96e4e` with that exact Candle
-pin; its producer API P2 finding is closed. GenEye's LTS release approval was
-not issued. Candle implementation files under active work: none. This local
-recheck updates only `D1.md`, `START_HERE.md`, `TODO.md`, `HISTORY.md`, and this
-status handoff.
+Current phase (2026-10-09): Complete with verified limitations locally;
+owner-authorized closeout and guarded publication of the verified d1 batch.
+The implementation baseline is
+`e87dffea82fef39fe4f41096575762bbc1720162`. The scoped candidate changes
+`candle-transformers/src/models/lfm2_d1.rs`,
+`candle-vlm/src/lfm2_d1/{session,tests}.rs`, the GGUF header inspector/tests and
+their owning documentation/routes, plus strict four-row CUDA Q8 reuse,
+CUDA F32 quantized-LFM2 causal convolution and opt-in phase timing. Active work:
+none. The approved 132-forward and 72-forward allowances are consumed and closed.
+The owner authorized this batch's commit/push on 2026-10-09. Exact successful
+publication commit/tree and the clean-head native gate are defined by
+`artifacts/publication/last-push.json`, retained with current-source binding in
+`artifacts/lfm2-d1/20261009-d1-closeout-publish/`. Downloads, training, new model
+calls, release tags and consumer changes are outside this closeout.
 
-Candle's guarded publication receipt and the independent 65-file source binding
-remain in `artifacts/lfm2-d1/20261008-closeout-publish-p1/`. The receipt records
-the clean-head native gate (500 Rust tests, eight explicit ignores, six Python
-receipt controls), d1-focused tests (14 passed, one explicit ignore), strict
-CUDA d1 Clippy, fixture byte-identity guard and Summary Bank verification. These
-are retained checks from the exact published source, not rerun during this
-documentation pass. The 120 retained typed answers replay with no new production
-forwards; numerical proof remains bound to the original implementation snapshot.
-This documentation pass ran the Summary Bank verifier and `git diff --check`;
-it did not run Cargo tests or model inference.
+The first four-row-only candidate preserves all 60 CUDA logits exactly against
+the fresh baseline and passes retained CPU/reference readout parity, but its warm
+median does not improve. Synchronized diagnostics identify language prefill as
+the dominant cost. The general grouped convolution splits per hidden channel;
+the revised CUDA F32 path computes causal taps across channels together. Authored
+CPU/CUDA reference, cached-chunk history and profiling/failure tests pass.
+The revised final study completes 20/20 cases: 60 language/four vision forwards
+and zero output tokens. Standalone warm corpus median changes from 6,452.3081 to
+687.7071 ms (89.34% reduction, about 9.4 times faster) on the same RTX 4090.
+Warm text and image medians change from 6,383.3404/6,814.3017 to
+671.4360/1,143.5240 ms. Loading remains about 2.8 seconds. Final CPU/CUDA logit
+error is `2.574920654296875e-5` under `0.02`, feature cosine
+`0.999999999989375` above `0.9999`, and readout error `1.1102230246251565e-16`
+under `1e-6`. Choices, boolean thresholds and 13/14/10 quality counts are unchanged.
+This is local standalone proof; GenEye's worker/package timing is not remeasured.
+
+Proven locally: invalid limit values and unsupported devices are checked before
+hybrid loading; zero-image limits remain valid. The inspector retains old
+defaults and accepts the actual d1 vocabulary/merge/header sizes through explicit
+bounded ceilings, with zero tensor-payload reads. Alias readout removes the
+shared vocabulary normalizer and second copy, preserves all-value finite
+validation and handles finite F32 extremes.
+
+The preceding admission/readout cleanup passed release tensor tests, its
+explicit CPU microbenchmark, 15 d1 session tests (two explicit ignores) and
+separately executed native replay of
+all 120 retained CPU/CUDA answers, 100 Python reference tests and six typed
+receipt controls. Replay maximum error is `2.4232748696562112e-8` under `1e-6`,
+with unchanged selections and boolean thresholds, and zero model forwards.
+The 128,000-entry CPU component median changes from 400.830 to 31.512 microseconds;
+this is a CPU component measurement. The native locked/offline helper
+passes formatting, maintained libraries/four examples, strict CPU Clippy,
+505 Rust tests (ten explicit ignores), receipt controls and repository gates
+on the final current source. Latest green checks also include native Q8/layout
+and convolution reference/timing controls, CPU/CUDA session profiling and cached
+chunk history, strict CUDA d1 Clippy and the CUDA example build. The existing
+`LNK4098` linkage warning remains. Summary Bank has a focused CUDA performance
+route. Fresh closeout rechecks the tensor readout and GGUF-header suite; the
+guarded publisher runs the required native gate on the clean commit. Exact
+commands, publication outcome and disposition are in `HISTORY.md` and its
+closeout receipt root above.
+
+This batch totals 68 admitted requests, 204 language and 16 vision forwards,
+zero output tokens and zero model retries. Seven model Jobs exited 0 and
+verified release; maximum peak is 6,543,790,080 bytes under 16 GiB. A separate
+launcher path failure occurred before any request/model admission or forward;
+its exited Job and failed receipt are preserved. No fresh CPU model run occurred:
+unchanged CPU execution traces are reused with new authored CPU component proof.
+
+Candle's original d1 source remains published at
+`3300bef20be161e63816b8820c845264acb1942d`; GenEye's integration remains at
+`48bf4de746ebbfe4226cb8bb79fd37e3c8e96e4e` with that exact pin and closed P2 API
+finding. Its LTS approval remains separate. Original model parity and publication
+proof retain their immutable identities in
+`artifacts/lfm2-d1/20261008-closeout-publish-p1/` and the linked implementation
+root. The readout cleanup does not relabel those production receipts.
 
 GenEye's published consumer acceptance used its separate closed 44-request
 allowance with zero retries, 132 language forwards, ten vision forwards and zero
@@ -37,10 +89,12 @@ The previous Candle closeout repaired CRLF in three tiny d1 fixture JSON files,
 corrected their manifest/tokenizer hashes and made the Windows grep byte guard
 literal. Its native fixture-identity regression reproduced the defect, then all
 14 focused d1 tests passed (one explicit ignore). Golden data and model/kernel
-math remain unchanged. Known limitations are the optional `Codex-Compat` WSL
-cache missing `accelerate-src` and the existing CUDA MSVC LNK4098 warning. The
-first remaining Candle task is the conditional real-adapter qualification in
-`TODO.md`; it still depends on its recorded producer artifacts and Edge gates.
+math remain unchanged. The prior optional `Codex-Compat` WSL proof lacked cached
+`accelerate-src`; that lane was not replayed here. CUDA still emits the existing
+MSVC LNK4098 warning. The first remaining Candle task is CPU one-row projection
+profiling/scheduling in `TODO.md`; optional loading follows separately.
+The real-adapter/Edge contract still depends on its recorded producer inputs and
+Edge gates. GenEye owns future LTS and product-quality acceptance.
 
 Previous phase (2026-10-08): Closeout of the stock CPU diagnostic progress
 snapshot; runtime and real-adapter acceptance remain blocked at an Edge-owned
@@ -331,4 +385,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=geneye-d1-recheck-cleanup | change=recorded published GenEye consumer acceptance and the separate LTS gate
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-closeout-publish | change=bound guarded d1 publication to fresh closeout and immutable performance proof

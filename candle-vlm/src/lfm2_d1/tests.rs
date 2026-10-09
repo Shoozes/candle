@@ -47,6 +47,176 @@ fn tokenizer() -> Tokenizer {
 }
 
 #[test]
+fn d1_load_rejects_invalid_limits_before_opening_inputs() -> candle::Result<()> {
+    use crate::lfm2_vl::{Lfm2VlHybridLoadOptions, Lfm2VlMmprojExecution, Lfm2VlMmprojSource};
+    let device = Device::Cpu;
+    let absent = std::path::Path::new("");
+    let hybrid = Lfm2VlHybridLoadOptions {
+        text_gguf: absent,
+        mmproj: Lfm2VlMmprojSource::GgufFile(absent),
+        tokenizer: absent,
+        processor_config: None,
+        mmproj_execution: Lfm2VlMmprojExecution::Q8,
+        vision_dtype: candle::DType::F32,
+        vision_device: &device,
+        text_device: &device,
+    };
+    for limits in [
+        D1Limits {
+            max_questions: 0,
+            ..Default::default()
+        },
+        D1Limits {
+            max_options: 0,
+            ..Default::default()
+        },
+        D1Limits {
+            max_prompt_bytes: 0,
+            ..Default::default()
+        },
+        D1Limits {
+            max_context_tokens: Some(0),
+            ..Default::default()
+        },
+    ] {
+        let error = load_d1_q8(D1LoadOptions { hybrid, limits })
+            .err()
+            .ok_or_else(|| candle::Error::Msg("invalid limits were accepted".into()))?;
+        assert!(
+            error.to_string().contains("d1 limits must be positive"),
+            "{error}"
+        );
+    }
+    // A zero image allowance is valid for callers that only accept text.
+    let error = load_d1_q8(D1LoadOptions {
+        hybrid,
+        limits: D1Limits {
+            max_images: 0,
+            ..Default::default()
+        },
+    })
+    .err()
+    .ok_or_else(|| candle::Error::Msg("absent tokenizer was accepted".into()))?;
+    assert!(
+        error.to_string().contains("cannot open tokenizer"),
+        "{error}"
+    );
+    Ok(())
+}
+
+#[test]
+#[ignore = "requires CANDLE_D1_READOUT_ROOT containing the retained CPU/CUDA study logits"]
+fn d1_retained_readout_matches_published_answers() -> candle::Result<()> {
+    #[derive(serde::Deserialize)]
+    struct Plan {
+        name: String,
+        groups: Vec<Vec<u32>>,
+    }
+    #[derive(serde::Deserialize)]
+    struct Plans {
+        plans: Vec<Plan>,
+    }
+    #[derive(serde::Deserialize)]
+    struct Case {
+        response: DecisionResponse,
+    }
+    #[derive(serde::Deserialize)]
+    struct Run {
+        state: String,
+        language_forwards: u64,
+        output_tokens: u64,
+        results: Vec<Case>,
+    }
+    fn read<T: serde::de::DeserializeOwned>(path: &std::path::Path) -> candle::Result<T> {
+        serde_json::from_slice(&std::fs::read(path)?).map_err(candle::Error::wrap)
+    }
+    let root = std::path::PathBuf::from(
+        std::env::var("CANDLE_D1_READOUT_ROOT").map_err(candle::Error::wrap)?,
+    );
+    if !root.is_absolute() {
+        candle::bail!("retained readout root must be absolute")
+    }
+    let mut maximum = 0f64;
+    let mut checked = 0;
+    for name in ["cpu-study-final", "cuda-study"] {
+        let run_root = root.join(name);
+        let run: Run = read(&run_root.join("report.json"))?;
+        assert_eq!(run.state, "complete");
+        assert_eq!(run.results.len(), 20);
+        assert_eq!(run.language_forwards, 60);
+        assert_eq!(run.output_tokens, 0);
+        for (case_index, case) in run.results.iter().enumerate() {
+            let case_root = run_root.join(format!("case-{case_index:03}"));
+            let plans: Plans = read(&case_root.join("plans.json"))?;
+            assert_eq!(plans.plans.len(), case.response.answers.0.len());
+            for (index, (plan, (name, answer))) in
+                plans.plans.iter().zip(&case.response.answers.0).enumerate()
+            {
+                assert_eq!(&plan.name, name);
+                let tensors = candle::safetensors::load(
+                    case_root.join(format!("logits-{index}.safetensors")),
+                    &Device::Cpu,
+                )?;
+                let logits = tensors
+                    .get("logits")
+                    .ok_or_else(|| candle::Error::Msg("retained logits are missing".into()))?;
+                let actual = candle_transformers::models::lfm2_d1::option_probabilities(
+                    logits,
+                    &plan.groups,
+                )?;
+                let expected = match answer {
+                    Answer::Noul { noul } => {
+                        assert_eq!(actual[0] >= 0.5, *noul >= 0.5);
+                        vec![*noul, 1. - noul]
+                    }
+                    Answer::Choice {
+                        choice,
+                        confidence,
+                        probabilities,
+                        ..
+                    } => {
+                        let best = actual.iter().enumerate().fold(0, |best, (i, p)| {
+                            if *p > actual[best] {
+                                i
+                            } else {
+                                best
+                            }
+                        });
+                        assert_eq!(&probabilities.0[best].0, choice);
+                        maximum = maximum.max((actual[best] - confidence).abs());
+                        probabilities.0.iter().map(|(_, p)| *p).collect()
+                    }
+                    Answer::Score {
+                        score,
+                        confidence,
+                        probabilities,
+                        ..
+                    } => {
+                        let expected_score: f64 =
+                            actual.iter().enumerate().map(|(i, p)| i as f64 * p).sum();
+                        maximum = maximum.max((expected_score - score).abs());
+                        let best = actual.iter().copied().fold(0f64, f64::max);
+                        maximum = maximum.max((best - confidence).abs());
+                        probabilities.0.iter().map(|(_, p)| *p).collect()
+                    }
+                };
+                assert_eq!(actual.len(), expected.len());
+                for (a, b) in actual.iter().zip(expected) {
+                    maximum = maximum.max((a - b).abs());
+                }
+                assert!(maximum <= 1e-6, "retained readout error {maximum}");
+                checked += 1;
+            }
+        }
+    }
+    assert_eq!(checked, 120);
+    println!(
+        "d1-readout replay_questions={checked} max_abs={maximum:e} bound=1e-6 model_forwards=0"
+    );
+    Ok(())
+}
+
+#[test]
 fn d1_fixture_checkout_identity() -> candle::Result<()> {
     #[derive(serde::Deserialize)]
     struct FileIdentity {
@@ -726,6 +896,80 @@ fn d1_context_rejection_precedes_all_model_forwards() -> candle::Result<()> {
     assert_eq!(failure.partial.usage.language_forwards, 0);
     assert_eq!(failure.partial.usage.vision_forwards, 0);
     assert_eq!(failure.partial.unattempted_questions, 2);
+    Ok(())
+}
+
+#[test]
+fn d1_profiling_preserves_answers_failure_counts_and_recovery() -> candle::Result<()> {
+    check_profiling(&Device::Cpu)
+}
+
+#[cfg(feature = "cuda")]
+#[test]
+fn d1_cuda_profiling_preserves_answers_failure_counts_and_recovery() -> candle::Result<()> {
+    check_profiling(&Device::new_cuda(0)?)
+}
+
+fn check_profiling(device: &Device) -> candle::Result<()> {
+    let mut session = tiny_session(device, D1Limits::default())?;
+    let request = request();
+    let expected = session
+        .decide(&request, &[])
+        .map_err(|e| candle::Error::Msg(e.to_string()))?;
+    let mut timings = super::D1Timings::default();
+    let actual = session
+        .decide_traced_profiled(&request, &[], || false, |_| Ok(()), &mut timings)
+        .map_err(|e| candle::Error::Msg(e.to_string()))?;
+    assert_eq!(actual.answers, expected.answers);
+    assert_eq!(actual.usage, expected.usage);
+    assert_eq!(timings.questions.len(), request.questions.0.len());
+    assert_eq!(timings.vision_ms, 0.);
+    assert!(timings.total_ms.is_finite() && timings.total_ms >= timings.observation_ms);
+    let failure = session
+        .decide_traced_profiled(
+            &request,
+            &[],
+            || false,
+            |event| {
+                if matches!(event, super::D1TraceEvent::QuestionInput { index: 1, .. }) {
+                    candle::bail!("authored observer failure")
+                }
+                Ok(())
+            },
+            &mut timings,
+        )
+        .expect_err("profiled observer failure");
+    assert_eq!(failure.partial.usage.language_forwards, 1);
+    assert_eq!(failure.partial.answers.0.len(), 1);
+    assert_eq!(timings.questions.len(), 2);
+    assert_eq!(timings.questions[1].prefill_ms, 0.);
+    let recovered = session
+        .decide_traced_profiled(&request, &[], || false, |_| Ok(()), &mut timings)
+        .map_err(|e| candle::Error::Msg(e.to_string()))?;
+    assert_eq!(recovered.answers, expected.answers);
+    assert_eq!(timings.questions.len(), request.questions.0.len());
+    let image = image::DynamicImage::ImageRgb8(image::RgbImage::from_pixel(
+        8,
+        8,
+        image::Rgb([64, 128, 192]),
+    ));
+    let expected = session
+        .decide(&request, std::slice::from_ref(&image))
+        .map_err(|e| candle::Error::Msg(e.to_string()))?;
+    let actual = session
+        .decide_traced_profiled(&request, &[image], || false, |_| Ok(()), &mut timings)
+        .map_err(|e| candle::Error::Msg(e.to_string()))?;
+    assert_eq!(actual.answers, expected.answers);
+    assert_eq!(actual.usage, expected.usage);
+    assert_eq!(actual.usage.vision_forwards, 1);
+    assert!(timings.vision_ms.is_finite());
+    let cancelled = session
+        .decide_traced_profiled(&request, &[], || true, |_| Ok(()), &mut timings)
+        .expect_err("profiled cancellation");
+    assert_eq!(cancelled.partial.usage.language_forwards, 0);
+    assert_eq!(cancelled.partial.usage.vision_forwards, 0);
+    assert!(timings.questions.is_empty());
+    assert_eq!(timings.vision_ms, 0.);
     Ok(())
 }
 

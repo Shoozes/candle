@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::io::{Read, Seek, SeekFrom};
 
 mod lora;
+mod shortconv;
 use lora::{AdaptedLinear, PreparedPair};
 pub use lora::{Lfm2LoraAdapter, Lfm2LoraPair, Lfm2LoraTarget};
 
@@ -247,9 +248,12 @@ impl ShortConvLayer {
                     ..Default::default()
                 },
             );
-            let out = conv
-                .forward(&conv_input.contiguous()?)?
-                .narrow(2, prefix_len, seq_len)?;
+            let out = if conv_input.device().is_cuda() && conv_input.dtype() == DType::F32 {
+                shortconv::causal_depthwise(&conv_input, &conv_weight)?
+            } else {
+                conv.forward(&conv_input.contiguous()?)?
+            }
+            .narrow(2, prefix_len, seq_len)?;
 
             if self.l_cache > 0 {
                 let cur_len = conv_input.dim(2)?;
@@ -1329,19 +1333,28 @@ mod tests {
 
     #[test]
     fn cached_forward_keeps_short_convolution_history() -> Result<()> {
-        let device = Device::Cpu;
+        check_short_convolution_history(&Device::Cpu)
+    }
+
+    #[cfg(feature = "cuda")]
+    #[test]
+    fn cached_cuda_forward_keeps_short_convolution_history() -> Result<()> {
+        check_short_convolution_history(&Device::new_cuda(0)?)
+    }
+
+    fn check_short_convolution_history(device: &Device) -> Result<()> {
         let projection = Tensor::from_slice(
             &[1f32, 0., 0., 1., 1., 0., 0., 1., 1., 0., 0., 1.],
             (6, 2),
-            &device,
+            device,
         )?;
-        let identity = Tensor::from_slice(&[1f32, 0., 0., 1.], (2, 2), &device)?;
+        let identity = Tensor::from_slice(&[1f32, 0., 0., 1.], (2, 2), device)?;
         let input = Tensor::from_slice(
             &[
                 1f32, 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14.,
             ],
             (1, 7, 2),
-            &device,
+            device,
         )?;
         // Each output is x times the sum of the last three squared inputs.
         let expected = Tensor::from_slice(
@@ -1350,13 +1363,13 @@ mod tests {
                 6160.,
             ],
             (1, 7, 2),
-            &device,
+            device,
         )?;
         for chunks in [vec![1, 2, 2, 2], vec![2, 1, 3, 1], vec![3, 2, 2]] {
             let mut conv = ShortConvLayer {
                 in_proj: AdaptedLinear::new("in".into(), QMatMul::Tensor(projection.clone()))?,
                 out_proj: AdaptedLinear::new("out".into(), QMatMul::Tensor(identity.clone()))?,
-                conv: Tensor::ones((2, 3), DType::F32, &device)?,
+                conv: Tensor::ones((2, 3), DType::F32, device)?,
                 l_cache: 3,
                 cache: None,
             };

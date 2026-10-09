@@ -6,6 +6,46 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ## Active Candle backlog
 
+### [ ] Scale d1 CPU single-row Q8 projection across output columns
+
+- What: Improve one-row answer-projection scheduling with the same Q8/F32 math.
+- Why: Four-row tiling in `native_q8_cpu.rs` leaves one vocabulary row in one
+  Rayon work chunk.
+- When: After phase profiling confirms its cost, in a separate CPU batch.
+- Where: `candle-core/src/quantized/native_q8_cpu.rs`, native Q8 tests and the
+  existing d1 readout/session tests.
+- How: Measure one-row and multi-row cases, then use bounded column tiling with
+  disjoint output ownership. Preserve weight reuse and ordinary Candle dispatch.
+- Done when: A measured one-row improvement preserves numerical/memory bounds
+  and the admitted multi-row behavior; model quality remains separately measured.
+- Verification: Authored Q8/F32 comparisons, release component timing,
+  retained readout replay and the native gate. Real-model calls need new admission.
+
+### [ ] Select and qualify optional d1 loading modes
+
+- What: Assess early quant-inventory admission, text-only/lazy vision loading
+  and retained Q8 embedding-row lookup. Assess Q4_K_M text only when a concrete
+  consumer memory requirement selects that separate lane.
+- Why: The current API loads a full hybrid for text requests, expands a
+  1,000 MiB F32 embedding table and checks text Q8 storage after construction.
+- When: After the performance batch or a selected memory requirement. Settle
+  the public loading contract before implementation.
+- Where: `candle-vlm/src/lfm2_d1/session.rs`,
+  `candle-vlm/src/lfm2_vl/loading.rs`,
+  `candle-transformers/src/models/quantized_lfm2.rs` and existing quantized
+  embedding primitives. GenEye owns bundle recipes and worker packaging.
+- How: Inspect bounded headers before payload allocation, preserve file admission
+  and consumed-file inventories, and reject unavailable vision for image requests.
+  Keep F32 lookup results and original projector weights; measure net memory and
+  startup effects. Lower-bit artifacts need separate identities, dispatch,
+  reference and quality proof.
+- Done when: The selected optional mode preserves its documented behavior,
+  source identity, numerical/readout bounds, resource accounting and controlled
+  errors with measured memory/startup results. Defaults retain the qualified
+  Q8/native source mix; no automatic downloads or provider fallback.
+- Verification: Admission fixtures, CPU then applicable CUDA parity, cold/warm
+  measurements and consumer pin/lock/package proof after authorized publication.
+
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
 - What: Admit an immutable trained text adapter for the accepted
@@ -357,4 +397,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=geneye-d1-recheck-cleanup | change=removed the completed GenEye adoption task from the active backlog
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cuda-performance | change=closed qualified CUDA batch and retained CPU scheduling/loading priorities

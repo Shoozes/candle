@@ -16,7 +16,7 @@ pub fn option_probabilities(logits: &Tensor, groups: &[Vec<u32>]) -> Result<Vec<
     if values.iter().any(|value| !value.is_finite()) {
         candle::bail!("d1 vocabulary logits must be finite")
     }
-    let logz = candle_nn::ops::log_softmax(logits, 0)?.to_vec1::<f32>()?;
+    // The shared vocabulary normalizer cancels when option scores are normalized.
     let mut scores = Vec::with_capacity(groups.len());
     for group in groups {
         if group.is_empty() {
@@ -25,7 +25,7 @@ pub fn option_probabilities(logits: &Tensor, groups: &[Vec<u32>]) -> Result<Vec<
         let mut score = f64::NEG_INFINITY;
         for &id in group {
             let index = usize::try_from(id).map_err(candle::Error::wrap)?;
-            let value = logz.get(index).ok_or_else(|| {
+            let value = values.get(index).ok_or_else(|| {
                 candle::Error::Msg(format!(
                     "d1 option token {id} is outside vocabulary {vocabulary}"
                 ))
@@ -33,7 +33,7 @@ pub fn option_probabilities(logits: &Tensor, groups: &[Vec<u32>]) -> Result<Vec<
             score = score.max(f64::from(*value));
         }
         if !score.is_finite() {
-            candle::bail!("d1 normalized option logits must be finite")
+            candle::bail!("d1 option logits must be finite")
         }
         scores.push(score);
     }
@@ -78,5 +78,87 @@ mod tests {
             vec![1., 0.]
         );
         Ok(())
+    }
+
+    #[test]
+    fn d1_finite_extreme_aliases_normalize_without_f32_overflow() -> Result<()> {
+        let logits = Tensor::new(&[f32::MAX, -f32::MAX, f32::MAX], &Device::Cpu)?;
+        let probabilities = option_probabilities(&logits, &[vec![0], vec![1], vec![2]])?;
+        assert_eq!(probabilities, vec![0.5, 0., 0.5]);
+        Ok(())
+    }
+
+    #[test]
+    fn d1_nonfinite_unselected_logits_remain_rejected() -> Result<()> {
+        for value in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
+            let logits = Tensor::new(&[1f32, 0., value], &Device::Cpu)?;
+            assert!(option_probabilities(&logits, &[vec![0], vec![1]]).is_err());
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "cuda")]
+    #[test]
+    fn d1_cuda_readout_matches_cpu_and_checks_unselected_logits() -> Result<()> {
+        let device = Device::new_cuda(0)?;
+        let groups = [vec![0, 2], vec![1]];
+        for values in [[0f32, 2., 2.], [f32::MAX, -f32::MAX, f32::MAX]] {
+            let cpu = Tensor::new(&values, &Device::Cpu)?;
+            let cuda = cpu.to_device(&device)?;
+            assert_eq!(
+                option_probabilities(&cpu, &groups)?,
+                option_probabilities(&cuda, &groups)?,
+            );
+        }
+        let invalid = Tensor::new(&[0f32, 1., f32::NAN], &device)?;
+        assert!(option_probabilities(&invalid, &[vec![0], vec![1]]).is_err());
+        Ok(())
+    }
+
+    fn benchmark_readout(device: &Device) -> Result<()> {
+        let groups: Vec<Vec<u32>> = (0..6)
+            .map(|index| vec![index * 31 + 1, index * 31 + 2, index * 31 + 3])
+            .collect();
+        for vocabulary in [4096, 128_000] {
+            let values: Vec<f32> = (0..vocabulary)
+                .map(|index| (index % 97) as f32 * 0.17 - 8.)
+                .collect();
+            let logits = Tensor::from_vec(values, vocabulary, device)?;
+            for _ in 0..3 {
+                std::hint::black_box(option_probabilities(&logits, &groups)?);
+            }
+            let mut samples = Vec::new();
+            for _ in 0..5 {
+                let started = std::time::Instant::now();
+                for _ in 0..100 {
+                    std::hint::black_box(option_probabilities(
+                        std::hint::black_box(&logits),
+                        std::hint::black_box(&groups),
+                    )?);
+                }
+                samples.push(started.elapsed().as_secs_f64() * 10_000.);
+            }
+            samples.sort_by(f64::total_cmp);
+            println!(
+                "d1-readout device={} release={} vocabulary={vocabulary} iterations=100 samples=5 median_us={:.3} min_us={:.3} max_us={:.3} model_forwards=0",
+                if device.is_cpu() { "cpu" } else { "cuda" },
+                !cfg!(debug_assertions),
+                samples[2], samples[0], samples[4],
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "explicit readout microbenchmark; zero model forwards"]
+    fn d1_readout_benchmark_cpu() -> Result<()> {
+        benchmark_readout(&Device::Cpu)
+    }
+
+    #[cfg(feature = "cuda")]
+    #[test]
+    #[ignore = "explicit CUDA readout microbenchmark; zero model forwards"]
+    fn d1_readout_benchmark_cuda() -> Result<()> {
+        benchmark_readout(&Device::new_cuda(0)?)
     }
 }
