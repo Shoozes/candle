@@ -2,6 +2,25 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-10-09 - d1 post-publication review and recheck
+
+Read-only review at published `3e08ad3201212b8da726ad15026f2a9b9071a39d`
+confirmed all eight CPU projection source bindings and the guarded publication
+and closeout digests. The paired synthetic 128000-column Q8/F32 component
+improvement remains about 6.2 times with exact legacy kernel parity; no new
+model forwards or end-to-end latency claim were added.
+
+Rechecked the 2026-10-08 d1 cleanup findings: Noul true/false criteria are
+unique before rendering, the typed receipt validator and six negative controls
+remain intact, and current startup/status routing reflects the CPU proof and
+the WSL offline dependency gap. No new defect was found in the completed CPU
+projection path. The full-hybrid load, F32 embedding expansion and late text-Q8
+admission remain the next scoped improvement in `TODO.md`.
+
+No tests or model runs were repeated during this review. Cleanup touched only
+`TODO.md`, `STATUS.md` and this history note; source, runtime evidence and the
+published identity remain unchanged.
+
 ## 2026-10-09 - Native d1 CPU single-row projection speedup
 
 Selected from the published `7425c84338f5185052995856a6652b2ab306332d`
@@ -2855,4 +2874,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cpu-single-row | change=archived qualified CPU projection and source-bound proof
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-repo-review-recheck-cleanup | change=recorded post-publication d1 review and recheck

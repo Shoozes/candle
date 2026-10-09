@@ -21,6 +21,9 @@ success. All seven measured/replay/regression Jobs exited zero and released
 their PIDs. WSL's unchanged offline dependency gap remains an unrun secondary
 lane; no new production model calls, accuracy or request-latency claim, downloads
 or consumed allowance reuse. Exact commands and scope are in `D1.md`.
+The post-publication review/recheck found no new code defect and verified that
+the prior d1 admission, receipt-validation and routing findings remain closed.
+The loading-mode assessment below is now unblocked by the completed CPU profile.
 
 The previously published upstream/CPU-options batch follows.
 Current phase (2026-10-09): Complete with verified limitations locally;
@@ -412,8 +415,9 @@ priority; existing runtime receipts and the next adapter gate remain unchanged.
 
 ## Exact next task
 
-Candle's next bounded task is optional d1 loading modes in `TODO.md`; settle
-that public loading contract before implementation. The CPU single-row task
+Candle's next bounded task is to compare and select one optional d1 loading mode
+as scoped in `TODO.md`. Measure cold start and peak memory from retained inputs,
+then record its public contract before implementation. The CPU single-row task
 is archived in `HISTORY.md` and its completion is bound to the current guarded
 publication receipt above. The independent Edge adapter handoff remains as follows.
 
@@ -431,4 +435,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cpu-single-row | change=qualified native CPU projection and preserved Q8/F32 proof
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-repo-review-recheck-cleanup | change=rechecked d1 CPU publication and selected next loading assessment

@@ -6,30 +6,39 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ## Active Candle backlog
 
-### [ ] Select and qualify optional d1 loading modes
+### [ ] Select and qualify the first optional d1 loading mode
 
-- What: Assess early quant-inventory admission, text-only/lazy vision loading
-  and retained Q8 embedding-row lookup. Assess Q4_K_M text only when a concrete
-  consumer memory requirement selects that separate lane.
+- What: Compare early quant-inventory admission, text-only/lazy vision loading,
+  and retained Q8 embedding-row lookup, then select one first implementation.
+  Assess Q4_K_M text only when a concrete consumer memory requirement selects
+  that separate lane.
 - Why: The current API loads a full hybrid for text requests, expands a
   1,000 MiB F32 embedding table and checks text Q8 storage after construction.
-- When: After the performance batch or a selected memory requirement. Settle
-  the public loading contract before implementation.
+  Unsupported text storage is discovered after full model construction, and
+  text-only requests still load the vision model.
+- When: Next Candle d1 task. The CPU single-row performance prerequisite is
+  qualified and published at `3e08ad3201212b8da726ad15026f2a9b9071a39d`;
+  measure the candidate modes and settle one public loading contract before
+  implementation.
 - Where: `candle-vlm/src/lfm2_d1/session.rs`,
   `candle-vlm/src/lfm2_vl/loading.rs`,
   `candle-transformers/src/models/quantized_lfm2.rs` and existing quantized
   embedding primitives. GenEye owns bundle recipes and worker packaging.
-- How: Inspect bounded headers before payload allocation, preserve file admission
-  and consumed-file inventories, and reject unavailable vision for image requests.
-  Keep F32 lookup results and original projector weights; measure net memory and
-  startup effects. Lower-bit artifacts need separate identities, dispatch,
-  reference and quality proof.
-- Done when: The selected optional mode preserves its documented behavior,
-  source identity, numerical/readout bounds, resource accounting and controlled
-  errors with measured memory/startup results. Defaults retain the qualified
-  Q8/native source mix; no automatic downloads or provider fallback.
+- How: Establish cold-start and peak-memory baselines from retained d1
+  artifacts, compare the candidates, and record the winning public contract
+  before implementation. Implement only the selected mode. Inspect bounded
+  headers before payload allocation, preserve file admission and consumed-file
+  inventories, and reject unavailable vision for image requests. Keep F32 lookup
+  results and original projector weights. Lower-bit artifacts need separate
+  identities, dispatch, reference and quality proof.
+- Done when: One mode is selected with measured startup/memory effects, documented
+  construction and error behavior, source identity and acceptance bounds; its
+  implementation preserves d1 readout behavior and resource accounting. Defaults
+  retain the qualified Q8/native source mix; no automatic downloads or provider
+  fallback.
 - Verification: Admission fixtures, CPU then applicable CUDA parity, cold/warm
-  measurements and consumer pin/lock/package proof after authorized publication.
+  measurements with zero model forwards during the selection pass, then consumer
+  pin/lock/package proof after authorized publication.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -382,4 +391,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cpu-single-row | change=qualified native CPU projection and preserved Q8/F32 proof
+AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-repo-review-recheck-cleanup | change=bounded the next d1 loading-mode pass-down
