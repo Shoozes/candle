@@ -897,6 +897,97 @@ fn d1_partial_cancel_preserves_answer_counters_and_releases_cache() -> candle::R
 }
 
 #[test]
+fn d1_trace_cancellation_stops_pending_prefill_and_recovers() -> candle::Result<()> {
+    check_trace_cancellation(&Device::Cpu)
+}
+
+#[cfg(feature = "cuda")]
+#[test]
+fn d1_cuda_trace_cancellation_stops_pending_prefill_and_recovers() -> candle::Result<()> {
+    check_trace_cancellation(&Device::new_cuda(0)?)
+}
+
+fn check_trace_cancellation(device: &Device) -> candle::Result<()> {
+    use std::cell::Cell;
+    let request = request();
+    for mode in [
+        Lfm2EmbeddingLoadMode::DenseF32,
+        Lfm2EmbeddingLoadMode::Q8Rows,
+    ] {
+        let mut session = tiny_session_with_embedding_mode(device, D1Limits::default(), mode)?;
+        let image = image::DynamicImage::ImageRgb8(image::RgbImage::from_pixel(
+            8,
+            8,
+            image::Rgb([64, 128, 192]),
+        ));
+        for images in [vec![], vec![image]] {
+            let healthy = session
+                .decide(&request, &images)
+                .map_err(|error| candle::Error::Msg(error.to_string()))?;
+            for cancel_index in 0..request.questions.0.len() {
+                let expected = session
+                    .decide_traced(
+                        &request,
+                        &images,
+                        || false,
+                        |event| {
+                            if matches!(event, D1TraceEvent::QuestionInput { index, .. } if index == cancel_index)
+                            {
+                                candle::bail!("authored observer stop before prefill")
+                            }
+                            Ok(())
+                        },
+                    )
+                    .expect_err("observer stops at the same forward boundary");
+                assert_eq!(
+                    expected.partial.answers.0,
+                    healthy.answers.0[..cancel_index]
+                );
+                for profiled in [false, true] {
+                    let cancelled = Cell::new(false);
+                    let observe = |event: D1TraceEvent<'_>| {
+                        if matches!(event, D1TraceEvent::QuestionInput { index, .. } if index == cancel_index)
+                        {
+                            cancelled.set(true);
+                        }
+                        Ok(())
+                    };
+                    let mut timings = super::D1Timings::default();
+                    let result = if profiled {
+                        session.decide_traced_profiled(
+                            &request,
+                            &images,
+                            || cancelled.get(),
+                            observe,
+                            &mut timings,
+                        )
+                    } else {
+                        session.decide_traced(&request, &images, || cancelled.get(), observe)
+                    };
+                    let failure = result.expect_err("trace cancellation stops the pending prefill");
+                    assert!(cancelled.get());
+                    assert_eq!(failure.partial.usage.language_forwards, cancel_index as u64);
+                    assert_eq!(failure.question_index, Some(cancel_index));
+                    assert!(failure.message.contains("cancelled before question"));
+                    assert_eq!(failure.partial, expected.partial);
+                    if profiled {
+                        assert_eq!(timings.questions.len(), cancel_index + 1);
+                    }
+                    let (_, dispatch) = candle::quantized::with_native_q8_0(|| Ok(()));
+                    assert_eq!(dispatch, candle::quantized::NativeQ8Execution::default());
+                    let recovered = session
+                        .decide(&request, &images)
+                        .map_err(|error| candle::Error::Msg(error.to_string()))?;
+                    assert_eq!(recovered, healthy);
+                }
+            }
+        }
+    }
+    device.synchronize()?;
+    Ok(())
+}
+
+#[test]
 fn d1_context_rejection_precedes_all_model_forwards() -> candle::Result<()> {
     let mut session = tiny_session(
         &Device::Cpu,

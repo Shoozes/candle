@@ -378,6 +378,9 @@ impl D1Session {
                     Phase::Prefill(index),
                     Some(&text_device),
                     || {
+                        if cancelled() {
+                            candle::bail!("d1 request cancelled before question {index}")
+                        }
                         let input = Tensor::new(ids.as_slice(), self.loaded.model.text_device())?
                             .unsqueeze(0)?;
                         response.unattempted_questions -= 1;
