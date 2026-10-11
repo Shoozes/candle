@@ -925,6 +925,58 @@ fn d1_cuda_profiling_preserves_answers_failure_counts_and_recovery() -> candle::
     check_profiling(&Device::new_cuda(0)?)
 }
 
+#[test]
+fn d1_profiled_vision_sync_failure_reports_zero_work_and_recovers() -> candle::Result<()> {
+    check_vision_sync_failure(&Device::Cpu)
+}
+
+#[cfg(feature = "cuda")]
+#[test]
+fn d1_cuda_profiled_vision_sync_failure_reports_zero_work_and_recovers() -> candle::Result<()> {
+    check_vision_sync_failure(&Device::new_cuda(0)?)
+}
+
+fn check_vision_sync_failure(device: &Device) -> candle::Result<()> {
+    let mut session = tiny_session(device, D1Limits::default())?;
+    let request = request();
+    let image = image::DynamicImage::ImageRgb8(image::RgbImage::from_pixel(
+        8,
+        8,
+        image::Rgb([64, 128, 192]),
+    ));
+    let expected = session
+        .decide(&request, std::slice::from_ref(&image))
+        .map_err(|error| candle::Error::Msg(error.to_string()))?;
+    let mut timings = super::D1Timings::default();
+    let failure = super::profiling::with_vision_sync_failure(|| {
+        session.decide_traced_profiled(
+            &request,
+            std::slice::from_ref(&image),
+            || false,
+            |_| Ok(()),
+            &mut timings,
+        )
+    })
+    .expect_err("vision synchronization failed before encoding");
+    assert!(failure
+        .message
+        .contains("authored vision synchronization failure"));
+    assert_eq!(failure.question_index, None);
+    assert!(failure.partial.answers.0.is_empty());
+    assert_eq!(failure.partial.usage, DecisionUsage::default());
+    assert_eq!(failure.partial.execution, session.execution_details());
+    assert_eq!(
+        failure.partial.unattempted_questions,
+        request.questions.0.len()
+    );
+    assert!(timings.questions.is_empty());
+    let recovered = session
+        .decide_traced_profiled(&request, &[image], || false, |_| Ok(()), &mut timings)
+        .map_err(|error| candle::Error::Msg(error.to_string()))?;
+    assert_eq!(recovered, expected);
+    Ok(())
+}
+
 fn check_profiling(device: &Device) -> candle::Result<()> {
     let mut session = tiny_session(device, D1Limits::default())?;
     let request = request();
@@ -1016,7 +1068,7 @@ fn d1_cuda_question_isolation_image_reuse_and_partial_failure() -> candle::Resul
     ));
     let request = request();
     let response = session
-        .decide(&request, &[image.clone()])
+        .decide(&request, std::slice::from_ref(&image))
         .map_err(|e| candle::Error::Msg(e.to_string()))?;
     assert_eq!(response.usage.vision_forwards, 1);
     assert_eq!(response.usage.language_forwards, 2);
@@ -1028,7 +1080,7 @@ fn d1_cuda_question_isolation_image_reuse_and_partial_failure() -> candle::Resul
             questions: OrderedMap(vec![(name.clone(), question.clone())]),
         };
         let result = session
-            .decide(&single, &[image.clone()])
+            .decide(&single, std::slice::from_ref(&image))
             .map_err(|e| candle::Error::Msg(e.to_string()))?;
         assert_eq!(
             response.answers.0.iter().find(|entry| &entry.0 == name),

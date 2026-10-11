@@ -35,6 +35,25 @@ pub(super) enum Phase {
     Readout(usize),
 }
 
+#[cfg(test)]
+thread_local! {
+    static FAIL_VISION_SYNC: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+#[cfg(test)]
+pub(super) fn with_vision_sync_failure<T>(run: impl FnOnce() -> T) -> T {
+    struct Restore(bool);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            FAIL_VISION_SYNC.with(|state| state.set(self.0));
+        }
+    }
+    let restore = Restore(FAIL_VISION_SYNC.with(|state| state.replace(true)));
+    let result = run();
+    drop(restore);
+    result
+}
+
 pub(super) fn measure<T>(
     timings: &mut Option<&mut D1Timings>,
     phase: Phase,
@@ -45,6 +64,10 @@ pub(super) fn measure<T>(
         return run();
     };
     if let Some(device) = device {
+        #[cfg(test)]
+        if matches!(phase, Phase::Vision) && FAIL_VISION_SYNC.with(|state| state.replace(false)) {
+            candle::bail!("authored vision synchronization failure")
+        }
         device.synchronize()?;
     }
     let started = Instant::now();
