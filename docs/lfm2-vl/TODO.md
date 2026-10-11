@@ -205,11 +205,14 @@ Task 4 and maintained product qualification remain separately gated.
 ### GenEye-owned Q8Rows portable handoff
 
 The Candle profiling-counter repair and handoff-record cleanup are complete;
-their authorized guarded publication is recorded in STATUS and HISTORY.
+both scoped commits are published at `ff81aabb`, as recorded in STATUS and HISTORY.
 GenEye's current proof remains bound to the published `3fa7075e` candidate.
+The 2026-10-11 recheck matches eighteen of nineteen source bindings; the changed
+Linux process owner is a prerequisite to new portable qualification.
 
-- What: Publish the qualified GenEye source, then qualify a clean portable
-  candidate pinned to Candle `3fa7075e`. The source/private-worker consumer gate
+- What: Review the changed process owner, publish the scoped GenEye source,
+  then qualify a clean portable candidate pinned to Candle `3fa7075e`.
+  The source/private-worker consumer gate
   is complete; this is not remaining Candle implementation.
 - Why: The four-request CPU/CUDA proof passes, but private worker setup and an
   unpublished working-tree source do not qualify a portable product release.
@@ -217,14 +220,19 @@ GenEye's current proof remains bound to the published `3fa7075e` candidate.
   authorization. Its consumed consumer allowance cannot be reused.
 - Where: GenEye's active `docs/TODO.md`, worker/lock/package owners and the
   [retained handoff record](HISTORY.md#2026-10-11---d1-review-recheck-and-consumer-handoff-cleanup).
-- How: Preserve unrelated owner changes, use GenEye's guarded helper for the
-  named source batch, then use a suitable clean published checkout without
+- How: Review the delta in GenEye's
+  `source/crates/geneye-core/src/process.rs` against the approved consumer packet
+  and run its relevant process-owner checks. Preserve unrelated owner changes,
+  use GenEye's guarded helper for the named source batch, then use a suitable
+  clean published checkout without
   changing the frozen LTS qualification owner. Keep package admission and LTS
   activation separately authorized; any new model request needs a fresh budget.
-- Done when: Published source, exact Candle lock/worker/package identities and
-  required portable-candidate evidence agree. Existing consumer proof keeps its
+- Done when: The changed process owner is reviewed and verified, published
+  source, exact Candle lock/worker/package identities and required
+  portable-candidate evidence agree. Existing consumer proof keeps its
   original source identity and the retained image-case quality limitation.
-- Verification: GenEye's clean published-source guard, package provenance and
+- Verification: GenEye's affected process-owner tests, exact source-binding
+  recheck, clean published-source guard, package provenance and
   release checks. The completed consumer qualification is not rerun implicitly.
 
 Deferred GPT-OSS-focused optional acceleration research is maintained in
@@ -382,4 +390,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-accounting-closeout | change=closed the selected Candle repair while preserving the separate GenEye portable and adapter prerequisites
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-review-closeout | change=polished the remaining consumer handoff without changing its proof or authorization gates

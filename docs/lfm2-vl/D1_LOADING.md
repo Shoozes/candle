@@ -204,5 +204,17 @@ publication and clean package qualification. The retained image-case quality
 limitation is unchanged. Exact source and receipts are in
 [HISTORY](HISTORY.md#2026-10-11---d1-review-recheck-and-consumer-handoff-cleanup).
 
+The published-d1 recheck on 2026-10-11 finds eighteen of nineteen consumer
+source bindings unchanged. GenEye's `geneye-core/src/process.rs` now contains
+Linux-only descendant-reaper changes; its worker/lock/package bindings still
+match. The original Windows run and its private binaries retain their frozen
+qualification. Review and verify the changed process owner before admitting a
+new portable source/package candidate; the retained receipt does not qualify
+that delta, and its consumed model allowance remains closed.
+
+Closeout rechecks the same consumer bytes on GenEye `b6cfe48a`: unrelated browser
+commits published the Linux process delta, while Q8Rows adoption remains dirty.
+Portable qualification and adoption publication retain their separate gates.
+
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-handoff-recheck | change=recorded the source-bound GenEye consumer qualification and its remaining portable gate
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-review-closeout | change=preserved frozen qualification across the later consumer branch advance

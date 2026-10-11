@@ -2,9 +2,50 @@
 
 ## Current phase and source
 
-Current d1 accounting and handoff closeout (2026-10-11): Complete with verified
-limitations locally; the owner selected Closeout + Publish for this nine-file
-batch through Candle's guarded helper. The source baseline is published native
+Current d1 review documentation closeout (2026-10-11): Complete with verified
+limitations. The four records and guarded publication use the receipt below.
+Native `main` and freshly fetched `origin/main` start
+at `ff81aabbc8c752aab2801a7a8602804de1c1ca87`, tree
+`92ff2def63d6e23ed1a563525f8d2e6e816dc5c9`. Review covers the published nine-file
+delta from `3fa7075e`, session/profiling work counts, partial failures and cache
+release, Q8Rows fixtures, public contracts and consumer proof bindings. No new
+d1 runtime defect was found; the published vision-counter repair and prior
+loading/output findings are verified closed. Fresh native CPU d1 tests pass
+18 with two retained-evidence ignores. Prior authored CUDA and strict CUDA
+Clippy proof is reused only at unchanged runtime hashes.
+
+Two current-record findings are corrected: publication was still described as
+selected, and the consumer source binding had changed. GenEye's Q8Rows adoption
+remains an unpublished working-tree candidate on
+`b6cfe48a8d24fb7d8daab3cbd6e0b3f6a07b79c1`, still pinned
+to Candle `3fa7075e`; eighteen of nineteen approved source files match. Its
+`source/crates/geneye-core/src/process.rs` now adds Linux-only descendant reaping.
+The completed Windows CPU/CUDA run remains valid at its frozen source/binaries;
+the changed consumer source requires delta review and its relevant owner checks
+before portable qualification. This is a consumer proof gap, not a reproduced
+Candle runtime failure. TODO preserves that dependency and the existing owners.
+
+Closeout changes only `STATUS.md`, `D1_LOADING.md`, `HISTORY.md` and `TODO.md`.
+No runtime implementation is active. Original review proof remains in
+`artifacts/lfm2-d1/20261011-published-recheck/verification.json`.
+The closeout gate log and exact guarded commit/tree/remote identity are retained
+under `artifacts/lfm2-d1/20261011-review-closeout/`; its
+`publication-receipt.json` is saved only after helper success. Unrelated GenEye
+browser commits published the Linux process delta but do not publish the dirty
+Q8Rows adoption or qualify its portable candidate. All nineteen reviewed
+consumer bytes still match the preceding recheck, including that known delta.
+Summary Bank routes and overlay path counts are unchanged and validated.
+WSL's pinned `accelerate-src` 0.3.2 remains absent from cache/source; no unchanged
+failing Cargo replay or download is attempted. No production calls, consumer
+edits, downloads or bulk deletion belong to this documentation closeout.
+
+The published accounting closeout and earlier proof keep their original sources.
+
+Published d1 accounting and handoff closeout (2026-10-11): Complete with verified
+limitations. Candle's guarded helper published both scoped forward commits at
+`ff81aabbc8c752aab2801a7a8602804de1c1ca87`, tree
+`92ff2def63d6e23ed1a563525f8d2e6e816dc5c9`, with clean local/remote equality.
+The source baseline was published native
 `main` at
 `3fa7075e536e66b024d14cee3f6f423d81d67162`, tree
 `4df52f11cbe493a84a4e279ca128878c3e916fbb`. Review covers d1 loading,
@@ -106,8 +147,9 @@ policy to `3fa7075e`. Its separately approved CPU-then-CUDA consumer proof
 completed two loads/four requests, twelve language/two vision forwards, zero
 output tokens and no warmup or retries. All 52 numeric answer values match their
 same-device producer exactly; ordering, native dispatch and process release
-pass. This review rechecks all nineteen bound consumer source files and the
-immutable receipts. GenEye's source remains an unpublished working-tree
+pass. The preceding review rechecked all nineteen bound consumer source files
+and the immutable receipts at that source. The current delta is bounded above.
+GenEye's source remains an unpublished working-tree
 candidate on `f9683595382a1c4b4929448e535e1e620ec1747a`; private worker setup is
 qualified, while a portable product package and LTS activation remain separate.
 Source-bound consumer proof and limitations are recorded in
@@ -543,10 +585,13 @@ owns that gate and its active TODO. Preserve unrelated owner work and the frozen
 LTS checkout. All production allowances described here are closed; any additional
 model request requires a new finite allowance.
 
-The Candle profiling-accounting repair and handoff records above are complete
-and selected for guarded publication; its exact saved identity is owned by the
-closeout receipt above. GenEye's current qualification keeps its exact
-`3fa7075e` pin and original source packet.
+The Candle profiling-accounting repair and handoff records are published at
+`ff81aabb`; the exact saved identity is owned by the closeout receipt above.
+GenEye's existing qualification keeps its exact `3fa7075e` pin and original
+source packet. Before portable qualification, review its changed Linux process
+owner and recheck the resulting consumer candidate without reusing the consumed
+model allowance. The four Candle review records' saved publication identity
+is owned by the closeout receipt above.
 
 The first remaining Candle implementation item is the real 2.6B adapter/Edge
 gate in `TODO.md`, with these unchanged external prerequisites.
@@ -565,4 +610,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-accounting-closeout | change=bound the verified accounting repair and consumer records to authorized guarded publication while preserving original proof identities
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-review-closeout | change=bound scoped review records to guarded publication and current consumer ownership

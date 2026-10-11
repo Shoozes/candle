@@ -2,6 +2,35 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-10-11 - published d1 review and consumer delta recheck
+
+Read-only Review/Recheck starts at published native/remote `main`
+`ff81aabbc8c752aab2801a7a8602804de1c1ca87`, tree
+`92ff2def63d6e23ed1a563525f8d2e6e816dc5c9`. Nine source hashes/Git blobs and
+publication logs match. Session counts, partial failures/cache release, Q8Rows
+fixtures, prompt/readout and example completion were inspected. Prior accounting,
+loading/output and lint findings stay closed; no new runtime defect is found.
+
+GenEye matches eighteen of nineteen approved source bindings. Its changed
+`source/crates/geneye-core/src/process.rs` has approved
+SHA-256 `11c19e2739125c7b6f361ad7ebfa75f8486d4a1f0c96a0fd5cef7c5295ef334e`,
+current SHA-256 `456da8a2f2cdced1ff2db5806841ad936eee45483140ddaa153cb2f284e5a490`.
+Approved bytes equal the `f9683595` Git blob. New changes are Linux-only
+descendant reaping. Frozen Windows consumer proof stays valid; GenEye owns
+review and affected process checks before portable qualification.
+
+Cleanup corrects publication/source wording in four documents; runtime, routes
+and inventories stay unchanged. Fresh offline CPU d1 tests pass 18/two ignores;
+CUDA fixture/Clippy proof is reused at unchanged source. The new history entry
+is condensed to preserve its route's 256 KiB limit. Detailed bindings, gate
+results and local changes are in
+`artifacts/lfm2-d1/20261011-published-recheck/verification.json`.
+WSL's pinned dependency remains uncached. The owner selected four-document
+Closeout + Publish; the saved identity is in
+`artifacts/lfm2-d1/20261011-review-closeout/publication-receipt.json`
+after helper success. No runtime/consumer edit, model call, download or bulk
+deletion. Adapter/Edge and closed allowances retain their disposition.
+
 ## 2026-10-11 - d1 accounting and handoff closeout
 
 The owner selected Closeout + Publish for the verified three-file d1
@@ -3173,4 +3202,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-accounting-closeout | change=recorded authorized scoped publication and retained verification without relabeling numerical or consumer proof
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-review-closeout | change=recorded scoped publication; retained original proof
