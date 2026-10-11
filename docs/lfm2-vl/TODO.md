@@ -55,6 +55,21 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   are admitted. Five fresh Candle admission/switch tests pass; qualification
   remains blocked on those producer inputs and the existing Edge prerequisites.
   No production allowance is reopened and the Done When contract is unchanged.
+- Current Work handoff (2026-10-11, Candle `56231159`): A fresh read-only GenUni
+  reply at `D:\GenUni`, source `86d246f`, confirms no real trained adapter,
+  canonical target/training manifest or held-out receipt. Its 189 recorded jobs
+  are completed setup jobs. GenUni's plan-only turn
+  `01a12c80-8b18-7481-a91c-2fd13f53fec6` is complete. It proposes frozen
+  base/target lineage, independent data/scoring and runner/resource readiness
+  before a fresh training/evaluation allowance; that turn changed no files,
+  queues or approvals and ran no training or inference. The retained
+  10,361-byte input manifest still matches SHA-256
+  `e6db64f730de70675fa6136dda0a257594d4539364f15e2deb0176b911e38bbe`;
+  stock scoring has zero supported views and unverified execution. Five current
+  Candle synthetic admission/switch tests pass. Supply the real immutable
+  artifact and receipts, then satisfy the existing Edge predecessors before
+  qualifying serving or held-out quality. Acceptance and closed allowances are
+  preserved; this is an external-input boundary, not another d1 runtime repair.
 - Actual Work attempt (2026-10-08): One authenticated API owner session stopped
   at support refusal before request creation/submission. Seven views remained
   unattempted, no model call or retry occurred. All eight slots stay in the
@@ -212,24 +227,25 @@ Task 4 and maintained product qualification remain separately gated.
 
 ### GenEye-owned Q8Rows portable handoff
 
-The published Candle repairs at `f3bec12a` match their source-bound receipt;
-the prior findings remain closed. This review also repairs cancellation during
-profiled vision synchronization: authored DenseF32/Q8Rows fixtures prove zero
-pending work and exact recovery. Twenty focused CPU tests, 26 CUDA-enabled tests
-and the native 531-test/13-ignore gate plus six Python controls pass. The owner
-selected Closeout + Publish for the seven-file repair; STATUS's guarded receipt
-owns the saved identity after helper success. Completed details remain in
-STATUS and HISTORY rather than an active backlog item.
-The verified runtime checkpoint is `9b5d332c`; the CUDA proof retains its
-original measured source and matching runtime hashes.
+The seven-file Candle repair is published at `56231159`, including runtime
+checkpoint `9b5d332c`. This read-only Review/Recheck verifies its file hashes,
+native logs, retained CUDA proof and callers. All prior findings, including
+vision-sync and question-trace cancellation, remain closed; no new Candle
+runtime defect was confirmed. The 531-test/13-ignore native gates and six Python
+controls, plus the 26-test/two-ignore CUDA-enabled proof, are retained results
+at their original source identities. Completed work remains in STATUS/HISTORY.
+The repeat delta pass selects no new runtime repair. The owner-selected
+Closeout/Publish saves only the STATUS/TODO progress records through Candle's
+guarded helper; STATUS's receipt owns their exact saved identity after success.
+The existing consumer and real-adapter completion gates remain open.
 
 GenEye's proof and Candle pin remain bound to published `3fa7075e`. At observed
-consumer HEAD `c99b9a53619ba6df26f270a9758ab8979a92602d`, nineteen consumer files
-match the preceding review; eighteen match the original approved packet. The
-known Linux process delta still needs its relevant consumer checks before new
-portable qualification. Subsequent browser/docs commits do not publish the
-Q8Rows worker/lock/package changes. The original production proof retains its
-source identity and consumed allowance.
+consumer HEAD/cached remote `d5112f16dd2bf316bf46c4c928e94a853eb02d31`, nineteen
+consumer files match the preceding review; eighteen match the original approved
+packet. The known Linux process delta still needs its relevant consumer checks
+before new portable qualification. The five inspected Q8Rows worker/lock/package
+adoption paths remain dirty. Later consumer commits do not publish those paths.
+The original production proof retains its source identity and consumed allowance.
 
 - What: Review the changed process owner, publish the scoped GenEye source,
   then qualify a clean portable candidate pinned to Candle `3fa7075e`.
@@ -411,4 +427,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-vision-sync-closeout | change=closed scoped repair records without narrowing consumer or adapter completion
+AI-edited: 2026-10-11T16:01:44-04:00 | agent=Codex/root | model=unknown | effort=unknown | task=docs | change=closed progress records without narrowing qualification criteria

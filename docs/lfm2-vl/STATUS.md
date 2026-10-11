@@ -2,55 +2,88 @@
 
 ## Current phase and source
 
-Current d1 vision-sync closeout (2026-10-11): Complete with verified limitations
-for the scoped repair. The owner selected Closeout and Publish for the seven
-runtime/test and record files. At intake, native `main` and freshly fetched
-`origin/main` both start at
-`f3bec12a611bcee614ddb2ea119c7846c8a0e019`, tree
-`80203c4d5c16680251cb46cddbbe18a40500534f`. Its six published file hashes/Git
-blobs and three retained gate logs match the original closeout receipt at
-`artifacts/lfm2-d1/20261011-cancellation-closeout/publication-receipt.json`.
-Loading/output controls, vision synchronization failure accounting, question
-trace cancellation and the CUDA lint findings remain verified closed.
+Current d1 records closeout (2026-10-11): The owner selected Closeout and Publish
+for the two pending STATUS/TODO records. At intake, native `main` and freshly
+fetched `origin/main` both equal `562311595fb421a32f4361a3197c813bd4195b7e`,
+tree `54d36ad92ccb28c3a8d2150b16650712e9bea3d1`; the index is empty. This save
+preserves verified progress. The larger real-adapter/Edge qualification remains
+blocked on external inputs, with its Done When criteria unchanged.
 
-Cleanup confirms one new cancellation gap: a flag raised during the profiled
-vision pre-sync allowed an unwanted encoder forward. The authored baseline test
-reports one forward where zero is required. A check inside the measured closure
-now stops that pending work before counters or native Q8 dispatch advance.
-Both DenseF32 and Q8Rows fixtures prove zero language/vision work, no answers,
-all questions unattempted, guard release and exact same-session recovery.
-The runtime checkpoint is `9b5d332cb736cc145f31f5b1e48493688465bb01`.
+The prior d1 review/recheck confirms no new runtime repair. Loading
+and output controls, vision pre-sync failure accounting, question-trace
+cancellation and vision-sync cancellation remain closed. The runtime checkpoint
+is `9b5d332cb736cc145f31f5b1e48493688465bb01`. Session/profile control flow,
+work counters, partial failures/cache release, DenseF32/Q8Rows recovery fixtures,
+public contracts and standalone/consumer callers were inspected.
 
-The original focused CPU suite passes 20 tests with two explicit ignores;
-its CPU-first CUDA-enabled suite passes 26 tests with two ignores. Closeout
-reuses the CUDA fixture and strict CUDA Clippy proof at unchanged runtime
-hashes and executable identity. The original bounded CUDA Job uses an
-8 GiB/600-second limit, peaks at 1,310,928,896 bytes and verifies cleanup.
-The fresh native repository gate passes 531 Rust tests, 13 explicit ignores
-and six Python controls, including format, locked/offline library/example
-checks, Clippy and repository verifiers. Closeout completes the native gate;
-Candle's `.tools/gitpush.ps1` repeats it on the reviewed clean exact commit
-before publication.
+The highest-priority queued batch still requires a real trained 2.6B text
+adapter, its canonical target/training manifest and held-out evaluation receipt.
+The previously authorized GenUni handoff was refreshed read-only in completed
+turn `01a12c7c-f1a8-7561-a8b5-c4f317b8a8bb`: at `D:\GenUni`, source `86d246f`,
+none of those qualifying inputs was found. Its 189 recorded jobs are completed
+setup jobs. GenUni's separate plan-only turn
+`01a12c80-8b18-7481-a91c-2fd13f53fec6` is complete: it proposes base/target
+lineage, independent data/scoring and runner/resource readiness before a fresh
+training/evaluation allowance. That turn changed no files, queues or approvals
+and ran no training or inference. It does not supply the missing artifacts.
 
-The original regression and proof remain immutable under
-`artifacts/lfm2-d1/20261011-f3-recheck/`. Closeout proof is retained under
-`artifacts/lfm2-d1/20261011-vision-sync-closeout/`; `publication-receipt.json`
-owns the saved commit/tree/remote identity only after helper success.
-Historical production receipts stay at their original source identities;
-this batch performs no production requests.
+The existing 10,361-byte base/input manifest at
+`D:\CodexVerify\genuni-candle-lora-scoring-20261008-1\production-input-binding\handoff-manifest.json`
+matches SHA-256 `e6db64f730de70675fa6136dda0a257594d4539364f15e2deb0176b911e38bbe`.
+Its phase is model-free preparation with remaining owner gates and zero model
+calls. The retained stock scoring report records `manual_supported=0` and
+`execution_independently_verified=false`; it cannot qualify held-out quality.
+Original inputs, failures and receipts remain unchanged.
 
-Selected files are `candle-vlm/src/lfm2_d1/{session,profiling,tests}.rs` and
-`docs/lfm2-vl/{D1,STATUS,TODO,HISTORY}.md`. Existing routes and publication
-inventories cover all seven paths. Their intake hashes match the preceding
-review receipt, the index starts empty, and all four proof owners are freshly
-absent. Inputs, immutable proof and shared caches are retained.
-No additional Candle runtime issue was confirmed in this bounded pass.
-The exact next open task is the real-adapter/Edge input qualification in TODO;
-GenEye's portable source/package gate remains separately owned. Its observed
-`c99b9a53619ba6df26f270a9758ab8979a92602d` HEAD includes unrelated browser/docs
-commits; the reviewed Q8Rows worker/lock/package adoption remains unpublished.
-WSL still lacks pinned offline `accelerate-src 0.3.2`; its lane was not rerun.
-The existing nonfatal CUDA `LIBCMT` linker warning remains recorded.
+The preceding local Work proof passes all five tests in
+`cargo test --locked --offline -j 2 -p candle-transformers --lib tiny_lfm2_lora`
+with exit zero. Admission, F32 scale bounds, rejected-state preservation and
+adapter/cache switching remain proven on authored CPU fixtures. Formatting, locked/offline
+checks for the four maintained crates and the `quantized-lfm2` example also pass.
+These checks prove Candle's prerequisite mechanics; real serving/quality,
+repeated-session memory and Edge admission/switch criteria remain incomplete.
+
+The preceding review verifies the original seven published HEAD blobs, the five
+unchanged runtime/contract/history file hashes and both native gate logs against
+`artifacts/lfm2-d1/20261011-vision-sync-closeout/publication-receipt.json`
+(SHA-256 `98c963c5958b3ae3e0edf1dc9277ef2b470645de0e07d9aec6f2d69a3afeaede`).
+The retained native gates pass 531 Rust tests, 13 explicit ignores and six Python
+controls at their original source identities. The original
+CPU-first CUDA-enabled suite passes 26 tests with two ignores and strict CUDA
+Clippy. Its receipt, CUDA log, Clippy log and retained executable still match.
+The CUDA proof is reused, not freshly executed in this closeout. Its regression
+source remains `f3bec12a` plus the bound runtime hashes. Historical production
+receipts and consumed allowances keep their original identities.
+
+Last documentation checks pass with exit zero: `cargo fmt --all -- --check`;
+`cargo check --locked --offline -j 2 -p candle-core -p candle-nn
+-p candle-transformers -p candle-vlm`; `verify-summary-bank.ps1`,
+`verify-mod-manifest.sh`, `verify-fork-overlays.sh` and `git diff --check`.
+The native checks cover the four maintained crates. Closeout runs the standalone
+LFM manifest verifier and Candle's `.tools/gitpush.ps1`; the helper requires a
+reviewed clean exact commit and the complete locked/offline native gate before
+its fast-forward push. The current gate log and `publication-receipt.json` are
+retained in `artifacts/lfm2-d1/20261011-562-records-closeout/`. That receipt owns
+the saved commit/tree/remote identity only after helper success.
+
+Both closeout/publication process owners are freshly absent. Immutable proof,
+inputs and shared caches are retained. Existing routes and inventories cover
+the two active documentation paths; routes and inventory ownership are unchanged.
+No further Candle runtime batch is justified by this pass.
+
+GenEye's observed HEAD/cached remote is
+`d5112f16dd2bf316bf46c4c928e94a853eb02d31`. All nineteen reviewed consumer files
+match the preceding review; eighteen match the original approved packet.
+Its known Linux process-owner delta still needs the existing consumer checks,
+and the five inspected worker/lock/package adoption files remain unpublished.
+The worker uses ordinary `decide`; its pin and production proof stay at
+`3fa7075e`. The next open Candle item remains real-adapter/Edge input admission;
+GenEye's portable qualification is separately owned in TODO. WSL's missing
+offline `accelerate-src 0.3.2` and the original nonfatal CUDA `LIBCMT` linker
+warning remain recorded limitations. No training, downloads, production inference
+or consumer edits belong to this save. GenUni owns the artifact and training/
+held-out evidence; Edge owns file admission, lease/switch, receipt and rollback.
+Candle's exact next task is input admission once those predecessors are supplied.
 
 Prior Dropin/Work (2026-10-11): Blocked by an external condition for the next
 real-adapter/Edge qualification. The accepted d1 cancellation batch below is
@@ -752,4 +785,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-vision-sync-closeout | change=bound verified repair closeout and guarded publication while preserving external gates
+AI-edited: 2026-10-11T16:01:44-04:00 | agent=Codex/root | model=unknown | effort=unknown | task=docs | change=closed review records while preserving adapter and consumer gates
