@@ -2,7 +2,34 @@
 
 ## Current phase and source
 
-Current d1 review documentation closeout (2026-10-11): Complete with verified
+Current b82fde64 review closeout (2026-10-11): Complete with verified
+limitations. The source baseline is published native `main` at
+`b82fde64edd38ae29982307e3497eb5f181de01e`, tree
+`5a720144cbb3b4f968434cd10d28a868cd65b64c`; the read-only remote check agrees.
+The four published document hashes/Git blobs and retained gate logs match.
+Session/profiling counts, failure recovery and Q8Rows fixture coverage were
+rechecked against unchanged runtime bytes. Prior Candle findings remain closed;
+no new d1 runtime defect or implementation batch is selected.
+
+GenEye remains at `b6cfe48a` with its Q8Rows adoption uncommitted. All nineteen
+consumer bytes match the preceding review, including the known Linux process
+delta; eighteen match the original approved packet. Its portable/process proof
+gap and the real-adapter/Edge prerequisites keep their existing owners and
+completion criteria. No closed model allowance is reused.
+
+Closeout saves only `STATUS.md` and `TODO.md` through Candle's guarded helper.
+Runtime code, routes and inventories are unchanged. The last published native
+gate passes 529 Rust tests, 13 ignores and six Python controls. The original
+review proof remains `artifacts/lfm2-d1/20261011-b82-recheck/verification.json`.
+The closeout native gate and guarded exact-commit verification are retained in
+`artifacts/lfm2-d1/20261011-b82-closeout/`; `publication-receipt.json` binds the
+saved commit/tree/remote identity only after helper success. WSL's pinned offline
+dependency remains absent. No consumer edits, production requests, downloads
+or bulk deletion belong to this two-document closeout.
+
+The completed documentation closeout retains its original source and proof.
+
+Completed d1 review documentation closeout (2026-10-11): Complete with verified
 limitations. The four records and guarded publication use the receipt below.
 Native `main` and freshly fetched `origin/main` start
 at `ff81aabbc8c752aab2801a7a8602804de1c1ca87`, tree
@@ -610,4 +637,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-review-closeout | change=bound scoped review records to guarded publication and current consumer ownership
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-b82-closeout | change=bound the two verified review records to guarded publication with remaining gates preserved

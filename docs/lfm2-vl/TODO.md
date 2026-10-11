@@ -207,8 +207,10 @@ Task 4 and maintained product qualification remain separately gated.
 The Candle profiling-counter repair and handoff-record cleanup are complete;
 both scoped commits are published at `ff81aabb`, as recorded in STATUS and HISTORY.
 GenEye's current proof remains bound to the published `3fa7075e` candidate.
-The 2026-10-11 recheck matches eighteen of nineteen source bindings; the changed
-Linux process owner is a prerequisite to new portable qualification.
+The verified b82fde64 recheck matches the preceding consumer review: eighteen of nineteen
+bindings match the approved packet, and the reviewed bytes are unchanged. The
+known Linux process delta still needs its relevant consumer checks before new
+portable qualification; this recheck selects no additional Candle runtime work.
 
 - What: Review the changed process owner, publish the scoped GenEye source,
   then qualify a clean portable candidate pinned to Candle `3fa7075e`.
@@ -390,4 +392,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-review-closeout | change=polished the remaining consumer handoff without changing its proof or authorization gates
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-b82-closeout | change=saved the verified consumer hold without changing its completion or proof requirements
