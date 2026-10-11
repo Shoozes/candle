@@ -2,6 +2,55 @@
 
 ## Current phase and source
 
+Current closeout/publication batch (2026-10-10): Complete with verified
+limitations locally; save the verified d1 runner repairs and optional Q8-row
+loading progress from published `ebf2f85e96d264c3d78f7f35b22da3cc0a9abcaf`.
+The repair checkpoint is `1601f971723422910b0b6d37bd2280d3b9e10f68`.
+The exact guarded saved commit/tree/remote identity is owned by
+`artifacts/lfm2-d1/20261010-loading-closeout/publication-receipt.json` only after
+helper success; absence of that receipt means publication has not completed.
+This progress save does not complete the larger production qualification.
+
+Current source preserves DenseF32 defaults and adds opt-in Q8Rows constructors,
+checked header/storage/ID admission, F32 lookup, tied-output sharing and exact
+file/usage/dispatch accounting. It removes the 1,000 MiB F32 token copy and retains
+the original native Q8/projector mix. Trace publication is exclusive and complete
+reports follow the final artifact identity recheck. No files remain under active
+implementation; the named source/docs/routes are closed out for progress saving.
+
+Last green numerical/load proof: exact CPU/CUDA authored rows/logits/readout,
+images, cache/failure/count fixtures and twelve zero-forward fresh-process loads.
+All runtime source bindings and fourteen released Job receipts match
+`artifacts/lfm2-d1/20261010-loading/verification.json`, SHA-256
+`04ae95b5473c32cd88c8ae3c21e67c2aa52f9d22feb9bfb0cc580b42440d2d47`.
+The final local native gate passes 528 Rust tests (13 ignores), six Python
+controls, format/check/Clippy and route/layout/overlay gates. Strict CUDA library/
+example Clippy and the 208-path LFM manifest pass. The current closeout reruns
+six example-output controls; the guarded helper repeats the complete native
+locked/offline gate on the exact clean publication head. Original measured and
+historical production snapshots remain bound to their original identities.
+
+Median peak host Job memory falls from 5,149,970,432 to 4,097,708,032 bytes on CPU
+and 5,806,395,392 to 4,757,143,552 on CUDA. CPU constructor medians fall from
+2,874.851 to 2,671.690 ms; CUDA/full-Job ranges overlap. No CUDA/full-startup
+speedup or cold-disk claim. See `D1_LOADING.md` for bounds and individual samples.
+All owned Jobs/staging are released. Proof, inputs and shared caches remain
+retained; no bulk deletion. WSL is unrun because its pinned dependency remains
+uncached; the existing nonfatal CUDA LIBCMT link warning remains.
+
+Larger-milestone blocker and exact next task: obtain the separate fresh allowance
+and execute prepared retained-artifact DenseF32/Q8Rows parity, CPU before CUDA,
+at most eight requests/24 language/four vision forwards, zero output tokens/no
+retries in 16 GiB/1,800-second Jobs. Consumed allowances stay closed. This paired
+Closeout + Publish request authorizes progress saving, not those model calls.
+GenEye mode adoption and pin/package proof remain separately owned.
+
+Prior runner repair proof is preserved at
+`artifacts/lfm2-d1/20261010-output-integrity/verification.json`, SHA-256
+`cd50360c67a4abe5bbde8e1859ceb15e70019c04ae2e1028dd0a3ce1b8c5c653`.
+Detailed completed records belong in `HISTORY.md`.
+
+The previously published CPU projection batch follows.
 Current selected batch (2026-10-09): Complete with verified limitations locally;
 CPU single-row native Q8/F32 scheduling is qualified for guarded publication,
 starting from clean published `7425c84338f5185052995856a6652b2ab306332d`.
@@ -435,4 +484,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-repo-review-recheck-cleanup | change=rechecked d1 CPU publication and selected next loading assessment
+AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-loading-closeout | change=closed out verified progress for guarded publication while retaining production acceptance

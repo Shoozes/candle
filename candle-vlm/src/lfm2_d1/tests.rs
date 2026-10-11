@@ -5,6 +5,8 @@ use tokenizers::{
     models::wordlevel::WordLevel, pre_tokenizers::whitespace::Whitespace, AddedToken, Tokenizer,
 };
 
+mod embedding;
+
 fn tokenizer() -> Tokenizer {
     let tokens = [
         "<unk>",
@@ -643,6 +645,14 @@ fn d1_typed_answers_use_yes_probability_and_expected_score() -> candle::Result<(
 }
 
 fn tiny_session(device: &Device, limits: D1Limits) -> candle::Result<D1Session> {
+    tiny_session_with_embedding_mode(device, limits, Lfm2EmbeddingLoadMode::DenseF32)
+}
+
+fn tiny_session_with_embedding_mode(
+    device: &Device,
+    limits: D1Limits,
+    embedding_mode: Lfm2EmbeddingLoadMode,
+) -> candle::Result<D1Session> {
     use std::path::Path;
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../tests/fixtures");
     use crate::lfm2_vl::{Lfm2VlProcessor, Lfm2VlPrompt, LoadedLfm2VlHybrid, PromptOptions};
@@ -714,7 +724,12 @@ fn tiny_session(device: &Device, limits: D1Limits) -> candle::Result<D1Session> 
     gguf_file::write(&mut bytes, &metadata, &tensor_refs)?;
     bytes.set_position(0);
     let content = gguf_file::Content::read(&mut bytes)?;
-    let text = quantized_lfm2::ModelWeights::from_gguf(content, &mut bytes, device)?;
+    let text = quantized_lfm2::ModelWeights::from_gguf_with_embedding_mode(
+        content,
+        &mut bytes,
+        device,
+        embedding_mode,
+    )?;
     let processor = Lfm2VlProcessor::from_json(&std::fs::read_to_string(
         root.join("lfm2_vl_mmproj_tiny/processor_config.json"),
     )?)?;

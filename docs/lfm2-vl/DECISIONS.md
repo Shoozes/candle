@@ -1,5 +1,21 @@
 # LFM2.5-VL Decisions
 
+## D-0075: Retain Q8 token rows as an optional d1 loading mode
+
+Status: Selected for the 2026-10-10 Work batch before model-loader edits.
+
+Use additive constructors and an explicit DenseF32/Q8Rows choice. Preserve old
+constructors and options structs; retain the existing tied Q8 allocation and
+return F32 lookup rows. The retained header establishes a removable 1,000 MiB
+copy, exceeding the retained vision file. Early full-model quant admission and
+lazy vision require separate work; no lower-bit artifact is selected.
+
+Check embedding header dimensions/storage/device before text payload loading;
+check IDs before CUDA row dispatch. Report exact table/sharing storage through
+an additive getter, preserving decision execution and forward-count schemas.
+Frozen measurements, construction/error behavior and proof boundaries live
+in [D1_LOADING.md](D1_LOADING.md). Production parity needs a fresh allowance.
+
 ## D-0074: Parallelize large native CPU Q8/F32 single-row projections
 
 Status: Selected by the owner on 2026-10-09; authored component qualification
@@ -1763,4 +1779,4 @@ it consumed zero model forwards. Quality and consumer package acceptance remain
 separately owned. No publication follows from this local qualification.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cpu-single-row | change=qualified native CPU projection and preserved Q8/F32 proof
+AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-loading | change=recorded additive loading implementation and local qualification with production allowance pending

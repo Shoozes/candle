@@ -5,7 +5,8 @@ use super::{
 };
 use super::{D1QuestionTiming, D1Timings};
 use crate::lfm2_vl::{
-    load_lfm2_vl_hybrid, Lfm2VlHybridLoadOptions, Lfm2VlMmprojExecution, LoadedLfm2VlHybrid,
+    load_lfm2_vl_hybrid_with_embedding_mode, Lfm2EmbeddingLoadMode, Lfm2EmbeddingStorage,
+    Lfm2VlHybridLoadOptions, Lfm2VlMmprojExecution, LoadedLfm2VlHybrid,
 };
 use candle::quantized::with_native_q8_0;
 use candle::{DType, IndexOp, Result, Tensor};
@@ -42,6 +43,14 @@ pub struct D1Session {
 }
 
 pub fn load_d1_q8(options: D1LoadOptions<'_>) -> Result<D1Session> {
+    load_d1_q8_with_embedding_mode(options, Lfm2EmbeddingLoadMode::DenseF32)
+}
+
+/// Opt in to retained Q8 token rows without changing decision policy or defaults.
+pub fn load_d1_q8_with_embedding_mode(
+    options: D1LoadOptions<'_>,
+    embedding_mode: Lfm2EmbeddingLoadMode,
+) -> Result<D1Session> {
     validate_limits(&options.limits)?;
     validate_devices(options.hybrid.text_device, options.hybrid.vision_device)?;
     for name in ["CANDLE_DEQUANTIZE_ALL", "CANDLE_DEQUANTIZE_ALL_F16"] {
@@ -55,7 +64,7 @@ pub fn load_d1_q8(options: D1LoadOptions<'_>) -> Result<D1Session> {
         candle::bail!("d1 loading requires explicit Q8 MMProj execution and F32 activations")
     }
     D1Session::from_hybrid(
-        load_lfm2_vl_hybrid(options.hybrid)?,
+        load_lfm2_vl_hybrid_with_embedding_mode(options.hybrid, embedding_mode)?,
         D1PolicyV1,
         options.limits,
     )
@@ -132,6 +141,10 @@ impl D1Session {
     }
     pub fn limits(&self) -> &D1Limits {
         &self.limits
+    }
+
+    pub fn text_embedding_storage(&self) -> Result<Lfm2EmbeddingStorage> {
+        self.loaded.model.text_embedding_storage()
     }
 
     pub fn execution_details(&self) -> ExecutionReport {

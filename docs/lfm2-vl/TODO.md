@@ -6,39 +6,58 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ## Active Candle backlog
 
-### [ ] Select and qualify the first optional d1 loading mode
+### [ ] Qualify the selected optional d1 Q8-row loading mode
 
-- What: Compare early quant-inventory admission, text-only/lazy vision loading,
-  and retained Q8 embedding-row lookup, then select one first implementation.
-  Assess Q4_K_M text only when a concrete consumer memory requirement selects
-  that separate lane.
-- Why: The current API loads a full hybrid for text requests, expands a
-  1,000 MiB F32 embedding table and checks text Q8 storage after construction.
-  Unsupported text storage is discovered after full model construction, and
-  text-only requests still load the vision model.
-- When: Next Candle d1 task. The CPU single-row performance prerequisite is
-  qualified and published at `3e08ad3201212b8da726ad15026f2a9b9071a39d`;
-  measure the candidate modes and settle one public loading contract before
-  implementation.
+- Selected Work (2026-10-10): Retained Q8 embedding rows, with additive opt-in
+  constructors and DenseF32 defaults. Baseline/candidate load-only sampling and
+  parity bounds are frozen in [D1_LOADING.md](D1_LOADING.md). Implementation and
+  local proof are recorded in `HISTORY.md`; full-model early inventory and lazy
+  vision remain separate.
+- Completed locally: Additive constructors, checked row lookup/storage reports,
+  example flags, exact CPU/CUDA authored parity and twelve zero-forward loads.
+  The 1,000 MiB F32 copy is removed. Native gate: 528 Rust tests/13 ignores/six
+  Python controls; strict CUDA Clippy and all document/overlay gates pass.
+  `artifacts/lfm2-d1/20261010-loading/verification.json` binds local source/proof.
+- Remaining acceptance: Approve and execute the prepared fresh production parity
+  proposal: frozen `t01`/`i01`, both modes on CPU before CUDA, at most eight
+  requests/24 language/four vision forwards, zero output tokens/no retries,
+  16 GiB/1,800-second native Jobs. The owner question is pending; no production
+  forward ran. The owner authorized saving the verified progress through the
+  guarded helper; that publication does not complete this acceptance gate.
+
+- What: Complete fresh retained-artifact parity for the selected Q8Rows mode
+  against DenseF32, CPU before CUDA. Retain the settled public loading contract,
+  source identities, readout and resource-accounting acceptance below. Assess
+  Q4_K_M only when a concrete consumer memory requirement selects a separate lane.
+- Why: Local fixtures prove exact rows/logits and load-only measurements remove
+  the 1,000 MiB F32 copy. Production trace parity remains unrun. Default DenseF32
+  and full-hybrid loading remain; early full-model quant admission and lazy vision
+  are independent future choices.
+- When: Next Candle d1 task after the fresh allowance. CPU single-row performance
+  remains published at `3e08ad3201212b8da726ad15026f2a9b9071a39d`. The loading
+  contract and frozen measurement bounds are settled in `D1_LOADING.md`.
 - Where: `candle-vlm/src/lfm2_d1/session.rs`,
   `candle-vlm/src/lfm2_vl/loading.rs`,
   `candle-transformers/src/models/quantized_lfm2.rs` and existing quantized
   embedding primitives. GenEye owns bundle recipes and worker packaging.
-- How: Establish cold-start and peak-memory baselines from retained d1
-  artifacts, compare the candidates, and record the winning public contract
-  before implementation. Implement only the selected mode. Inspect bounded
-  headers before payload allocation, preserve file admission and consumed-file
-  inventories, and reject unavailable vision for image requests. Keep F32 lookup
-  results and original projector weights. Lower-bit artifacts need separate
-  identities, dispatch, reference and quality proof.
+- How: Recheck the retained five artifacts, frozen two-case inputs, candidate
+  source/binary and prepared proposal, then run only the approved bounded batch.
+  Stop before CUDA if CPU mode parity fails. Preserve checked embedding headers,
+  file admission/inventories, F32 lookup results, projector precision, old receipts
+  and source-bound load measurements. Do not relabel the observed filesystem-cache
+  state as cold disk I/O. Lower-bit artifacts need separate identities, dispatch,
+  reference and quality proof.
 - Done when: One mode is selected with measured startup/memory effects, documented
   construction and error behavior, source identity and acceptance bounds; its
   implementation preserves d1 readout behavior and resource accounting. Defaults
   retain the qualified Q8/native source mix; no automatic downloads or provider
   fallback.
-- Verification: Admission fixtures, CPU then applicable CUDA parity, cold/warm
-  measurements with zero model forwards during the selection pass, then consumer
-  pin/lock/package proof after authorized publication.
+- Verification: Selection uses retained-artifact inspection and bounded loading
+  measurements with zero model forwards. The selected implementation needs
+  admission fixtures, CPU then applicable CUDA parity and cold/warm measurements.
+  Freeze comparison bounds before measurement and obtain a fresh allowance for
+  production parity; consumed d1 study allowances remain closed. Consumer
+  pin/lock/package proof follows authorized publication.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -391,4 +410,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-repo-review-recheck-cleanup | change=bounded the next d1 loading-mode pass-down
+AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-loading-closeout | change=closed out verified progress for guarded publication while retaining production acceptance

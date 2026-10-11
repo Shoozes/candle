@@ -2,6 +2,100 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-10-10 - Guarded d1 progress closeout
+
+The owner requested Closeout + Publish for the verified runner repairs and
+optional Q8-row loading batch. Native Git owns the existing `main`; refreshed
+`origin/main` was `ebf2f85e96d264c3d78f7f35b22da3cc0a9abcaf` at intake, with no
+unrelated index entries or outgoing commits. Every runtime source binding and
+all fourteen released Job receipts match the retained loading proof. Current
+`cargo test --locked --offline -j 2 -p candle-examples --example lfm2-d1`
+passes six controls. No new production inference or allowance consumption.
+
+The output-integrity checkpoint is
+`1601f971723422910b0b6d37bd2280d3b9e10f68`: exactly the source-bound original
+repair in named staged files, including report completion after final recheck.
+The subsequent forward commit owns optional row loading and current records.
+Publication uses only `.tools/gitpush.ps1 -Yes`, which verifies the clean exact
+commit/tree before its non-force push. The closeout's compact identity record is
+`artifacts/lfm2-d1/20261010-loading-closeout/publication-receipt.json`, retained
+only after helper success; it binds the helper log and prior local proof.
+
+All task model/test Jobs and tensor staging are released. Proof, immutable
+inputs and shared build caches are deliberately retained; no bulk deletion,
+weights, consumer edits, release tags or PR. The larger loading qualification
+remains open for the separate fresh eight-request parity allowance. Saving this
+verified scoped progress does not qualify production mode adoption or imply a
+CUDA/full-startup speedup. WSL's uncached dependency remains an unrun limitation.
+
+## 2026-10-10 - Optional d1 Q8-row loading implementation and local proof
+
+Dropin classified the prior runner-output findings as locally complete and
+preserved those repairs. Work selected the first active loading item after
+bounded retained-header inspection: d1 ties its Q8 token table to output, and
+the default F32 lookup copy costs 1,000 MiB. Early full-model quant admission,
+lazy vision and lower-bit artifacts remain independent candidates.
+
+Additive model/hybrid/d1 constructors opt into retained Q8_0 rows; existing
+constructors and options structs retain DenseF32 behavior. Lookup results stay
+F32, with checked header/storage/IDs before payload or CUDA row dispatch and
+explicit table/sharing accounting. The example adds `--text-embedding` and a
+mutually exclusive, verified zero-forward `--load-only` path. Prompt/readout,
+major Q8 linears, native projector mix, cache and decision accounting remain.
+
+Twelve fresh-process retained-artifact loads and two authored CUDA test Jobs
+exit zero and release their PIDs. Q8Rows removes the 1,048,576,000-byte F32
+copy; median peak Job memory is 5,149,970,432 to 4,097,708,032 bytes on CPU
+and 5,806,395,392 to 4,757,143,552 on CUDA. CPU constructor medians improve
+2,874.851 to 2,671.690 ms; CUDA and full-Job timing ranges overlap. No cold-disk
+or inference speedup is claimed. CPU/CUDA authored lookup/logit/readout/image/
+failure/cache/count parity is bit-exact between modes. The final native gate
+passes 528 Rust tests (13 ignores), six Python controls, formatting, locked/
+offline checks, Clippy and route/layout/overlay gates. Strict CUDA Clippy and
+the 208-path LFM manifest pass. Union: 281 paths, five overlays, 27 shared.
+
+The new loader fixture initially lacked its tiny processor config; that
+test-only setup repair passes the focused replay and final gate. WSL's pinned
+offline dependency remains uncached and unrun. Proof:
+`artifacts/lfm2-d1/20261010-loading/verification.json`, SHA-256
+`04ae95b5473c32cd88c8ae3c21e67c2aa52f9d22feb9bfb0cc580b42440d2d47`.
+The original measured snapshots and older production receipts remain immutable.
+This records completed local implementation, not completed production
+qualification. Zero new production forwards; the fresh eight-request allowance
+is pending. No commit, push, consumer edits, downloads or owned bulk cleanup.
+
+## 2026-10-10 - d1 example output-integrity review and repair
+
+Started at clean published `ebf2f85e96d264c3d78f7f35b22da3cc0a9abcaf`;
+the delta recheck found no changes since the previous review. Prior Noul and
+typed-receipt fixes remain intact, and all eight CPU projection source bindings
+still match their retained proof. Expanded review of the standalone runner found
+two existing defects: its trace absence check preceded a replacing safetensors
+writer, and its complete run report preceded the final artifact identity recheck.
+
+Five authored regressions reproduced both defects (three pass/two fail, exit
+101) before repair. Tensor serialization now streams to owned sibling staging,
+syncs the file and uses an exclusive hard link; a competing destination remains
+unchanged and staging is released on success/error. Report publication is gated
+by the final retained-handle/path recheck. Exact safetensors bytes/layouts and JSON
+schema/order remain. A filesystem without hard-link support fails explicitly.
+
+`cargo test --locked --offline -j 2 -p candle-examples --example lfm2-d1`
+passes all five controls. The maintained native verifier now executes them;
+`pwsh -NoProfile -File .tools/verify-before-push.ps1` passes 520 Rust tests,
+13 explicit ignores and six Python controls, with format/check/Clippy and
+bank/layout/overlay gates green. Focused runner-output routing separates example
+I/O from the reusable library group and expands the existing exclusive-publication
+issue route. Current overlay inventories remain 204 LFM paths and 277 union paths.
+
+Retained regression/gate logs: `artifacts/lfm2-d1/20261010-output-integrity/`.
+Source/evidence receipt: `verification.json` in that root, SHA-256
+`cd50360c67a4abe5bbde8e1859ceb15e70019c04ae2e1028dd0a3ce1b8c5c653`.
+No production forwards, downloads, model math, loading modes, consumer changes,
+Git staging, commits or publication occurred. Temporary test/staging files are released;
+existing proof and shared build caches remain retained. WSL's unchanged offline
+dependency gap is not repeated. Loading-mode selection remains the next TODO.
+
 ## 2026-10-09 - d1 post-publication review and recheck
 
 Read-only review at published `3e08ad3201212b8da726ad15026f2a9b9071a39d`
@@ -2874,4 +2968,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-repo-review-recheck-cleanup | change=recorded post-publication d1 review and recheck
+AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-loading-closeout | change=closed out verified progress for guarded publication while retaining production acceptance

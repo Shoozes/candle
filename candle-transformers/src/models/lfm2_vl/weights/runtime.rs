@@ -310,6 +310,10 @@ impl QuantizedLfm2VlModel {
         self.text.require_native_q8_linears()
     }
 
+    pub fn text_embedding_storage(&self) -> Result<quantized_lfm2::Lfm2EmbeddingStorage> {
+        self.text.embedding_storage()
+    }
+
     pub fn pairing_report(&self) -> &PairingReport {
         &self.pairing
     }

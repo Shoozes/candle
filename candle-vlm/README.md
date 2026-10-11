@@ -11,6 +11,13 @@ failures and native Q8 dispatch receipts. See [the d1 contract](../docs/lfm2-vl/
 and [local example](../candle-examples/examples/lfm2-d1/README.md) for explicit
 loading and current CPU/CUDA qualification limits. `cuda` is optional.
 
+The additive `load_d1_q8_with_embedding_mode(options, Lfm2EmbeddingLoadMode::Q8Rows)`
+retains Q8_0 token rows and returns F32 lookup results on CPU/CUDA. The hybrid
+loader also exposes `load_lfm2_vl_hybrid_with_embedding_mode`; existing entry
+points retain DenseF32 lookup. `text_embedding_storage()` reports table bytes
+and tied-output sharing without changing decision usage/dispatch schemas.
+See [loading qualification](../docs/lfm2-vl/D1_LOADING.md) for limits and proof.
+
 ## Supported boundary
 
 The current release evidence covers the `LiquidAI/LFM2.5-VL-450M` and
@@ -92,4 +99,4 @@ for checkpoint preparation, native and GGUF/MMProj forms, device placement,
 bounded inference, JSON evidence, and local verification commands.
 
 ---
-AI-edited: 2026-10-08 | agent=Codex/root | model=unknown | effort=unknown | task=lfm2-d1 | change=recorded reusable d1 implementation and bounded proof
+AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-loading | change=documented additive Q8-row loading and storage reporting

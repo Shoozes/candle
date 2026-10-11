@@ -7,7 +7,7 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 - Model and compatibility baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
 - Live overlay baseline: Hugging Face `c68b24997319b8d76e5a4e775dab197c7f26322a` after the October 9 upstream sync. Frozen `candle-overlays-mvp-0.2.0` receipts still encode `6f74e7c390c717f8fd34f23ce02aceb058173370`.
 - Historical mod checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`; that branch is retained as evidence, not used as a second publication line.
-- Current local LFM2-VL overlay: 204 paths, exactly 20 fork-origin modifications and 184 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL. Frozen 0.2.0 release receipts retain their original inventory.
+- Current local LFM2-VL overlay: 208 paths, exactly 20 fork-origin modifications and 188 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL. Frozen 0.2.0 release receipts retain their original inventory.
 - A **fork-origin modification** is a path that exists in the current publication baseline and is intentionally changed by this mod.
 - A **mod-owned addition** is a path absent from the current publication baseline and created for this project.
 - “Mod-owned” describes repository provenance, not third-party authorship. External source and license provenance remains authoritative in `SOURCES.md` and `LICENSE_NOTES.md`.
@@ -35,7 +35,7 @@ Exactly these twenty baseline files contain LFM2-VL or combined-release changes:
 | `candle-transformers/Cargo.toml` | Add dependencies required by LFM2-VL loading and verification. |
 | `candle-transformers/src/models/lfm2.rs` | Normalize LFM2.5 configuration and add dense embedding-driven forwarding/cache support. |
 | `candle-transformers/src/models/mod.rs` | Register the new SigLIP2 and LFM2-VL model modules. |
-| `candle-transformers/src/models/quantized_lfm2.rs` | Add validated GGUF metadata, tied-output handling, embedding-driven forwarding, cache support, and hash-bound text adapter switching for hybrid execution. |
+| `candle-transformers/src/models/quantized_lfm2.rs` | Add validated GGUF metadata, tied-output handling, optional retained Q8 token rows, embedding-driven forwarding, cache support, and hash-bound text adapter switching for hybrid execution. |
 | `candle-core/src/quantized/mod.rs` | Add call-scoped strict native Q8 admission and CPU dispatch counting without changing ordinary callers. |
 | `candle-core/src/quantized/cuda.rs` | Reject forced dense d1 CUDA execution, select bounded four-row Q8/F32 reuse and report actual dispatch; Qwen owns its separate activation scope. |
 | `candle-kernels/src/lib.rs` | Register the opt-in Q8 weight/F32 activation kernel while preserving existing module IDs. |
@@ -68,6 +68,8 @@ No other file from the integrated Candle publication baseline is part of the mod
 
 - `candle-transformers/src/models/quantized_lfm2/lora.rs`
 - `candle-transformers/src/models/quantized_lfm2/shortconv.rs`
+- `candle-transformers/src/models/quantized_lfm2/embedding.rs`
+- `candle-transformers/src/models/quantized_lfm2/embedding/tests.rs`
 - `candle-transformers/src/models/lfm2/config.rs`
 - `candle-transformers/src/models/lfm2/cache.rs`
 - `candle-transformers/src/models/lfm2/layers.rs`
@@ -219,6 +221,10 @@ No other file from the integrated Candle publication baseline is part of the mod
 
 ### Reusable d1 decisions
 
+The standalone example owns exclusive streamed tensor publication and final
+artifact recheck before report completion. Its five output controls are executed
+by `.tools/verify-before-push.ps1`; model/kernel receipt identities are unchanged.
+
 - `candle-core/src/quantized/native_q8.rs`
 - `candle-core/src/quantized/native_q8_cpu.rs`
 - `candle-core/src/quantized/native_q8_cpu/tests.rs`
@@ -226,6 +232,7 @@ No other file from the integrated Candle publication baseline is part of the mod
 - `candle-vlm/src/image/bicubic.rs`
 - `candle-transformers/src/models/lfm2_d1.rs`
 - `docs/lfm2-vl/D1.md`
+- `docs/lfm2-vl/D1_LOADING.md`
 - `docs/lfm2-vl/licenses/PILLOW_LICENSE.txt`
 - `candle-vlm/src/lfm2_d1/image_cap.rs`
 - `candle-vlm/src/lfm2_d1/mod.rs`
@@ -234,6 +241,7 @@ No other file from the integrated Candle publication baseline is part of the mod
 - `candle-vlm/src/lfm2_d1/render_state.rs`
 - `candle-vlm/src/lfm2_d1/session.rs`
 - `candle-vlm/src/lfm2_d1/tests.rs`
+- `candle-vlm/src/lfm2_d1/tests/embedding.rs`
 - `candle-vlm/src/lfm2_d1/types.rs`
 - `candle-examples/examples/lfm2-d1/files.rs`
 - `candle-examples/examples/lfm2-d1/main.rs`
@@ -271,4 +279,4 @@ commands are prohibited. The LFM2-VL verifier remains independently runnable
 and does not absorb unfinished diffusion paths.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cpu-single-row | change=qualified native CPU projection and preserved Q8/F32 proof
+AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-loading | change=registered Q8-row loading sources and qualification records

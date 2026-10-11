@@ -7,10 +7,11 @@ mod render_state;
 mod session;
 mod types;
 
+pub use crate::lfm2_vl::{Lfm2EmbeddingLoadMode, Lfm2EmbeddingStorage};
 pub use profiling::{D1QuestionTiming, D1Timings};
 pub use prompt::{D1PolicyV1, PreparedQuestion};
 pub use session::D1TraceEvent;
-pub use session::{load_d1_q8, D1LoadOptions, D1Session};
+pub use session::{load_d1_q8, load_d1_q8_with_embedding_mode, D1LoadOptions, D1Session};
 pub use types::{
     Answer, D1Limits, DecisionFailure, DecisionRequest, DecisionResponse, DecisionUsage,
     ExecutionReport, OrderedMap, Question, State, YesNoCriteria,

@@ -120,7 +120,9 @@
         "candle-transformers/src/models/lfm2/config.rs",
         "candle-transformers/src/models/lfm2/cache.rs",
         "candle-transformers/src/models/lfm2/layers.rs",
-        "candle-transformers/src/models/lfm2/model.rs"
+        "candle-transformers/src/models/lfm2/model.rs",
+        "candle-transformers/src/models/quantized_lfm2/embedding.rs",
+        "candle-transformers/src/models/quantized_lfm2/embedding/tests.rs"
       ]
     },
     "feature__gpt_oss_experimental": {
@@ -479,7 +481,7 @@
       ]
     },
     "issue__exclusive_evidence_publication": {
-      "description": "Recurring check-then-replace races in snapshot, report, split-bundle, and native-trace publication; routes the shared no-clobber primitives, affected writers, narrow tests, and D-0042 contract.",
+      "description": "Recurring check-then-replace races in snapshot, report, split-bundle, native-trace and d1 example publication; routes exclusive writers, completion ordering, narrow tests and the D-0042 contract.",
       "status": "active",
       "paths": [
         "tools/lfm2_vl/reference/manifest.py",
@@ -489,6 +491,8 @@
         "tools/lfm2_vl/reference/inspect_gguf_header.py",
         "tools/export_lfm2_vl_mmproj.py",
         "candle-examples/examples/lfm2-vl/trace.rs",
+        "candle-examples/examples/lfm2-d1/files.rs",
+        "candle-examples/examples/lfm2-d1/main.rs",
         "tools/lfm2_vl/reference/test_gguf_header.py",
         "tools/lfm2_vl/reference/test_mmproj_exporter.py"
       ]
@@ -658,7 +662,7 @@
       ]
     },
     "feature__lfm2_d1": {
-      "description": "Reusable d1 API, prompt/readout policy, native Q8 admission, independent prefills, explicit-input runner, benchmarks/replay and small goldens. Expand to workflow__d1_reference_parity for oracle/export tooling, workflow__d1_cuda_performance for CUDA prefill, feature__lfm2_text and feature__gguf_mmproj for storage/load changes, and workflow__gguf_artifact_inspection for metadata diagnostics.",
+      "description": "Reusable d1 API, prompt/readout policy, native Q8 admission, independent prefills, benchmarks/replay and small goldens. Expand to workflow__d1_example_outputs for the standalone runner, workflow__d1_reference_parity for oracle/export tooling, workflow__d1_cuda_performance for CUDA prefill, feature__lfm2_text and feature__gguf_mmproj for storage/load changes, and workflow__gguf_artifact_inspection for metadata diagnostics.",
       "status": "active",
       "paths": [
         "docs/lfm2-vl/D1.md",
@@ -678,9 +682,6 @@
         "candle-vlm/src/lfm2_d1/session.rs",
         "candle-vlm/src/lfm2_d1/tests.rs",
         "candle-vlm/src/lfm2_d1/types.rs",
-        "candle-examples/examples/lfm2-d1/files.rs",
-        "candle-examples/examples/lfm2-d1/main.rs",
-        "candle-examples/examples/lfm2-d1/README.md",
         "tools/lfm2_vl/d1/reference-lock.json",
         "tools/lfm2_vl/d1/verify_run.py",
         "tools/lfm2_vl/d1/test_verify_run.py",
@@ -690,7 +691,18 @@
         "tests/fixtures/lfm2_d1_tiny/manifest.json",
         "tests/fixtures/lfm2_d1_tiny/policy.json",
         "tests/fixtures/lfm2_d1_tiny/README.md",
-        "tests/fixtures/lfm2_d1_tiny/tokenizer.json"
+        "tests/fixtures/lfm2_d1_tiny/tokenizer.json",
+        "candle-vlm/src/lfm2_d1/tests/embedding.rs"
+      ]
+    },
+    "workflow__d1_example_outputs": {
+      "description": "Standalone d1 runner with explicit artifact admission, final identity recheck before report completion, exclusive streamed tensor traces and deterministic output tests. Expand to feature__lfm2_d1 for library policy and session controls.",
+      "status": "active",
+      "paths": [
+        "candle-examples/examples/lfm2-d1/files.rs",
+        "candle-examples/examples/lfm2-d1/main.rs",
+        "candle-examples/examples/lfm2-d1/README.md",
+        ".tools/verify-before-push.ps1"
       ]
     },
     "workflow__d1_cuda_performance": {
@@ -722,6 +734,23 @@
         "tools/lfm2_vl/d1/test_oracle_weights.py",
         "tools/lfm2_vl/d1/export_resize_goldens.py",
         "tools/lfm2_vl/d1/compare_runs.py"
+      ]
+    },
+    "workflow__d1_loading": {
+      "description": "Optional retained Q8 token rows with F32 lookup, tied-output storage sharing, bounded embedding-header/ID admission, additive public constructors and zero-forward load profiling. Expand to feature__lfm2_d1 for policy/readout, workflow__d1_example_outputs for exclusive output ownership and feature__lfm2_text for language/adapter behavior. The composite storage getter is in feature__native_composite.",
+      "status": "active",
+      "paths": [
+        "docs/lfm2-vl/D1_LOADING.md",
+        "candle-transformers/src/models/quantized_lfm2.rs",
+        "candle-transformers/src/models/quantized_lfm2/embedding.rs",
+        "candle-transformers/src/models/quantized_lfm2/embedding/tests.rs",
+        "candle-vlm/src/lfm2_vl/loading.rs",
+        "candle-vlm/src/lfm2_vl/mod.rs",
+        "candle-vlm/src/lfm2_d1/mod.rs",
+        "candle-vlm/src/lfm2_d1/session.rs",
+        "candle-vlm/src/lfm2_d1/tests/embedding.rs",
+        "candle-examples/examples/lfm2-d1/main.rs",
+        "tools/lfm2_vl/d1/reference-lock.json"
       ]
     }
   },

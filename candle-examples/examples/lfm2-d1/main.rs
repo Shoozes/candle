@@ -5,8 +5,8 @@ mod files;
 use anyhow::{Context, Result};
 use candle::{DType, Device};
 use candle_vlm::lfm2_d1::{
-    load_d1_q8, D1Limits, D1LoadOptions, D1Timings, D1TraceEvent, DecisionFailure, DecisionRequest,
-    DecisionResponse,
+    load_d1_q8_with_embedding_mode, D1Limits, D1LoadOptions, D1Timings, D1TraceEvent,
+    DecisionFailure, DecisionRequest, DecisionResponse, Lfm2EmbeddingLoadMode,
 };
 use candle_vlm::lfm2_vl::{Lfm2VlHybridLoadOptions, Lfm2VlMmprojExecution, Lfm2VlMmprojSource};
 use clap::Parser;
@@ -28,12 +28,20 @@ struct Args {
     template: PathBuf,
     #[arg(long)]
     artifact_manifest: PathBuf,
-    #[arg(long)]
-    requests: PathBuf,
+    #[arg(
+        long,
+        required_unless_present = "load_only",
+        conflicts_with = "load_only"
+    )]
+    requests: Option<PathBuf>,
+    #[arg(long, conflicts_with_all = ["requests", "trace", "profile"])]
+    load_only: bool,
     #[arg(long)]
     out: PathBuf,
     #[arg(long, default_value = "cpu")]
     device: String,
+    #[arg(long, default_value = "dense-f32")]
+    text_embedding: Lfm2EmbeddingLoadMode,
     #[arg(long, default_value_t = 4096)]
     context: usize,
     #[arg(long)]
@@ -93,6 +101,53 @@ fn main() -> Result<()> {
     outcome
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn load_only_cli_excludes_request_execution() {
+        let base = [
+            "lfm2-d1",
+            "--model",
+            "model",
+            "--mmproj",
+            "mmproj",
+            "--tokenizer",
+            "tokenizer",
+            "--processor",
+            "processor",
+            "--template",
+            "template",
+            "--artifact-manifest",
+            "manifest",
+            "--out",
+            "out",
+        ];
+        assert!(Args::try_parse_from(base).is_err());
+        let args = Args::try_parse_from(base.into_iter().chain(["--load-only"]))
+            .expect("load-only argument parsing");
+        assert!(args.load_only);
+        assert!(args.requests.is_none());
+        for extra in [
+            vec!["--requests", "requests"],
+            vec!["--trace"],
+            vec!["--profile"],
+        ] {
+            assert!(
+                Args::try_parse_from(base.into_iter().chain(["--load-only"]).chain(extra)).is_err()
+            );
+        }
+        assert!(Args::try_parse_from(base.into_iter().chain(["--requests", "requests"])).is_ok());
+        assert!(Args::try_parse_from(base.into_iter().chain([
+            "--load-only",
+            "--text-embedding",
+            "q4"
+        ]))
+        .is_err());
+    }
+}
+
 fn run(args: &Args) -> Result<()> {
     let device = match args.device.as_str() {
         "cpu" => Device::Cpu,
@@ -100,7 +155,12 @@ fn run(args: &Args) -> Result<()> {
         other => anyhow::bail!("unsupported device {other:?}; expected cpu or cuda"),
     };
     anyhow::ensure!(args.context > 0, "context must be positive");
-    let inputs = files::read_bounded(&args.requests, 1024 * 1024)?;
+    let inputs = args
+        .requests
+        .as_ref()
+        .map(|path| files::read_bounded(path, 1024 * 1024))
+        .transpose()?
+        .unwrap_or_default();
     let text = std::str::from_utf8(&inputs)?;
     let cases: Vec<Input> = text
         .lines()
@@ -108,7 +168,7 @@ fn run(args: &Args) -> Result<()> {
         .map(serde_json::from_str)
         .collect::<std::result::Result<_, _>>()?;
     anyhow::ensure!(
-        !cases.is_empty() && cases.len() <= 64,
+        args.load_only || (!cases.is_empty() && cases.len() <= 64),
         "expected 1..=64 explicit cases"
     );
     let mut names = std::collections::HashSet::new();
@@ -135,28 +195,50 @@ fn run(args: &Args) -> Result<()> {
     )?;
     files::write_json(
         &args.out.join("admission.json"),
-        &json!({"schema":"candle.d1_artifact_admission.v1","artifacts":retained.identities,"device":args.device,"context":args.context,"cases":cases.len(),"requests_sha256":files::sha256(&inputs),"policy":candle_vlm::lfm2_d1::D1PolicyV1::ID}),
+        &json!({"schema":if args.load_only {"candle.d1_load_artifact_admission.v1"} else {"candle.d1_artifact_admission.v1"},"artifacts":retained.identities,"device":args.device,"context":args.context,"cases":cases.len(),"requests_sha256":args.requests.as_ref().map(|_|files::sha256(&inputs)),"policy":candle_vlm::lfm2_d1::D1PolicyV1::ID}),
     )?;
     let load_started = Instant::now();
-    let mut session = load_d1_q8(D1LoadOptions {
-        hybrid: Lfm2VlHybridLoadOptions {
-            text_gguf: &args.model,
-            mmproj: Lfm2VlMmprojSource::GgufFile(&args.mmproj),
-            tokenizer: &args.tokenizer,
-            processor_config: Some(&args.processor),
-            mmproj_execution: Lfm2VlMmprojExecution::Q8,
-            vision_dtype: DType::F32,
-            vision_device: &device,
-            text_device: &device,
+    let mut session = load_d1_q8_with_embedding_mode(
+        D1LoadOptions {
+            hybrid: Lfm2VlHybridLoadOptions {
+                text_gguf: &args.model,
+                mmproj: Lfm2VlMmprojSource::GgufFile(&args.mmproj),
+                tokenizer: &args.tokenizer,
+                processor_config: Some(&args.processor),
+                mmproj_execution: Lfm2VlMmprojExecution::Q8,
+                vision_dtype: DType::F32,
+                vision_device: &device,
+                text_device: &device,
+            },
+            limits: D1Limits {
+                max_context_tokens: Some(args.context),
+                ..Default::default()
+            },
         },
-        limits: D1Limits {
-            max_context_tokens: Some(args.context),
-            ..Default::default()
-        },
-    })?;
+        args.text_embedding,
+    )?;
+    if args.load_only {
+        device.synchronize()?;
+        let load_ms = load_started.elapsed().as_secs_f64() * 1000.;
+        let consumed_files = session.consumed_files().to_vec();
+        let execution = session.execution_details();
+        let embedding_storage = session.text_embedding_storage()?;
+        drop(session);
+        retained.write_verified_report(
+            &args.out.join("load-only.json"),
+            &json!({
+                "schema": "candle.d1_load_only.v1", "state": "complete",
+                "device": args.device, "embedding": args.text_embedding, "load_ms": load_ms,
+                "embedding_storage": embedding_storage,
+                "consumed_files": consumed_files, "execution": execution,
+                "language_forwards": 0, "vision_forwards": 0, "output_tokens": 0,
+            }),
+        )?;
+        return Ok(());
+    }
     files::write_json(
         &args.out.join("loaded.json"),
-        &json!({"load_ms":load_started.elapsed().as_secs_f64()*1000.,"consumed_files":session.consumed_files(),"template":args.template,"policy_revision":candle_vlm::lfm2_d1::D1PolicyV1::REFERENCE_REVISION}),
+        &json!({"load_ms":load_started.elapsed().as_secs_f64()*1000.,"consumed_files":session.consumed_files(),"template":args.template,"policy_revision":candle_vlm::lfm2_d1::D1PolicyV1::REFERENCE_REVISION,"embedding_storage":session.text_embedding_storage()?}),
     )?;
     let mut results = Vec::new();
     let mut total_forwards = 0u64;

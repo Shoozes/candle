@@ -3,13 +3,17 @@ use crate::utils::repeat_kv;
 use candle::quantized::gguf_file;
 use candle::quantized::QMatMul;
 use candle::{bail, DType, Device, IndexOp, Result, Tensor};
-use candle_nn::{Conv1d, Conv1dConfig, Embedding, Module};
+use candle_nn::{Conv1d, Conv1dConfig, Module};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::io::{Read, Seek, SeekFrom};
+use std::sync::Arc;
 
+mod embedding;
 mod lora;
 mod shortconv;
+use embedding::TokenEmbedding;
+pub use embedding::{Lfm2EmbeddingLoadMode, Lfm2EmbeddingStorage};
 use lora::{AdaptedLinear, PreparedPair};
 pub use lora::{Lfm2LoraAdapter, Lfm2LoraPair, Lfm2LoraTarget};
 
@@ -278,7 +282,7 @@ impl ShortConvLayer {
 }
 
 pub struct ModelWeights {
-    tok_embeddings: Embedding,
+    tok_embeddings: TokenEmbedding,
     layers: Vec<LayerWeights>,
     norm: RmsNorm,
     output: QMatMul,
@@ -515,7 +519,24 @@ impl ModelWeights {
         reader: &mut R,
         device: &Device,
     ) -> Result<Self> {
+        Self::from_gguf_with_embedding_mode(ct, reader, device, Lfm2EmbeddingLoadMode::DenseF32)
+    }
+
+    /// Load with an explicit lookup-storage choice; language activations remain F32.
+    pub fn from_gguf_with_embedding_mode<R: Read + Seek>(
+        ct: gguf_file::Content,
+        reader: &mut R,
+        device: &Device,
+        embedding_mode: Lfm2EmbeddingLoadMode,
+    ) -> Result<Self> {
         let metadata = inspect_gguf_metadata(&ct)?;
+        embedding::validate_header(
+            &ct,
+            device,
+            embedding_mode,
+            metadata.embedding_length,
+            metadata.eos_token_id,
+        )?;
         let head_count = metadata.head_count;
         let head_count_kv = &metadata.head_count_kv;
         let embedding_length = metadata.embedding_length;
@@ -528,21 +549,17 @@ impl ModelWeights {
         let (cos, sin) = precomput_freqs_cis(head_dim, rope_freq_base, context_length, device)?;
         let neg_inf = Tensor::new(f32::NEG_INFINITY, device)?;
 
-        let tok_embeddings_q = get_qtensor(
+        let tok_embeddings_q = Arc::new(get_qtensor(
             &ct,
             reader,
             device,
-            &[
-                "token_embd.weight",
-                "tok_embeddings.weight",
-                "model.embed_tokens.weight",
-            ]
-            .iter()
-            .map(|s| s.to_string())
-            .collect::<Vec<_>>(),
-        )?;
-        let tok_embeddings = tok_embeddings_q.dequantize(device)?;
-        let (vocab_size, loaded_embedding_length) = tok_embeddings.dims2()?;
+            &embedding::NAMES
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>(),
+        )?);
+        let tok_embeddings = TokenEmbedding::new(Arc::clone(&tok_embeddings_q), embedding_mode)?;
+        let (vocab_size, loaded_embedding_length) = tok_embeddings_q.shape().dims2()?;
         if loaded_embedding_length != embedding_length {
             bail!(
                 "quantized LFM2 token embedding width {loaded_embedding_length} does not match GGUF metadata {embedding_length}"
@@ -557,7 +574,7 @@ impl ModelWeights {
             }
         }
         tracing::debug!(
-            tok_embd_shape = ?tok_embeddings.shape().dims(),
+            tok_embd_shape = ?tok_embeddings_q.shape().dims(),
             "loaded lfm2 token embeddings"
         );
 
@@ -582,7 +599,7 @@ impl ModelWeights {
         let output_q = if metadata.tied_output {
             tok_embeddings_q
         } else {
-            get_qtensor(
+            Arc::new(get_qtensor(
                 &ct,
                 reader,
                 device,
@@ -595,7 +612,7 @@ impl ModelWeights {
                 .iter()
                 .map(|s| s.to_string())
                 .collect::<Vec<_>>(),
-            )?
+            )?)
         };
         if output_q.shape().dims() != [vocab_size, embedding_length] {
             bail!(
@@ -824,10 +841,10 @@ impl ModelWeights {
         }
 
         Ok(Self {
-            tok_embeddings: Embedding::new(tok_embeddings, embedding_length),
+            tok_embeddings,
             layers,
             norm,
-            output: QMatMul::from_qtensor(output_q)?,
+            output: QMatMul::from_arc(output_q)?,
             metadata,
             masks: HashMap::new(),
             span: tracing::span!(tracing::Level::TRACE, "model"),
@@ -894,11 +911,15 @@ impl ModelWeights {
     }
 
     pub fn vocab_size(&self) -> usize {
-        self.tok_embeddings.embeddings().dims()[0]
+        self.tok_embeddings.vocab_size()
     }
 
     pub fn device(&self) -> &Device {
-        self.tok_embeddings.embeddings().device()
+        self.tok_embeddings.device()
+    }
+
+    pub fn embedding_storage(&self) -> Result<Lfm2EmbeddingStorage> {
+        self.tok_embeddings.storage(&self.output)
     }
 
     pub fn lora_base_sha256(&self) -> Option<&str> {
@@ -945,7 +966,7 @@ impl ModelWeights {
         let base = self.base_sha256.as_deref().ok_or_else(|| {
             candle::Error::Msg("quantized LFM2 LoRA requires a hash-verified base load".into())
         })?;
-        if self.tok_embeddings.embeddings().dtype() != DType::F32 {
+        if self.tok_embeddings.dtype() != DType::F32 {
             bail!("quantized LFM2 LoRA currently requires an F32 execution graph")
         }
         let next_generation = self
@@ -1067,6 +1088,7 @@ mod tests {
     use crate::models::lfm2_vl::{merge_projected_embeddings, EncodedImages, ImageTokenSpan};
     use candle::quantized::{GgmlDType, QMatMul, QTensor};
     use candle::{DType, Device, Tensor};
+    use candle_nn::Embedding;
     use std::collections::HashMap;
     use std::io::Cursor;
 
@@ -1451,7 +1473,7 @@ mod tests {
         let norm = RmsNorm::from_qtensor(QTensor::quantize(&norm_weights, GgmlDType::Q8_0)?, 1e-5)?;
         let output = QMatMul::from_qtensor(QTensor::quantize(&output_weights, GgmlDType::Q8_0)?)?;
         let mut model = ModelWeights {
-            tok_embeddings: embedding,
+            tok_embeddings: TokenEmbedding::Dense(embedding),
             layers: Vec::new(),
             norm,
             output,

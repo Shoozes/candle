@@ -25,6 +25,26 @@ IDs, final logits and the first image request's processor/features. Failures kee
 partial answers/work counts and remaining case IDs. JSON output preserves the
 public answer and option order. No output tokens are generated.
 
+`--text-embedding q8-rows` retains Q8_0 token rows and returns F32 embeddings,
+sharing the existing output weight for tied models. The default `dense-f32`
+keeps the full F32 lookup table. Both modes load the complete vision model and
+retain the same model/projector files. `loaded.json` includes exact token-table
+storage and output-sharing details. See [loading qualification](../../../docs/lfm2-vl/D1_LOADING.md)
+for measured effects and numerical limits.
+
+For constructor measurements, replace `--requests ...` with `--load-only`.
+This excludes `--trace` and `--profile`, executes zero model forwards and emits
+`load-only.json` after device synchronization, session release and the final
+retained-file recheck. It does not emit an inference `report.json`. Its admission
+receipt uses the separate `candle.d1_load_artifact_admission.v1` schema.
+
+Tensor traces are streamed into sibling staging, flushed, and published without
+replacing an existing or racing destination. The output filesystem must support
+hard links; unsupported publication returns an error. Staging is removed on
+success or failure. `report.json` is written only after the final retained-file
+and path-identity recheck succeeds. A failed recheck cannot publish a complete
+report; the runner exits with failure and keeps available partial case evidence.
+
 `--profile` adds opt-in `timings` to each case: preparation, image processing,
 tokenization, vision, each question's prefill/readout, and trace observation.
 It synchronizes device work at phase boundaries. Use unprofiled runs for
@@ -38,4 +58,4 @@ The caller owns admission and isolation. See [D1.md](../../../docs/lfm2-vl/D1.md
 for policy, API, source pins and qualification limits.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cuda-performance | change=documented opt-in synchronized phase timing
+AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-loading | change=documented opt-in Q8 rows and zero-forward constructor measurements

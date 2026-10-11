@@ -8,6 +8,9 @@ use candle::quantized::gguf_file;
 use candle::{DType, Device, Result};
 use candle_transformers::models::lfm2_vl::{Mmproj, QuantizedLfm2VlModel};
 use candle_transformers::models::quantized_lfm2::ModelWeights;
+pub use candle_transformers::models::quantized_lfm2::{
+    Lfm2EmbeddingLoadMode, Lfm2EmbeddingStorage,
+};
 use std::fmt;
 use std::fs::File;
 use std::io::Read;
@@ -100,6 +103,14 @@ enum MmprojLoadPlan {
 /// Pairing, tokenizer, processor, dtype, and execution-policy mismatches fail
 /// before a runtime is returned.
 pub fn load_lfm2_vl_hybrid(options: Lfm2VlHybridLoadOptions<'_>) -> Result<LoadedLfm2VlHybrid> {
+    load_lfm2_vl_hybrid_with_embedding_mode(options, Lfm2EmbeddingLoadMode::DenseF32)
+}
+
+/// Load with explicit token lookup storage; the complete vision model still loads.
+pub fn load_lfm2_vl_hybrid_with_embedding_mode(
+    options: Lfm2VlHybridLoadOptions<'_>,
+    embedding_mode: Lfm2EmbeddingLoadMode,
+) -> Result<LoadedLfm2VlHybrid> {
     let mmproj_plan = mmproj_load_plan(
         options.mmproj,
         options.mmproj_execution,
@@ -126,7 +137,12 @@ pub fn load_lfm2_vl_hybrid(options: Lfm2VlHybridLoadOptions<'_>) -> Result<Loade
     })?;
     let content =
         gguf_file::Content::read(&mut text_file).map_err(|err| err.with_path(options.text_gguf))?;
-    let text = ModelWeights::from_gguf(content, &mut text_file, options.text_device)?;
+    let text = ModelWeights::from_gguf_with_embedding_mode(
+        content,
+        &mut text_file,
+        options.text_device,
+        embedding_mode,
+    )?;
 
     let mmproj = match options.mmproj {
         Lfm2VlMmprojSource::SplitDirectory(path) => {
@@ -585,6 +601,46 @@ mod tests {
                 "fixture {name} SHA-256"
             );
         }
+        Ok(())
+    }
+
+    #[test]
+    fn explicit_embedding_mode_keeps_default_inventory_and_rejects_before_mmproj() -> Result<()> {
+        let root = repository_fixture("lfm2_vl_loader_tiny");
+        let text = root.join("text.gguf");
+        let tokenizer = root.join("tokenizer.json");
+        let mmproj = root.join("mmproj-q8.gguf");
+        let processor = repository_fixture("lfm2_vl_mmproj_tiny").join("processor_config.json");
+        let options = || Lfm2VlHybridLoadOptions {
+            text_gguf: &text,
+            mmproj: Lfm2VlMmprojSource::GgufFile(&mmproj),
+            tokenizer: &tokenizer,
+            processor_config: Some(&processor),
+            mmproj_execution: Lfm2VlMmprojExecution::Q8,
+            vision_dtype: DType::F32,
+            vision_device: &Device::Cpu,
+            text_device: &Device::Cpu,
+        };
+        let default = load_lfm2_vl_hybrid(options())?;
+        let explicit =
+            load_lfm2_vl_hybrid_with_embedding_mode(options(), Lfm2EmbeddingLoadMode::DenseF32)?;
+        assert_eq!(default.consumed_files, explicit.consumed_files);
+        assert_eq!(
+            default.model.text_embedding_storage()?,
+            explicit.model.text_embedding_storage()?
+        );
+        assert_eq!(
+            default.model.text_embedding_storage()?.mode,
+            Lfm2EmbeddingLoadMode::DenseF32
+        );
+        let missing = root.join("missing-mmproj.gguf");
+        let mut incompatible = options();
+        incompatible.mmproj = Lfm2VlMmprojSource::GgufFile(&missing);
+        let error =
+            load_lfm2_vl_hybrid_with_embedding_mode(incompatible, Lfm2EmbeddingLoadMode::Q8Rows)
+                .err()
+                .expect("incompatible embedding admission");
+        assert!(error.to_string().contains("require retained Q8_0"));
         Ok(())
     }
 }

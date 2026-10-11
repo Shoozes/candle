@@ -11,7 +11,8 @@ pub use config::{
     GgufProcessorMetadata, Lfm2VlProcessorConfig, ProcessorConfigOverride, ProcessorConfigPatch,
 };
 pub use loading::{
-    load_lfm2_vl_hybrid, Lfm2VlHybridLoadOptions, Lfm2VlMmprojExecution, Lfm2VlMmprojSource,
+    load_lfm2_vl_hybrid, load_lfm2_vl_hybrid_with_embedding_mode, Lfm2EmbeddingLoadMode,
+    Lfm2EmbeddingStorage, Lfm2VlHybridLoadOptions, Lfm2VlMmprojExecution, Lfm2VlMmprojSource,
     LoadedLfm2VlHybrid,
 };
 pub use processor::Lfm2VlProcessor;
