@@ -212,18 +212,24 @@ Task 4 and maintained product qualification remain separately gated.
 
 ### GenEye-owned Q8Rows portable handoff
 
-The Candle profiling-counter repair and handoff-record cleanup are complete;
-both scoped commits are published at `ff81aabb`, as recorded in STATUS and HISTORY.
-GenEye's current proof remains bound to the published `3fa7075e` candidate.
-The 3a706c0c recheck confirms nineteen unchanged reviewed bytes; eighteen match
-the original approved packet. The known Linux process delta still needs its
-relevant consumer checks before new portable qualification.
-Candle's scoped trace-cancellation repair is verified locally on authored
-CPU/CUDA fixtures in both embedding modes. The retained native gate passes
-530 Rust tests/13 ignores and six Python controls. The owner selected scoped
-Closeout + Publish for the six task files; STATUS's guarded receipt owns the
-saved identity after helper success.
-The consumer's original pin and production proof retain their source identities.
+The published Candle repairs at `f3bec12a` match their source-bound receipt;
+the prior findings remain closed. This review also repairs cancellation during
+profiled vision synchronization: authored DenseF32/Q8Rows fixtures prove zero
+pending work and exact recovery. Twenty focused CPU tests, 26 CUDA-enabled tests
+and the native 531-test/13-ignore gate plus six Python controls pass. The owner
+selected Closeout + Publish for the seven-file repair; STATUS's guarded receipt
+owns the saved identity after helper success. Completed details remain in
+STATUS and HISTORY rather than an active backlog item.
+The verified runtime checkpoint is `9b5d332c`; the CUDA proof retains its
+original measured source and matching runtime hashes.
+
+GenEye's proof and Candle pin remain bound to published `3fa7075e`. At observed
+consumer HEAD `c99b9a53619ba6df26f270a9758ab8979a92602d`, nineteen consumer files
+match the preceding review; eighteen match the original approved packet. The
+known Linux process delta still needs its relevant consumer checks before new
+portable qualification. Subsequent browser/docs commits do not publish the
+Q8Rows worker/lock/package changes. The original production proof retains its
+source identity and consumed allowance.
 
 - What: Review the changed process owner, publish the scoped GenEye source,
   then qualify a clean portable candidate pinned to Candle `3fa7075e`.
@@ -405,4 +411,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cancellation-closeout | change=saved verified scoped progress without narrowing consumer or adapter completion
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-vision-sync-closeout | change=closed scoped repair records without narrowing consumer or adapter completion
