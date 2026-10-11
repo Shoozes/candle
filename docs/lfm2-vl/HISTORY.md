@@ -2,6 +2,81 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-10-10 - Q8Rows parity documentation closeout
+
+The owner separately requested Closeout + Publish for the completed Q8Rows
+parity records. Native `main` and freshly fetched `origin/main` start at
+`7c9067bc494e1cc98bdd2a83151b056757897c1c`; the index is empty and only the
+five task documentation files are modified. All 124 retained runtime/evidence
+bindings and five original documentation bindings match at intake.
+
+The loading contract now describes implemented behavior. Current status and
+startup routes distinguish the completed inference batch from its authorized
+documentation publication. The completed loading acceptance is moved out of
+TODO; the real adapter/Edge gate and separate GenEye adoption retain their
+owners and completion criteria. Summary Bank routes and overlay path counts
+are unchanged; their validators remain required for this closeout.
+
+`pwsh -NoProfile -File .tools/verify-before-push.ps1` passes 528 Rust tests,
+13 explicit ignores and six Python controls, with format/check/Clippy and
+route/layout/overlay gates green. The LFM manifest passes at 208 paths
+(20 modified/188 added); the union remains 281 paths, five overlays and
+27 shared paths. Logs are retained under the closeout root below. The guarded
+helper repeats its mandatory native gate on the clean exact publication commit.
+
+Immutable production proof is
+`artifacts/lfm2-d1/20261010-loading/production-parity.json`, SHA-256
+`35c1be0bb8abf5ff0a0a3e4f483a20ef4d80fa603f5e0b833cb37db74e46cf0c`.
+The four parity PIDs are freshly absent and no d1 tensor staging remains.
+Original inputs, traces, receipts, replay scripts and shared build caches are
+deliberately retained for reproducibility. No new production forwards,
+downloads, default changes, consumer edits or bulk cleanup.
+
+Only named task files are staged. Candle's `.tools/gitpush.ps1 -Yes` verifies
+the clean exact commit with the native locked/offline gate and publishes it
+without force. Exact successful commit/tree/remote equality and useful gate
+logs are retained in
+`artifacts/lfm2-d1/20261010-q8rows-parity-closeout/publication-receipt.json`
+only after helper success. The numerical source remains `7c9067bc`; the
+documentation commit does not relabel or overwrite earlier proof. WSL's
+uncached dependency and GenEye's separate pin/package/worker proof remain
+the recorded limitations. No release tags or PR.
+
+## 2026-10-10 - Fresh d1 Q8Rows production qualification
+
+The owner approved the prepared eight-request allowance separately from guarded
+progress publication. Execution uses the unchanged clean published source
+`7c9067bc494e1cc98bdd2a83151b056757897c1c` and the retained five d1 inputs.
+The release example rebuild passes locked/offline. Frozen `t01`/`i01` requests
+run in DenseF32 and Q8Rows on CPU first; the successful CPU gate admits CUDA.
+Each of the four native Jobs has a 16 GiB limit and 1,800-second deadline.
+
+All twelve same-device logit comparisons and every typed answer are bit-exact
+between modes. Six CPU/CUDA Q8Rows vectors have maximum absolute error
+0.000011444091796875 against 0.02; projected-feature cosine is
+0.999999999989375 against 0.9999. The pinned official renderer/tokenizer checks
+all 24 prompts/alias groups, 12 text token sequences and 24 typed readouts.
+Maximum independent readout error is 1.1102230246251565e-16 against 1e-6.
+Native Q8/F32 dispatch, the retained 137 Q8/27 F16-source projector mix,
+question/image work counts and tied token-table storage remain unchanged.
+
+The allowance is consumed and closed: exactly eight requests, 24 language and
+four vision forwards, zero output tokens and no retries. All four Jobs exit
+zero and release their PIDs. Final retained-artifact, source/binary and staging
+rechecks pass. Compact source/trace/command/resource proof:
+`artifacts/lfm2-d1/20261010-loading/production-parity.json`. Earlier load/proof/
+publication receipts remain immutable. This completes the selected loading
+Done When gate; completed acceptance moves out of TODO. Current native formatting,
+locked/offline crate checks and document/route/inventory checks accompany the
+proof; the previously published full Rust/Clippy gate is reused at its identity.
+
+No production code changes, model downloads, default changes, consumer edits, Git staging,
+commits or publication. WSL's missing offline dependency remains unrun. This
+two-case comparison is not a new 20-case quality study, independent full-model
+oracle or inference-speed benchmark. GenEye owns adoption and pin/package/worker
+proof under separate authorization. The remaining real-adapter gate retains its
+producer prerequisites.
+
 ## 2026-10-10 - Guarded d1 progress closeout
 
 The owner requested Closeout + Publish for the verified runner repairs and
@@ -2968,4 +3043,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-loading-closeout | change=closed out verified progress for guarded publication while retaining production acceptance
+AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-q8rows-parity-closeout | change=recorded scoped documentation publication without changing completed numerical evidence

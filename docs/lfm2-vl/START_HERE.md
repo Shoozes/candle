@@ -37,8 +37,14 @@ and its producer API compatibility review is closed. GenEye's separate LTS
 release gate remains open and owner-managed. CPU one-row projection has been
 profiled and qualified with exact Q8/F32 parity and retained readout replay;
 see `D1.md` and `STATUS.md` for source-bound proof and publication identity.
-The next active Candle item is optional d1 loading modes in `TODO.md`; CUDA prefill
-qualification is published at `f93a4111ae41683b548758225940f80de6cd37e8`.
+Opt-in d1 Q8Rows loading is published at `7c9067bc` and fresh CPU/CUDA parity
+with retained artifacts is complete; see `D1_LOADING.md` for the construction
+contract and source-bound proof. `STATUS.md` identifies the separate guarded
+publication receipt for these completed parity records. GenEye mode adoption
+and pin/package/worker verification remain separately owned. The next active
+Candle item is the real 2.6B adapter
+gate in `TODO.md`, pending producer inputs. CUDA prefill qualification is
+published at `f93a4111ae41683b548758225940f80de6cd37e8`.
 The subsequent pinned upstream/CPU-options batch is qualified at `34830c19`;
 its final guarded publication identity is owned by the current source-bound
 receipt recorded in `STATUS.md`.
@@ -179,4 +185,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cpu-single-row | change=qualified native CPU projection and preserved Q8/F32 proof
+AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-q8rows-parity-closeout | change=routed completed Q8Rows parity and its separate guarded documentation publication
