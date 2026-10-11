@@ -217,7 +217,8 @@ fn run(args: &Args) -> Result<()> {
             break;
         }
     }
-    files::write_json(
+    drop(session);
+    retained.write_verified_report(
         &args.out.join("report.json"),
         &RunReport {
             schema: "candle.d1_run.v1",
@@ -235,8 +236,6 @@ fn run(args: &Args) -> Result<()> {
             results: &results,
         },
     )?;
-    drop(session);
-    retained.recheck()?;
     if failed {
         anyhow::bail!("d1 run failed; partial results retained")
     }

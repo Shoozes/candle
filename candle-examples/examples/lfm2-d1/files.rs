@@ -26,6 +26,15 @@ pub struct RetainedArtifacts {
 }
 
 impl RetainedArtifacts {
+    pub fn write_verified_report<T: Serialize + ?Sized>(
+        &mut self,
+        path: &Path,
+        value: &T,
+    ) -> Result<()> {
+        self.recheck()?;
+        write_json(path, value)
+    }
+
     pub fn recheck(&mut self) -> Result<()> {
         for (file, path, pin) in &mut self.files {
             anyhow::ensure!(
@@ -153,13 +162,89 @@ pub fn write_tensor(path: &Path, name: &str, tensor: &Tensor) -> Result<()> {
     write_tensors(path, &[(name, tensor)])
 }
 pub fn write_tensors(path: &Path, tensors: &[(&str, &Tensor)]) -> Result<()> {
-    anyhow::ensure!(!path.exists(), "trace already exists");
+    write_tensors_before_publish(path, tensors, || Ok(()))
+}
+
+fn write_tensors_before_publish(
+    path: &Path,
+    tensors: &[(&str, &Tensor)],
+    before_publish: impl FnOnce() -> Result<()>,
+) -> Result<()> {
     let values = tensors
         .iter()
         .map(|(name, tensor)| Ok(((*name).to_string(), tensor.to_device(&candle::Device::Cpu)?)))
         .collect::<candle::Result<std::collections::HashMap<_, _>>>()?;
-    safetensors::save(&values, path)?;
-    Ok(())
+    let stage = TensorStage::new(path)?;
+    let result = (|| -> Result<()> {
+        safetensors::save(&values, &stage.tensor)?;
+        OpenOptions::new()
+            .write(true)
+            .open(&stage.tensor)?
+            .sync_all()?;
+        before_publish()?;
+        fs::hard_link(&stage.tensor, path).with_context(|| {
+            format!(
+                "publishing tensor trace without replacement: {}",
+                path.display()
+            )
+        })?;
+        Ok(())
+    })();
+    match (result, stage.cleanup()) {
+        (Err(error), Err(cleanup)) => {
+            Err(error.context(format!("trace staging cleanup also failed: {cleanup}")))
+        }
+        (Err(error), _) => Err(error),
+        (Ok(()), cleanup) => cleanup,
+    }
+}
+
+// Stage beside the destination so publication is exclusive without buffering its payload.
+struct TensorStage {
+    directory: PathBuf,
+    tensor: PathBuf,
+}
+
+impl TensorStage {
+    fn new(destination: &Path) -> Result<Self> {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        let parent = destination
+            .parent()
+            .filter(|path| !path.as_os_str().is_empty())
+            .unwrap_or_else(|| Path::new("."));
+        let parent = parent.canonicalize()?;
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_nanos();
+        let directory = parent.join(format!(
+            ".candle-d1-tensor-{}-{nonce}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
+        fs::create_dir(&directory)?;
+        let tensor = directory.join("tensor.safetensors");
+        Ok(Self { directory, tensor })
+    }
+
+    fn cleanup(&self) -> Result<()> {
+        match fs::remove_file(&self.tensor) {
+            Ok(()) => (),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => (),
+            Err(error) => return Err(error.into()),
+        }
+        match fs::remove_dir(&self.directory) {
+            Ok(()) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(error.into()),
+        }
+    }
+}
+
+impl Drop for TensorStage {
+    fn drop(&mut self) {
+        let _ = self.cleanup();
+    }
 }
 
 pub fn load_image(path: &Path) -> Result<image::DynamicImage> {
@@ -169,4 +254,154 @@ pub fn load_image(path: &Path) -> Result<image::DynamicImage> {
     limits.max_alloc = Some(64 * 1024 * 1024);
     reader.limits(limits);
     reader.decode().context("decoding bounded d1 image")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candle::Device;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    struct TestDir(PathBuf);
+
+    impl TestDir {
+        fn new() -> Result<Self> {
+            static NEXT: AtomicU64 = AtomicU64::new(0);
+            let nonce = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)?
+                .as_nanos();
+            let path = std::env::temp_dir().join(format!(
+                "candle-d1-output-{}-{nonce}-{}",
+                std::process::id(),
+                NEXT.fetch_add(1, Ordering::Relaxed)
+            ));
+            fs::create_dir(&path)?;
+            Ok(Self(path))
+        }
+
+        fn retained(&self) -> Result<RetainedArtifacts> {
+            let path = self.0.join("artifact.bin");
+            let bytes = b"admitted";
+            fs::write(&path, bytes)?;
+            // A mutable test handle exercises recheck failure on Windows too.
+            let file = File::open(&path)?;
+            Ok(RetainedArtifacts {
+                files: vec![(
+                    file,
+                    path,
+                    Pin {
+                        file: "artifact.bin".into(),
+                        bytes: bytes.len() as u64,
+                        sha256: sha256(bytes),
+                    },
+                )],
+                identities: Vec::new(),
+            })
+        }
+    }
+
+    impl Drop for TestDir {
+        fn drop(&mut self) {
+            for name in [
+                "trace.safetensors",
+                "expected.safetensors",
+                "artifact.bin",
+                "report.json",
+            ] {
+                let _ = fs::remove_file(self.0.join(name));
+            }
+            let _ = fs::remove_dir(&self.0);
+        }
+    }
+
+    #[test]
+    fn tensor_trace_preserves_bytes_layout_and_existing_files() -> Result<()> {
+        let root = TestDir::new()?;
+        let tensor = Tensor::new(&[[1f32, 2.], [3., 4.]], &Device::Cpu)?.t()?;
+        let ids = Tensor::new(&[2u32, 0], &Device::Cpu)?;
+        let path = root.0.join("trace.safetensors");
+        write_tensors(&path, &[("logits", &tensor), ("ids", &ids)])?;
+        let expected = std::collections::HashMap::from([
+            ("logits".to_owned(), tensor),
+            ("ids".to_owned(), ids),
+        ]);
+        safetensors::save(&expected, root.0.join("expected.safetensors"))?;
+        let bytes = fs::read(&path)?;
+        assert_eq!(bytes, fs::read(root.0.join("expected.safetensors"))?);
+        let loaded = safetensors::load(&path, &Device::Cpu)?;
+        assert_eq!(
+            loaded["logits"].to_vec2::<f32>()?,
+            vec![vec![1., 3.], vec![2., 4.]]
+        );
+        assert_eq!(loaded["ids"].to_vec1::<u32>()?, vec![2, 0]);
+        assert!(write_tensor(&path, "replacement", &Tensor::new(0f32, &Device::Cpu)?).is_err());
+        assert_eq!(fs::read(&path)?, bytes);
+        Ok(())
+    }
+
+    #[test]
+    fn tensor_trace_preserves_a_racing_writer() -> Result<()> {
+        let root = TestDir::new()?;
+        let path = root.0.join("trace.safetensors");
+        let tensor = Tensor::new(&[1f32, 2.], &Device::Cpu)?;
+        let result = write_tensors_before_publish(&path, &[("logits", &tensor)], || {
+            fs::write(&path, b"competing writer")?;
+            Ok(())
+        });
+        assert!(result.is_err(), "racing destination must be rejected");
+        assert_eq!(fs::read(&path)?, b"competing writer");
+        assert_eq!(
+            fs::read_dir(&root.0)?.count(),
+            1,
+            "staging must be released"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn tensor_trace_failure_leaves_no_output_or_staging() -> Result<()> {
+        let root = TestDir::new()?;
+        let path = root.0.join("trace.safetensors");
+        let tensor = Tensor::new(&[1f32, 2.], &Device::Cpu)?;
+        let result = write_tensors_before_publish(&path, &[("logits", &tensor)], || {
+            anyhow::bail!("injected failure before publication")
+        });
+        assert!(result.is_err());
+        assert!(!path.exists());
+        assert_eq!(fs::read_dir(&root.0)?.count(), 0);
+        Ok(())
+    }
+
+    #[test]
+    fn failed_artifact_recheck_cannot_publish_a_complete_report() -> Result<()> {
+        let root = TestDir::new()?;
+        let mut retained = root.retained()?;
+        fs::write(root.0.join("artifact.bin"), b"modified")?;
+        let report = root.0.join("report.json");
+        assert!(retained
+            .write_verified_report(&report, &json!({"state":"complete"}))
+            .is_err());
+        assert!(
+            !report.exists(),
+            "invalid artifacts cannot publish completion"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn verified_report_preserves_json_and_refuses_replacement() -> Result<()> {
+        let root = TestDir::new()?;
+        let mut retained = root.retained()?;
+        let path = root.0.join("report.json");
+        let report = json!({"schema":"candle.d1_run.v1","state":"complete","language_forwards":0});
+        retained.write_verified_report(&path, &report)?;
+        let bytes = fs::read(&path)?;
+        assert_eq!(serde_json::from_slice::<Value>(&bytes)?, report);
+        assert_eq!(bytes.last(), Some(&b'\n'));
+        assert!(retained
+            .write_verified_report(&path, &json!({"state":"failed"}))
+            .is_err());
+        assert_eq!(fs::read(&path)?, bytes);
+        Ok(())
+    }
 }

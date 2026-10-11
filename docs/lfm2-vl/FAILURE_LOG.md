@@ -1420,6 +1420,14 @@ unsupported platforms fail closed. Acquisition rollback uses the same
 exclusive directory primitive, and stale manifest staging blocks the next
 plan.
 
+The 2026-10-10 d1 runner audit found this same race in its newly inspected tensor
+writer, plus completion written before final artifact verification. Two authored
+regressions failed before repair; the five-control suite now passes. The runner
+streams and syncs a sibling tensor before exclusive hard-link publication, removes
+only its named staging file/directory, and publishes the final report only after
+retained-handle/path rechecks. Keep these controls in the native gate when adding
+writers; see the dated `HISTORY.md` record for current source and evidence.
+
 **Decision rationale:** These primitives keep final evidence invisible until
 complete, make collision refusal part of the committing operation, add no
 dependency, and preserve every competing owner path. Replacement remains
@@ -1932,4 +1940,4 @@ upstream replaces this live test with a deterministic fixture or explicitly
 marks it network-dependent.
 
 ---
-AI-edited: 2026-08-12T16:04:00-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=max | task=three-repo-round-3 | change=recorded the runtime-network limit of Cargo offline mode and the exact owner-scoped skip
+AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-output-integrity | change=extended exclusive-publication prevention to d1 outputs

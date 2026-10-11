@@ -87,6 +87,9 @@ try {
     Invoke-Step "LFM2-VL example tests" {
         & cargo test --locked --offline -j 2 -p candle-examples --example lfm2-vl
     }
+    Invoke-Step "d1 example output tests" {
+        & cargo test --locked --offline -j 2 -p candle-examples --example lfm2-d1
+    }
     Invoke-Step "d1 clippy" {
         & cargo clippy --locked --offline -j 2 -p candle-vlm --lib -p candle-examples --example lfm2-d1 -- -D warnings
     }
