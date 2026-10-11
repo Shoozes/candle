@@ -335,6 +335,9 @@ impl D1Session {
                     }
                     let encoded =
                         measure(&mut timings, Phase::Vision, Some(&vision_device), || {
+                            if cancelled() {
+                                candle::bail!("d1 request cancelled before vision forward")
+                            }
                             response.usage.vision_forwards = 1;
                             let (result, dispatch) = with_native_q8_0(|| {
                                 self.loaded.model.encode_images_with_limits(

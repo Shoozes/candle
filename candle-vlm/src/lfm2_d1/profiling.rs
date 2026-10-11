@@ -36,19 +36,38 @@ pub(super) enum Phase {
 }
 
 #[cfg(test)]
+enum VisionSyncEvent {
+    Fail,
+    Cancel(std::sync::Arc<std::sync::atomic::AtomicBool>),
+}
+
+#[cfg(test)]
 thread_local! {
-    static FAIL_VISION_SYNC: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    static VISION_SYNC_EVENT: std::cell::RefCell<Option<VisionSyncEvent>> = const { std::cell::RefCell::new(None) };
 }
 
 #[cfg(test)]
 pub(super) fn with_vision_sync_failure<T>(run: impl FnOnce() -> T) -> T {
-    struct Restore(bool);
+    with_vision_sync_event(VisionSyncEvent::Fail, run)
+}
+
+#[cfg(test)]
+pub(super) fn with_vision_sync_cancellation<T>(
+    cancelled: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    run: impl FnOnce() -> T,
+) -> T {
+    with_vision_sync_event(VisionSyncEvent::Cancel(cancelled), run)
+}
+
+#[cfg(test)]
+fn with_vision_sync_event<T>(event: VisionSyncEvent, run: impl FnOnce() -> T) -> T {
+    struct Restore(Option<VisionSyncEvent>);
     impl Drop for Restore {
         fn drop(&mut self) {
-            FAIL_VISION_SYNC.with(|state| state.set(self.0));
+            VISION_SYNC_EVENT.with(|state| drop(state.replace(self.0.take())));
         }
     }
-    let restore = Restore(FAIL_VISION_SYNC.with(|state| state.replace(true)));
+    let restore = Restore(VISION_SYNC_EVENT.with(|state| state.replace(Some(event))));
     let result = run();
     drop(restore);
     result
@@ -65,10 +84,20 @@ pub(super) fn measure<T>(
     };
     if let Some(device) = device {
         #[cfg(test)]
-        if matches!(phase, Phase::Vision) && FAIL_VISION_SYNC.with(|state| state.replace(false)) {
+        let event = if matches!(phase, Phase::Vision) {
+            VISION_SYNC_EVENT.with(|state| state.borrow_mut().take())
+        } else {
+            None
+        };
+        #[cfg(test)]
+        if matches!(event.as_ref(), Some(VisionSyncEvent::Fail)) {
             candle::bail!("authored vision synchronization failure")
         }
         device.synchronize()?;
+        #[cfg(test)]
+        if let Some(VisionSyncEvent::Cancel(cancelled)) = event {
+            cancelled.store(true, std::sync::atomic::Ordering::SeqCst);
+        }
     }
     let started = Instant::now();
     let result = run();

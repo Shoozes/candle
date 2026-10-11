@@ -1068,6 +1068,79 @@ fn check_vision_sync_failure(device: &Device) -> candle::Result<()> {
     Ok(())
 }
 
+#[test]
+fn d1_profiled_vision_sync_cancellation_stops_forward_and_recovers() -> candle::Result<()> {
+    check_vision_sync_cancellation(&Device::Cpu)
+}
+
+#[cfg(feature = "cuda")]
+#[test]
+fn d1_cuda_profiled_vision_sync_cancellation_stops_forward_and_recovers() -> candle::Result<()> {
+    check_vision_sync_cancellation(&Device::new_cuda(0)?)
+}
+
+fn check_vision_sync_cancellation(device: &Device) -> candle::Result<()> {
+    use std::sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    };
+    let request = request();
+    let image = image::DynamicImage::ImageRgb8(image::RgbImage::from_pixel(
+        8,
+        8,
+        image::Rgb([64, 128, 192]),
+    ));
+    for mode in [
+        Lfm2EmbeddingLoadMode::DenseF32,
+        Lfm2EmbeddingLoadMode::Q8Rows,
+    ] {
+        let mut session = tiny_session_with_embedding_mode(device, D1Limits::default(), mode)?;
+        let images = std::slice::from_ref(&image);
+        let expected = session
+            .decide(&request, images)
+            .map_err(|error| candle::Error::Msg(error.to_string()))?;
+        let cancelled = Arc::new(AtomicBool::new(false));
+        let mut timings = super::D1Timings::default();
+        let failure = super::profiling::with_vision_sync_cancellation(cancelled.clone(), || {
+            session.decide_traced_profiled(
+                &request,
+                images,
+                || cancelled.load(Ordering::SeqCst),
+                |_| Ok(()),
+                &mut timings,
+            )
+        })
+        .expect_err("cancellation at vision synchronization stops the pending forward");
+        assert!(cancelled.load(Ordering::SeqCst));
+        assert_eq!(failure.partial.usage.vision_forwards, 0);
+        assert!(failure.message.contains("cancelled before vision forward"));
+        assert_eq!(failure.question_index, None);
+        assert!(failure.partial.answers.0.is_empty());
+        assert_eq!(failure.partial.usage, DecisionUsage::default());
+        assert_eq!(failure.partial.execution, session.execution_details());
+        assert_eq!(
+            failure.partial.unattempted_questions,
+            request.questions.0.len()
+        );
+        assert!(timings.questions.is_empty());
+        let (_, dispatch) = candle::quantized::with_native_q8_0(|| Ok(()));
+        assert_eq!(dispatch, candle::quantized::NativeQ8Execution::default());
+        cancelled.store(false, Ordering::SeqCst);
+        let recovered = session
+            .decide_traced_profiled(
+                &request,
+                images,
+                || cancelled.load(Ordering::SeqCst),
+                |_| Ok(()),
+                &mut timings,
+            )
+            .map_err(|error| candle::Error::Msg(error.to_string()))?;
+        assert_eq!(recovered, expected);
+    }
+    device.synchronize()?;
+    Ok(())
+}
+
 fn check_profiling(device: &Device) -> candle::Result<()> {
     let mut session = tiny_session(device, D1Limits::default())?;
     let request = request();
