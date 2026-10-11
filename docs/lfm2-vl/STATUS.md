@@ -2,7 +2,93 @@
 
 ## Current phase and source
 
-Current b82fde64 review closeout (2026-10-11): Complete with verified
+Current d1 cancellation closeout (2026-10-11): Complete with verified
+limitations for the scoped local repair. The owner selected Closeout and Publish
+for the two runtime/test files and four records. Native `main` and
+freshly fetched `origin/main` both start at
+`3a706c0c60f5db2222755ef89a3bf01e3d4365af`, tree
+`dffc06eca8d0653aaa41902abce90f06070a45c6`; the index is empty. All six intake
+hashes match the preceding Dropin/Work receipt. No additional runtime change is
+needed. The repair prevents a pending prefill after trace cancellation while
+preserving partial counts, native Q8 dispatch and exact session recovery.
+
+Closeout reuses the authored CPU/CUDA and strict CUDA Clippy proof at unchanged
+runtime hashes. The fresh native gate passes 530 Rust tests, 13 explicit ignores
+and six Python controls, including format/checks/Clippy and repository verifiers.
+Candle's `.tools/gitpush.ps1` reruns that gate on the clean exact commit before
+publication. Original failure/proof receipts
+remain immutable under `artifacts/lfm2-d1/20261011-3a-cancellation/`. Closeout
+proof is retained under `artifacts/lfm2-d1/20261011-cancellation-closeout/`;
+`publication-receipt.json` binds the saved commit/tree/remote identity only after
+helper success. Routes and inventories are unchanged. All seven prior proof
+owners are freshly absent; inputs and shared caches are retained.
+
+This scoped save completes the d1 repair. The real-adapter/Edge and GenEye
+portable criteria remain open under their existing owners and original source
+identities. WSL's pinned offline dependency and the earlier nonfatal CUDA linker
+warning remain recorded limitations. No production requests, downloads, consumer
+edits, PR, release tags or bulk deletion belong to this publication.
+
+Prior Dropin/Work (2026-10-11): Blocked by an external condition for the next
+real-adapter/Edge qualification. The accepted d1 cancellation batch below is
+verified complete: all six candidate file hashes and retained logs match at
+intake, and the runtime remains unchanged. Current native `main` is still
+`3a706c0c60f5db2222755ef89a3bf01e3d4365af`, with six uncommitted task files.
+
+The supplied cache has no adapter config/model or adapter-manifest candidates.
+GenUni is now at `D:\GenUni`, source `86d246f6b8a243fc4c3214ec0804259bfb5d80f8`;
+all 56 adapter-named files in its inspected runtime/proof roots belong to
+verification or temporary-test paths. No real 2.6B adapter, target/training
+manifest and held-out receipt are admitted. Test artifacts cannot satisfy that
+producer gate. The existing Edge regular-file and retirement-hook prerequisites
+retain their owners. No new actionable d1 feedback or Candle research-inbox item
+was found; later production and unrelated maintenance batches remain gated.
+
+Fresh focused proof passes all five Candle LoRA admission/switch controls and
+the CPU trace-cancellation regression. The earlier CPU/CUDA suites and full
+native gate are reused only at their matching runtime identities. This Work
+pass updates only STATUS/TODO dispositions; it does not rerun production models
+or change the consumer pin. The compact observed result is retained beside the
+original proof as `dropin-work-disposition.json`. Routes/inventories are unchanged.
+
+Completed 3a706c0c d1 review cleanup (2026-10-11): Complete with verified
+limitations. The published baseline is native/remote `main` at
+`3a706c0c60f5db2222755ef89a3bf01e3d4365af`, tree
+`dffc06eca8d0653aaa41902abce90f06070a45c6`. Its two published document bindings
+and gate logs match. Prior loading/output and profiled-vision accounting findings
+remain closed. Review identified one new cancellation defect: a successful
+`QuestionInput` observer could report cancellation, yet the pending prefill ran.
+The authored baseline reports one language forward instead of zero.
+
+The scoped repair checks cancellation inside the measured prefill closure,
+after the observer and profiling pre-synchronization, before tensor creation or
+work counters. Authored regressions cover first/second-question cancellation,
+text/images, profiled/unprofiled calls and both DenseF32/Q8Rows. Partial responses
+match an observer stop at the same boundary, and the same session recovers with
+an exact healthy response. CPU d1 passes 19 tests/two retained-evidence ignores;
+the CUDA-enabled suite passes 24/two ignores with strict CUDA test Clippy.
+The 8-GiB/600-second CUDA Job peaks at 1,310,748,672 bytes and releases its PID.
+The existing nonfatal LIBCMT linker warning remains. Production numerical
+receipts retain their original sources; this repair runs no production model.
+
+Last green verification: `.tools/verify-before-push.ps1` passes 530 Rust tests,
+13 ignores and six Python controls, including formatting, locked/offline checks,
+Clippy, Summary Bank, module layout, overlay and whitespace gates. The separate
+LFM manifest verifier passes 208 paths (20 modified/188 added); the overlay
+union remains 281 paths/five overlays/27 shared. Runtime bytes are unchanged
+since the CPU/CUDA proof. All recorded verification owners have exited.
+
+Active local files are `candle-vlm/src/lfm2_d1/{session,tests}.rs`, `D1.md`,
+`STATUS.md`, `TODO.md` and `HISTORY.md`. Proof is retained in
+`artifacts/lfm2-d1/20261011-3a-cancellation/`; its final `verification.json` binds
+the uncommitted candidate and completed native gate. Routes/inventory paths are
+unchanged. GenEye remains at `b6cfe48a`: nineteen reviewed source bytes are
+unchanged and eighteen match the original approved packet. Its Linux process
+delta and portable publication/qualification remain separately owned. WSL's
+pinned offline `accelerate-src 0.3.2` is still absent. Adapter/Edge prerequisites
+and all closed production allowances remain unchanged.
+
+Completed b82fde64 review closeout (2026-10-11): Complete with verified
 limitations. The source baseline is published native `main` at
 `b82fde64edd38ae29982307e3497eb5f181de01e`, tree
 `5a720144cbb3b4f968434cd10d28a868cd65b64c`; the read-only remote check agrees.
@@ -604,6 +690,12 @@ priority; existing runtime receipts and the next adapter gate remain unchanged.
 
 ## Exact next task
 
+The d1 cancellation repair is verified; the owner selected its scoped
+Closeout + Publish. The receipt above owns its final saved identity after helper
+success. The existing real-adapter gate still needs the producer artifact,
+target/training manifest and held-out receipt before its unchanged qualification
+criteria can run.
+
 Candle's d1 CPU projection, optional Q8Rows loading and retained CPU/CUDA parity
 gates are complete. GenEye's source/private-worker adoption and finite consumer
 proof are also complete; its next bounded task is separately authorized scoped
@@ -637,4 +729,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-b82-closeout | change=bound the two verified review records to guarded publication with remaining gates preserved
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cancellation-closeout | change=bound scoped cancellation closeout and guarded publication while preserving larger gates

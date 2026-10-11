@@ -47,6 +47,14 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   selecting any adapter investment; exposed development results cannot qualify
   unseen competence. Completed preparation identities and original proof are
   [in HISTORY](HISTORY.md#2026-10-08---genuni-and-edge-diagnostic-preparation).
+- Dropin/Work recheck (2026-10-11): The supplied cache has no adapter-config,
+  adapter-model or adapter-manifest candidate. GenUni's current `D:\GenUni`
+  source is `86d246f6b8a243fc4c3214ec0804259bfb5d80f8`; all 56 adapter-named
+  runtime/proof files found are under verification or temporary-test paths.
+  No real trained 2.6B artifact, target/training manifest and held-out receipt
+  are admitted. Five fresh Candle admission/switch tests pass; qualification
+  remains blocked on those producer inputs and the existing Edge prerequisites.
+  No production allowance is reopened and the Done When contract is unchanged.
 - Actual Work attempt (2026-10-08): One authenticated API owner session stopped
   at support refusal before request creation/submission. Seven views remained
   unattempted, no model call or retry occurred. All eight slots stay in the
@@ -207,10 +215,15 @@ Task 4 and maintained product qualification remain separately gated.
 The Candle profiling-counter repair and handoff-record cleanup are complete;
 both scoped commits are published at `ff81aabb`, as recorded in STATUS and HISTORY.
 GenEye's current proof remains bound to the published `3fa7075e` candidate.
-The verified b82fde64 recheck matches the preceding consumer review: eighteen of nineteen
-bindings match the approved packet, and the reviewed bytes are unchanged. The
-known Linux process delta still needs its relevant consumer checks before new
-portable qualification; this recheck selects no additional Candle runtime work.
+The 3a706c0c recheck confirms nineteen unchanged reviewed bytes; eighteen match
+the original approved packet. The known Linux process delta still needs its
+relevant consumer checks before new portable qualification.
+Candle's scoped trace-cancellation repair is verified locally on authored
+CPU/CUDA fixtures in both embedding modes. The retained native gate passes
+530 Rust tests/13 ignores and six Python controls. The owner selected scoped
+Closeout + Publish for the six task files; STATUS's guarded receipt owns the
+saved identity after helper success.
+The consumer's original pin and production proof retain their source identities.
 
 - What: Review the changed process owner, publish the scoped GenEye source,
   then qualify a clean portable candidate pinned to Candle `3fa7075e`.
@@ -392,4 +405,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-b82-closeout | change=saved the verified consumer hold without changing its completion or proof requirements
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cancellation-closeout | change=saved verified scoped progress without narrowing consumer or adapter completion

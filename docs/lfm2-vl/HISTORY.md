@@ -2,6 +2,11 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-10-11 - d1 trace cancellation
+
+Trace cancellation stops pending prefills; CPU/CUDA counts and recovery pass.
+Guarded closeout publication: [STATUS](STATUS.md).
+
 ## 2026-10-11 - published d1 review and consumer delta recheck
 
 Read-only Review/Recheck starts at published native/remote `main`
@@ -3202,4 +3207,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-review-closeout | change=recorded scoped publication; retained original proof
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cancellation-closeout | change=saved verified trace-cancellation repair
