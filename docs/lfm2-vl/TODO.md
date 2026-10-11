@@ -202,6 +202,31 @@ Task 4 and maintained product qualification remain separately gated.
 
 ## Sequencing holds
 
+### GenEye-owned Q8Rows portable handoff
+
+The Candle profiling-counter repair and handoff-record cleanup are complete;
+their authorized guarded publication is recorded in STATUS and HISTORY.
+GenEye's current proof remains bound to the published `3fa7075e` candidate.
+
+- What: Publish the qualified GenEye source, then qualify a clean portable
+  candidate pinned to Candle `3fa7075e`. The source/private-worker consumer gate
+  is complete; this is not remaining Candle implementation.
+- Why: The four-request CPU/CUDA proof passes, but private worker setup and an
+  unpublished working-tree source do not qualify a portable product release.
+- When: After explicit GenEye source-publication and portable-qualification
+  authorization. Its consumed consumer allowance cannot be reused.
+- Where: GenEye's active `docs/TODO.md`, worker/lock/package owners and the
+  [retained handoff record](HISTORY.md#2026-10-11---d1-review-recheck-and-consumer-handoff-cleanup).
+- How: Preserve unrelated owner changes, use GenEye's guarded helper for the
+  named source batch, then use a suitable clean published checkout without
+  changing the frozen LTS qualification owner. Keep package admission and LTS
+  activation separately authorized; any new model request needs a fresh budget.
+- Done when: Published source, exact Candle lock/worker/package identities and
+  required portable-candidate evidence agree. Existing consumer proof keeps its
+  original source identity and the retained image-case quality limitation.
+- Verification: GenEye's clean published-source guard, package provenance and
+  release checks. The completed consumer qualification is not rerun implicitly.
+
 Deferred GPT-OSS-focused optional acceleration research is maintained in
 [GPT-OSS status](../gpt-oss/STATUS.md#deferred-optional-acceleration-research).
 Profile existing safe cases before selecting one optimization; exact support
@@ -357,4 +382,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-q8rows-parity-closeout | change=closed the verified loading item while preserving the remaining producer and consumer gates
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-accounting-closeout | change=closed the selected Candle repair while preserving the separate GenEye portable and adapter prerequisites

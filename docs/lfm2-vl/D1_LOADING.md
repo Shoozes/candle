@@ -141,7 +141,8 @@ progress publication on 2026-10-10. That saved the locally verified option and
 runner repairs before the production qualification below. The exact saved
 commit/tree/remote identity is retained in
 `artifacts/lfm2-d1/20261010-loading-closeout/publication-receipt.json` only after
-helper success. Consumer mode adoption and pin/package proof remain separate.
+helper success. That producer checkpoint did not perform consumer mode adoption
+or pin/package proof; the later GenEye qualification is recorded below.
 
 ## Retained production parity
 
@@ -178,8 +179,7 @@ Exact source, commands, verifier/bounds, trace and Job bindings are retained in
 `artifacts/lfm2-d1/20261010-loading/production-parity.json`. The approved launcher
 is `run-parity.ps1` in that directory. Read-only comparators are `compare-modes.py`,
 `replay-reference.py` and `tools/lfm2_vl/d1/compare_runs.py`; they perform zero
-model forwards. The selected Candle loading gate is complete. GenEye mode
-selection and pin/lock/package/worker proof remain separately owned. The inference
+model forwards. The selected Candle loading gate is complete. The inference
 batch made no consumer edits, commits or publication. Its immutable receipt has
 SHA-256 `35c1be0bb8abf5ff0a0a3e4f483a20ef4d80fa603f5e0b833cb37db74e46cf0c`.
 
@@ -190,5 +190,19 @@ identity and the rechecked production proof are retained in
 only after helper success. Runtime source and numerical receipts stay bound to
 `7c9067bc`; documentation publication performs no new production forwards.
 
+## GenEye consumer qualification
+
+GenEye's local worker selects the additive Q8Rows constructor at Candle
+`3fa7075e536e66b024d14cee3f6f423d81d67162`. Its lock and packaging policy bind
+that revision. Private CPU/CUDA workers report shared 278,528,000-byte Q8 storage
+with zero additional lookup bytes. The separately approved two-load/four-request
+text/image proof preserves all 52 numeric answer values exactly against each
+matching-device producer, native dispatch, key order and complete process release.
+The allowance is closed. This is local consumer qualification on an unpublished
+GenEye source candidate; a portable release still requires authorized source
+publication and clean package qualification. The retained image-case quality
+limitation is unchanged. Exact source and receipts are in
+[HISTORY](HISTORY.md#2026-10-11---d1-review-recheck-and-consumer-handoff-cleanup).
+
 ---
-AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-q8rows-parity-closeout | change=polished the completed loading contract and bound guarded documentation publication to immutable parity proof
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-handoff-recheck | change=recorded the source-bound GenEye consumer qualification and its remaining portable gate

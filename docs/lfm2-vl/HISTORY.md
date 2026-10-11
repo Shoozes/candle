@@ -2,6 +2,136 @@
 
 This file preserves completed implementation and verification evidence. Any present-tense phase, blocker, worktree, or next-task statement below its dated section is historical. Use `STATUS.md` for current truth and `TODO.md` for active work.
 
+## 2026-10-11 - d1 accounting and handoff closeout
+
+The owner selected Closeout + Publish for the verified three-file d1
+profiling-accounting repair and six consumer/current-state documents below.
+Native `main` and freshly fetched `origin/main` both start at
+`3fa7075e536e66b024d14cee3f6f423d81d67162`; the index is empty and the nine
+named files are the entire task diff. All nine intake hashes match the preceding
+review receipt. No additional runtime change is needed. Current records now
+distinguish this authorized Candle publication from the completed local review
+and GenEye's remaining portable handoff.
+
+Closeout reuses authored CPU/CUDA regression and strict CUDA Clippy proof only
+at the unchanged runtime hashes. The repair's native gate passes 529 Rust tests,
+13 explicit ignores and six Python controls. Publication reruns the required
+native formatting, locked/offline checks, tests, Clippy, Summary Bank, layout,
+overlay and whitespace gate on the clean exact commit. Routes and inventories
+are unchanged: LFM 208 paths (20 modified/188 added), union 281 paths/five
+overlays/27 shared paths. All four prior owned verification PIDs are freshly
+absent; referenced evidence, inputs and shared build caches remain retained.
+
+Scoped forward commits preserve both histories. Exact saved source/tree,
+remote equality, verification logs, owner release and the guarded helper
+receipt are recorded in
+`artifacts/lfm2-d1/20261011-accounting-closeout/publication-receipt.json`
+only after helper success. No production-model requests, downloads, consumer
+edits, PR, release tags or bulk deletion belong to this batch. WSL remains
+unavailable because its pinned offline dependency is missing; the earlier CUDA
+LIBCMT link warning is nonfatal. GenEye's proof retains Candle `3fa7075e`;
+the real adapter/Edge and GenEye portable/LTS criteria remain incomplete in
+their original owning tasks.
+
+## 2026-10-11 - d1 review, recheck and consumer handoff cleanup
+
+The review starts from clean native `main` at published Candle
+`3fa7075e536e66b024d14cee3f6f423d81d67162`, tree
+`4df52f11cbe493a84a4e279ca128878c3e916fbb`. Relative to numerical source
+`7c9067bc`, only the five parity-closeout documents differ. Coverage includes
+d1 Q8Rows header/row/storage admission, local loader propagation, session limits,
+prompt/readout, independent-prefill cache reset and failure counts, native CPU
+Q8 scheduling and CPU selector restoration, plus exclusive example traces and
+completion-after-recheck. Other overlay boundaries were reviewed through their
+registry; this is not a new numerical audit of unrelated models.
+
+Previous loading/output/consumer findings remain verified closed. GenEye's
+nineteen bound source files still match its approved packet; the consumer,
+closeout, journal and consumed-marker hashes match their retained identities.
+The source remains an unpublished working-tree candidate on GenEye
+`f9683595382a1c4b4929448e535e1e620ec1747a`, with worker, all six resolved Candle
+packages and packaging policy pinned to `3fa7075e`. New documentation findings
+were a stale completed loading-assessment next task and a consumer handoff still
+described as pending. Cleanup reconciles six existing documents and bounds the
+remaining GenEye-owned portable gate in TODO. Routes and overlay path inventories
+do not change. No consumer source edits, staging, commits or publication.
+
+The final failure-path check reproduced one runtime accounting defect: the
+profiled image path incremented its vision counter before synchronization,
+reporting a forward that never started when synchronization failed. A scoped,
+thread-local test-only synchronization fault reproduces the public failure:
+all input/output/language work and native dispatch are zero, but the old vision
+count is one. Moving that increment into the measured encode closure corrects
+the counter without changing successful model execution. CPU and optional CUDA
+regressions pass with zero work/answers, all questions unattempted, and exact
+recovery on the same session. The fixture executes no production model. Focused
+CPU d1 tests pass 18 with two retained-evidence ignores; the CUDA-enabled d1
+suite passes 22 with the same two ignores, including Q8Rows parity. Both
+8-GiB/600-second authored CUDA Jobs exit zero and release their PIDs.
+
+Warnings-denied CUDA library/test Clippy initially exposes two pre-existing
+single-image clones in the neighboring CUDA test. Replacing those clones with
+borrowed singleton slices closes both lints; strict Clippy and rebuilt CUDA
+fixtures pass. The first CUDA caller check read an unsupported `exit_code`
+receipt property and reported a false failure after 22 passing tests. Validation
+of the original `child_exit_code: 0` and process-release fields corrected that
+caller error without rerunning that completed Job. The second Job qualifies the
+later test-only lint repair. Original receipts and failure logs remain intact.
+
+The earlier human-approved consumer run uses two loads/four requests, twelve
+language/two vision forwards, zero output tokens, warmup or retries, CPU before
+CUDA. All 52 numeric answer values match their same-device producer exactly.
+Native counts are 501/638 for text/image on each device; typed and lexical key
+order, shared 278,528,000-byte Q8Rows storage and zero additional lookup bytes
+pass. Both owner/worker families exit with complete cleanup and no listeners.
+Image case i01 still selects `diff`; numerical parity establishes no accuracy
+gain. Its general owner ceilings are 22 requests/3,600,000 ms, while the frozen
+qualifier supplies the tighter four-request cap and 900,000-ms per-device abort.
+
+Retained evidence root: `D:\GenEye-evidence\candle-q8rows-adoption-20261010`.
+
+- `consumer-verification.json`: 12,716 bytes, SHA-256
+  `a68f91ed3e8d5a5f8666903df1a317520178b2c59876dc7243ff2cea07e2cdc7`.
+- `closeout.json`: 11,705 bytes, SHA-256
+  `4d2f1f995ab5cb1809bca032e81d3e0ad0d73839093260fb744e2a6d6b4f5d7e`.
+- `consumer-proof-20261010/proof.jsonl`: 30,461 bytes, SHA-256
+  `af7165d179b978ed754e00edc85c415881bf5eecdd072a39af6753d34c09e349`.
+- `allowance-consumed.json`: 321 bytes, SHA-256
+  `da680918add715c75bde6524c22f2bd8cbbc6f77ac4d97fae4e2a695011bd5c5`.
+
+These are reused immutable consumer receipts, not new inference in this review.
+GenEye's source gate records 1,642 Rust passes/10 ignores and 543 Node passes/
+two skips, with focused offline WSL checks; that evidence keeps its own source.
+Portable packaging still requires separately authorized publication and a clean
+published candidate. Installed LTS, frozen qualification and unrelated owner
+work remain outside this Candle documentation cleanup. Original Candle model
+proof retains `7c9067bc`; no closed allowance is reopened.
+
+Current-task baseline: the read-only native Summary Bank verifier and initial
+native gate pass. The new regression fails on the prior counter placement with
+Cargo exit 101 (`vision_forwards: 1` instead of zero); its log is retained as
+`regression-before.log`. Final `pwsh -NoProfile -File
+.tools/verify-before-push.ps1` passes 529 Rust tests, 13 explicit ignores and six
+Python controls, with formatting, locked/offline library/four-example checks,
+strict CPU Clippy and route/layout/overlay gates. The focused command
+`cargo test --locked --offline -j 2 -p candle-vlm --lib lfm2_d1` passes 18 tests
+with two explicit retained-evidence ignores. The CUDA build uses
+`cargo test --locked --offline -j 2 -p candle-vlm --lib --features cuda --no-run`;
+its named executable runs filter `lfm2_d1::tests --test-threads=1` in the bounded
+Job. CUDA library/test Clippy uses
+`cargo clippy --locked --offline -j 2 -p candle-vlm --lib --tests --features cuda -- -D warnings`.
+
+Current-task proof is `artifacts/lfm2-d1/20261011-review-recheck/verification.json`.
+Code is frozen before the final native gate; only completion records change
+after it, with final document/route/inventory/whitespace rechecks. At this local
+review milestone all nine named files remained uncommitted. Routes and
+inventories are unchanged: LFM 208
+paths (20 modified/188 added), union 281/five overlays/27 shared paths.
+A read-only check
+confirms `accelerate-src` 0.3.2 is absent from Codex-Compat's Cargo cache and
+source tree; the unchanged failing Cargo replay is not retried. New CUDA proof
+is limited to authored fixtures; no production-model call or accuracy claim.
+
 ## 2026-10-10 - Q8Rows parity documentation closeout
 
 The owner separately requested Closeout + Publish for the completed Q8Rows
@@ -3043,4 +3173,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-q8rows-parity-closeout | change=recorded scoped documentation publication without changing completed numerical evidence
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-accounting-closeout | change=recorded authorized scoped publication and retained verification without relabeling numerical or consumer proof

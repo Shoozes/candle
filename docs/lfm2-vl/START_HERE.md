@@ -40,9 +40,13 @@ see `D1.md` and `STATUS.md` for source-bound proof and publication identity.
 Opt-in d1 Q8Rows loading is published at `7c9067bc` and fresh CPU/CUDA parity
 with retained artifacts is complete; see `D1_LOADING.md` for the construction
 contract and source-bound proof. `STATUS.md` identifies the separate guarded
-publication receipt for these completed parity records. GenEye mode adoption
-and pin/package/worker verification remain separately owned. The next active
-Candle item is the real 2.6B adapter
+publication receipt for these completed parity records. GenEye's local worker,
+lock and packaging policy now pin Candle `3fa7075e` and select shared Q8Rows;
+its separately approved four-request CPU/CUDA consumer proof and process release
+pass. GenEye's source is still an unpublished working-tree candidate; portable
+packaging and LTS activation remain separately owned gates. See
+[the handoff record](HISTORY.md#2026-10-11---d1-review-recheck-and-consumer-handoff-cleanup).
+The next active Candle implementation item is the real 2.6B adapter
 gate in `TODO.md`, pending producer inputs. CUDA prefill qualification is
 published at `f93a4111ae41683b548758225940f80de6cd37e8`.
 The subsequent pinned upstream/CPU-options batch is qualified at `34830c19`;
@@ -185,4 +189,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-q8rows-parity-closeout | change=routed completed Q8Rows parity and its separate guarded documentation publication
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-handoff-recheck | change=routed completed consumer proof and the separate portable publication boundary

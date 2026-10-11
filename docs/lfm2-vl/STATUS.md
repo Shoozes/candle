@@ -2,6 +2,46 @@
 
 ## Current phase and source
 
+Current d1 accounting and handoff closeout (2026-10-11): Complete with verified
+limitations locally; the owner selected Closeout + Publish for this nine-file
+batch through Candle's guarded helper. The source baseline is published native
+`main` at
+`3fa7075e536e66b024d14cee3f6f423d81d67162`, tree
+`4df52f11cbe493a84a4e279ca128878c3e916fbb`. Review covers d1 loading,
+session/readout, native CPU Q8 scheduling, CPU mode selection, example output
+ownership and the retained GenEye consumer proof. One failure-accounting defect
+was reproduced: profiling reported one vision forward when synchronization
+failed before encoding. The counter now advances inside the measured encode
+call. Completed local changes include `candle-vlm/src/lfm2_d1/{session,profiling,tests}.rs`
+and `STATUS.md`, `START_HERE.md`, `D1.md`, `D1_LOADING.md`, `HISTORY.md`, `TODO.md`.
+The six documents reconcile the completed consumer gate and stale next task.
+No implementation remains active. The repair's native
+`.tools/verify-before-push.ps1` gate passes 529 Rust tests,
+13 explicit ignores and six Python controls, with formatting, locked/offline
+checks, Clippy and route/layout/overlay gates. Focused CPU d1 tests pass 18;
+the CUDA-enabled d1 suite passes 22, both with two retained-evidence ignores.
+Strict CUDA library/test Clippy passes. Both authored CUDA Jobs exit zero and
+release their PIDs. The read-only consumer source/receipt bindings remain valid.
+The original repair proof remains
+`artifacts/lfm2-d1/20261011-review-recheck/verification.json`. Closeout rechecks
+the same runtime bytes, affected records, owner release and inventories. Its
+fresh native gate log is
+`artifacts/lfm2-d1/20261011-accounting-closeout/native-closeout.log`.
+Guarded publication reruns the native gate on the clean exact commit. Saved
+commit/tree/remote equality and the helper receipt are retained in
+`artifacts/lfm2-d1/20261011-accounting-closeout/publication-receipt.json`
+only after helper success. Summary Bank routes and overlay path counts remain
+unchanged; their validators still run. Original numerical proof and GenEye's
+consumer qualification retain their original sources and the exact `3fa7075e`
+consumer pin. Referenced inputs, receipts and shared build caches are retained;
+owned verification processes are released, with no bulk deletion.
+WSL remains unrun after a fresh cache/source check confirms its missing pinned
+dependency; the existing CUDA LIBCMT link warning remains nonfatal. No new
+production calls or downloads belong to this closeout. GenEye source publication,
+portable packaging and LTS activation remain separately owned and authorized.
+
+The following completed checkpoints retain their original execution identities.
+
 Current Q8Rows parity closeout (2026-10-10): Complete with verified limitations
 locally; the owner authorized guarded publication of the completed parity records.
 Fresh retained-artifact production parity qualifies opt-in d1 Q8Rows loading.
@@ -60,12 +100,21 @@ its pinned dependency is uncached; the existing nonfatal CUDA LIBCMT link warnin
 remains. The two-case loading comparison establishes parity, not a new 20-case
 accuracy result or inference-speed claim.
 
-The selected Candle loading gate is complete. Next consumer task: GenEye may
-select the published opt-in constructor and prove its pin/lock/package and
-bounded-worker behavior under separate authorization. The first remaining
-Candle TODO is the real 2.6B adapter/Edge gate, which still needs GenUni's
-retained adapter, training manifest and held-out evidence. No additional
-quant-format, lazy-vision or provider change is selected by this proof.
+The selected Candle loading gate is complete. GenEye's local source selects
+shared Q8Rows and pins its worker, six resolved Candle packages and packaging
+policy to `3fa7075e`. Its separately approved CPU-then-CUDA consumer proof
+completed two loads/four requests, twelve language/two vision forwards, zero
+output tokens and no warmup or retries. All 52 numeric answer values match their
+same-device producer exactly; ordering, native dispatch and process release
+pass. This review rechecks all nineteen bound consumer source files and the
+immutable receipts. GenEye's source remains an unpublished working-tree
+candidate on `f9683595382a1c4b4929448e535e1e620ec1747a`; private worker setup is
+qualified, while a portable product package and LTS activation remain separate.
+Source-bound consumer proof and limitations are recorded in
+[HISTORY](HISTORY.md#2026-10-11---d1-review-recheck-and-consumer-handoff-cleanup).
+The first remaining Candle implementation TODO is the real 2.6B adapter/Edge
+gate, which still needs GenUni's retained adapter, training manifest and held-out
+evidence. No additional quant-format, lazy-vision or provider change is selected.
 
 Prior runner repair proof is preserved at
 `artifacts/lfm2-d1/20261010-output-integrity/verification.json`, SHA-256
@@ -486,11 +535,21 @@ priority; existing runtime receipts and the next adapter gate remain unchanged.
 
 ## Exact next task
 
-Candle's next bounded task is to compare and select one optional d1 loading mode
-as scoped in `TODO.md`. Measure cold start and peak memory from retained inputs,
-then record its public contract before implementation. The CPU single-row task
-is archived in `HISTORY.md` and its completion is bound to the current guarded
-publication receipt above. The independent Edge adapter handoff remains as follows.
+Candle's d1 CPU projection, optional Q8Rows loading and retained CPU/CUDA parity
+gates are complete. GenEye's source/private-worker adoption and finite consumer
+proof are also complete; its next bounded task is separately authorized scoped
+source publication, followed by clean portable-candidate qualification. GenEye
+owns that gate and its active TODO. Preserve unrelated owner work and the frozen
+LTS checkout. All production allowances described here are closed; any additional
+model request requires a new finite allowance.
+
+The Candle profiling-accounting repair and handoff records above are complete
+and selected for guarded publication; its exact saved identity is owned by the
+closeout receipt above. GenEye's current qualification keeps its exact
+`3fa7075e` pin and original source packet.
+
+The first remaining Candle implementation item is the real 2.6B adapter/Edge
+gate in `TODO.md`, with these unchanged external prerequisites.
 
 Edge owns the next bounded repair: provide a consumer-compatible regular
 artifact binding with the required GGUF filename while preserving the base
@@ -506,4 +565,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-q8rows-parity-closeout | change=bound the completed parity records to authorized guarded publication and preserved numerical source identity
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-accounting-closeout | change=bound the verified accounting repair and consumer records to authorized guarded publication while preserving original proof identities
