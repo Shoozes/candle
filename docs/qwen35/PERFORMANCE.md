@@ -1,5 +1,49 @@
 # Qwen3.5 4B CPU performance and CUDA assessment
 
+## Scoped review repair replay, 2026-10-12
+
+After restoring completed projection observations on later execution failure,
+the same frozen authored operands, ten warmups and 100 alternating paired
+samples were replayed in an 8 GiB/600-second native Job. Both owners exited;
+the component suite passes twelve/ten ignores, including failure prefixes and
+cache reset. No retained model was opened or forwarded. Current source/binary
+bindings, raw measurements and owners are under
+`artifacts/maintained-models/20261012-review/`.
+
+| Workload | Sequential/Grouped medians, ms | Grouped faster pairs |
+| --- | --- | ---: |
+| Recurrent | 0.14620 / 0.09210 | 97/100 |
+| FFN | 0.08135 / 0.06810 | 93/100 |
+
+Every paired output is bit exact; observed median reductions are 37.0%/16.3%.
+Historical measurements below retain their original source identities. This
+shared-host component replay establishes no new production-model throughput.
+
+## Authored transfer grouping, 2026-10-12
+
+Before optimization, synchronized transfer/kernel/download profiling used
+authored Q8_0 matrices with input width 2048 and recurrent output widths
+`[6144,2048,16,16]`, FFN `[5632,5632]`. Weight/input formulas, ten warmups,
+100 samples and alternating paired order were frozen before measurements.
+Each run was a native 8 GiB/600-second Job on RTX 4090; all owners exited.
+No retained weights or model tokens were used. The source/binary-bound protocol,
+raw timings and owners live in `artifacts/maintained-models/20261012/`.
+
+| Workload | Baseline H2D/kernel/D2H medians, ms | Paired Sequential/Grouped medians, ms | Grouped faster pairs |
+| --- | --- | --- | ---: |
+| Recurrent | 0.04495 / 0.08695 / 0.03585 | 0.14950 / 0.09355 | 98/100 |
+| FFN | 0.02140 / 0.05115 / 0.02100 | 0.08010 / 0.06800 | 91/100 |
+
+Stage timings synchronize separately and must not be added to infer the
+paired whole-call latency. Matched whole calls improve median latency 37.4%
+and 15.1%; every compared F32 output is bit exact. The 32-token, two-block
+authored host profile totals 23.875 ms, with recurrent state 0.1161 ms and
+convolution 0.0543 ms. Its legacy projection kernel timer measures launch
+latency; only the separate synchronized stage profile measures GPU completion.
+Small authored host state does not predict long-context production attention
+cost. These shared-host component results have no invented speed threshold
+and establish no full retained-model throughput or new reference parity.
+
 ## Reproducible CPU baseline, 2026-09-30
 
 This is a release-profile **test binary** of local Candle `main` at
@@ -294,3 +338,6 @@ limits, not hard OS process caps. The relevant Edge owner must rebuild its
 application against these local Candle changes and rerun the real 90-second
 Responses gate, including measured application overhead and resource cleanup.
 No normal provider selection follows from the Candle timing result alone.
+
+---
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-model-review | change=rechecked and repaired scoped observations, receipt counts and handoff

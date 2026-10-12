@@ -16,6 +16,8 @@ artifact-specific fixture is kept separate from the config-driven model code.
 - `candle-transformers/src/models/qwen35/mod.rs`
 - `candle-transformers/src/models/qwen35/admission.rs`
 - `candle-transformers/src/models/qwen35/cpu.rs`
+- `candle-transformers/src/models/qwen35/cpu/recovery_tests.rs`
+- `candle-transformers/src/models/qwen35/cpu/projection_tests.rs`
 - `candle-core/src/quantized/k_quants.rs`
 - `candle-core/src/quantized/cuda.rs`
 - `candle-core/src/quantized/fast_mmvq.rs`
@@ -45,3 +47,6 @@ artifact-specific fixture is kept separate from the config-driven model code.
 
 All shared paths are listed in the root registry. The LFM2-VL and GPT-OSS
 overlays retain independent implementation and proof ownership.
+
+---
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models | change=implemented and verified scoped model improvements

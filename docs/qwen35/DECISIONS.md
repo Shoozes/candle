@@ -1,5 +1,32 @@
 # Qwen3.5 Compatibility Decisions
 
+## 2026-10-12 review: Preserve failure observations
+
+Grouping must preserve the readable completed prefix on a later projection
+failure. Sequential observations occur immediately after each result, as
+before the grouping work. An observed Grouped failure downloads completed
+outputs once before returning its original kernel error; unreadable prefix
+data is never fabricated and kernels are not retried. The unobserved path
+continues shared transfers. This diagnostic recovery does not copy caches or
+change arithmetic, defaults or token-boundary cancellation.
+
+## 2026-10-12: Clear failed execution and group only shared transfers
+
+Admission checks the entire prefill vocabulary and context before starting.
+Rejected input retains existing state; any admitted decode execution error
+resets every recurrent/attention cache and position. Cancellation is checked
+between tokens, with the same reset behavior on CPU and CUDA/host-state.
+This avoids expensive whole-cache copies and makes exact fresh replay possible.
+
+Sequential remains the public loading default. Grouped is explicitly selected
+through `load_with_projection_mode` and reported by `projection_mode()`.
+It changes transfers only, retaining each individual scoped Q8 kernel and
+F32 fallback, observer sequence, host arithmetic and reduction order. Outputs
+are concatenated only after checked widths; weights are not fused/requantized.
+The frozen paired authored workloads showed lower latency and bit-exact
+results, so the opt-in mode is retained. Full-model qualification and any
+default change remain separate from these synthetic measurements.
+
 ## 2026-09-30: Own a separate, bounded Qwen3.5 overlay
 
 Candle owns a `qwen35` module and keeps the exact Darkidol Ballad 4B reference
@@ -119,3 +146,6 @@ their existing behavior. The exact 49-token reference and the sealed
 1,024-token Edge input passed their unchanged 0.01 raw-logprob ceiling.
 Measured improvement and remaining application gate ownership are in
 `PERFORMANCE.md` and `INTEGRATION.md`.
+
+---
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-model-review | change=rechecked and repaired scoped observations, receipt counts and handoff

@@ -25,13 +25,28 @@ and tensor directory pass. Use the exact Q8_0/F32 4B model identity:
 native CPU reference. With Candle's `cuda` feature,
 `qwen35::cpu::HybridGpuModel::load(artifact, max_positions, max_state_bytes,
 device)` requires a CUDA device. Both provide token-ID `prefill`, `decode`,
-`reset`, and `position`; the hybrid also provides `prefill_with_cancel` with
-token-boundary cancellation and state clearing. Projection weights reside on
+`reset`, and `position`. Both now provide `prefill_with_cancel` with token-boundary
+cancellation and state clearing. Token/context admission rejection preserves
+state; admitted execution failures clear all caches and reset position.
+Projection weights reside on
 CUDA while recurrent FIFO/matrix state, attention KV, and scalar operations
 remain on CPU. Admission is configuration driven, but only this artifact,
 short context, and the pinned trace have acceptance evidence. There is no
 tokenizer, chat-template, application resource broker, receipt schema, or
 end-to-end product loader in this Candle module.
+
+The 2026-10-12 maintained-model batch adds
+`HybridProjectionMode::{Sequential, Grouped}` and
+`HybridGpuModel::load_with_projection_mode(artifact, max_positions,
+max_state_bytes, device, mode)`. Existing `load` remains Sequential;
+`projection_mode()` reports the selected option. Grouped shares transfers for
+recurrent QKV/Z/alpha/beta and FFN gate/up without changing their scoped Q8
+kernels, F32 arithmetic or host state. Its bit-exact authored component and
+paired-latency proof is in `PERFORMANCE.md`; the historical retained-model
+receipts below remain bound to their original sources. New retained-model
+qualification needs its own fresh finite allowance before consumer adoption.
+The diagnostic observer also retains readable completed projections if a
+later projection fails; the model still clears its partially changed cache.
 
 The native strict CUDA trace passed 49-token prefill, cached decode
 `[19, 248046]`, EOS, identical top-10 sets, maximum raw-logprob error
@@ -83,3 +98,6 @@ route. The owner subsequently authorized a source closeout and publication
 round. Local checkpoint verification is recorded in STATUS; source publication
 awaits a supported secure authentication route. The Edge application gate
 remains independently owned.
+
+---
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-model-review | change=rechecked and repaired scoped observations, receipt counts and handoff

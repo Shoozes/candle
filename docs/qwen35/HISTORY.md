@@ -1,5 +1,14 @@
 # Qwen3.5 Compatibility History
 
+## 2026-10-12: Recovery and opt-in shared projection transfers
+
+Admitted execution failures and token-boundary cancellation clear every cache;
+validation rejection preserves state. Authored CPU/CUDA replay, mixed Q8/F32
+components and observer order pass. Frozen paired transfer measurements retain
+Grouped as an opt-in mode with Sequential still default. See
+[performance](PERFORMANCE.md#authored-transfer-grouping-2026-10-12) for bounds
+and source-bound measurements. No retained-model run or consumer activation.
+
 ## 2026-09-30: Exact 4B Q8_0/F32 CPU trace and reset gate
 
 Added checked, caller-bounded GGUF admission and config-driven CPU
@@ -62,3 +71,6 @@ full raw-logit vectors exactly; sampled CUDA free memory remained unchanged.
 The native CPU strict trace and shared GPT-OSS regression passed again.
 `PERFORMANCE.md` records the matched stages, exact evidence paths, resource
 bounds, and the still-required end-to-end Edge Responses gate.
+
+---
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models | change=implemented and verified scoped model improvements

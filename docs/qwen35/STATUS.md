@@ -2,6 +2,46 @@
 
 ## Scope and current state
 
+Source closeout (2026-10-12): the owner authorized guarded publication of
+recovery, opt-in grouped projections and the reviewed failure diagnostics.
+The exact source/tree and final native gate are identified by Candle's
+`artifacts/publication/last-push.json` when it matches HEAD. Component evidence
+below remains source-bound; no new retained-model qualification or consumer
+activation follows from publication.
+
+October 12 review cleanup at unchanged main `4c2dfaf3`: the observer path now
+retains readable completed projection results when a later projection fails,
+including Sequential FFN-gate and recurrent-QKV observations. Grouped reads
+the available prefix once, returns the original error and re-runs no kernels.
+CPU regression tests pass nine/four ignores; bounded CUDA twelve/ten ignores,
+with exact recovery, successful observer order and failure-prefix controls.
+Frozen authored replay remains exact and faster in 97/100 recurrent and
+93/100 FFN pairs; current medians are in `PERFORMANCE.md`. Original model
+receipts are unchanged and no new production qualification is claimed.
+The repaired source also passes the complete native Candle gate, including
+strict CPU Clippy and the maintained library/example matrix. Strict affected
+CUDA Clippy also passes; both bounded CUDA owners exited and released.
+
+Maintained-model forward batch (2026-10-12), starting at Candle `4c2dfaf3`:
+CPU and hybrid prefill/decode now validate tokens/context before mutation,
+preserve caches on admission rejection, and reset all caches/position on
+execution failure. CPU `prefill_with_cancel` shares the hybrid token-boundary
+contract. No cache snapshots are copied. Authored two-block CPU tests pass
+eight/four ignores; bounded CUDA tests pass ten/ten ignores, including exact
+recovery, component logits and observer ordering in both projection modes.
+
+`HybridGpuModel::load_with_projection_mode(..., device, mode)` adds explicit
+`HybridProjectionMode::{Sequential, Grouped}`; ordinary `load` stays
+Sequential. Grouped uploads recurrent QKV/Z/alpha/beta or FFN gate/up input
+once, executes the same scoped kernels, concatenates outputs on-device and
+downloads once. It preserves F32/Q8 mixtures and reduction order. Matched
+authored measurements improve medians 37.4% recurrent/15.1% FFN; exact
+outputs pass every pair. This is component evidence, not retained-model
+latency/qualification. Production inference needs its own fresh allowance.
+Active implementation files are `cpu.rs`, its two test modules and these
+records. The next production task is a clean source/binary-bound qualification
+proposal; no Edge activation, consumer edit, commit or publication occurred.
+
 Pre-overlay Candle baseline: `main` at
 `0c0bc3ecb7eed3eb22c8fa08a190741c84f2bb56`. Active files are `candle-transformers/src/models/qwen35/`,
 the scoped Q8_0 CPU/CUDA core and CUDA kernel paths, model registry, fixture,
@@ -227,3 +267,6 @@ rebuild and sealed 1,024-token Responses rerun under the existing 90-second
 deadline with resource/receipt checks, followed by symbio-code consumer
 qualification. The owner authorized this closeout and publication round; the qualified
 source checkpoint remains local until its secure publication route is available.
+
+---
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models-publish | change=closed out verified scoped progress while retaining numerical qualification gates

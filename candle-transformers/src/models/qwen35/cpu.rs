@@ -5,8 +5,24 @@ use candle::quantized::{gguf_file::TensorInfo, QMatMul, QTensor};
 use candle::{bail, Device, Result, Tensor};
 use std::sync::Arc;
 
+#[cfg(test)]
+#[path = "cpu/recovery_tests.rs"]
+mod recovery_tests;
+
+#[cfg(all(test, feature = "cuda"))]
+#[path = "cpu/projection_tests.rs"]
+mod projection_tests;
+
 type ModelObserver<'a> = &'a mut dyn FnMut(usize, &str, &[f32]);
 type ComponentObserver<'a> = &'a mut dyn FnMut(&str, &[f32]);
+
+/// Shared-input projection transfer policy for the CUDA/host-state hybrid.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum HybridProjectionMode {
+    #[default]
+    Sequential,
+    Grouped,
+}
 
 struct Recurrent {
     qkv: QMatMul,
@@ -55,6 +71,7 @@ enum Cache {
 }
 
 pub struct CpuModel {
+    projection_mode: HybridProjectionMode,
     config: Config,
     max_positions: usize,
     position: usize,
@@ -79,17 +96,34 @@ impl HybridGpuModel {
         max_state_bytes: usize,
         device: &Device,
     ) -> Result<Self> {
+        Self::load_with_projection_mode(
+            artifact,
+            max_positions,
+            max_state_bytes,
+            device,
+            HybridProjectionMode::Sequential,
+        )
+    }
+
+    /// Opt in to shared uploads/downloads; the individual Q8 kernels are unchanged.
+    pub fn load_with_projection_mode(
+        artifact: &mut Artifact,
+        max_positions: usize,
+        max_state_bytes: usize,
+        device: &Device,
+        mode: HybridProjectionMode,
+    ) -> Result<Self> {
         if !matches!(device, Device::Cuda(_)) {
             bail!("qwen35: hybrid GPU model requires a CUDA device")
         }
-        Ok(Self {
-            inner: CpuModel::load_with_projection_device(
-                artifact,
-                max_positions,
-                max_state_bytes,
-                device,
-            )?,
-        })
+        let mut inner = CpuModel::load_with_projection_device(
+            artifact,
+            max_positions,
+            max_state_bytes,
+            device,
+        )?;
+        inner.projection_mode = mode;
+        Ok(Self { inner })
     }
 
     pub fn prefill(&mut self, tokens: &[u32]) -> Result<Vec<f32>> {
@@ -102,30 +136,7 @@ impl HybridGpuModel {
         tokens: &[u32],
         cancelled: &mut dyn FnMut() -> bool,
     ) -> Result<Vec<f32>> {
-        if self.inner.position != 0 || tokens.is_empty() || tokens.len() > self.inner.max_positions
-        {
-            bail!("qwen35: prefill requires an empty cache and bounded nonempty tokens")
-        }
-        let mut logits = Vec::new();
-        for (index, &token) in tokens.iter().enumerate() {
-            if cancelled() {
-                self.inner.reset();
-                bail!("qwen35: hybrid CUDA prefill cancelled at token boundary")
-            }
-            let next = if index + 1 == tokens.len() {
-                self.inner.decode(token)
-            } else {
-                self.inner.decode_without_logits(token)
-            };
-            match next {
-                Ok(next) => logits = next,
-                Err(error) => {
-                    self.inner.reset();
-                    return Err(error);
-                }
-            }
-        }
-        Ok(logits)
+        self.inner.prefill_with_cancel(tokens, cancelled)
     }
 
     pub fn decode(&mut self, token: u32) -> Result<Vec<f32>> {
@@ -138,6 +149,10 @@ impl HybridGpuModel {
 
     pub fn position(&self) -> usize {
         self.inner.position()
+    }
+
+    pub fn projection_mode(&self) -> HybridProjectionMode {
+        self.inner.projection_mode
     }
 }
 
@@ -271,6 +286,131 @@ fn projection(weight: &QMatMul, input: &[f32]) -> Result<Vec<f32>> {
         bench_profile::record(weight, input.len(), output.len(), done - started);
     }
     Ok(output)
+}
+
+fn projections<const N: usize>(
+    weights: [&QMatMul; N],
+    input: &[f32],
+    mode: HybridProjectionMode,
+) -> Result<[Vec<f32>; N]> {
+    let outputs = if mode == HybridProjectionMode::Sequential {
+        weights
+            .iter()
+            .map(|weight| projection(weight, input))
+            .collect::<Result<Vec<_>>>()?
+    } else {
+        let first = weights
+            .first()
+            .ok_or_else(|| candle::Error::Msg("qwen35: empty projection group".into()))?;
+        let device = projection_device(first);
+        if weights
+            .iter()
+            .any(|weight| !projection_device(weight).same_device(&device))
+        {
+            bail!("qwen35: projection group devices differ")
+        }
+        let x = Tensor::from_slice(input, (1, input.len()), &Device::Cpu)?.to_device(&device)?;
+        let tensors = weights
+            .iter()
+            .map(|weight| weight.forward_ggml_q8_0(&x))
+            .collect::<Result<Vec<_>>>()?;
+        grouped_projection_rows(&tensors)?
+    };
+    outputs
+        .try_into()
+        .map_err(|_| candle::Error::Msg("qwen35: projection group count differs".into()))
+}
+
+fn grouped_projection_rows(tensors: &[Tensor]) -> Result<Vec<Vec<f32>>> {
+    let mut widths = Vec::with_capacity(tensors.len());
+    let mut total = 0usize;
+    for tensor in tensors {
+        let (rows, width) = tensor.dims2()?;
+        if rows != 1 {
+            bail!("qwen35: projection group requires one output row")
+        }
+        total = total
+            .checked_add(width)
+            .ok_or_else(|| candle::Error::Msg("qwen35: grouped output width overflow".into()))?;
+        widths.push(width);
+    }
+    let values = Tensor::cat(tensors, 1)?.flatten_all()?.to_vec1::<f32>()?;
+    if values.len() != total {
+        bail!("qwen35: grouped output width differs")
+    }
+    let mut offset = 0usize;
+    Ok(widths
+        .into_iter()
+        .map(|width| {
+            let next = offset + width; // Total width was checked before concatenation.
+            let row = values[offset..next].to_vec();
+            offset = next;
+            row
+        })
+        .collect())
+}
+
+fn observed_projections<const N: usize>(
+    weights: [&QMatMul; N],
+    input: &[f32],
+    mode: HybridProjectionMode,
+    observe: &mut dyn FnMut(usize, &[f32]),
+) -> Result<[Vec<f32>; N]> {
+    let outputs = if mode == HybridProjectionMode::Sequential {
+        weights
+            .iter()
+            .enumerate()
+            .map(|(index, weight)| {
+                let row = projection(weight, input)?;
+                observe(index, &row);
+                Ok(row)
+            })
+            .collect::<Result<Vec<_>>>()?
+    } else {
+        let first = weights
+            .first()
+            .ok_or_else(|| candle::Error::Msg("qwen35: empty projection group".into()))?;
+        let device = projection_device(first);
+        if weights
+            .iter()
+            .any(|weight| !projection_device(weight).same_device(&device))
+        {
+            bail!("qwen35: projection group devices differ")
+        }
+        let x = Tensor::from_slice(input, (1, input.len()), &Device::Cpu)?.to_device(&device)?;
+        let mut tensors = Vec::with_capacity(N);
+        for weight in weights {
+            match weight.forward_ggml_q8_0(&x) {
+                Ok(output) => tensors.push(output),
+                Err(error) => {
+                    // A failed later kernel retains any readable completed prefix.
+                    if !tensors.is_empty() {
+                        if let Ok(rows) = grouped_projection_rows(&tensors) {
+                            for (index, row) in rows.iter().enumerate() {
+                                observe(index, row);
+                            }
+                        }
+                    }
+                    return Err(error);
+                }
+            }
+        }
+        let rows = grouped_projection_rows(&tensors)?;
+        for (index, row) in rows.iter().enumerate() {
+            observe(index, row);
+        }
+        rows
+    };
+    outputs
+        .try_into()
+        .map_err(|_| candle::Error::Msg("qwen35: projection group count differs".into()))
+}
+
+fn projection_device(weight: &QMatMul) -> Device {
+    match weight {
+        QMatMul::QTensor(tensor) => tensor.device(),
+        QMatMul::Tensor(tensor) | QMatMul::TensorF16(tensor) => tensor.device().clone(),
+    }
 }
 
 fn sigmoid(x: f32) -> f32 {
@@ -618,6 +758,7 @@ impl CpuModel {
             cache.push(layer_cache);
         }
         Ok(Self {
+            projection_mode: HybridProjectionMode::Sequential,
             config,
             max_positions,
             position: 0,
@@ -650,16 +791,38 @@ impl CpuModel {
     }
 
     pub fn prefill(&mut self, tokens: &[u32]) -> Result<Vec<f32>> {
+        self.prefill_with_cancel(tokens, &mut || false)
+    }
+
+    /// Cancels at token boundaries and releases partially updated caches.
+    /// Admission errors preserve state; execution errors reset the whole session.
+    pub fn prefill_with_cancel(
+        &mut self,
+        tokens: &[u32],
+        cancelled: &mut dyn FnMut() -> bool,
+    ) -> Result<Vec<f32>> {
         if self.position != 0 || tokens.is_empty() || tokens.len() > self.max_positions {
             bail!("qwen35: prefill requires an empty cache and bounded nonempty tokens")
         }
-        let (last, prefix) = tokens
-            .split_last()
-            .ok_or_else(|| candle::Error::Msg("qwen35: empty prefill".into()))?;
-        for &token in prefix {
-            self.decode_without_logits(token)?;
+        if tokens
+            .iter()
+            .any(|&token| token as usize >= self.config.vocab_size)
+        {
+            bail!("qwen35: prefill token exceeds admitted vocabulary")
         }
-        self.decode(*last)
+        let mut logits = Vec::new();
+        for (index, &token) in tokens.iter().enumerate() {
+            if cancelled() {
+                self.reset();
+                bail!("qwen35: prefill cancelled at token boundary")
+            }
+            logits = if index + 1 == tokens.len() {
+                self.decode(token)?
+            } else {
+                self.decode_without_logits(token)?
+            };
+        }
+        Ok(logits)
     }
 
     /// Appends one token and returns its raw vocabulary logits.
@@ -682,12 +845,25 @@ impl CpuModel {
     fn decode_observed_inner(
         &mut self,
         token: u32,
-        mut observe: Option<ModelObserver<'_>>,
+        observe: Option<ModelObserver<'_>>,
         emit_logits: bool,
     ) -> Result<Vec<f32>> {
         if self.position >= self.max_positions || token as usize >= self.config.vocab_size {
             bail!("qwen35: token or position exceeds admitted ceiling")
         }
+        let result = self.decode_admitted(token, observe, emit_logits);
+        if result.is_err() {
+            self.reset();
+        }
+        result
+    }
+
+    fn decode_admitted(
+        &mut self,
+        token: u32,
+        mut observe: Option<ModelObserver<'_>>,
+        emit_logits: bool,
+    ) -> Result<Vec<f32>> {
         let ids = Tensor::from_slice(&[token], 1, &Device::Cpu)?;
         let mut x = self
             .embedding
@@ -702,11 +878,19 @@ impl CpuModel {
                     cache,
                     &self.config,
                     self.position,
+                    self.projection_mode,
                     Some(&mut layer_observer),
                 )?;
                 observer(index, "l_out", &x);
             } else {
-                x = layer.forward(&x, cache, &self.config, self.position, None)?;
+                x = layer.forward(
+                    &x,
+                    cache,
+                    &self.config,
+                    self.position,
+                    self.projection_mode,
+                    None,
+                )?;
             }
         }
         let logits = if emit_logits {
@@ -727,6 +911,7 @@ impl Layer {
         cache: &mut Cache,
         config: &Config,
         position: usize,
+        mode: HybridProjectionMode,
         mut observe: Option<ComponentObserver<'_>>,
     ) -> Result<Vec<f32>> {
         let mut normalized = input.to_vec();
@@ -739,9 +924,16 @@ impl Layer {
         let mixed = match (&self.mixer, cache) {
             (Mixer::Recurrent(weights), Cache::Recurrent { fifo, state }) => {
                 if let Some(observer) = &mut observe {
-                    weights.forward(&normalized, fifo, state, config, Some(&mut **observer))?
+                    weights.forward(
+                        &normalized,
+                        fifo,
+                        state,
+                        config,
+                        mode,
+                        Some(&mut **observer),
+                    )?
                 } else {
-                    weights.forward(&normalized, fifo, state, config, None)?
+                    weights.forward(&normalized, fifo, state, config, mode, None)?
                 }
             }
             (Mixer::Attention(weights), Cache::Attention { keys, values }) => {
@@ -780,14 +972,18 @@ impl Layer {
         if let Some(observer) = observe.as_mut() {
             observer("attn_post_norm", &normalized);
         }
-        let gate = projection(&self.gate, &normalized)?;
-        if let Some(observer) = observe.as_mut() {
-            observer("ffn_gate", &gate);
-        }
-        let up = projection(&self.up, &normalized)?;
-        if let Some(observer) = observe.as_mut() {
-            observer("ffn_up", &up);
-        }
+        let [gate, up] = if let Some(observer) = observe.as_mut() {
+            observed_projections(
+                [&self.gate, &self.up],
+                &normalized,
+                mode,
+                &mut |index, row| {
+                    observer(if index == 0 { "ffn_gate" } else { "ffn_up" }, row);
+                },
+            )?
+        } else {
+            projections([&self.gate, &self.up], &normalized, mode)?
+        };
         let product = gate
             .iter()
             .zip(&up)
@@ -817,6 +1013,7 @@ impl Recurrent {
         fifo: &mut [f32],
         state: &mut [f32],
         config: &Config,
+        mode: HybridProjectionMode,
         mut observe: Option<ComponentObserver<'_>>,
     ) -> Result<Vec<f32>> {
         let dim = config.state_size;
@@ -827,13 +1024,16 @@ impl Recurrent {
         let key_width = dim * key_heads;
         let channels = key_width * 2 + config.inner_size;
         let kernel = config.conv_kernel;
-        let qkv = projection(&self.qkv, input)?;
-        if let Some(observer) = observe.as_mut() {
-            observer("linear_attn_qkv_mixed", &qkv);
-        }
-        let z = projection(&self.z, input)?;
-        let alpha = projection(&self.alpha, input)?;
-        let beta = projection(&self.beta, input)?;
+        let weights = [&self.qkv, &self.z, &self.alpha, &self.beta];
+        let [qkv, z, alpha, beta] = if let Some(observer) = observe.as_mut() {
+            observed_projections(weights, input, mode, &mut |index, row| {
+                if index == 0 {
+                    observer("linear_attn_qkv_mixed", row);
+                }
+            })?
+        } else {
+            projections(weights, input, mode)?
+        };
         #[cfg(test)]
         let conv_started = std::time::Instant::now();
         let mut convolved = vec![0.0; channels];
