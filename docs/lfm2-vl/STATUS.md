@@ -2,88 +2,116 @@
 
 ## Current phase and source
 
-Current d1 records closeout (2026-10-11): The owner selected Closeout and Publish
-for the two pending STATUS/TODO records. At intake, native `main` and freshly
-fetched `origin/main` both equal `562311595fb421a32f4361a3197c813bd4195b7e`,
-tree `54d36ad92ccb28c3a8d2150b16650712e9bea3d1`; the index is empty. This save
-preserves verified progress. The larger real-adapter/Edge qualification remains
-blocked on external inputs, with its Done When criteria unchanged.
+Current five-record closeout (2026-10-11): verified scoped progress. The batch
+corrects GenEye's published Q8Rows handoff and records the newly retained
+GenUni 3B pilot without closing the selected 2.6B/Edge gate. GenEye remains
+pinned to Candle `3fa7075e`; its package numerical qualification still requires
+a quiet admission window and fresh finite allowance. No runtime repair is
+selected, and existing qualification criteria and consumed allowances remain.
 
-The prior d1 review/recheck confirms no new runtime repair. Loading
-and output controls, vision pre-sync failure accounting, question-trace
-cancellation and vision-sync cancellation remain closed. The runtime checkpoint
-is `9b5d332cb736cc145f31f5b1e48493688465bb01`. Session/profile control flow,
-work counters, partial failures/cache release, DenseF32/Q8Rows recovery fixtures,
-public contracts and standalone/consumer callers were inspected.
+At publication intake, native `main` and freshly fetched `origin/main` both
+equal `06c2e785eb8a8f1a0b40900ed5e70f3f4053c6e7`; there are no outgoing commits
+or staged paths. The five reviewed files are `START_HERE.md`, `D1.md`,
+`D1_LOADING.md`, `STATUS.md` and `TODO.md`. Current routes and inventories
+already cover them. HISTORY and all runtime/fixture identities are unchanged.
+The saved commit/tree/remote identity and final native gate are owned by
+`artifacts/lfm2-d1/20261011-package-handoff-closeout/publication-receipt.json`,
+written only after Candle's guarded helper succeeds. This receipt preserves
+progress while the larger producer/consumer acceptance gates stay open.
 
-The highest-priority queued batch still requires a real trained 2.6B text
-adapter, its canonical target/training manifest and held-out evaluation receipt.
-The previously authorized GenUni handoff was refreshed read-only in completed
-turn `01a12c7c-f1a8-7561-a8b5-c4f317b8a8bb`: at `D:\GenUni`, source `86d246f`,
-none of those qualifying inputs was found. Its 189 recorded jobs are completed
-setup jobs. GenUni's separate plan-only turn
-`01a12c80-8b18-7481-a91c-2fd13f53fec6` is complete: it proposes base/target
-lineage, independent data/scoring and runner/resource readiness before a fresh
-training/evaluation allowance. That turn changed no files, queues or approvals
-and ran no training or inference. It does not supply the missing artifacts.
+Prior Dropin/Work (2026-10-11): Blocked by an external condition for the
+selected real 2.6B adapter/Edge qualification. The preceding five-document
+review cleanup is verified complete; its candidate hashes and native gate log
+still match. No additional Candle runtime repair is justified by that feedback.
 
-The existing 10,361-byte base/input manifest at
-`D:\CodexVerify\genuni-candle-lora-scoring-20261008-1\production-input-binding\handoff-manifest.json`
-matches SHA-256 `e6db64f730de70675fa6136dda0a257594d4539364f15e2deb0176b911e38bbe`.
-Its phase is model-free preparation with remaining owner gates and zero model
-calls. The retained stock scoring report records `manual_supported=0` and
-`execution_independently_verified=false`; it cannot qualify held-out quality.
-Original inputs, failures and receipts remain unchanged.
+New producer evidence supersedes the broad earlier absence assessment:
+GenUni retains a trained native `LiquidAI/d1-3B` pilot at
+`D:\GenUni\runtime-data\models\local-models\d1-pilot-69b113c110c5`. Its
+36,890,600-byte PEFT payload has 180 F32 tensors, rank 8/alpha 16 and language
+FFN targets; SHA-256 is
+`579fac6bc9324d1b14ae2f24cb45e17c638284f11a2726f2df40b38130bc0fbf`.
+The config, training manifest and comparison bind the 3B snapshot at `051bcc46`,
+not the selected 2.6B GGUF base. The comparison at
+`D:\GenUni\runtime-data\evaluations\d1\c4de76fc6cc546889a70990c238b9126\d1-result.json`
+is explicitly synthetic and non-promoting. Its separate native training/reload
+proof cannot close this 2.6B serving/quality gate. GenUni reports that its new
+reader classifies the unchanged pilot/comparison as `legacy_unsealed`.
+A read-only producer request asks for any existing exact-base handoff;
+no qualifying 2.6B input is admitted.
 
-The preceding local Work proof passes all five tests in
-`cargo test --locked --offline -j 2 -p candle-transformers --lib tiny_lfm2_lora`
-with exit zero. Admission, F32 scale bounds, rejected-state preservation and
-adapter/cache switching remain proven on authored CPU fixtures. Formatting, locked/offline
-checks for the four maintained crates and the `quantized-lfm2` example also pass.
-These checks prove Candle's prerequisite mechanics; real serving/quality,
-repeated-session memory and Edge admission/switch criteria remain incomplete.
+Fresh `cargo test --locked --offline -j 2 -p candle-transformers --lib
+tiny_lfm2_lora` passes all five admission/switch/F32-scale controls. This proves
+the unchanged Candle prerequisite on authored CPU fixtures. The recent full
+native gate and retained CUDA proof below are reused at their matching runtime
+identities. Dropin/Work changes only STATUS/TODO dispositions and preserves the
+other three reviewed documentation edits, input artifacts and closed allowances.
+The real-adapter Done When criteria remain unchanged; no training, production
+inference, weight conversion, consumer edits or publication ran in that Work pass.
 
-The preceding review verifies the original seven published HEAD blobs, the five
-unchanged runtime/contract/history file hashes and both native gate logs against
-`artifacts/lfm2-d1/20261011-vision-sync-closeout/publication-receipt.json`
-(SHA-256 `98c963c5958b3ae3e0edf1dc9277ef2b470645de0e07d9aec6f2d69a3afeaede`).
-The retained native gates pass 531 Rust tests, 13 explicit ignores and six Python
-controls at their original source identities. The original
-CPU-first CUDA-enabled suite passes 26 tests with two ignores and strict CUDA
-Clippy. Its receipt, CUDA log, Clippy log and retained executable still match.
-The CUDA proof is reused, not freshly executed in this closeout. Its regression
-source remains `f3bec12a` plus the bound runtime hashes. Historical production
-receipts and consumed allowances keep their original identities.
+Completed d1 Review/Recheck/Cleanup (2026-10-11): Complete with verified limitations.
+The reviewed native `main` and
+cached `origin/main` baseline is `06c2e785eb8a8f1a0b40900ed5e70f3f4053c6e7`, tree
+`5c7c53b45ce52b2211969b392a9af908278f23a2`. Its two published document hashes,
+Git blobs and guarded publication log match the receipt in
+`artifacts/lfm2-d1/20261011-562-records-closeout/`. The completed save is no
+longer pending. The pinned upstream remains zero behind and 99 commits ahead.
 
-Last documentation checks pass with exit zero: `cargo fmt --all -- --check`;
-`cargo check --locked --offline -j 2 -p candle-core -p candle-nn
--p candle-transformers -p candle-vlm`; `verify-summary-bank.ps1`,
-`verify-mod-manifest.sh`, `verify-fork-overlays.sh` and `git diff --check`.
-The native checks cover the four maintained crates. Closeout runs the standalone
-LFM manifest verifier and Candle's `.tools/gitpush.ps1`; the helper requires a
-reviewed clean exact commit and the complete locked/offline native gate before
-its fast-forward push. The current gate log and `publication-receipt.json` are
-retained in `artifacts/lfm2-d1/20261011-562-records-closeout/`. That receipt owns
-the saved commit/tree/remote identity only after helper success.
+The runtime checkpoint is unchanged at
+`9b5d332cb736cc145f31f5b1e48493688465bb01`. Review covers loading/readout,
+native Q8/F32 CPU execution, session/profiling control flow, work counters,
+partial failures/cache release, DenseF32/Q8Rows recovery fixtures, standalone
+output controls and the consumer caller. Prior loading/output, vision accounting,
+question-trace cancellation and vision-sync cancellation findings remain closed.
+No new Candle runtime defect was confirmed. The three runtime/test hashes and
+the earlier contract/history bindings match their original receipts.
 
-Both closeout/publication process owners are freshly absent. Immutable proof,
-inputs and shared caches are retained. Existing routes and inventories cover
-the two active documentation paths; routes and inventory ownership are unchanged.
-No further Candle runtime batch is justified by this pass.
+The selected cleanup corrects five current documentation paths that still
+describe GenEye's Q8Rows adoption as unpublished. GenEye source adoption is
+published at `8e97e3327a82be9b09a1eb1903aaad2a3efbaa68`, and its package progress
+records at `0d552b0ec3db47afe62c373e5eefa283c6aac602`. Its worker, lock and package
+policy retain Candle `3fa7075e`; the inspected adoption paths match that source.
+Clean CPU/CUDA candidates pass model-free package/process checks. Thirteen
+bound packet/package/terminal objects rehash exactly. The original private-worker
+numerical proof remains valid only at its original source/binary identities.
 
-GenEye's observed HEAD/cached remote is
-`d5112f16dd2bf316bf46c4c928e94a853eb02d31`. All nineteen reviewed consumer files
-match the preceding review; eighteen match the original approved packet.
-Its known Linux process-owner delta still needs the existing consumer checks,
-and the five inspected worker/lock/package adoption files remain unpublished.
-The worker uses ordinary `decide`; its pin and production proof stay at
-`3fa7075e`. The next open Candle item remains real-adapter/Edge input admission;
-GenEye's portable qualification is separately owned in TODO. WSL's missing
-offline `accelerate-src 0.3.2` and the original nonfatal CUDA `LIBCMT` linker
-warning remain recorded limitations. No training, downloads, production inference
-or consumer edits belong to this save. GenUni owns the artifact and training/
-held-out evidence; Edge owns file admission, lease/switch, receipt and rollback.
-Candle's exact next task is input admission once those predecessors are supplied.
+The fresh portable numerical attempt stopped at CPU owner admission for
+competing workloads before private-worker startup. Zero models, requests,
+language/vision forwards or output tokens ran; all four slots remain unstarted.
+Its allowance is consumed and closed, CUDA was not started, and process-release
+proof passes. A quiet admission window and a newly reviewed finite allowance
+precede GenEye's remaining CPU-first/CUDA package qualification. See `D1_LOADING.md`
+and the single active handoff in `TODO.md`; LTS activation stays separately owned.
+
+The completed review passes `.tools/verify-before-push.ps1` in 232.1 s:
+531 Rust tests, 13 explicit ignores and six Python controls, including all
+20 CPU d1 fixtures/two retained-evidence ignores. Formatting, locked/offline
+checks of four maintained crates/four examples, strict Clippy, Summary Bank,
+module layout, overlay and whitespace gates pass. The standalone LFM manifest
+gate passes 208 paths (20 modified/188 added); the overlay union remains 281
+paths/five overlays/27 shared. Incremental writes were disabled for this owner.
+The CPU-first CUDA fixture suite retains its 26/two-ignore and strict Clippy
+proof: its receipt, logs, executable and runtime bindings rehash exactly.
+This review reuses CUDA proof and performs no production-model execution.
+Original review commands, logs and candidate identities are retained in
+`artifacts/lfm2-d1/20261011-package-handoff-review/`.
+
+The reviewed file set is `START_HERE.md`, `D1.md`, `D1_LOADING.md`, `STATUS.md` and
+`TODO.md`. No runtime source is under active work; this records batch is saved
+through the receipt above. Routes and inventory ownership are unchanged.
+The completed storage cleanup
+retired only approved regenerable caches; original numerical receipts, binaries,
+fixtures and the reference environment remain retained.
+
+The highest-priority Candle gate still awaits an immutable trained 2.6B adapter,
+canonical target/training manifest and held-out receipt, followed by Edge's
+admission/switch/recovery/memory/quality proof. The retained 10,361-byte input
+manifest still matches SHA-256
+`e6db64f730de70675fa6136dda0a257594d4539364f15e2deb0176b911e38bbe`; it is model-free
+preparation, not the missing trained-adapter or held-out qualification. Earlier
+GenUni observations and synthetic Candle mechanics retain their original source
+identities. WSL's missing offline `accelerate-src 0.3.2` and the retained nonfatal
+CUDA `LIBCMT` warning remain limitations. Exact next Candle task: admit the
+producer handoff once those GenUni/Edge predecessors are supplied.
 
 Prior Dropin/Work (2026-10-11): Blocked by an external condition for the next
 real-adapter/Edge qualification. The accepted d1 cancellation batch below is
@@ -785,4 +813,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-11T16:01:44-04:00 | agent=Codex/root | model=unknown | effort=unknown | task=docs | change=closed review records while preserving adapter and consumer gates
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-records-closeout | change=bound the five-document progress save and retained producer and consumer qualification limits

@@ -47,7 +47,7 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   selecting any adapter investment; exposed development results cannot qualify
   unseen competence. Completed preparation identities and original proof are
   [in HISTORY](HISTORY.md#2026-10-08---genuni-and-edge-diagnostic-preparation).
-- Dropin/Work recheck (2026-10-11): The supplied cache has no adapter-config,
+- Earlier Dropin/Work recheck (2026-10-11): The supplied cache has no adapter-config,
   adapter-model or adapter-manifest candidate. GenUni's current `D:\GenUni`
   source is `86d246f6b8a243fc4c3214ec0804259bfb5d80f8`; all 56 adapter-named
   runtime/proof files found are under verification or temporary-test paths.
@@ -55,7 +55,7 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   are admitted. Five fresh Candle admission/switch tests pass; qualification
   remains blocked on those producer inputs and the existing Edge prerequisites.
   No production allowance is reopened and the Done When contract is unchanged.
-- Current Work handoff (2026-10-11, Candle `56231159`): A fresh read-only GenUni
+- Prior Work handoff (2026-10-11, Candle `56231159`): A fresh read-only GenUni
   reply at `D:\GenUni`, source `86d246f`, confirms no real trained adapter,
   canonical target/training manifest or held-out receipt. Its 189 recorded jobs
   are completed setup jobs. GenUni's plan-only turn
@@ -70,6 +70,22 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   artifact and receipts, then satisfy the existing Edge predecessors before
   qualifying serving or held-out quality. Acceptance and closed allowances are
   preserved; this is an external-input boundary, not another d1 runtime repair.
+- Current Dropin/Work disposition (2026-10-11): GenUni now retains a real native
+  d1 pilot at
+  `D:\GenUni\runtime-data\models\local-models\d1-pilot-69b113c110c5`. Its
+  `adapter_model.safetensors` is 36,890,600 bytes, SHA-256
+  `579fac6bc9324d1b14ae2f24cb45e17c638284f11a2726f2df40b38130bc0fbf`; the bounded
+  header contains 180 F32 PEFT tensors, rank 8/alpha 16. Its config and training/
+  comparison identities bind `LiquidAI/d1-3B` revision `051bcc46`, not this
+  exact 2.6B GGUF base. Its held-out comparison is synthetic and explicitly
+  non-promoting; GenUni's new reader reports both unchanged records as
+  `legacy_unsealed`. This supersedes a general claim that GenUni has no trained
+  adapter, but does not supply the selected exact-base canonical target/training
+  and qualifying held-out handoff. The producer was asked read-only for any
+  existing matching 2.6B inputs. Five fresh Candle synthetic admission/switch
+  tests pass; serving/quality/Edge Done When and all closed allowances remain
+  unchanged. Preserve the 3B pilot as separate evidence; do not relabel its base,
+  convert its weights or reuse its model allowance to force this gate closed.
 - Actual Work attempt (2026-10-08): One authenticated API owner session stopped
   at support refusal before request creation/submission. Seven views remained
   unattempted, no model call or retry occurred. All eight slots stay in the
@@ -227,50 +243,34 @@ Task 4 and maintained product qualification remain separately gated.
 
 ### GenEye-owned Q8Rows portable handoff
 
-The seven-file Candle repair is published at `56231159`, including runtime
-checkpoint `9b5d332c`. This read-only Review/Recheck verifies its file hashes,
-native logs, retained CUDA proof and callers. All prior findings, including
-vision-sync and question-trace cancellation, remain closed; no new Candle
-runtime defect was confirmed. The 531-test/13-ignore native gates and six Python
-controls, plus the 26-test/two-ignore CUDA-enabled proof, are retained results
-at their original source identities. Completed work remains in STATUS/HISTORY.
-The repeat delta pass selects no new runtime repair. The owner-selected
-Closeout/Publish saves only the STATUS/TODO progress records through Candle's
-guarded helper; STATUS's receipt owns their exact saved identity after success.
-The existing consumer and real-adapter completion gates remain open.
+Current boundary (2026-10-11): GenEye's Q8Rows adoption is published at
+`8e97e33`, with package progress records at `0d552b0`; Candle remains pinned to
+`3fa7075e`. Clean CPU/CUDA candidates pass model-free package and process-owner
+checks. The new package's numerical proof stopped at CPU owner admission before
+worker startup: zero model loads, requests or forwards, and all four slots
+unstarted. That allowance is consumed and closed. See
+[the source-bound package records](D1_LOADING.md#geneye-consumer-qualification).
 
-GenEye's proof and Candle pin remain bound to published `3fa7075e`. At observed
-consumer HEAD/cached remote `d5112f16dd2bf316bf46c4c928e94a853eb02d31`, nineteen
-consumer files match the preceding review; eighteen match the original approved
-packet. The known Linux process delta still needs its relevant consumer checks
-before new portable qualification. The five inspected Q8Rows worker/lock/package
-adoption paths remain dirty. Later consumer commits do not publish those paths.
-The original production proof retains its source identity and consumed allowance.
-
-- What: Review the changed process owner, publish the scoped GenEye source,
-  then qualify a clean portable candidate pinned to Candle `3fa7075e`.
-  The source/private-worker consumer gate
-  is complete; this is not remaining Candle implementation.
-- Why: The four-request CPU/CUDA proof passes, but private worker setup and an
-  unpublished working-tree source do not qualify a portable product release.
-- When: After explicit GenEye source-publication and portable-qualification
-  authorization. Its consumed consumer allowance cannot be reused.
-- Where: GenEye's active `docs/TODO.md`, worker/lock/package owners and the
-  [retained handoff record](HISTORY.md#2026-10-11---d1-review-recheck-and-consumer-handoff-cleanup).
-- How: Review the delta in GenEye's
-  `source/crates/geneye-core/src/process.rs` against the approved consumer packet
-  and run its relevant process-owner checks. Preserve unrelated owner changes,
-  use GenEye's guarded helper for the named source batch, then use a suitable
-  clean published checkout without
-  changing the frozen LTS qualification owner. Keep package admission and LTS
-  activation separately authorized; any new model request needs a fresh budget.
-- Done when: The changed process owner is reviewed and verified, published
-  source, exact Candle lock/worker/package identities and required
-  portable-candidate evidence agree. Existing consumer proof keeps its
-  original source identity and the retained image-case quality limitation.
-- Verification: GenEye's affected process-owner tests, exact source-binding
-  recheck, clean published-source guard, package provenance and
-  release checks. The completed consumer qualification is not rerun implicitly.
+- What: Finish fresh bounded CPU/CUDA numerical qualification of the clean
+  portable candidate at the unchanged Candle pin. GenEye owns this remaining
+  consumer gate.
+- Why: The original four-request private-worker proof and model-free package
+  checks do not qualify the new package's numerical execution.
+- When: After a quiet admission window and explicit approval of a newly reviewed
+  finite proof packet. All earlier allowances remain closed.
+- Where: GenEye's active `docs/TODO.md`, its clean `q8rows-portable` checkout and
+  retained `D:\GenEye-evidence\candle-q8rows-portable-20261011` records.
+- How: Revalidate source, lock, packages, binaries, DLLs, models and frozen
+  inputs; prepare the fresh finite allowance before execution. Use the existing
+  bounded Job and worker/request limits, CPU first, CUDA only after CPU passes,
+  stop on any failure and verify process release. Preserve shared workloads,
+  existing receipts and the unchanged pin. LTS activation stays separate.
+- Done when: Exact published source, Candle lock/worker/package identities and
+  CPU/CUDA text/image numerical, native-dispatch, Q8Rows storage, counters,
+  ordering and cleanup receipts agree at the admitted bounds. Existing consumer
+  proof keeps its original source and image-case quality limitation.
+- Verification: The freshly admitted package proof and identity/process-release
+  recheck. Original numerical and model-free records remain explicitly separate.
 
 Deferred GPT-OSS-focused optional acceleration research is maintained in
 [GPT-OSS status](../gpt-oss/STATUS.md#deferred-optional-acceleration-research).
@@ -427,4 +427,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-11T16:01:44-04:00 | agent=Codex/root | model=unknown | effort=unknown | task=docs | change=closed progress records without narrowing qualification criteria
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-records-closeout | change=saved verified 3B producer progress and the unchanged exact-base 2.6B input boundary

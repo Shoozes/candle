@@ -198,23 +198,33 @@ that revision. Private CPU/CUDA workers report shared 278,528,000-byte Q8 storag
 with zero additional lookup bytes. The separately approved two-load/four-request
 text/image proof preserves all 52 numeric answer values exactly against each
 matching-device producer, native dispatch, key order and complete process release.
-The allowance is closed. This is local consumer qualification on an unpublished
-GenEye source candidate; a portable release still requires authorized source
-publication and clean package qualification. The retained image-case quality
-limitation is unchanged. Exact source and receipts are in
+That allowance is closed. The original private-worker proof retains its source
+and binary identities; the retained image-case quality limitation is unchanged.
+Its exact source and receipts are in
 [HISTORY](HISTORY.md#2026-10-11---d1-review-recheck-and-consumer-handoff-cleanup).
 
-The published-d1 recheck on 2026-10-11 finds eighteen of nineteen consumer
-source bindings unchanged. GenEye's `geneye-core/src/process.rs` now contains
-Linux-only descendant-reaper changes; its worker/lock/package bindings still
-match. The original Windows run and its private binaries retain their frozen
-qualification. Review and verify the changed process owner before admitting a
-new portable source/package candidate; the retained receipt does not qualify
-that delta, and its consumed model allowance remains closed.
+GenEye's Q8Rows adoption is now published at
+`8e97e3327a82be9b09a1eb1903aaad2a3efbaa68`; package progress records are published
+at `0d552b0ec3db47afe62c373e5eefa283c6aac602`. The clean CPU/CUDA candidates bind
+the same Candle revision, lock and worker provenance. Their 33-file package
+inventories and model-free checks pass; the changed Linux process owner has
+focused Windows/WSL consumer proof. These checks do not relabel the earlier
+numerical receipt or qualify the new package's model execution.
 
-Closeout rechecks the same consumer bytes on GenEye `b6cfe48a`: unrelated browser
-commits published the Linux process delta, while Q8Rows adoption remains dirty.
-Portable qualification and adoption publication retain their separate gates.
+The fresh approved package attempt stopped at CPU owner admission for competing
+workloads before private-worker startup. It loaded no model, made no request or
+forward, generated no token and left all four CPU/CUDA slots unstarted. The
+allowance is consumed and closed; CUDA was not started. Process-release proof
+passes. GenEye owns a quiet admission window and a newly reviewed finite
+allowance before rerunning CPU first, then CUDA only after CPU passes.
+LTS activation remains separately gated.
+
+Retained package records are in
+`D:\GenEye-evidence\candle-q8rows-portable-20261011`: `checks-cpu.json`,
+`checks-cuda.json`, `portable-terminal.json`, `publication.json` and
+`package-model-proof/process-release.json`. This review rehashes thirteen bound
+packet/package/terminal objects; all match. The terminal receipt is SHA-256
+`56a97b9607e187e56636b3d65bb8e4e43135d35cd40ff18afbf5ac9fe3efdaa7`.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-review-closeout | change=preserved frozen qualification across the later consumer branch advance
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-records-closeout | change=saved published adoption and distinguished package checks from blocked numerical qualification

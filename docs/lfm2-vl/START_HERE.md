@@ -41,11 +41,14 @@ Opt-in d1 Q8Rows loading is published at `7c9067bc` and fresh CPU/CUDA parity
 with retained artifacts is complete; see `D1_LOADING.md` for the construction
 contract and source-bound proof. `STATUS.md` identifies the separate guarded
 publication receipt for these completed parity records. GenEye's local worker,
-lock and packaging policy now pin Candle `3fa7075e` and select shared Q8Rows;
-its separately approved four-request CPU/CUDA consumer proof and process release
-pass. GenEye's source is still an unpublished working-tree candidate; portable
-packaging and LTS activation remain separately owned gates. See
-[the handoff record](HISTORY.md#2026-10-11---d1-review-recheck-and-consumer-handoff-cleanup).
+lock and packaging policy pin Candle `3fa7075e` and select shared Q8Rows.
+The adoption is published at GenEye `8e97e33`; its package proof records are
+published at `0d552b0`. The original four-request private-worker CPU/CUDA proof
+retains its source identity. Clean CPU/CUDA portable packages pass model-free
+checks, but the fresh numerical attempt stopped at owner admission before any
+model load or request. Its allowance is closed. GenEye owns a quiet admission
+window and fresh bounded qualification; LTS activation remains a separate gate.
+See [the current handoff](D1_LOADING.md#geneye-consumer-qualification).
 The next active Candle implementation item is the real 2.6B adapter
 gate in `TODO.md`, pending producer inputs. CUDA prefill qualification is
 published at `f93a4111ae41683b548758225940f80de6cd37e8`.
@@ -189,4 +192,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-handoff-recheck | change=routed completed consumer proof and the separate portable publication boundary
+AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-records-closeout | change=routed published Q8Rows adoption and the remaining bounded package qualification
