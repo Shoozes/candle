@@ -87,7 +87,10 @@ impl Encoder {
             )?;
             down_blocks.push(down_block)
         }
-        let last_block_out_channels = *config.block_out_channels.last().unwrap();
+        let last_block_out_channels = *config
+            .block_out_channels
+            .last()
+            .ok_or_else(|| candle::Error::Msg("VAE encoder requires a channel layout".into()))?;
         let mid_cfg = UNetMidBlock2DConfig {
             resnet_eps: 1e-6,
             output_scale_factor: 1.,
@@ -104,7 +107,9 @@ impl Encoder {
             vs.pp("conv_norm_out"),
         )?;
         let conv_out_channels = if config.double_z {
-            2 * out_channels
+            out_channels.checked_mul(2).ok_or_else(|| {
+                candle::Error::Msg("VAE doubled latent-channel width overflows".into())
+            })?
         } else {
             out_channels
         };
@@ -181,7 +186,10 @@ impl Decoder {
         config: DecoderConfig,
     ) -> Result<Self> {
         let n_block_out_channels = config.block_out_channels.len();
-        let last_block_out_channels = *config.block_out_channels.last().unwrap();
+        let last_block_out_channels = *config
+            .block_out_channels
+            .last()
+            .ok_or_else(|| candle::Error::Msg("VAE decoder requires a channel layout".into()))?;
         let conv_cfg = nn::Conv2dConfig {
             padding: 1,
             ..Default::default()
@@ -299,9 +307,15 @@ pub struct DiagonalGaussianDistribution {
 
 impl DiagonalGaussianDistribution {
     pub fn new(parameters: &Tensor) -> Result<Self> {
-        let mut parameters = parameters.chunk(2, 1)?.into_iter();
-        let mean = parameters.next().unwrap();
-        let logvar = parameters.next().unwrap();
+        let channels = parameters.dims().get(1).copied().ok_or_else(|| {
+            candle::Error::Msg("VAE Gaussian parameters require a channel axis".into())
+        })?;
+        if channels == 0 || channels % 2 != 0 {
+            candle::bail!("VAE Gaussian channel width must be positive and even, got {channels}")
+        }
+        let [mean, logvar]: [Tensor; 2] = parameters.chunk(2, 1)?.try_into().map_err(|_| {
+            candle::Error::Msg("VAE Gaussian split requires mean and log-variance".into())
+        })?;
         let std = (logvar * 0.5)?.exp()?;
         Ok(DiagonalGaussianDistribution { mean, std })
     }
@@ -331,7 +345,30 @@ impl AutoEncoderKL {
         out_channels: usize,
         config: AutoEncoderKLConfig,
     ) -> Result<Self> {
+        if config.block_out_channels.is_empty() || config.block_out_channels.contains(&0) {
+            candle::bail!("VAE block channel layout must be nonempty and positive")
+        }
+        if in_channels == 0 || out_channels == 0 || config.latent_channels == 0 {
+            candle::bail!("VAE input, output and latent channels must be positive")
+        }
+        if config.norm_num_groups == 0
+            || config
+                .block_out_channels
+                .iter()
+                .any(|channel| channel % config.norm_num_groups != 0)
+        {
+            candle::bail!(
+                "VAE normalization groups must be positive and divide every block channel width"
+            )
+        }
+        config
+            .layers_per_block
+            .checked_add(1)
+            .ok_or_else(|| candle::Error::Msg("VAE decoder layer count overflows".into()))?;
         let latent_channels = config.latent_channels;
+        let doubled_latent_channels = latent_channels.checked_mul(2).ok_or_else(|| {
+            candle::Error::Msg("VAE doubled latent-channel width overflows".into())
+        })?;
         let encoder_cfg = EncoderConfig {
             block_out_channels: config.block_out_channels.clone(),
             layers_per_block: config.layers_per_block,
@@ -350,8 +387,8 @@ impl AutoEncoderKL {
         let quant_conv = {
             if config.use_quant_conv {
                 Some(nn::conv2d(
-                    2 * latent_channels,
-                    2 * latent_channels,
+                    doubled_latent_channels,
+                    doubled_latent_channels,
                     1,
                     conv_cfg,
                     vs.pp("quant_conv"),
@@ -399,5 +436,94 @@ impl AutoEncoderKL {
             Some(post_quant_conv) => &post_quant_conv.forward(xs)?,
         };
         self.decoder.forward(xs)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candle::{DType, Device};
+
+    fn builder() -> nn::VarBuilder<'static> {
+        nn::VarBuilder::zeros(DType::F32, &Device::Cpu)
+    }
+
+    fn tiny() -> AutoEncoderKLConfig {
+        AutoEncoderKLConfig {
+            block_out_channels: vec![4],
+            layers_per_block: 1,
+            latent_channels: 2,
+            norm_num_groups: 2,
+            use_quant_conv: true,
+            use_post_quant_conv: true,
+        }
+    }
+
+    #[test]
+    fn malformed_channel_layouts_fail_before_construction() {
+        for channels in [vec![], vec![0], vec![4, 0]] {
+            let mut config = tiny();
+            config.block_out_channels = channels;
+            let error = AutoEncoderKL::new(builder(), 3, 3, config).expect_err("invalid layout");
+            assert!(error.to_string().contains("channel layout"));
+        }
+        for groups in [0, 3] {
+            let mut config = tiny();
+            config.norm_num_groups = groups;
+            assert!(AutoEncoderKL::new(builder(), 3, 3, config)
+                .expect_err("invalid groups")
+                .to_string()
+                .contains("normalization groups"));
+        }
+        for latent in [0, usize::MAX / 2 + 1] {
+            let mut config = tiny();
+            config.latent_channels = latent;
+            assert!(AutoEncoderKL::new(builder(), 3, 3, config).is_err());
+        }
+        assert!(AutoEncoderKL::new(builder(), 0, 3, tiny()).is_err());
+        assert!(AutoEncoderKL::new(builder(), 3, 0, tiny()).is_err());
+        let mut config = tiny();
+        config.layers_per_block = usize::MAX;
+        assert!(AutoEncoderKL::new(builder(), 3, 3, config).is_err());
+    }
+
+    #[test]
+    fn gaussian_requires_positive_even_channel_axis() -> Result<()> {
+        for shape in [vec![], vec![4], vec![1, 0], vec![1, 1], vec![1, 3]] {
+            let parameters = Tensor::zeros(shape, DType::F32, &Device::Cpu)?;
+            assert!(DiagonalGaussianDistribution::new(&parameters).is_err());
+        }
+        let parameters = Tensor::new(&[[0.5f32, 1.5, 4f32.ln(), 9f32.ln()]], &Device::Cpu)?;
+        let distribution = DiagonalGaussianDistribution::new(&parameters)?;
+        assert_eq!(distribution.mean.to_vec2::<f32>()?, vec![vec![0.5, 1.5]]);
+        for (actual, expected) in distribution.std.to_vec2::<f32>()?[0].iter().zip([2.0, 3.0]) {
+            assert!((actual - expected).abs() < 1e-6);
+        }
+        assert_eq!(distribution.sample()?.dims(), &[1, 2]);
+        Ok(())
+    }
+
+    #[test]
+    fn tiny_valid_vae_constructs_encodes_and_decodes() -> Result<()> {
+        let model = AutoEncoderKL::new(builder(), 3, 3, tiny())?;
+        let image = Tensor::zeros((1, 3, 2, 2), DType::F32, &Device::Cpu)?;
+        let distribution = model.encode(&image)?;
+        assert_eq!(distribution.mean.dims(), &[1, 2, 2, 2]);
+        assert!(distribution
+            .mean
+            .flatten_all()?
+            .to_vec1::<f32>()?
+            .iter()
+            .all(|v| *v == 0.0));
+        assert!(distribution
+            .std
+            .flatten_all()?
+            .to_vec1::<f32>()?
+            .iter()
+            .all(|v| *v == 1.0));
+        let sample = distribution.sample()?;
+        assert_eq!(sample.dims(), &[1, 2, 2, 2]);
+        assert_eq!(model.decode(&sample)?.dims(), image.dims());
+        Ok(())
     }
 }

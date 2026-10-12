@@ -93,8 +93,8 @@ while IFS= read -r path; do
     fi
 done <"$MANIFEST_PATHS"
 
-if [[ "$modified_count" -ne 8 || "$added_count" -ne 12 ]]; then
-    printf 'error: expected SnapFlash-derived overlay counts 8 modified/12 added; found %s/%s\n' \
+if [[ "$modified_count" -ne 9 || "$added_count" -ne 12 ]]; then
+    printf 'error: expected SnapFlash-derived overlay counts 9 modified/12 added; found %s/%s\n' \
         "$modified_count" "$added_count" >&2
     exit 1
 fi

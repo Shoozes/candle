@@ -6,7 +6,12 @@ and first regression witness; EdgeSymbio remains the product acceptance owner.
 
 ## Current state
 
-Four reusable diffusion boundaries are implemented. Candle owns validated SDXL
+Five reusable diffusion boundaries are implemented. The separately selected
+2026-10-12 VAE safety repair validates positive channel layouts and checked
+latent widths before construction, and positive even Gaussian channels before
+splitting. Three authored malformed/valid tests pass; valid math and sampling
+are preserved. This forward repair does not relabel frozen release receipts.
+Candle owns validated SDXL
 LoRA tensor parsing and a rollback-capable replacement transaction over the
 UNet and both text encoders. It also validates the existing UNet
 additional-residual hook as an exact, configuration-derived tensor contract
@@ -48,6 +53,7 @@ move SnapFlash's separately proven Candle pin.
 | `candle-transformers/src/models/stable_diffusion/embeddings.rs` | Implement the reusable SDXL `text_time` addition embedding and checked dimension contract. |
 | `candle-transformers/src/models/stable_diffusion/mod.rs` | Export the generic LoRA parser and mutable transaction modules. |
 | `candle-transformers/src/models/stable_diffusion/unet_2d.rs` | Fail closed on malformed added-conditioning and residual inputs while preserving legacy wrappers. |
+| `candle-transformers/src/models/stable_diffusion/vae.rs` | Validate construction channel layouts and latent arithmetic; reject malformed Gaussian channel splits without panics. |
 
 ## Overlay-owned additions
 
@@ -175,4 +181,4 @@ Models, adapters, generated images, local caches, `.tools/`, secrets, runtime
 logs, and application artifacts are not part of this overlay.
 
 ---
-AI-edited: 2026-08-13T19:14:09-04:00 | agent=Codex/root | model=gpt-5.6-sol | effort=ultra | task=release-closeout | change=registered the shared receipt gate and tests without moving the consumer pin
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models | change=implemented and verified scoped model improvements
