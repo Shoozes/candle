@@ -2,6 +2,37 @@
 
 ## Current phase and source
 
+The owner selected guarded closeout/publication of only the two STATUS/TODO
+review-disposition updates, based on `8b5ad42b`. The matching
+`artifacts/publication/last-push.json` identifies this documentation commit,
+tree, clean-source native gate and exact remote/local equality. Its compact
+closeout is retained under the existing t01 proof root as
+`status-todo-review-publication-closeout.json`. Model qualification remains
+bound to `7568791a`; the eight-request allowance remains closed. No runtime
+or consumer code changes belong to this record-only publication.
+
+Published parity-record review/recheck (2026-10-12) starts from clean native
+`main` at `8b5ad42b6cda155fceb38bd1c7ee1e834f1e791f`, tree
+`597f6e1d6ee6fde2c2cca11a9bae7c2521ed22ee`. At intake, the five document byte
+identities, canonical publication receipt and retained proof match the
+publication closeout. Read-only `compare(...)` re-evaluation of all eight
+saved t01 runs exactly reproduces the final receipt, including report hashes and numerical
+errors, with zero model forwards or output files. Prior sentinel/reference,
+typed-accounting, cancellation/recovery and Qwen failure-prefix findings stay
+closed; no new runtime, receipt or routing repair is indicated. The original
+native publication gate remains source-bound proof, not a newly run review
+result. This task updates only STATUS/TODO disposition; the completed d1
+qualification stays out of the active queue. Remaining model gates below keep
+their original owners, acceptance criteria and fresh-allowance requirements.
+
+Fresh local review checks pass with exit zero: `cargo fmt --all -- --check`,
+`cargo check --locked --offline -j 2 -p candle-core -p candle-nn
+-p candle-transformers -p candle-vlm`, seven `test_compare_text_loading.py`
+controls and six `test_verify_run.py` controls using `.venv/Scripts/python.exe
+-B`. Summary Bank, LFM manifest, overlay and whitespace gates also pass.
+The preceding review did not rerun the full native/CUDA gates; guarded
+publication separately replays the native gate on this clean docs commit.
+
 Retained t01 text-loading qualification is complete locally (2026-10-12) at
 clean checkpoint `7568791adbdffd7216a6882baf4a1259c6fe698e`, tree
 `2d1c563096a2946b17c4ba2970226f0acda69ff7`. The freshly approved packet
@@ -30,11 +61,13 @@ and whitespace checks. Seven text-loading comparator controls also pass;
 the owned gate wrapper is released. The approved production packet, receipt
 and executable are unchanged. Commands, retained proof and phase limits are
 in [the local Work record](MAINTAINED_MODELS.md#dropinwork-local-preparation).
-The matching `artifacts/publication/last-push.json` identifies this record
-publication's exact commit/tree, successful native gate and remote equality.
-Its compact source-bound closeout is retained under the existing t01 proof
-root as `proof-records-publication-closeout.json`; it preserves the earlier
-qualification identity rather than rebinding model proof to the docs commit.
+The original five-record publication at `8b5ad42b` is bound by the compact
+`proof-records-publication-closeout.json` under the existing t01 proof root;
+it retains that publication's exact commit/tree, native gate and equality.
+Its original canonical receipt bytes are retained in that same root as
+`proof-records-publication-receipt.json` before the latest receipt advances.
+It preserves the earlier qualification identity rather than rebinding model
+proof to the docs commit.
 No runtime implementation remains active in this five-document batch.
 Exact next task: admit GenUni's immutable same-base 2.6B adapter, target/training
 manifest and held-out evidence when supplied, then satisfy the existing Edge
@@ -925,4 +958,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=d1-proof-records-publish | change=closed out the five proof records and routed only remaining model work
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=d1-review-status-todo-publish | change=closed out the scoped review records without rebinding original model proof

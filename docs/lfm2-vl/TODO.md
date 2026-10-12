@@ -32,6 +32,13 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 - Verification: Exact-byte artifact hashes, model-generated target inventory,
   focused Candle admission tests, Edge job/API replay, and independent held-out
   comparison. No CUDA LoRA or 2.6B quality claim follows from synthetic tests.
+- Candle proof-record disposition (2026-10-12 review baseline `8b5ad42b`):
+  Published d1 records and prior findings recheck cleanly. Read-only replay of the eight
+  retained t01 comparisons exactly matches the saved receipt at `7568791a`;
+  no new model forwards occurred and its allowance remains closed. No d1
+  runtime repair or repeated qualification is queued. This evidence supplies
+  no trained 2.6B adapter or held-out quality result; the producer/Edge
+  prerequisites and this task's Done When remain unchanged.
 - Current disposition (2026-10-07): Candle's F32 coefficient prerequisite now
   rejects conversion overflow/underflow before adapter or cache mutation; its
   five local LoRA tests, 46 neighboring LFM tests, and native maintained CPU
@@ -424,4 +431,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=d1-proof-records-publish | change=moved completed record saving to history and retained the actual model gates
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=d1-review-status-todo-publish | change=saved verified d1 review disposition while retaining actual producer prerequisites
