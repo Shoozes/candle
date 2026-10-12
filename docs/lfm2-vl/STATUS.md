@@ -2,6 +2,48 @@
 
 ## Current phase and source
 
+Retained t01 text-loading qualification is complete locally (2026-10-12) at
+clean checkpoint `7568791adbdffd7216a6882baf4a1259c6fe698e`, tree
+`2d1c563096a2946b17c4ba2970226f0acda69ff7`. The freshly approved packet
+`46bd5f82bed0046e0f04f893c7aab6c04245a8072c7458a21785514ec0d7174a`
+passed all eight hybrid/text-only × DenseF32/Q8Rows × CPU/CUDA requests.
+CPU comparison passed before CUDA and is bit exact. Maximum CPU/CUDA logit
+error is `1.1444091796875e-5` against `0.02`; readout error is
+`5.792258422898655e-7` against `1e-6`. Prompts, IDs, aliases, artifact
+inventory, answer order, native Q8 dispatch and actual counts pass.
+Eight loads and exactly 24 language forwards consumed the fresh allowance;
+there were zero vision forwards/output tokens/warmups/retries. All model and
+phase PIDs are released. Proof: `artifacts/maintained-models/20261012-t01-7568791a/qualification.json`.
+The allowance is closed. This covers frozen t01 text parity, not image,
+longer-context or general accuracy qualification. GenEye stays at `3fa7075e`;
+Qwen retained-model proof, the exact-base 2.6B adapter/Edge producer gate and
+unavailable WSL replay remain separate. The owner selected Closeout/Publish
+for the five STATUS/TODO, maintained-model history, D1_LOADING and START_HERE
+proof/handoff records. Review/recheck confirms prior runtime findings are
+closed and the source-bound proof is consistent. Cleanup corrects the entry point's completed
+t01 selection and labels superseded historical instructions. No runtime repair,
+consumer edit, new model run, commit or push occurred in this review batch.
+Last green local Work verification: `.tools/verify-before-push.ps1` passes
+the complete native locked/offline library/four-example gate, maintained
+tests, strict transformer/d1 Clippy, layout/routing, typed receipt, overlay
+and whitespace checks. Seven text-loading comparator controls also pass;
+the owned gate wrapper is released. The approved production packet, receipt
+and executable are unchanged. Commands, retained proof and phase limits are
+in [the local Work record](MAINTAINED_MODELS.md#dropinwork-local-preparation).
+The matching `artifacts/publication/last-push.json` identifies this record
+publication's exact commit/tree, successful native gate and remote equality.
+Its compact source-bound closeout is retained under the existing t01 proof
+root as `proof-records-publication-closeout.json`; it preserves the earlier
+qualification identity rather than rebinding model proof to the docs commit.
+No runtime implementation remains active in this five-document batch.
+Exact next task: admit GenUni's immutable same-base 2.6B adapter, target/training
+manifest and held-out evidence when supplied, then satisfy the existing Edge
+predecessors in TODO. Qwen qualification remains separately selectable.
+The completed local parity closeout does not need repeating; any new numerical
+production run requires its own fresh allowance.
+
+### Source closeout before numerical qualification
+
 Maintained-model source closeout (2026-10-12), implementation baseline
 `4c2dfaf3bd7a8e519c70db026a79c32e271c3a61`: the owner authorized scoped
 checkpoint commits and guarded publication of the reviewed 35-file batch.
@@ -10,8 +52,8 @@ VAE admission and the subsequent diagnostic/receipt repairs. No unrelated
 paths or outgoing commits were found; native/remote main matched at intake.
 Construction and authored component criteria are proven. Retained t01
 numerical qualification remains open, as does Qwen retained-model proof.
-The exact final commit/tree and native gate are bound by
-`artifacts/publication/last-push.json` when its commit matches current HEAD.
+The original source publication's exact commit/tree and native gate are bound
+by `artifacts/maintained-models/20261012-publication/closeout.json` at `7568791a`.
 After the clean checkpoint, rebuild/rebind the source-stale t01 proposal and
 obtain fresh approval before its CPU-first eight-request/24-forward matrix.
 GenEye stays at `3fa7075e`; no production inference is authorized by this
@@ -883,4 +925,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models-publish | change=closed out verified scoped progress while retaining numerical qualification gates
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=d1-proof-records-publish | change=closed out the five proof records and routed only remaining model work

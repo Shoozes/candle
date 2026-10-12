@@ -2,10 +2,11 @@
 
 ## Explicit text-only loading, 2026-10-12
 
-The maintained-model batch at `4c2dfaf3` adds `D1TextLoadOptions` and
-`load_d1_text_q8[_with_embedding_mode]`. DenseF32 remains the default;
-Q8Rows is explicit. The private session backend consumes only the language
-GGUF and tokenizer, constructs no processor/vision/projector, reports
+The maintained-model batch, based on `4c2dfaf3` and published at `7568791a`,
+adds `D1TextLoadOptions` and `load_d1_text_q8[_with_embedding_mode]`.
+DenseF32 remains the default; Q8Rows is explicit. The private session backend
+consumes only the language GGUF and tokenizer, constructs no
+processor/vision/projector, reports
 `vision_device="none"` and zero projector inventory, and rejects images and
 literal/resolved image sentinels before forwards. Existing hybrid entry points
 retain their defaults. The CLI selects this path with `--text-only`, which
@@ -17,7 +18,26 @@ after CPU. Both embedding modes have bit-exact text/hybrid prompts, token IDs,
 logits, answers, ordering and language counts. Tests exercise missing vision
 files, malformed inputs, context admission, partial failure, cancellation,
 cache reset/replay and nonatomic image markers. These component results do
-not substitute for the separately approved retained `t01` numerical packet.
+not substitute for retained-model numerical proof. That separate frozen
+`t01` proof is now complete at the source identity below.
+
+### Retained t01 parity at 7568791a
+
+The fresh approved packet `46bd5f82bed0046e0f04f893c7aab6c04245a8072c7458a21785514ec0d7174a`
+qualifies the published constructor at
+`7568791adbdffd7216a6882baf4a1259c6fe698e`: hybrid/text-only, both embedding
+modes and CPU/CUDA. All four CPU variants are bit exact; they passed before
+CUDA. Maximum cross-device logit/readout errors are
+`1.1444091796875e-5`/`5.792258422898655e-7`, within the frozen `0.02`/`1e-6`
+bounds. Pinned prompts/IDs/aliases, ordered answers, consumed-file inventories
+and actual native Q8/F32 dispatch pass. Eight released bounded Jobs consumed
+exactly 24 language forwards, zero vision forwards/output tokens and no
+warmups/retries. The allowance is closed; no image, longer-context or general
+accuracy claim follows. Source/binary-bound proof and release receipts are in
+`artifacts/maintained-models/20261012-t01-7568791a/qualification.json`, with
+details in [maintained-model history](MAINTAINED_MODELS.md).
+The later [proof-record publication](MAINTAINED_MODELS.md#guarded-proof-record-closeout)
+preserves this exact qualification source/binary and its consumed allowance.
 
 The accepted twelve-load protocol was frozen before measurement. All samples
 use the same release binary, Q8Rows, retained hash-checked files, 4,096-token
@@ -272,4 +292,4 @@ packet/package/terminal objects; all match. The terminal receipt is SHA-256
 `56a97b9607e187e56636b3d65bb8e4e43135d35cd40ff18afbf5ac9fe3efdaa7`.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models | change=implemented and verified scoped model improvements
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=d1-proof-records-publish | change=preserved qualified source identity through the documentation closeout

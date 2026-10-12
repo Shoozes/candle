@@ -49,13 +49,19 @@ checks, but the fresh numerical attempt stopped at owner admission before any
 model load or request. Its allowance is closed. GenEye owns a quiet admission
 window and fresh bounded qualification; LTS activation remains a separate gate.
 See [the current handoff](D1_LOADING.md#geneye-consumer-qualification).
-The maintained-model batch adds explicit text-only d1 loading, Qwen recovery/
-projection options and VAE input validation locally at baseline `4c2dfaf3`.
-The next selected proof item is the retained t01 text/hybrid loading matrix in
-`TODO.md`, after a separately authorized clean checkpoint and fresh packet
-approval. The owner has authorized this source batch's guarded publication;
-retained-model numerical approval remains separate. The real 2.6B adapter
-gate still awaits producer inputs. CUDA prefill qualification is published at
+The maintained-model batch is published at `7568791a`, based on `4c2dfaf3`:
+explicit text-only d1 loading, Qwen recovery/projection options and VAE input
+validation. Fresh retained t01 text/hybrid parity is complete on CPU first,
+then CUDA, with both embedding modes; its eight-request allowance is closed.
+See [the source-bound result](MAINTAINED_MODELS.md#retained-t01-text-loading-qualification).
+The five parity/review records are the owner-authorized guarded closeout;
+their publication identity and native gate belong to the matching receipt
+identified in `STATUS.md`. [Completed record saving](MAINTAINED_MODELS.md#guarded-proof-record-closeout)
+leaves TODO. The next active model gate needs the exact-base 2.6B producer/Edge
+inputs; no production allowance is reopened by this documentation publication.
+Qwen retained-model qualification is conditional on a separately selected
+packet and fresh allowance; the real 2.6B adapter gate still awaits producer
+inputs. GenEye remains pinned to `3fa7075e`. CUDA prefill qualification is published at
 `f93a4111ae41683b548758225940f80de6cd37e8`.
 The subsequent pinned upstream/CPU-options batch is qualified at `34830c19`;
 its final guarded publication identity is owned by the current source-bound
@@ -197,4 +203,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models-publish | change=closed out verified scoped progress while retaining numerical qualification gates
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=d1-proof-records-publish | change=aligned current routing with guarded record closeout and remaining model gates

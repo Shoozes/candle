@@ -6,34 +6,6 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ## Active Candle backlog
 
-### [ ] Qualify retained t01 on the new d1 text-only loading path
-
-- What: Execute the prepared text/hybrid × DenseF32/Q8Rows × CPU/CUDA matrix
-  against the retained t01 request after the completed maintained-model repair.
-- Why: Authored component parity and twelve zero-forward load samples do not
-  establish the new constructor's retained-model numerical qualification.
-- When: Only after a separately authorized clean checkpoint and newly approved
-  source/binary-bound packet. The owner has now authorized the 35-file source
-  Closeout/Publish; it supplies no numerical allowance. The October 12 review
-  repaired Qwen failure
-  observations and d1 receipt accounting, so the original pending proposal's
-  source hashes are stale. Rebuild/rebind it; no closed allowance can be reused.
-- Where: Candle's d1 example, pinned offline reference/comparator and fresh
-  owned proof outputs. GenEye remains pinned to `3fa7075e`; no consumer edits.
-- How: Eight sequential requests at most, 24 language forwards, zero vision
-  forwards/output tokens/warmups/retries; 16 GiB Jobs, 1,800 seconds/run. Run
-  all four CPU variants first and stop on failure before CUDA. Rebind the
-  proposal after the clean checkpoint; verify every owner releases.
-- Done when: Pinned prompts/IDs/aliases and artifact admission match; CPU
-  logits/answers are exact; CUDA logits stay within 0.02 and readout 1e-6;
-  actual counts and completion-last receipts pass. No accuracy threshold.
-- Verification: The narrowed comparator and its seven authored controls for
-  typed counts, trace-derived input totals, inactive dispatch and prior parity
-  checks, exact input/source/binary hashes and native bounded Job receipts.
-  Completed code, load/profile proof and WSL limitation are recorded in
-  [maintained-model history](MAINTAINED_MODELS.md). Qwen retained-model
-  qualification needs a separately selected fresh finite allowance as well.
-
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
 - What: Admit an immutable trained text adapter for the accepted
@@ -321,6 +293,26 @@ LTS remain separate repository or future-product work. They are not hidden
 INT-5 requirements and must not be introduced without a scoped proposal and
 acceptance contract.
 
+### Conditional maintained-model qualification — Qwen recovery/projections
+
+- What: Qualify the repaired Qwen recovery and optional Grouped projections
+  against the retained exact 4B artifact and its existing pinned reference.
+- Why: Authored bit-exact components and paired transfer timings do not prove
+  retained-model behavior or full-model latency at the new source identity.
+- When: After separately selecting a clean source/binary-bound packet and
+  approving its exact finite model-work allowance. The completed d1 t01
+  allowance is closed and cannot be reused.
+- Where: The Qwen CPU/hybrid models, existing bounded parity/performance
+  helpers and independently owned `docs/qwen35/` proof records.
+- How: Freeze inputs, modes, work counts and resource limits before approval;
+  preserve Sequential default, run CPU first, stop on failure and prove release.
+- Done when: The selected existing Qwen reference/recovery criteria pass;
+  matched Sequential/Grouped results preserve arithmetic and observer order;
+  any latency claim has matched measurements, without a new speed threshold.
+- Verification: Exact source/binary/artifact hashes, native bounded receipts
+  and the accepted Qwen bounds/contracts in `docs/qwen35/STATUS.md` and
+  `PERFORMANCE.md`. No Edge/provider activation or consumer repinning.
+
 ### Conditional upstream maintenance — disabled-feature panic fallbacks
 
 - What: sixteen unrelated upstream model modules still use `unimplemented!()`
@@ -432,4 +424,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models-publish | change=closed out verified scoped progress while retaining numerical qualification gates
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=d1-proof-records-publish | change=moved completed record saving to history and retained the actual model gates
