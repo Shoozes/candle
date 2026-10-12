@@ -280,7 +280,7 @@ fn read_processor_config(path: &Path) -> Result<String> {
     })
 }
 
-fn load_tokenizer(path: &Path) -> Result<Tokenizer> {
+pub(crate) fn load_tokenizer(path: &Path) -> Result<Tokenizer> {
     let bytes = read_bounded_bytes(path, "tokenizer", MAX_TOKENIZER_BYTES)?;
     Tokenizer::from_bytes(&bytes).map_err(|error| {
         candle::Error::Msg(format!("cannot load tokenizer {}: {error}", path.display()))

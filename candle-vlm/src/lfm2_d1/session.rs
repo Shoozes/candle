@@ -1,18 +1,29 @@
+use super::backend::D1Backend;
+use super::loading::{prepare_tokenizer, validate_devices, validate_limits};
 use super::profiling::{measure, Phase};
 use super::{
     D1Limits, D1PolicyV1, DecisionFailure, DecisionRequest, DecisionResponse, ExecutionReport,
     PreparedQuestion,
 };
 use super::{D1QuestionTiming, D1Timings};
-use crate::lfm2_vl::{
-    load_lfm2_vl_hybrid_with_embedding_mode, Lfm2EmbeddingLoadMode, Lfm2EmbeddingStorage,
-    Lfm2VlHybridLoadOptions, Lfm2VlMmprojExecution, LoadedLfm2VlHybrid,
-};
+use crate::lfm2_vl::{Lfm2EmbeddingStorage, LoadedLfm2VlHybrid};
 use candle::quantized::with_native_q8_0;
 use candle::{DType, IndexOp, Result, Tensor};
 use image::DynamicImage;
 use std::collections::HashSet;
 use std::path::PathBuf;
+
+fn is_image_marker(text: &str) -> bool {
+    [
+        "<image>",
+        "<|image_start|>",
+        "<|image_end|>",
+        "<|img_thumbnail|>",
+        "<|img_row_",
+    ]
+    .iter()
+    .any(|marker| text.contains(marker))
+}
 
 /// Borrowed checkpoints for an explicitly requested numerical trace.
 pub enum D1TraceEvent<'a> {
@@ -29,65 +40,14 @@ pub enum D1TraceEvent<'a> {
     },
 }
 
-pub struct D1LoadOptions<'a> {
-    pub hybrid: Lfm2VlHybridLoadOptions<'a>,
-    pub limits: D1Limits,
-}
-
 pub struct D1Session {
-    loaded: LoadedLfm2VlHybrid,
+    backend: D1Backend,
+    consumed_files: Vec<PathBuf>,
     policy: D1PolicyV1,
     limits: D1Limits,
     tokenizer: tokenizers::Tokenizer,
     text_quantized_linears: usize,
-}
-
-pub fn load_d1_q8(options: D1LoadOptions<'_>) -> Result<D1Session> {
-    load_d1_q8_with_embedding_mode(options, Lfm2EmbeddingLoadMode::DenseF32)
-}
-
-/// Opt in to retained Q8 token rows without changing decision policy or defaults.
-pub fn load_d1_q8_with_embedding_mode(
-    options: D1LoadOptions<'_>,
-    embedding_mode: Lfm2EmbeddingLoadMode,
-) -> Result<D1Session> {
-    validate_limits(&options.limits)?;
-    validate_devices(options.hybrid.text_device, options.hybrid.vision_device)?;
-    for name in ["CANDLE_DEQUANTIZE_ALL", "CANDLE_DEQUANTIZE_ALL_F16"] {
-        if std::env::var_os(name).is_some_and(|value| !value.is_empty() && value != "0") {
-            candle::bail!("d1 native Q8 loading rejects {name}")
-        }
-    }
-    if options.hybrid.mmproj_execution != Lfm2VlMmprojExecution::Q8
-        || options.hybrid.vision_dtype != DType::F32
-    {
-        candle::bail!("d1 loading requires explicit Q8 MMProj execution and F32 activations")
-    }
-    D1Session::from_hybrid(
-        load_lfm2_vl_hybrid_with_embedding_mode(options.hybrid, embedding_mode)?,
-        D1PolicyV1,
-        options.limits,
-    )
-}
-
-fn validate_limits(limits: &D1Limits) -> Result<()> {
-    if limits.max_questions == 0
-        || limits.max_options == 0
-        || limits.max_prompt_bytes == 0
-        || limits.max_context_tokens == Some(0)
-    {
-        candle::bail!("d1 limits must be positive")
-    }
-    Ok(())
-}
-
-fn validate_devices(text: &candle::Device, vision: &candle::Device) -> Result<()> {
-    for device in [text, vision] {
-        if !device.is_cpu() && !device.is_cuda() {
-            candle::bail!("d1 supports CPU and CUDA devices")
-        }
-    }
-    Ok(())
+    image_token_ids: Vec<u32>,
 }
 
 impl D1Session {
@@ -108,33 +68,56 @@ impl D1Session {
         {
             candle::bail!("d1 session requires native Q8 MMProj storage with F32 activations")
         }
-        let mut tokenizer = loaded.prompt.tokenizer().clone();
-        tokenizer
-            .with_truncation(None)
-            .map_err(|error| candle::Error::Msg(error.to_string()))?;
-        tokenizer.with_padding(None);
-        for marker in ["<|im_start|>", "<|im_end|>"] {
-            let token_id = tokenizer
-                .token_to_id(marker)
-                .ok_or_else(|| candle::Error::Msg(format!("d1 tokenizer is missing {marker}")))?;
-            let ids = tokenizer
-                .encode(marker, false)
-                .map_err(|error| candle::Error::Msg(error.to_string()))?;
-            if ids.get_ids() != [token_id] {
-                candle::bail!("d1 tokenizer marker {marker} must be atomic")
-            }
-        }
+        let tokenizer = prepare_tokenizer(loaded.prompt.tokenizer().clone())?;
+        let consumed_files = std::mem::take(&mut loaded.consumed_files);
         Ok(Self {
-            loaded,
+            backend: D1Backend::Hybrid(Box::new(loaded)),
+            consumed_files,
             policy,
             limits,
             tokenizer,
             text_quantized_linears,
+            image_token_ids: Vec::new(),
         })
     }
 
+    pub(super) fn from_text(
+        model: candle_transformers::models::quantized_lfm2::ModelWeights,
+        tokenizer: tokenizers::Tokenizer,
+        limits: D1Limits,
+        consumed_files: Vec<PathBuf>,
+    ) -> Result<Self> {
+        validate_limits(&limits)?;
+        validate_devices(model.device(), model.device())?;
+        let text_quantized_linears = model.require_native_q8_linears()?;
+        let tokenizer = prepare_tokenizer(tokenizer)?;
+        let image_token_ids = [
+            "<image>",
+            "<|image_start|>",
+            "<|image_end|>",
+            "<|img_thumbnail|>",
+        ]
+        .iter()
+        .filter_map(|marker| tokenizer.token_to_id(marker))
+        .collect();
+        Ok(Self {
+            backend: D1Backend::Text(Box::new(model)),
+            consumed_files,
+            policy: D1PolicyV1,
+            limits,
+            tokenizer,
+            text_quantized_linears,
+            image_token_ids,
+        })
+    }
+
+    /// Whether this session loaded the vision stack and permits image requests.
+    pub fn supports_images(&self) -> bool {
+        self.backend.supports_images() && self.limits.max_images > 0
+    }
+
     pub fn consumed_files(&self) -> &[PathBuf] {
-        &self.loaded.consumed_files
+        &self.consumed_files
     }
     pub fn tokenizer(&self) -> &tokenizers::Tokenizer {
         &self.tokenizer
@@ -144,32 +127,34 @@ impl D1Session {
     }
 
     pub fn text_embedding_storage(&self) -> Result<Lfm2EmbeddingStorage> {
-        self.loaded.model.text_embedding_storage()
+        self.backend.embedding_storage()
     }
 
     pub fn execution_details(&self) -> ExecutionReport {
         ExecutionReport {
             policy: D1PolicyV1::ID.into(),
-            text_device: if self.loaded.model.text_device().is_cpu() {
+            text_device: if self.backend.text_device().is_cpu() {
                 "cpu"
             } else {
                 "cuda"
             }
             .into(),
-            vision_device: if self.loaded.model.vision_device().is_cpu() {
-                "cpu"
-            } else {
-                "cuda"
-            }
-            .into(),
-            mmproj_quantized_tensors: self.loaded.model.mmproj().native_quantized_tensor_count(),
+            vision_device: self
+                .backend
+                .vision_device()
+                .map_or(
+                    "none",
+                    |device| if device.is_cpu() { "cpu" } else { "cuda" },
+                )
+                .into(),
+            mmproj_quantized_tensors: self.backend.hybrid().map_or(0, |loaded| {
+                loaded.model.mmproj().native_quantized_tensor_count()
+            }),
             text_quantized_linears: self.text_quantized_linears,
-            source_float_mmproj_linears: self
-                .loaded
-                .model
-                .mmproj()
-                .source_float_linear_names()
-                .to_vec(),
+            source_float_mmproj_linears: self.backend.hybrid().map_or_else(
+                |_| Vec::new(),
+                |loaded| loaded.model.mmproj().source_float_linear_names().to_vec(),
+            ),
             ..Default::default()
         }
     }
@@ -179,6 +164,9 @@ impl D1Session {
         request: &DecisionRequest,
         image_count: usize,
     ) -> Result<Vec<(String, PreparedQuestion, String)>> {
+        if image_count > 0 && !self.backend.supports_images() {
+            candle::bail!("text-only d1 session does not support images")
+        }
         if request.questions.0.is_empty()
             || request.questions.0.len() > self.limits.max_questions
             || image_count > self.limits.max_images
@@ -201,6 +189,9 @@ impl D1Session {
                 image_count,
                 self.limits.max_prompt_bytes,
             )?;
+            if !self.backend.supports_images() && is_image_marker(&rendered) {
+                candle::bail!("text-only d1 prompt contains an image sentinel")
+            }
             plans.push((name.clone(), plan, rendered));
         }
         Ok(plans)
@@ -257,8 +248,8 @@ impl D1Session {
         mut timings: Option<&mut D1Timings>,
     ) -> std::result::Result<DecisionResponse, DecisionFailure> {
         let started = timings.as_ref().map(|_| std::time::Instant::now());
-        let text_device = self.loaded.model.text_device().clone();
-        let vision_device = self.loaded.model.vision_device().clone();
+        let text_device = self.backend.text_device().clone();
+        let vision_device = self.backend.vision_device().cloned();
         let mut response = DecisionResponse {
             planned_questions: request.questions.0.len(),
             unattempted_questions: request.questions.0.len(),
@@ -273,28 +264,31 @@ impl D1Session {
             if cancelled() {
                 candle::bail!("d1 request cancelled before preparation")
             }
-            let processed = measure(
-                &mut timings,
-                Phase::ImageProcessing,
-                Some(&vision_device),
-                || {
-                    Ok(if images.is_empty() {
-                        None
-                    } else {
-                        let capped = images
-                            .iter()
-                            .map(|image| {
-                                super::image_cap::cap_pixels(image, super::image_cap::MAX_PIXELS)
-                            })
-                            .collect::<Result<Vec<_>>>()?;
-                        Some(
-                            self.loaded
-                                .processor
-                                .process(&capped, self.loaded.model.vision_device())?,
-                        )
-                    })
-                },
-            )?;
+            let processed = if vision_device.is_none() {
+                None
+            } else {
+                measure(
+                    &mut timings,
+                    Phase::ImageProcessing,
+                    vision_device.as_ref(),
+                    || {
+                        Ok(if images.is_empty() {
+                            None
+                        } else {
+                            let capped = images
+                                .iter()
+                                .map(|image| {
+                                    super::image_cap::cap_pixels(
+                                        image,
+                                        super::image_cap::MAX_PIXELS,
+                                    )
+                                })
+                                .collect::<Result<Vec<_>>>()?;
+                            Some(self.backend.process_images(&capped)?)
+                        })
+                    },
+                )?
+            };
             if let Some(processed) = &processed {
                 measure(&mut timings, Phase::Observation, None, || {
                     observe(D1TraceEvent::ProcessedImages(processed))
@@ -305,7 +299,7 @@ impl D1Session {
                 for (_, _, rendered) in &plans {
                     let (ids, spans) = match &processed {
                         Some(processed) => {
-                            let prompt = self.loaded.prompt.expand(rendered, processed)?;
+                            let prompt = self.backend.expand(rendered, processed)?;
                             (prompt.input_ids, prompt.image_spans)
                         }
                         None => {
@@ -316,11 +310,22 @@ impl D1Session {
                             (ids.get_ids().to_vec(), Vec::new())
                         }
                     };
+                    if !self.backend.supports_images()
+                        && ids.iter().any(|id| {
+                            self.image_token_ids.contains(id)
+                                || self
+                                    .tokenizer
+                                    .id_to_token(*id)
+                                    .is_some_and(|token| is_image_marker(&token))
+                        })
+                    {
+                        candle::bail!("text-only d1 prompt contains an image sentinel")
+                    }
                     let limit = self
                         .limits
                         .max_context_tokens
-                        .unwrap_or(self.loaded.model.context_length())
-                        .min(self.loaded.model.context_length());
+                        .unwrap_or(self.backend.context_length())
+                        .min(self.backend.context_length());
                     if ids.is_empty() || ids.len() > limit {
                         candle::bail!("d1 prompt has {} tokens outside 1..={limit}", ids.len())
                     }
@@ -334,18 +339,13 @@ impl D1Session {
                         candle::bail!("d1 request cancelled before vision forward")
                     }
                     let encoded =
-                        measure(&mut timings, Phase::Vision, Some(&vision_device), || {
+                        measure(&mut timings, Phase::Vision, vision_device.as_ref(), || {
                             if cancelled() {
                                 candle::bail!("d1 request cancelled before vision forward")
                             }
                             response.usage.vision_forwards = 1;
-                            let (result, dispatch) = with_native_q8_0(|| {
-                                self.loaded.model.encode_images_with_limits(
-                                    processed,
-                                    1,
-                                    &self.loaded.processor.config().vision_limits,
-                                )
-                            });
+                            let (result, dispatch) =
+                                with_native_q8_0(|| self.backend.encode_images(processed));
                             response.execution.accumulate(dispatch)?;
                             result
                         })?;
@@ -384,7 +384,7 @@ impl D1Session {
                         if cancelled() {
                             candle::bail!("d1 request cancelled before question {index}")
                         }
-                        let input = Tensor::new(ids.as_slice(), self.loaded.model.text_device())?
+                        let input = Tensor::new(ids.as_slice(), self.backend.text_device())?
                             .unsqueeze(0)?;
                         response.unattempted_questions -= 1;
                         response.usage.language_forwards += 1;
@@ -396,7 +396,7 @@ impl D1Session {
                                 candle::Error::Msg("d1 input token counter overflow".into())
                             })?;
                         let (result, dispatch) = with_native_q8_0(|| {
-                            self.loaded.model.prefill(&input, &spans, encoded.as_ref())
+                            self.backend.prefill(&input, &spans, encoded.as_ref())
                         });
                         response.execution.accumulate(dispatch)?;
                         result?.i(0)
@@ -418,7 +418,7 @@ impl D1Session {
             }
             Ok(())
         })();
-        self.loaded.model.clear_cache();
+        self.backend.clear_cache();
         if let (Some(timings), Some(started)) = (timings, started) {
             timings.total_ms = started.elapsed().as_secs_f64() * 1000.;
         }

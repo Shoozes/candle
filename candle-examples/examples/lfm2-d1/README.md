@@ -4,6 +4,17 @@ This thin runner uses `candle_vlm::lfm2_d1` with explicit local inputs. It retai
 and hashes model, projector, tokenizer, processor and template files against the
 supplied manifest, then rehashes them after execution. It does not download models.
 
+For text requests, add `--text-only` and omit `--mmproj`/`--processor`; these
+arguments conflict with text-only mode. Model, tokenizer, template provenance
+and artifact manifest remain explicit. The library consumes only the model and
+tokenizer; the template is retained as policy provenance, not used for rendering.
+All image-bearing JSONL cases are rejected before model loading or image I/O.
+Hybrid remains the default and its five-artifact admission order is unchanged.
+
+`--load-only` also supports text-only mode. It reports zero forwards/tokens,
+the exact consumed files and optional CUDA free/total memory snapshots before
+load, while loaded and after release. These observations are not peak VRAM.
+
 Each input JSONL row contains `request_id`, `request` and optional image paths:
 
 ```json
@@ -27,8 +38,8 @@ public answer and option order. No output tokens are generated.
 
 `--text-embedding q8-rows` retains Q8_0 token rows and returns F32 embeddings,
 sharing the existing output weight for tied models. The default `dense-f32`
-keeps the full F32 lookup table. Both modes load the complete vision model and
-retain the same model/projector files. `loaded.json` includes exact token-table
+keeps the full F32 lookup table. Hybrid loads the complete vision model in either
+embedding mode; `--text-only` omits it. `loaded.json` includes exact token-table
 storage and output-sharing details. See [loading qualification](../../../docs/lfm2-vl/D1_LOADING.md)
 for measured effects and numerical limits.
 
@@ -58,4 +69,4 @@ The caller owns admission and isolation. See [D1.md](../../../docs/lfm2-vl/D1.md
 for policy, API, source pins and qualification limits.
 
 ---
-AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-loading | change=documented opt-in Q8 rows and zero-forward constructor measurements
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models | change=implemented and verified scoped model improvements

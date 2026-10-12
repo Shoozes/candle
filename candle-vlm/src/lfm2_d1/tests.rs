@@ -6,6 +6,7 @@ use tokenizers::{
 };
 
 mod embedding;
+mod text_only;
 
 fn tokenizer() -> Tokenizer {
     let tokens = [
@@ -648,19 +649,9 @@ fn tiny_session(device: &Device, limits: D1Limits) -> candle::Result<D1Session> 
     tiny_session_with_embedding_mode(device, limits, Lfm2EmbeddingLoadMode::DenseF32)
 }
 
-fn tiny_session_with_embedding_mode(
-    device: &Device,
-    limits: D1Limits,
-    embedding_mode: Lfm2EmbeddingLoadMode,
-) -> candle::Result<D1Session> {
-    use std::path::Path;
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../tests/fixtures");
-    use crate::lfm2_vl::{Lfm2VlProcessor, Lfm2VlPrompt, LoadedLfm2VlHybrid, PromptOptions};
+fn tiny_text_gguf() -> candle::Result<Vec<u8>> {
     use candle::quantized::{gguf_file, GgmlDType, QTensor};
-    use candle_transformers::models::{
-        lfm2_vl::{Mmproj, QuantizedLfm2VlModel},
-        quantized_lfm2,
-    };
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../tests/fixtures");
     let mut reader =
         std::io::Cursor::new(std::fs::read(root.join("lfm2_vl_loader_tiny/text.gguf"))?);
     let mut content = gguf_file::Content::read(&mut reader)?;
@@ -722,6 +713,23 @@ fn tiny_session_with_embedding_mode(
     metadata.sort_by_key(|(name, _)| *name);
     let mut bytes = std::io::Cursor::new(Vec::new());
     gguf_file::write(&mut bytes, &metadata, &tensor_refs)?;
+    Ok(bytes.into_inner())
+}
+
+fn tiny_session_with_embedding_mode(
+    device: &Device,
+    limits: D1Limits,
+    embedding_mode: Lfm2EmbeddingLoadMode,
+) -> candle::Result<D1Session> {
+    use std::path::Path;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../tests/fixtures");
+    use crate::lfm2_vl::{Lfm2VlProcessor, Lfm2VlPrompt, LoadedLfm2VlHybrid, PromptOptions};
+    use candle::quantized::{gguf_file, GgmlDType, QTensor};
+    use candle_transformers::models::{
+        lfm2_vl::{Mmproj, QuantizedLfm2VlModel},
+        quantized_lfm2,
+    };
+    let mut bytes = std::io::Cursor::new(tiny_text_gguf()?);
     bytes.set_position(0);
     let content = gguf_file::Content::read(&mut bytes)?;
     let text = quantized_lfm2::ModelWeights::from_gguf_with_embedding_mode(

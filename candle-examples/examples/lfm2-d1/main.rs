@@ -5,8 +5,9 @@ mod files;
 use anyhow::{Context, Result};
 use candle::{DType, Device};
 use candle_vlm::lfm2_d1::{
-    load_d1_q8_with_embedding_mode, D1Limits, D1LoadOptions, D1Timings, D1TraceEvent,
-    DecisionFailure, DecisionRequest, DecisionResponse, Lfm2EmbeddingLoadMode,
+    load_d1_q8_with_embedding_mode, load_d1_text_q8_with_embedding_mode, D1Limits, D1LoadOptions,
+    D1TextLoadOptions, D1Timings, D1TraceEvent, DecisionFailure, DecisionRequest, DecisionResponse,
+    Lfm2EmbeddingLoadMode,
 };
 use candle_vlm::lfm2_vl::{Lfm2VlHybridLoadOptions, Lfm2VlMmprojExecution, Lfm2VlMmprojSource};
 use clap::Parser;
@@ -18,12 +19,22 @@ use std::{fs, path::PathBuf, time::Instant};
 struct Args {
     #[arg(long)]
     model: PathBuf,
-    #[arg(long)]
-    mmproj: PathBuf,
+    #[arg(
+        long,
+        required_unless_present = "text_only",
+        conflicts_with = "text_only"
+    )]
+    mmproj: Option<PathBuf>,
     #[arg(long)]
     tokenizer: PathBuf,
+    #[arg(
+        long,
+        required_unless_present = "text_only",
+        conflicts_with = "text_only"
+    )]
+    processor: Option<PathBuf>,
     #[arg(long)]
-    processor: PathBuf,
+    text_only: bool,
     #[arg(long)]
     template: PathBuf,
     #[arg(long)]
@@ -106,6 +117,55 @@ mod tests {
     use super::*;
 
     #[test]
+    fn text_only_cli_excludes_vision_inputs_and_keeps_defaults() {
+        let base = [
+            "lfm2-d1",
+            "--text-only",
+            "--model",
+            "model",
+            "--tokenizer",
+            "tokenizer",
+            "--template",
+            "template",
+            "--artifact-manifest",
+            "manifest",
+            "--out",
+            "out",
+            "--load-only",
+        ];
+        let args = Args::try_parse_from(base).expect("explicit text mode");
+        assert!(args.text_only);
+        assert!(args.mmproj.is_none() && args.processor.is_none());
+        assert_eq!(args.text_embedding, Lfm2EmbeddingLoadMode::DenseF32);
+        for extra in [["--mmproj", "absent"], ["--processor", "absent"]] {
+            assert!(Args::try_parse_from(base.into_iter().chain(extra)).is_err());
+        }
+        assert!(Args::try_parse_from(base.into_iter().filter(|v| *v != "--text-only")).is_err());
+    }
+
+    #[test]
+    fn text_only_rejects_any_image_case_before_artifact_or_image_io() -> Result<()> {
+        let request = DecisionRequest::from_json(
+            br#"{"state":"ready","questions":{"ok":{"type":"noul","instructions":"Ready?"}}}"#,
+            4096,
+        )?;
+        let mut cases = vec![Input {
+            request_id: "text".into(),
+            request: request.clone(),
+            images: vec![],
+        }];
+        validate_mode_inputs(true, &cases)?;
+        cases.push(Input {
+            request_id: "image".into(),
+            request,
+            images: vec![PathBuf::from("nonexistent-image-do-not-open.png")],
+        });
+        assert!(validate_mode_inputs(true, &cases).is_err());
+        validate_mode_inputs(false, &cases)?;
+        Ok(())
+    }
+
+    #[test]
     fn load_only_cli_excludes_request_execution() {
         let base = [
             "lfm2-d1",
@@ -149,11 +209,10 @@ mod tests {
 }
 
 fn run(args: &Args) -> Result<()> {
-    let device = match args.device.as_str() {
-        "cpu" => Device::Cpu,
-        "cuda" => Device::new_cuda(0).context("opening CUDA device 0")?,
-        other => anyhow::bail!("unsupported device {other:?}; expected cpu or cuda"),
-    };
+    anyhow::ensure!(
+        matches!(args.device.as_str(), "cpu" | "cuda"),
+        "unsupported device; expected cpu or cuda"
+    );
     anyhow::ensure!(args.context > 0, "context must be positive");
     let inputs = args
         .requests
@@ -167,6 +226,7 @@ fn run(args: &Args) -> Result<()> {
         .filter(|line| !line.trim().is_empty())
         .map(serde_json::from_str)
         .collect::<std::result::Result<_, _>>()?;
+    validate_mode_inputs(args.text_only, &cases)?;
     anyhow::ensure!(
         args.load_only || (!cases.is_empty() && cases.len() <= 64),
         "expected 1..=64 explicit cases"
@@ -183,54 +243,97 @@ fn run(args: &Args) -> Result<()> {
         .iter()
         .map(|input| (input.request_id.clone(), input.request.questions.0.len()))
         .collect();
-    let mut retained = files::retain_artifacts(
-        &args.artifact_manifest,
-        &[
+    let artifact_paths = if args.text_only {
+        vec![&args.model, &args.tokenizer, &args.template]
+    } else {
+        vec![
             &args.model,
-            &args.mmproj,
+            args.mmproj
+                .as_ref()
+                .context("hybrid mode requires --mmproj")?,
             &args.tokenizer,
-            &args.processor,
+            args.processor
+                .as_ref()
+                .context("hybrid mode requires --processor")?,
             &args.template,
-        ],
-    )?;
+        ]
+    };
+    let mut retained = files::retain_artifacts(&args.artifact_manifest, &artifact_paths)?;
+    let device = if args.device == "cpu" {
+        Device::Cpu
+    } else {
+        Device::new_cuda(0).context("opening CUDA device 0")?
+    };
     files::write_json(
         &args.out.join("admission.json"),
         &json!({"schema":if args.load_only {"candle.d1_load_artifact_admission.v1"} else {"candle.d1_artifact_admission.v1"},"artifacts":retained.identities,"device":args.device,"context":args.context,"cases":cases.len(),"requests_sha256":args.requests.as_ref().map(|_|files::sha256(&inputs)),"policy":candle_vlm::lfm2_d1::D1PolicyV1::ID}),
     )?;
     let load_started = Instant::now();
-    let mut session = load_d1_q8_with_embedding_mode(
-        D1LoadOptions {
-            hybrid: Lfm2VlHybridLoadOptions {
+    let gpu_before_load = if args.load_only {
+        gpu_memory(&device)?
+    } else {
+        None
+    };
+    let limits = D1Limits {
+        max_context_tokens: Some(args.context),
+        ..Default::default()
+    };
+    let mut session = if args.text_only {
+        load_d1_text_q8_with_embedding_mode(
+            D1TextLoadOptions {
                 text_gguf: &args.model,
-                mmproj: Lfm2VlMmprojSource::GgufFile(&args.mmproj),
                 tokenizer: &args.tokenizer,
-                processor_config: Some(&args.processor),
-                mmproj_execution: Lfm2VlMmprojExecution::Q8,
-                vision_dtype: DType::F32,
-                vision_device: &device,
                 text_device: &device,
+                limits,
             },
-            limits: D1Limits {
-                max_context_tokens: Some(args.context),
-                ..Default::default()
+            args.text_embedding,
+        )?
+    } else {
+        load_d1_q8_with_embedding_mode(
+            D1LoadOptions {
+                hybrid: Lfm2VlHybridLoadOptions {
+                    text_gguf: &args.model,
+                    mmproj: Lfm2VlMmprojSource::GgufFile(
+                        args.mmproj
+                            .as_ref()
+                            .context("hybrid mode requires --mmproj")?,
+                    ),
+                    tokenizer: &args.tokenizer,
+                    processor_config: Some(
+                        args.processor
+                            .as_ref()
+                            .context("hybrid mode requires --processor")?,
+                    ),
+                    mmproj_execution: Lfm2VlMmprojExecution::Q8,
+                    vision_dtype: DType::F32,
+                    vision_device: &device,
+                    text_device: &device,
+                },
+                limits,
             },
-        },
-        args.text_embedding,
-    )?;
+            args.text_embedding,
+        )?
+    };
     if args.load_only {
         device.synchronize()?;
         let load_ms = load_started.elapsed().as_secs_f64() * 1000.;
         let consumed_files = session.consumed_files().to_vec();
         let execution = session.execution_details();
         let embedding_storage = session.text_embedding_storage()?;
+        let gpu_loaded = gpu_memory(&device)?;
         drop(session);
+        device.synchronize()?;
+        let gpu_after_release = gpu_memory(&device)?;
         retained.write_verified_report(
             &args.out.join("load-only.json"),
             &json!({
                 "schema": "candle.d1_load_only.v1", "state": "complete",
                 "device": args.device, "embedding": args.text_embedding, "load_ms": load_ms,
+                "text_only": args.text_only,
                 "embedding_storage": embedding_storage,
                 "consumed_files": consumed_files, "execution": execution,
+                "gpu_memory_observations": {"before_load": gpu_before_load,
+                    "loaded": gpu_loaded, "after_release": gpu_after_release},
                 "language_forwards": 0, "vision_forwards": 0, "output_tokens": 0,
             }),
         )?;
@@ -322,6 +425,37 @@ fn run(args: &Args) -> Result<()> {
         anyhow::bail!("d1 run failed; partial results retained")
     }
     Ok(())
+}
+
+fn validate_mode_inputs(text_only: bool, cases: &[Input]) -> Result<()> {
+    anyhow::ensure!(
+        !text_only || cases.iter().all(|input| input.images.is_empty()),
+        "--text-only does not accept image requests; use the hybrid mode"
+    );
+    Ok(())
+}
+
+#[derive(Serialize)]
+struct GpuMemory {
+    free_bytes: usize,
+    total_bytes: usize,
+}
+
+fn gpu_memory(device: &Device) -> Result<Option<GpuMemory>> {
+    #[cfg(feature = "cuda")]
+    if let Device::Cuda(cuda) = device {
+        let (free_bytes, total_bytes) = cuda
+            .cuda_stream()
+            .context()
+            .mem_get_info()
+            .context("CUDA memory observation")?;
+        return Ok(Some(GpuMemory {
+            free_bytes,
+            total_bytes,
+        }));
+    }
+    let _ = device;
+    Ok(None)
 }
 
 fn run_case(
