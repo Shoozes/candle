@@ -2,14 +2,84 @@
 
 ## Current phase and source
 
-Current five-record closeout (2026-10-11): verified scoped progress. The batch
+Maintained-model source closeout (2026-10-12), implementation baseline
+`4c2dfaf3bd7a8e519c70db026a79c32e271c3a61`: the owner authorized scoped
+checkpoint commits and guarded publication of the reviewed 35-file batch.
+It includes text-only d1 loading, Qwen recovery/opt-in grouped projections,
+VAE admission and the subsequent diagnostic/receipt repairs. No unrelated
+paths or outgoing commits were found; native/remote main matched at intake.
+Construction and authored component criteria are proven. Retained t01
+numerical qualification remains open, as does Qwen retained-model proof.
+The exact final commit/tree and native gate are bound by
+`artifacts/publication/last-push.json` when its commit matches current HEAD.
+After the clean checkpoint, rebuild/rebind the source-stale t01 proposal and
+obtain fresh approval before its CPU-first eight-request/24-forward matrix.
+GenEye stays at `3fa7075e`; no production inference is authorized by this
+closeout, and WSL remains unavailable without its missing offline dependency.
+
+### Review evidence before source closeout
+
+Review/recheck/cleanup (2026-10-12): native `main` remains `4c2dfaf3`; the
+34-file implementation candidate and ten proof logs matched the prior closeout
+receipt before edits. Prior image-marker and pinned-reference prompt findings
+are closed. New controls reproduced lost Qwen projection observations on later
+failure and a comparator false-pass for shared incorrect input-token totals.
+The scoped repairs pass Qwen CPU nine/four ignores, bounded CUDA twelve/ten
+ignores and seven comparator controls. Readable completed observations now
+survive later failures without re-running kernels; cache reset/replay remains
+exact. Receipt counts must be integers, match traces and report zero inactive
+dispatch. Frozen authored replay remains bit exact, with current paired
+medians improving 37.0% recurrent/16.3% FFN. These are component measurements.
+Active review files are Qwen runtime/recovery tests, the d1 comparator/controls,
+entry-point/status/TODO/history and affected route/API descriptions. The full
+native `.tools/verify-before-push.ps1` gate passes at this repaired source,
+including strict Clippy, maintained tests, examples and repository controls;
+strict affected CUDA Clippy and the LFM/diffusion inventories also pass.
+The original pending t01 packet is retained unchanged
+but source-stale; rebuild/rebind after a separately authorized clean checkpoint
+and obtain fresh approval before any production request. No publication,
+downloads, training, consumer edits or new production inference occurred.
+WSL was not replayed: the previously observed missing offline `accelerate-src`
+dependency remains an unaddressed portability limitation, not a native failure.
+
+## Original maintained-model implementation proof
+
+Current implementation (2026-10-12): the accepted maintained-model plan starts
+at clean native `main` `4c2dfaf3`. D1 text-only loading and CLI integration are
+implemented locally: CPU d1 tests pass 24/two ignores, CLI/output tests pass
+eight, and strict library/example Clippy passes. CPU-first authored CUDA d1
+fixtures pass 31/two ignores in an 8 GiB/600-second Job; the owner exited and
+its receipt is in `artifacts/maintained-models/20261012/`. The text path matches
+hybrid prompts, IDs, logits and answers in both embedding modes, rejects
+images/sentinels before forwards and consumes only GGUF/tokenizer model inputs.
+All twelve zero-forward loading samples passed: median startup improves
+14.6% CPU/15.8% CUDA with approximately 808/817 MiB less CPU/CUDA peak Job memory and
+832 MiB less retained CUDA allocation; source identities and raw measurements
+remain in the owned proof root. D1 routes/inventories pass. Qwen recovery CPU
+fixtures pass eight/four ignores and bounded CUDA passes ten/ten ignores.
+Grouped remains opt-in after bit-exact components and 37.4%/15.1% lower
+authored recurrent/FFN projection medians. The VAE repair passes three CPU
+malformed/valid tests. The original five text-loading comparator controls pass,
+including common-mode reference/identity rejection. The complete native gate
+`.tools/verify-before-push.ps1` passes formatting, locked/offline libraries and
+four examples, strict Clippy, maintained tests and repository gates. Affected
+LFM/diffusion inventories pass. WSL replay is unavailable because cached
+`accelerate-src` is missing; no dependency fetch occurred. Exact next task:
+rebind the retained t01 proposal to a separately authorized clean checkpoint,
+then obtain fresh packet approval before any numerical production request.
+Active files include d1 backend/load/session/tests, the standalone example,
+Qwen recovery/tests, VAE and affected records/routes. No commit
+or publication is selected; GenEye retains Candle `3fa7075e`, and its package
+qualification and the exact-base 2.6B adapter/Edge gate remain open.
+
+Historical five-record closeout (2026-10-11): verified scoped progress. The batch
 corrects GenEye's published Q8Rows handoff and records the newly retained
 GenUni 3B pilot without closing the selected 2.6B/Edge gate. GenEye remains
 pinned to Candle `3fa7075e`; its package numerical qualification still requires
 a quiet admission window and fresh finite allowance. No runtime repair is
 selected, and existing qualification criteria and consumed allowances remain.
 
-At publication intake, native `main` and freshly fetched `origin/main` both
+At that earlier publication intake, native `main` and freshly fetched `origin/main` both
 equal `06c2e785eb8a8f1a0b40900ed5e70f3f4053c6e7`; there are no outgoing commits
 or staged paths. The five reviewed files are `START_HERE.md`, `D1.md`,
 `D1_LOADING.md`, `STATUS.md` and `TODO.md`. Current routes and inventories
@@ -813,4 +883,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-records-closeout | change=bound the five-document progress save and retained producer and consumer qualification limits
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models-publish | change=closed out verified scoped progress while retaining numerical qualification gates

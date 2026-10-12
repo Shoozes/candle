@@ -1,5 +1,28 @@
 # LFM2.5-VL Decisions
 
+## D-0077: Independently adopt the VAE input repair
+
+The accepted 2026-10-12 maintained-model plan selects the isolated VAE repair
+before any later combined snapshot. Its path belongs explicitly to the
+SnapFlash-derived diffusion overlay. Validate positive channel layouts and
+latent doubling before construction; Gaussian inputs retain any valid rank
+with a channel axis, requiring positive even channels. Valid distribution
+math/sampling and all frozen release identities remain unchanged. Qwen keeps
+its independent arithmetic, recovery and measurement decisions in its owner.
+
+## D-0076: Explicit text-only d1 construction
+
+The owner selected startup/memory work first on 2026-10-12. A separate local
+text constructor returns the existing D1Session with a private text backend;
+the existing hybrid constructors and embedding defaults remain unchanged.
+The text path never opens a vision/projector/processor input and rejects
+images and resolved image sentinel IDs before model execution. It reports
+the absent vision device as `none` and zero projector inventory, while keeping
+the shared prompt/readout, independent prefills, counts and cancellation rules.
+This is explicit construction, not lazy loading or a failed-MMProj fallback.
+Native Q8 major language linears/F32 activation admission remains mandatory.
+Retained model numerical proof requires its own finite source-bound allowance.
+
 ## D-0075: Retain Q8 token rows as an optional d1 loading mode
 
 Status: Selected for the 2026-10-10 Work batch before model-loader edits.
@@ -1779,4 +1802,4 @@ it consumed zero model forwards. Quality and consumer package acceptance remain
 separately owned. No publication follows from this local qualification.
 
 ---
-AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-loading | change=recorded additive loading implementation and local qualification with production allowance pending
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models | change=implemented and verified scoped model improvements

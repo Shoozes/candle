@@ -1,5 +1,50 @@
 # Optional d1 loading qualification
 
+## Explicit text-only loading, 2026-10-12
+
+The maintained-model batch at `4c2dfaf3` adds `D1TextLoadOptions` and
+`load_d1_text_q8[_with_embedding_mode]`. DenseF32 remains the default;
+Q8Rows is explicit. The private session backend consumes only the language
+GGUF and tokenizer, constructs no processor/vision/projector, reports
+`vision_device="none"` and zero projector inventory, and rejects images and
+literal/resolved image sentinels before forwards. Existing hybrid entry points
+retain their defaults. The CLI selects this path with `--text-only`, which
+conflicts with projector/processor flags and preflights every image-bearing
+case before image I/O or model loading. Template bytes remain provenance.
+
+Authored CPU fixtures pass 24 tests/two ignores; CUDA passes 31/two ignores
+after CPU. Both embedding modes have bit-exact text/hybrid prompts, token IDs,
+logits, answers, ordering and language counts. Tests exercise missing vision
+files, malformed inputs, context admission, partial failure, cancellation,
+cache reset/replay and nonatomic image markers. These component results do
+not substitute for the separately approved retained `t01` numerical packet.
+
+The accepted twelve-load protocol was frozen before measurement. All samples
+use the same release binary, Q8Rows, retained hash-checked files, 4,096-token
+ceiling, fresh processes, 16 GiB Jobs and 900-second deadlines; CPU precedes
+CUDA. There were zero forwards/tokens, warmups or retries; all owners exited.
+
+| Device/path | Constructor ms: first; subsequent; subsequent | Median startup s | Median peak Job bytes |
+| --- | --- | ---: | ---: |
+| CPU hybrid | 2693.060; 2712.643; 2616.311 | 7.612 | 4,099,100,672 |
+| CPU text-only | 2493.764; 2482.665; 2422.149 | 6.498 | 3,252,051,968 |
+| CUDA hybrid | 2675.587; 2729.242; 2732.695 | 7.584 | 4,757,794,816 |
+| CUDA text-only | 2330.362; 2446.760; 2322.120 | 6.383 | 3,900,882,944 |
+
+Median total startup fell 14.6%/15.8% (CPU/CUDA). CUDA free-memory observations
+before/loaded/after-release show 3,758,096,384 hybrid versus 2,885,681,152
+text-only retained device bytes, a reduction of 872,415,232 bytes; every
+after-release observation equals before-load. These are retained allocation
+observations, not peak VRAM. Job/private/working-set measurements are host
+memory, recorded separately. OS caches were not flushed and ordinary desktop
+and an independently owned graphics workload were present; no cold-disk or
+isolated-host claim follows. Compact raw samples, source/binary/input hashes
+and release receipts live under `artifacts/maintained-models/20261012/`.
+The later literal-sentinel admission regression changes request validation
+only; these measurements remain bound to their original constructor source.
+
+## Historical Q8Rows qualification
+
 The selected Work batch started at published `ebf2f85e96d264c3d78f7f35b22da3cc0a9abcaf`
 and preserved the separately proven example-output repairs. The owner separately
 published that progress at `7c9067bc494e1cc98bdd2a83151b056757897c1c` before
@@ -227,4 +272,4 @@ packet/package/terminal objects; all match. The terminal receipt is SHA-256
 `56a97b9607e187e56636b3d65bb8e4e43135d35cd40ff18afbf5ac9fe3efdaa7`.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-records-closeout | change=saved published adoption and distinguished package checks from blocked numerical qualification
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models | change=implemented and verified scoped model improvements

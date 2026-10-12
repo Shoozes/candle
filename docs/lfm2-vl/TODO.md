@@ -6,6 +6,34 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ## Active Candle backlog
 
+### [ ] Qualify retained t01 on the new d1 text-only loading path
+
+- What: Execute the prepared text/hybrid × DenseF32/Q8Rows × CPU/CUDA matrix
+  against the retained t01 request after the completed maintained-model repair.
+- Why: Authored component parity and twelve zero-forward load samples do not
+  establish the new constructor's retained-model numerical qualification.
+- When: Only after a separately authorized clean checkpoint and newly approved
+  source/binary-bound packet. The owner has now authorized the 35-file source
+  Closeout/Publish; it supplies no numerical allowance. The October 12 review
+  repaired Qwen failure
+  observations and d1 receipt accounting, so the original pending proposal's
+  source hashes are stale. Rebuild/rebind it; no closed allowance can be reused.
+- Where: Candle's d1 example, pinned offline reference/comparator and fresh
+  owned proof outputs. GenEye remains pinned to `3fa7075e`; no consumer edits.
+- How: Eight sequential requests at most, 24 language forwards, zero vision
+  forwards/output tokens/warmups/retries; 16 GiB Jobs, 1,800 seconds/run. Run
+  all four CPU variants first and stop on failure before CUDA. Rebind the
+  proposal after the clean checkpoint; verify every owner releases.
+- Done when: Pinned prompts/IDs/aliases and artifact admission match; CPU
+  logits/answers are exact; CUDA logits stay within 0.02 and readout 1e-6;
+  actual counts and completion-last receipts pass. No accuracy threshold.
+- Verification: The narrowed comparator and its seven authored controls for
+  typed counts, trace-derived input totals, inactive dispatch and prior parity
+  checks, exact input/source/binary hashes and native bounded Job receipts.
+  Completed code, load/profile proof and WSL limitation are recorded in
+  [maintained-model history](MAINTAINED_MODELS.md). Qwen retained-model
+  qualification needs a separately selected fresh finite allowance as well.
+
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
 - What: Admit an immutable trained text adapter for the accepted
@@ -313,29 +341,6 @@ acceptance contract.
   crate tests, warnings-denied Clippy, the selected workspace suite, and the
   exact inventory command above.
 
-### Conditional upstream maintenance — malformed stable-diffusion VAE inputs
-
-- What: Replace the unchecked `block_out_channels[0]`/`last().unwrap()`
-  assumptions in `AutoEncoderKL::new` and the two-result unwrap in
-  `DiagonalGaussianDistribution::new` with controlled validation errors.
-- Why: Both constructors are public. An empty channel layout or a latent
-  parameter tensor that cannot split into mean/log-variance halves can panic
-  instead of returning the crate's normal `Result` error.
-- When: After combined-overlay 0.2.0 publication, and only as an independently
-  reviewed upstream safety slice; `vae.rs` is outside both frozen overlays.
-- Where: `candle-transformers/src/models/stable_diffusion/vae.rs`, its nearest
-  unit tests, and whichever overlay or upstream manifest explicitly adopts the
-  change.
-- How: Validate the channel inventory before constructing encoder/decoder
-  blocks, validate the latent parameter channel count before splitting, keep
-  valid SD 1.x/XL shapes unchanged, and avoid a new abstraction or dependency.
-- Done when: Empty channel layouts and unsplittable latent tensors return
-  actionable errors without mutation or panic, valid VAE construction and
-  sampling remain compatible, and the owning manifest records the new path.
-- Verification: Focused malformed/valid VAE tests, transformer tests,
-  warnings-denied Clippy, formatting, the selected locked/offline workspace
-  gate, and the affected overlay/union verifiers.
-
 ### Conditional upstream maintenance — reachable model/operator stub branches
 
 - What: Replace externally reachable `todo!()` branches with the pinned
@@ -427,4 +432,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-records-closeout | change=saved verified 3B producer progress and the unchanged exact-base 2.6B input boundary
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models-publish | change=closed out verified scoped progress while retaining numerical qualification gates

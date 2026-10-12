@@ -45,7 +45,7 @@
       ]
     },
     "feature__qwen35_gguf": {
-      "description": "Bounded Qwen3.5 GGUF Q8_0/F32 admission and the separately gated exact 4B CPU trace.",
+      "description": "Bounded Qwen3.5 Q8/F32 admission, token/context and cache recovery, default Sequential and opt-in Grouped CUDA projections, and diagnostic observer contracts; production qualification stays source-bound.",
       "status": "active",
       "paths": [
         "docs/qwen35/STATUS.md",
@@ -63,7 +63,10 @@
         "scripts/qwen35/llama-layer-probe.cpp",
         "scripts/qwen35/run-bounded-layer-probe.ps1",
         "tests/fixtures/qwen35_codename_b/reference.json",
-        "tests/fixtures/qwen35_codename_b/README.md"
+        "tests/fixtures/qwen35_codename_b/README.md",
+        "candle-transformers/src/models/qwen35/cpu/recovery_tests.rs",
+        "candle-transformers/src/models/qwen35/cpu/projection_tests.rs",
+        "docs/qwen35/INTEGRATION.md"
       ]
     },
     "feature__qwen35_q8_core": {
@@ -541,7 +544,7 @@
       ]
     },
     "issue__stable_diffusion_public_input_panics": {
-      "description": "Deferred upstream safety slice for malformed public VAE configuration or latent distribution inputs that can still reach unchecked indexing or unwraps.",
+      "description": "VAE public channel/configuration admission and controlled Gaussian splits, with malformed/valid regression coverage owned by the diffusion overlay.",
       "status": "active",
       "paths": [
         "candle-transformers/src/models/stable_diffusion/vae.rs",
@@ -644,7 +647,8 @@
         "candle-transformers/src/models/stable_diffusion/unet_2d.rs",
         "candle-transformers/tests/stable_diffusion_mutable_tests.rs",
         "docs/snapflash/MOD_MANIFEST.md",
-        "scripts/snapflash/verify-mod-manifest.sh"
+        "scripts/snapflash/verify-mod-manifest.sh",
+        "candle-transformers/src/models/stable_diffusion/vae.rs"
       ]
     },
     "workflow__context_integrity": {
@@ -692,7 +696,8 @@
         "tests/fixtures/lfm2_d1_tiny/policy.json",
         "tests/fixtures/lfm2_d1_tiny/README.md",
         "tests/fixtures/lfm2_d1_tiny/tokenizer.json",
-        "candle-vlm/src/lfm2_d1/tests/embedding.rs"
+        "candle-vlm/src/lfm2_d1/tests/embedding.rs",
+        "candle-vlm/src/lfm2_d1/backend.rs"
       ]
     },
     "workflow__d1_example_outputs": {
@@ -737,7 +742,7 @@
       ]
     },
     "workflow__d1_loading": {
-      "description": "Optional retained Q8 token rows with F32 lookup, tied-output storage sharing, bounded embedding-header/ID admission, additive public constructors and zero-forward load profiling. Expand to feature__lfm2_d1 for policy/readout, workflow__d1_example_outputs for exclusive output ownership and feature__lfm2_text for language/adapter behavior. The composite storage getter is in feature__native_composite.",
+      "description": "Explicit text-only or hybrid d1 loading, retained Q8 token rows/F32 lookup, tied-output sharing, image capability/sentinel admission, two-file text inventory and zero-forward loading measurements. Expand to feature__lfm2_d1 for shared prompt/session controls, workflow__d1_example_outputs for the runner and feature__lfm2_text for language/adapter behavior.",
       "status": "active",
       "paths": [
         "docs/lfm2-vl/D1_LOADING.md",
@@ -750,7 +755,13 @@
         "candle-vlm/src/lfm2_d1/session.rs",
         "candle-vlm/src/lfm2_d1/tests/embedding.rs",
         "candle-examples/examples/lfm2-d1/main.rs",
-        "tools/lfm2_vl/d1/reference-lock.json"
+        "tools/lfm2_vl/d1/reference-lock.json",
+        "candle-vlm/src/lfm2_d1/backend.rs",
+        "candle-vlm/src/lfm2_d1/loading.rs",
+        "candle-vlm/src/lfm2_d1/tests/text_only.rs",
+        "tools/lfm2_vl/d1/compare_text_loading.py",
+        "tools/lfm2_vl/d1/test_compare_text_loading.py",
+        "docs/lfm2-vl/MAINTAINED_MODELS.md"
       ]
     }
   },

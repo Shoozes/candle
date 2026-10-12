@@ -22,7 +22,7 @@ native Windows and WSL report the same candidate paths.
 | --- | --- | --- |
 | LFM2-VL/MMProj | `docs/lfm2-vl/MOD_MANIFEST.md` | Proven model, loader, processor, fixture, and verification work; CPU hash-bound quantized-text adapter mechanics proven; real adapter qualification pending |
 | Retained upstream compatibility | `docs/fork-compat/MOD_MANIFEST.md` | Public ug APIs, onig tokenizer selection and scoped CPU quantized execution options |
-| SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic three-component SDXL LoRA transaction, controlled unsupported flash-attention failure, and exact residual/opt-in `text_time` UNet conditioning |
+| SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic SDXL LoRA transaction, controlled unsupported flash attention, residual/`text_time` conditioning and validated VAE channel construction/distribution |
 | GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Packed CPU/CUDA interfaces and source-bound short-parity/2,080-token receipt; no new production claim from upstream sync |
 | Qwen3.5 GGUF compatibility | `docs/qwen35/MOD_MANIFEST.md` | Bounded Q8_0/F32 text admission, proven CPU parity, and scoped CUDA quantization under qualification; no Edge activation |
 
@@ -184,4 +184,4 @@ the one-row kernel and Qwen's separate MMVQ/MMQ branch retain their behavior.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=d1-cpu-single-row | change=qualified native CPU projection and preserved Q8/F32 proof
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models | change=implemented and verified scoped model improvements

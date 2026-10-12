@@ -49,9 +49,14 @@ checks, but the fresh numerical attempt stopped at owner admission before any
 model load or request. Its allowance is closed. GenEye owns a quiet admission
 window and fresh bounded qualification; LTS activation remains a separate gate.
 See [the current handoff](D1_LOADING.md#geneye-consumer-qualification).
-The next active Candle implementation item is the real 2.6B adapter
-gate in `TODO.md`, pending producer inputs. CUDA prefill qualification is
-published at `f93a4111ae41683b548758225940f80de6cd37e8`.
+The maintained-model batch adds explicit text-only d1 loading, Qwen recovery/
+projection options and VAE input validation locally at baseline `4c2dfaf3`.
+The next selected proof item is the retained t01 text/hybrid loading matrix in
+`TODO.md`, after a separately authorized clean checkpoint and fresh packet
+approval. The owner has authorized this source batch's guarded publication;
+retained-model numerical approval remains separate. The real 2.6B adapter
+gate still awaits producer inputs. CUDA prefill qualification is published at
+`f93a4111ae41683b548758225940f80de6cd37e8`.
 The subsequent pinned upstream/CPU-options batch is qualified at `34830c19`;
 its final guarded publication identity is owned by the current source-bound
 receipt recorded in `STATUS.md`.
@@ -192,4 +197,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-10-11 | agent=Codex/root | model=unknown | effort=unknown | task=d1-records-closeout | change=routed published Q8Rows adoption and the remaining bounded package qualification
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models-publish | change=closed out verified scoped progress while retaining numerical qualification gates
