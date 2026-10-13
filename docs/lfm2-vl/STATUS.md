@@ -2,16 +2,21 @@
 
 ## Independent GPT-OSS work, 2026-10-13
 
-Current published baseline is `0232662335b393da3c8f5b64d08302c5e3a92a47`, tree
-`264a2fee58669d03ab649465666da3644700f108`. Prior typed receipt/timing findings
-remain closed. The next common-session characterization harness is implemented
-locally with bounded observers, fixed 5/6/7-token rows, replay, actual DLL paths
-and clean source/build admission; historical packets and model arithmetic stay
-unchanged. Focused CPU/CUDA examples and strict Clippy, complete native gate and
-bounded release builds pass. The revised draft is independently reviewed. Active files are the
-GPT examples/scripts, verifier
-and affected docs/routes; see [GPT status](../gpt-oss/STATUS.md) and
-[the contract](../gpt-oss/CHARACTERIZATION.md).
+Current published baseline remains `0232662335b393da3c8f5b64d08302c5e3a92a47`.
+The authorized local checkpoint is `03228e54595cf783e6186ba86f11e55a0fd63696`,
+tree `d65aac1a5d94ded3e95acbecebdacba56261180a`, unpushed. Its clean native gate
+and reviewed CPU/CUDA release package passed. The approved `6fd22840…` packet
+then exited before admission because importing the legacy helper overwrote the
+caller's `AsLibrary` switch. No model load, request, forward, token or watcher
+ran and no model output root exists. The attempt is incomplete and its allowance
+is closed without retry; historical source, packets and receipts remain intact.
+
+The scoped runner repair preserves CLI/library intent across the import;
+145 model-free controls include actual `pwsh -File` refusal and library-mode
+checks; the complete locked/offline native gate and independent source review
+pass. Active files are the runner/controls
+and five current docs, with no model arithmetic or consumer changes. See
+[GPT status](../gpt-oss/STATUS.md) and [the contract](../gpt-oss/CHARACTERIZATION.md).
 
 The owner-requested independent oracle regeneration reproduces the exact
 historical size/digest. Its producer Job/child released and codec checks pass;
@@ -21,11 +26,11 @@ Symbio's published twelve-file `e43eeeac` candidate bytes are reconciled; Edge's
 local twelve-file return and proof journal are also byte-verified. Native consumer,
 32k/BF16 and provider gates remain held. Q8 and GenEye's `3fa7075e` pin stay.
 
-Exact next task: obtain explicit local
-checkpoint authority, bind the final clean packet, then seek a separate finite
-CPU-first Candle allowance. No commit, push or consumer change is authorized
-by the current Work. The stale `9591dc7c…edcf653` packet remains forbidden;
-closed allowances are not reused. The retained d1 phase below is unchanged.
+Exact next task: obtain new authority for the verified seven-file repair
+checkpoint, rebuild/review a clean final packet, then seek a separate finite
+CPU-first allowance. Neither the closed `6fd22840…` packet nor stale
+`9591dc7c…edcf653` may run. No new commit, push or consumer change is authorized.
+The retained d1 phase below is unchanged.
 
 ### Prior local review evidence
 
@@ -1046,4 +1051,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=implemented bounded numerical and runtime preparation with exact oracle recovery
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cli-admission | change=recorded held GPT-OSS qualification and scoped entry-point recovery

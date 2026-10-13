@@ -2,6 +2,7 @@
 param([string]$PacketPath,[string]$RunRoot,[switch]$AsLibrary)
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
+$characterizationLibraryOnly=[bool]$AsLibrary
 . (Join-Path $PSScriptRoot 'run-session-profile.ps1') -AsLibrary
 
 function Get-CharacterizationPlan {
@@ -259,7 +260,7 @@ function Invoke-CharacterizationLane($Lane,$Packet,[string]$PacketFile,[string]$
     }
     if(-not $success){throw "Characterization failed: $errorText"}
 }
-if($AsLibrary){return}
+if($characterizationLibraryOnly){return}
 if(-not $IsWindows -or $PSVersionTable.PSVersion.Major -lt 7){throw 'Characterization needs native Windows PowerShell 7'}
 $repo=(Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 Set-Location -LiteralPath $repo

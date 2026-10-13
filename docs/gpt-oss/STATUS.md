@@ -2,20 +2,29 @@
 
 ## Current maintained support, 2026-10-13
 
-Current baseline is published `0232662335b393da3c8f5b64d08302c5e3a92a47`, tree
-`264a2fee58669d03ab649465666da3644700f108`. The prior receipt repair remains
-closed, with its 241 controls and original `5a7e392a` observations unchanged.
+Published baseline remains `0232662335b393da3c8f5b64d08302c5e3a92a47`.
+The authorized local checkpoint is `03228e54595cf783e6186ba86f11e55a0fd63696`,
+tree `d65aac1a5d94ded3e95acbecebdacba56261180a`; it has not been pushed.
+The prior receipt repair, its 241 controls and original `5a7e392a` observations
+remain unchanged.
 
-The accepted drop-in's Task 1 is implemented locally: bounded GPU/process
-probes, common-session cold/numerical/replay capture, shared pinned comparator,
-loaded-DLL watcher, source/build admission and release-package preparation.
-Active paths are the characterization/example helper, GPT-OSS scripts, native
-verification step and affected docs/routes; no model arithmetic changed.
-Focused native checks pass: 140 characterization, 16 observer and 12 watcher
-controls; CPU examples 6/3 tests and strict Clippy. The complete native gate and
-CUDA examples 6/6 tests/checks/strict Clippy pass; CPU/CUDA bounded release builds
-pass. The revised draft also proves CPU/CUDA no-model startup and CPU host
-verification of both device metadata; independent draft review passes. Proof is in
+The checkpoint's clean native gate, CPU/CUDA release builds and model-free
+startup/host verification passed. Its reviewed final packet was 8,794 bytes,
+SHA-256 `6fd228404aa00ca2e1245b1d87046b26735c4838472db5452d929eece36680ff`.
+The separately approved invocation exited zero before admission or dispatch:
+dot-sourcing the legacy helper overwrote the runner's `AsLibrary` parameter.
+No output root, model load, request, forward, token or watcher was created.
+This attempt is incomplete, and its allowance is closed without retry. Original
+packet and invocation bytes are retained; this is no model qualification.
+
+The scoped repair captures library intent before importing helpers. Real
+`pwsh -File` regressions now reject missing arguments and malformed packets,
+preserve explicit library mode and prove rejection precedes output creation.
+145 native controls and the complete locked/offline native gate pass;
+independent two-file source review passes.
+Active work is the runner, its controls and five current handoff/contract docs.
+No Rust/model arithmetic, limits, oracle or consumer changes are included.
+Compact proof and the closed-attempt receipt are in
 `artifacts/gpt-oss/characterization-prep-02326623-20261013/`.
 
 The owner-requested oracle regeneration recovered the exact pinned bytes.
@@ -34,10 +43,11 @@ against return receipt SHA `8343d2e0…5fb44`. Neither is native consumer
 qualification. Q8/GenEye pins, Responses
 90s, WorkerRuntime 600s, engine 0.154 and all activation holds remain unchanged.
 
-Exact next task: obtain explicit local checkpoint authority
-for a final clean packet. Candle characterization needs its own fresh finite
-allowance afterward; no commit, push or consumer adoption belongs to this Work.
-The stale `9591dc7c…edcf653` packet stays forbidden and earlier allowances closed.
+Exact next task: obtain scoped authority for the verified seven-file repair
+checkpoint, then rebuild and independently review a final
+clean packet. Execution needs a new finite allowance; the closed `6fd22840…`
+packet must not run again. No new commit, push or consumer adoption is authorized.
+The stale `9591dc7c…edcf653` packet also stays forbidden and older allowances closed.
 Whole-model speed, BF16/32k, native consumers and release promotion remain open.
 
 ### Prior local review evidence
@@ -499,4 +509,4 @@ infer Q8/default or broad maintained production support from this packet.
 
 ---
 
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=implemented bounded numerical and runtime preparation with exact oracle recovery
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cli-admission | change=recorded zero-work closed attempt and verified real entry-point repair

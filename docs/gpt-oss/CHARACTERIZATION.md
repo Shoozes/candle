@@ -78,6 +78,27 @@ requires `nvcuda.dll`, `cublas64_13.dll`, `cublasLt64_13.dll` and
 launch and against actual observations. OS modules outside this selected
 closure remain inventory rather than a claim that every DLL was packaged.
 
+## Closed entry-point attempt and repair, 2026-10-13
+
+Local checkpoint `03228e54595cf783e6186ba86f11e55a0fd63696` passed the clean
+native gate, release preparation and final-packet review. The owner approved
+packet SHA-256 `6fd228404aa00ca2e1245b1d87046b26735c4838472db5452d929eece36680ff`
+for the frozen CPU-first workload. Its invocation exited zero without creating
+the model output root: the imported legacy helper's `AsLibrary` parameter
+overwrote the caller's same-named switch, causing an early library return.
+Zero loads, segments, forwards, token steps or outputs ran; CUDA never launched.
+An empty successful invocation is not a qualification receipt. The attempt and
+allowance are closed, with original packet/invocation bytes retained alongside
+`qualification-attempt-closeout.json` in the preparation proof root below.
+
+The correction preserves the caller's library intent in a distinct private
+value before dot-sourcing. Model-free child `pwsh -File` tests now exercise
+missing-argument and malformed-packet refusal, output-root absence, and explicit
+library mode; direct helper tests alone cannot prove executable admission.
+The correction requires its own clean checkpoint and reviewed source/helper
+binding before another finite owner allowance. No retry of the closed packet,
+consumer activation or publication follows from this repair.
+
 ## Oracle recovery, 2026-10-13
 
 The historical Temp oracle was missing. On the owner's explicit regeneration
@@ -102,4 +123,4 @@ physical memory, 28.48 GB commit against a 73.38 GB limit and 1.146 GB GPU use.
 Keep these new producer records separate even though their output digest matches.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=defined bounded common-session numerical and runtime proof with exact oracle recovery
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cli-admission | change=preserved closed zero-work attempt and real CLI admission contract

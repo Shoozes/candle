@@ -3,9 +3,12 @@
 The next characterization uses a separate [common-session contract](CHARACTERIZATION.md)
 and executable. It adds fixed-context numerical rows, reset/replay and observed
 DLL validation without changing this frozen historical eight/16 workload.
-Its model-free preparation is active at `02326623`; the missing pinned oracle
-has been recovered with exactly matching bytes. Fresh Candle measurements
-still require a clean source/binary-bound packet and separate finite allowance.
+Its local preparation checkpoint is `03228e54`; the missing pinned oracle was
+recovered with exactly matching bytes. The approved `6fd22840…` final packet
+exited before dispatch because a dot-sourced library switch replaced CLI intent.
+It performed zero model work and is closed without retry. The scoped entry-point
+repair passes 145 model-free controls including real `pwsh -File` refusal;
+fresh measurements require a new clean source/helper-bound packet and allowance.
 
 The first maintained baseline characterizes the public `GptOssSession` on CPU
 then CUDA, using F32 activations and retained GGUF MXFP4 experts. The historical
@@ -320,4 +323,4 @@ requesting its finite allowance. No consumer edits, model runs or release tags
 belong to this publication.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=implemented bounded numerical and runtime preparation with exact oracle recovery
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cli-admission | change=closed zero-work invocation without relabeling historical measurements

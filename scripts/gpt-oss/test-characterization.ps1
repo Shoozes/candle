@@ -126,4 +126,32 @@ Invoke-CharacterizationRuntimeEnvironment $runtimeLane {param($selected) Assert-
 Assert-CharacterTest ($env:PATH -eq $priorPath) 'runtime PATH restored after success'
 Assert-CharacterReject {Invoke-CharacterizationRuntimeEnvironment $runtimeLane {throw 'injected environment failure'}} 'injected environment'
 Assert-CharacterTest ($env:PATH -eq $priorPath) 'runtime PATH restored after failure'
+
+# Exercise the real script entry, where dot-source parameter binding can differ
+# from the library-only controls above. No valid packet or model is supplied.
+Assert-CharacterTest ($null -ne (Get-Command Get-CharacterizationPlan) -and
+    $null -ne (Get-Command Invoke-CharacterizationBatch)) 'library import exposes its helpers'
+$runner=(Resolve-Path (Join-Path $PSScriptRoot 'run-characterization.ps1')).Path
+$shell=(Get-Command pwsh).Source
+$missing=Invoke-SessionProfileProbe $shell @('-NoProfile','-NonInteractive','-File',$runner) 5000 8192
+Assert-CharacterTest ($missing.ExitCode -ne 0 -and $missing.Stderr -match 'PacketPath and RunRoot are required') 'real file entry rejects missing arguments'
+$library=Invoke-SessionProfileProbe $shell @('-NoProfile','-NonInteractive','-File',$runner,'-AsLibrary') 5000 8192
+Assert-CharacterTest ($library.ExitCode -eq 0 -and $library.Stdout.Length -eq 0 -and $library.Stderr.Length -eq 0) 'explicit library mode does not dispatch'
+$testRoot=Join-Path ([IO.Path]::GetTempPath()) ('candle-characterization-cli-'+[guid]::NewGuid().ToString('N'))
+$runRoot=Join-Path (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path ('artifacts/gpt-oss/rejected-cli-'+[guid]::NewGuid().ToString('N'))
+$success=$false
+New-Item -ItemType Directory -Path $testRoot | Out-Null
+try {
+    $badPacket=Join-Path $testRoot 'packet.json'
+    [IO.File]::WriteAllText($badPacket,'{"schema":"invalid"}',[Text.UTF8Encoding]::new($false))
+    $rejected=Invoke-SessionProfileProbe $shell @('-NoProfile','-NonInteractive','-File',$runner,'-PacketPath',$badPacket,'-RunRoot',$runRoot) 5000 8192
+    Assert-CharacterTest ($rejected.ExitCode -ne 0 -and $rejected.Stderr -match 'Characterization needs its exact final source') 'real file entry validates its packet'
+    Assert-CharacterTest (-not (Test-Path -LiteralPath $runRoot)) 'CLI packet rejection precedes output and model dispatch'
+    $success=$true
+} finally {
+    $resolved=[IO.Path]::GetFullPath($testRoot)
+    $allowed=([IO.Path]::GetFullPath([IO.Path]::GetTempPath())).TrimEnd([IO.Path]::DirectorySeparatorChar)+[IO.Path]::DirectorySeparatorChar
+    if(-not $resolved.StartsWith($allowed,[StringComparison]::OrdinalIgnoreCase) -or (Split-Path -Leaf $resolved) -notlike 'candle-characterization-cli-*'){throw 'CLI test root escaped owned scope'}
+    if($success){Remove-Item -LiteralPath $resolved -Recurse -Force}else{"Retained unresolved CLI evidence: $resolved"}
+}
 "characterization model-free controls: $script:passed passed"

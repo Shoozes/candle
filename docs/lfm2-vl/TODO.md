@@ -33,9 +33,15 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   independent 5/6/7-token row capture and replay, actual loaded-module paths,
   typed source/build/DLL admission and release-package preparation. Preserve
   the frozen historical eight/16 contract and all original receipts.
-- Current proof: 140 characterization, 16 observer and 12 watcher model-free
-  controls; CPU/CUDA example tests/checks and strict Clippy, full native
-  gate and bounded release builds pass. The revised draft is independently reviewed. Exact oracle bytes were recovered by one
+- Current proof: preparation is saved locally at `03228e54`; its clean native
+  gate, CPU/CUDA release/startup checks and final packet review passed. The
+  approved `6fd22840…` invocation returned before dispatch because a helper
+  import overwrote CLI/library intent. No loads, requests, forwards or tokens
+  ran. The attempt is incomplete and its no-retry allowance is closed.
+  The scoped repair passes 145 model-free controls, including real `-File`
+  refusal/library-mode checks, the complete native gate and independent source
+  review. Exact oracle
+  bytes were recovered by one
   separately owned b11379 load/chunk, zero output tokens or model retries;
   offload execution remains unclaimed. See
   [CHARACTERIZATION.md](../gpt-oss/CHARACTERIZATION.md) for paths and bounds.
@@ -44,17 +50,17 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   backing report and route proof; Symbio owns coding consumption afterward.
   Symbio's published twelve-file `e43eeeac` preparation is byte-verified;
   Edge's local twelve-file return and proof journal are also byte-verified.
-- Selected next batch: the local gate and independent draft review pass.
-  Obtain explicit local checkpoint authority and bind final clean
-  source/release binaries. Execution afterward needs a fresh finite allowance:
+- Selected next batch: obtain authority for the verified seven-file local
+  entry-point repair checkpoint, then rebuild/review a final clean
+  source/release/helper packet. Execution afterward needs a fresh finite allowance:
   CPU first, then CUDA only after complete numerical and release proof; at most
   two loads/six segments/44 public forwards/74 steps/32 outputs, no warmup/retry,
   with diagnostic 32 GiB/1,800s Jobs and 20e9 sampled GPU ceiling.
 - Preparation Done when: a reviewed final packet binds clean source/build,
   helper/watcher/probe/oracle, all work counts and resource/release bounds.
-  The current Work grants no commit, push, consumer adoption or Candle model
-  inference. The stale `9591dc7c…edcf653` proposal stays forbidden; consumed
-  allowances remain closed. BF16/32k/native provider/release gates remain open.
+  The new repair has no commit/push or model allowance. The closed `6fd22840…`
+  packet and stale `9591dc7c…edcf653` proposal must not execute; no consumer
+  adoption follows. BF16/32k/native provider/release gates remain open.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -464,4 +470,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=implemented bounded numerical and runtime preparation with exact oracle recovery
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cli-admission | change=selected verified entry-point repair before fresh checkpoint and finite qualification
