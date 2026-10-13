@@ -3,8 +3,12 @@
 ## Current maintained support, 2026-10-13
 
 Local checkpoints: loading/API `06a83835`, records `eb6abe92`, profiling
-preparation `3b16430b`, CUDA upload ownership `5a7e392a`. Earlier LFM edits
-and historical receipts remain intact. These checkpoints are not published.
+preparation `3b16430b`, CUDA upload ownership `5a7e392a`, CPU block dots
+`270bfc86` (tree `e1f153647c928e5be82ff87d3d2392a549181895`). Earlier LFM edits
+and historical receipts remain intact. The owner selected guarded publication
+of this related checkpoint history and the six-file proof-validator closeout.
+Publication commit/tree, native gate and exact remote equality are bound by
+`artifacts/publication/last-push.json`; deployment and inference are separate.
 
 Explicit GGUF and original/indexed packed safetensors load into CPU/CUDA F32.
 Experts stay packed; other supported types normalize to dense F32. Config,
@@ -24,8 +28,9 @@ receipts. Exact identities, counts and limits are in [PROFILING.md](PROFILING.md
 Optional timing preserves validation/cancellation/cache commit. Its CUDA
 validation interval includes pending device work; caller readback is separate.
 
-Active local CPU optimization: `mxfp4.rs` and new `mxfp4_cpu.rs`, plus
-LOADING/PROFILING/STATUS, manifest, Summary Bank and the LFM STATUS/TODO handoff.
+The nine-file CPU optimization is checkpointed at `270bfc86`. Its clean native
+gate and separate locked/offline CPU/CUDA release builds pass; release/build
+owners are absent. No production load or request ran for this candidate.
 Each 32-value block now computes its scale/lookup once, preserving packed
 storage and ordered F32 multiplication/accumulation. Frozen synthetic means
 improve 8.7–8.8x with identical F32-bit checksums; whole-model improvement
@@ -34,10 +39,33 @@ along with focused checks, strict CUDA Clippy and the complete native
 locked/offline `.tools/verify-before-push.ps1` gate. Proof:
 `artifacts/gpt-oss/cpu-dot-20261013/`. Current inventories are 44 GPT-OSS paths
 and 299 overlay paths, with 27 shared paths; Summary Bank routes pass.
-Next: request a scoped local checkpoint for the nine reviewed CPU code/record
-files, then bind/review a fresh CPU-first production comparison packet.
+Review/recheck at `270bfc86`: the prior nine-file byte identities, pending
+packet and exact-bit component checksums match. No packed-dot, cache or
+cancellation defect was found. A new host proof-validator defect accepted
+boolean/fractional/string counts, truthy string release flags and invalid token
+IDs/timings. The scoped repair is `scripts/gpt-oss/run-session-profile.ps1`,
+its model-free controls, PROFILING/STATUS and the LFM STATUS/TODO handoff.
+Explicit integer/range, boolean and finite numeric checks replace coercion.
+139 native model-free controls and the complete locked/offline native gate pass.
+Valid retained CPU/CUDA `5a7e392a` receipts pass the repaired validator without
+new model work; their source identity and bytes remain unchanged. Existing
+Summary Bank routes and the 44-path GPT-OSS manifest pass; overlay inventory
+remains 299 paths with 27 shared paths. No new model-code or route change.
+
+The reviewed 18,210-byte `9591dc7c…edcf653` packet and its release inputs remain
+unchanged, but are now source/helper-stale and must not launch. The passive
+watcher's 18 model-free controls establish capture/lifecycle behavior only;
+actual required DLL paths and hashes must be checked after a newly approved run.
+Local repair criteria are proven; the larger maintained-model milestone remains
+open. Closeout retains source-bound proof, releases task-owned processes and
+preserves prior publication evidence under
+`artifacts/gpt-oss/cpu-dot-20261013/receipt-review-270bfc86/publication/`.
+Next: bind/review a fresh CPU-first characterization packet to the delivered
+clean source, binaries, helper and passive watcher, then request finite
+production approval. No old packet or allowance may be reused.
 The completed `5a7e392a` proof must not be rebound to this candidate or reused
-as an allowance. No push, BF16/32k or consumer-ready claim. Preserve 32 GiB
+as an allowance. Publication saves verified progress and establishes no
+BF16/32k or consumer-ready claim. Preserve 32 GiB
 host, 20e9 GPU and Responses90s/WorkerRuntime600s. Existing nonfatal LNK4098
 remains visible; WSL still lacks offline dependencies.
 
@@ -413,4 +441,4 @@ infer Q8/default or broad maintained production support from this packet.
 
 ---
 
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cpu-dot | change=recorded completed upload qualification and exact-bit synthetic CPU block-dot improvement
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-proof-publication | change=closed verified receipt repair for guarded progress publication while preserving remaining model gates

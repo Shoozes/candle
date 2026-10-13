@@ -176,11 +176,63 @@ Separate focused CUDA fixtures/check/strict Clippy and the GPT-OSS manifest
 pass. Commands and exit codes remain in the same proof root. WSL was not
 repeated because its previously observed offline dependency is still missing.
 
-Next: obtain scoped checkpoint authority, bind/review a fresh release packet
-and request CPU-first production latency/parity proof. Repair-run receipts
+The owner approved the nine-file local checkpoint at `270bfc86`, tree
+`e1f153647c928e5be82ff87d3d2392a549181895`, without push or inference. Its
+clean native gate and locked/offline CPU/CUDA release builds pass. The prepared
+18,210-byte packet has SHA-256
+`9591dc7c4af55ad17df68ef1e04dbd1959173ad4c10c0bf8d1ecfde22edcf653`.
+It freezes the same two-load/two-request/32-forward/46-step/32-output workload
+and a separately armed read-only DLL watcher with 18 harmless-process controls.
+The watcher never launches/stops model processes or their native Jobs. Its
+observations must include the required modules per lane and hashes of observed
+CUDA/MSVC files; installed candidate identities alone cannot qualify runtime
+provenance. Greedy equality and descriptive single-run timing remain its
+comparison scope. No model run consumed this proposed packet.
+
+## Receipt review and scoped repair at `270bfc86`
+
+Read-only review/recheck recovered the prior nine-file identities and original
+component checksums. Packed-dot arithmetic, bounds and cache/cancellation
+ownership remain unchanged. In-memory controls reproduced a host receipt
+false-pass: PowerShell converted boolean load counts and fractional forward
+counts to integers, treated the string `"false"` as a successful release flag,
+and accepted nonnumeric generated IDs and coerced timings.
+
+The scoped launcher repair requires nonnegative integer JSON values for input,
+work/cache/PID/byte fields, bounded UInt32 token IDs and actual boolean Job flags.
+Timing values must be finite nonnegative numbers; strings and booleans fail.
+Existing equality, CPU-first, memory, identity and process-release gates remain
+in force. Added model-free controls exercise malformed producer records and
+valid JSON round trips. This changes proof admission, not model arithmetic or
+the frozen production allowance. The retained `5a7e392a` receipts contain valid
+typed fields; revalidating those existing records adds no model work or new
+source qualification.
+
+Fresh cleanup verification passes: `pwsh -NoProfile -File
+scripts/gpt-oss/test-session-profile.ps1` has 139 model-free controls, including
+independent consumed-file/expected-identity objects and valid JSON round trips.
+The repaired completion validator accepts the original CPU/CUDA `5a7e392a`
+progress and Job receipts. `cargo fmt --all -- --check`, the complete native
+`.tools/verify-before-push.ps1` gate, GPT-OSS manifest, existing Summary Bank
+routes and whitespace checks pass. Exact results and stale-packet disposition
+are retained under
+`artifacts/gpt-oss/cpu-dot-20261013/receipt-review-270bfc86/`. There are zero
+new production loads, forwards or outputs; that review added no commit or push.
+
+The earlier `9591dc7c…edcf653` packet is preserved unchanged but source/helper-
+stale after this repair. Do not execute it, including if its pending approval
+arrives later. The owner selected Closeout/Publish for the verified six-file
+repair and related GPT-OSS checkpoint history. The guarded helper's canonical
+receipt binds the delivered source/tree, final native gate and remote equality.
+Compact closeout/publication proof and the preserved `f1278f94` receipt remain
+in the existing `receipt-review-270bfc86/publication/` root. Model receipts keep
+their executed identities; publication does not promote them to a new source.
+
+Next: bind/review a new clean-source packet and exact binaries/helper/watcher
+before fresh finite production approval. Repair-run receipts
 retain `5a7e392a`; no prior allowance may be reused.
 Later BF16, staged 8k/16k/32k and Edge/Symbio route qualification retain their
 own gates. Responses remains 90 seconds and WorkerRuntime remains 600 seconds.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cpu-dot | change=bound successful repair qualification and exact-bit synthetic CPU timing to their original source identities
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-proof-publication | change=recorded guarded publication scope and fresh source-bound characterization prerequisite

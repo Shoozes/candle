@@ -35,14 +35,25 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   Fresh CPU/CUDA repair proof completes two loads/two requests, 32 forwards,
   46 token steps and 32 outputs under the declared bounds; sixteen greedy IDs
   agree and Job/registry release passes. Its allowance is closed. Full-logit
-  parity and live CUDA DLL provenance remain incomplete. The active CPU helper
+  parity and live CUDA DLL provenance remain incomplete. The CPU helper
   preserves scalar F32 bits while computing each block scale/lookup once;
   frozen synthetic means improve 8.7–8.8x. CPU 53/CUDA 61 fixtures, checks and
-  strict CUDA Clippy and the complete native locked/offline gate pass. Next
-  obtain scoped nine-file checkpoint authority and prepare fresh CPU-first production
-  latency/parity proof per [PROFILING.md](../gpt-oss/PROFILING.md). Production
+  strict CUDA Clippy and the complete native locked/offline gate pass. The owner
+  saved its nine-file checkpoint at `270bfc86`; clean native and CPU/CUDA release
+  gates pass. Read-only review/recheck recovers prior identities and proof with
+  no packed-dot/cache/cancellation defect. Scoped cleanup repairs a reproduced
+  proof-validator false-pass for implicit count/flag/token/timing conversions.
+  139 native model-free controls, retained-record revalidation, the complete
+  native gate and affected route/manifest checks pass with zero new model work.
+  The owner selected guarded progress publication of the repair and related
+  GPT-OSS checkpoints; full model/provider Done When remains open. Next bind
+  the delivered clean source, release binaries, helper and passive watcher to
+  a fresh reviewed CPU-first characterization packet, then obtain a separate
+  finite inference allowance per [PROFILING.md](../gpt-oss/PROFILING.md). The original
+  18,210-byte `9591dc7c…edcf653` packet stays unchanged but is source/helper-stale
+  and must not execute, even if its pending approval arrives. Production
   CPU speedup, BF16, larger context and consumer routes remain unqualified.
-  No inference retry, consumer pin or push is implied.
+  No inference retry, consumer repin, activation or deployment is implied.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -470,4 +481,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cpu-dot | change=closed the completed repair allowance and selected fresh CPU optimization qualification after local proof
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-proof-publication | change=kept maintained-model acceptance open after guarded progress closeout and selected fresh characterization binding

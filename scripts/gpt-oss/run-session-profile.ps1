@@ -16,8 +16,27 @@ function Get-SessionProfilePlan {
     }
 }
 
+function Test-SessionProfileUnsignedInteger {
+    param([AllowNull()]$Value)
+    $null -ne $Value -and $Value.GetType() -in @([byte],[sbyte],[int16],[uint16],[int32],[uint32],[int64],[uint64]) -and $Value -ge 0
+}
+
+function Assert-SessionProfileUnsignedInteger {
+    param([AllowNull()]$Value, [string]$Name, [UInt64]$Minimum=0, [UInt64]$Maximum=[UInt64]::MaxValue)
+    if (-not (Test-SessionProfileUnsignedInteger $Value) -or $Value -lt $Minimum -or $Value -gt $Maximum) {
+        throw "Profile $Name requires an unsigned integer in $Minimum..$Maximum"
+    }
+}
+
+function Test-SessionProfileTiming {
+    param([AllowNull()]$Value)
+    ((Test-SessionProfileUnsignedInteger $Value) -or $Value -is [double] -or $Value -is [single] -or $Value -is [decimal]) -and
+        [double]::IsFinite([double]$Value) -and $Value -ge 0
+}
+
 function Assert-SessionProfileIdentity {
     param([Parameter(Mandatory)]$Identity)
+    Assert-SessionProfileUnsignedInteger $Identity.size_bytes 'file size' 1
     if ([string]$Identity.sha256 -notmatch '^[0-9a-fA-F]{64}$' -or [UInt64]$Identity.size_bytes -eq 0) {
         throw 'Profile file requires explicit size and SHA-256'
     }
@@ -35,6 +54,9 @@ function Assert-SessionProfileIdentity {
 function Assert-SessionProfileInput {
     param([Parameter(Mandatory)]$InputValue, [Parameter(Mandatory)][string]$Source, [Parameter(Mandatory)][string]$Backend)
     $plan = Get-SessionProfilePlan
+    Assert-SessionProfileUnsignedInteger $InputValue.generated_tokens 'generated token count'
+    Assert-SessionProfileUnsignedInteger $InputValue.device_index 'device index' 0 ([int]::MaxValue)
+    Assert-SessionProfileUnsignedInteger $InputValue.model.size_bytes 'model size' 1
     if ($InputValue.schema -ne 'candle.gpt-oss.session-profile-input.v1' -or
         $InputValue.source_commit -ne $Source -or $InputValue.backend -ne $Backend) {
         throw 'Profile input source/backend/version mismatch'
@@ -46,6 +68,7 @@ function Assert-SessionProfileInput {
     $referencePath=Join-Path $PSScriptRoot '..\..\tests\fixtures\gpt_oss_task3_short_parity\reference.json'
     $frozen=(Get-Content -LiteralPath $referencePath -Raw | ConvertFrom-Json).reference_prefix_token_ids
     for($index=0; $index -lt $plan.prompt_tokens; $index++) {
+        Assert-SessionProfileUnsignedInteger $InputValue.prompt_token_ids[$index] 'prompt token ID' 0 ([UInt32]::MaxValue)
         if ($InputValue.prompt_token_ids[$index] -ne $frozen[$index]) { throw 'Profile prompt differs from the pinned reference prefix' }
     }
     if ([string]$InputValue.model.sha256 -notmatch '^[0-9a-fA-F]{64}$' -or
@@ -59,6 +82,23 @@ function Assert-SessionProfileCompletion {
     param([Parameter(Mandatory)]$Progress, [Parameter(Mandatory)]$Job, [Parameter(Mandatory)][string]$InputHash,
         [Parameter(Mandatory)]$BinaryIdentity, [Parameter(Mandatory)]$ModelIdentity, [Parameter(Mandatory)][string]$Backend)
     $plan = Get-SessionProfilePlan
+    foreach($name in @('loads_attempted','requests_attempted','requests_completed','attempted_forward_calls',
+        'completed_forward_calls','attempted_token_steps_upper_bound','completed_token_steps','registry_entries_after_release')) {
+        Assert-SessionProfileUnsignedInteger $Progress.$name "receipt $name"
+    }
+    Assert-SessionProfileUnsignedInteger $Progress.pid 'runner PID' 1 ([int]::MaxValue)
+    foreach($token in $Progress.generated_token_ids) {
+        Assert-SessionProfileUnsignedInteger $token 'generated token ID' 0 ([UInt32]::MaxValue)
+    }
+    foreach($name in @('child_exit_code','executable_bytes','peak_private_memory_bytes','peak_job_memory_bytes','max_job_memory_bytes','timeout_seconds')) {
+        Assert-SessionProfileUnsignedInteger $Job.$name "Job $name"
+    }
+    Assert-SessionProfileUnsignedInteger $Job.pid 'Job PID' 1 ([int]::MaxValue)
+    foreach($name in @('pid_absent_after_cleanup','assigned_before_resume','job_assigned','started_suspended')) {
+        if($Job.$name -isnot [bool]) { throw "Profile bounded Job $name requires a boolean" }
+    }
+    Assert-SessionProfileUnsignedInteger $BinaryIdentity.size_bytes 'binary size' 1
+    Assert-SessionProfileUnsignedInteger $ModelIdentity.size_bytes 'expected model size' 1
     if ($Progress.schema -ne 'candle.gpt-oss.session-profile-progress.v1' -or
         $Progress.status -ne 'completed' -or $Progress.input_sha256 -ne $InputHash -or
         [int]$Progress.loads_attempted -ne $plan.loads -or
@@ -84,21 +124,22 @@ function Assert-SessionProfileCompletion {
         [UInt64]$Job.max_job_memory_bytes -ne $plan.max_job_memory_bytes -or
         [int]$Job.timeout_seconds -ne $plan.deadline_seconds) { throw 'Profile bounded Job receipt is incomplete' }
     $consumed = @($Progress.consumed_files)
+    foreach($file in $consumed) { Assert-SessionProfileUnsignedInteger $file.size_bytes 'consumed model size' 1 }
     if ($consumed.Count -ne 1 -or $consumed[0].sha256 -ne $ModelIdentity.sha256 -or
         [UInt64]$consumed[0].size_bytes -ne [UInt64]$ModelIdentity.size_bytes) { throw 'Profile consumed model identity mismatch' }
     $position=0
     for ($index=0; $index -lt $plan.forward_calls; $index++) {
         $call=$Progress.calls[$index]
+        Assert-SessionProfileUnsignedInteger $call.input_tokens 'per-call input count'
+        Assert-SessionProfileUnsignedInteger $call.committed_sequence_tokens 'per-call cache position'
         $incoming=if($index -eq 0){$plan.prompt_tokens}else{1}
         $position+=$incoming
         if ($call.input_tokens -ne $incoming -or $call.committed_sequence_tokens -ne $position) { throw 'Profile per-call cache/work count mismatch' }
         foreach($name in @('forward_ms','caller_readback_ms','argmax_ms')) {
-            if ($null -eq $call.$name -or -not [double]::IsFinite([double]$call.$name) -or [double]$call.$name -lt 0) { throw 'Profile returned invalid timing' }
+            if (-not (Test-SessionProfileTiming $call.$name)) { throw 'Profile returned invalid timing' }
         }
         if (($Backend -eq 'cpu' -and $null -ne $call.cuda_final_validation_ms) -or
-            ($Backend -eq 'cuda' -and ($null -eq $call.cuda_final_validation_ms -or
-            -not [double]::IsFinite([double]$call.cuda_final_validation_ms) -or
-            [double]$call.cuda_final_validation_ms -lt 0 -or
+            ($Backend -eq 'cuda' -and (-not (Test-SessionProfileTiming $call.cuda_final_validation_ms) -or
             [double]$call.cuda_final_validation_ms -gt [double]$call.forward_ms))) { throw 'Profile validation timing/backend mismatch' }
     }
 }

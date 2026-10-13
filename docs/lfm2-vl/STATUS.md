@@ -17,24 +17,41 @@ checkpointed at `5a7e392a`. Fresh CPU/CUDA qualification completes both lanes
 under the declared bounds, with sixteen matching greedy IDs and verified Job/
 registry release. Its two-load/two-request/32-forward allowance is now closed.
 Full-logit parity and observed live CUDA DLL paths remain incomplete.
-Active local CPU work adds an ordered block-dot helper and exact-bit fixtures;
-frozen synthetic primitive means improve 8.7–8.8x. CPU 53/CUDA 61 tests, checks
+The CPU work is locally checkpointed at `270bfc86` with an ordered block-dot
+helper and exact-bit fixtures; frozen synthetic primitive means improve
+8.7–8.8x. CPU 53/CUDA 61 tests, checks
 and strict CUDA Clippy pass, as does the complete native locked/offline gate.
 This does not yet prove production model speedup. See
 [the measured contract](../gpt-oss/PROFILING.md) for source identities and limits.
-Next is a separately authorized nine-file CPU optimization checkpoint, then
-fresh source/binary-bound CPU-first production proof. No prior allowance
-reuse or publication is implied.
+Its clean native gate and separate CPU/CUDA release builds also pass. Review/
+recheck confirms prior source identities and component proof; no model defect
+was found. Scoped cleanup repairs a newly reproduced host proof-validator
+false-pass for coerced counts, release flags, token IDs and timings. Closeout files
+are the GPT-OSS launcher/model-free controls, its STATUS/PROFILING and this
+STATUS/TODO. 139 native model-free controls and the complete native gate pass;
+valid retained CPU/CUDA `5a7e392a` records pass the strict validator with zero
+new model work. Routes and manifests pass. The original 18,210-byte
+characterization packet remains unchanged but is source/helper-stale; it must
+not execute. The owner selected guarded publication of the verified six-file
+repair and related unpublished GPT-OSS checkpoints. The canonical
+`artifacts/publication/last-push.json` binds the delivered commit/tree, final
+native gate and remote equality; prior `f1278f94` evidence is preserved in
+`artifacts/gpt-oss/cpu-dot-20261013/receipt-review-270bfc86/publication/`.
+The larger GPT-OSS milestone remains open. Next is fresh source/binary/helper/
+watcher binding and review for CPU-first characterization, followed by separate
+finite production approval. No prior allowance reuse, consumer activation or
+deployment is implied.
 Prior two-file LFM review edits below
 remain intact; their original d1 qualification and closed allowance do not
 qualify GPT-OSS. Consumer activation stays separate. GenEye stays at `3fa7075e`.
 
-## Current phase and source
+## Retained d1 phase and source
 
-The owner selected guarded closeout/publication of only the two STATUS/TODO
-review-disposition updates, based on `8b5ad42b`. The matching
-`artifacts/publication/last-push.json` identifies this documentation commit,
-tree, clean-source native gate and exact remote/local equality. Its compact
+The earlier owner-selected two STATUS/TODO review-disposition publication,
+based on `8b5ad42b`, completed at `f1278f94`. Its canonical receipt is retained
+as `prior-f1278f94-receipt.json` in the GPT-OSS publication proof root above;
+it identifies that documentation commit, tree, clean-source native gate and
+exact remote/local equality. Its compact
 closeout is retained under the existing t01 proof root as
 `status-todo-review-publication-closeout.json`. Model qualification remains
 bound to `7568791a`; the eight-request allowance remains closed. No runtime
@@ -987,4 +1004,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cpu-dot | change=recorded completed GPT-OSS repair qualification and local CPU optimization while preserving d1
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-proof-publication | change=closed GPT-OSS progress for guarded publication and retained exact prior d1 publication evidence
