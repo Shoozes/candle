@@ -232,10 +232,10 @@ impl GptOssLayerWeights {
 /// Dense non-MoE weights required by the CPU GPT-OSS proof model.
 #[derive(Debug, Clone)]
 pub struct GptOssWeights {
-    token_embedding: Vec<f32>,
-    layers: Vec<GptOssLayerWeights>,
-    final_norm: Vec<f32>,
-    lm_head: DenseLinear,
+    pub(super) token_embedding: Vec<f32>,
+    pub(super) layers: Vec<GptOssLayerWeights>,
+    pub(super) final_norm: Vec<f32>,
+    pub(super) lm_head: DenseLinear,
     load_handle: Option<GptOssLoadedHandle>,
 }
 

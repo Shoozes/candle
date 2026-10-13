@@ -297,24 +297,36 @@ struct CudaWeights {
 impl CudaWeights {
     fn from_cpu(
         config: &GptOssConfig,
-        weights: &GptOssWeights,
+        weights: GptOssWeights,
         device: &Device,
         static_resident_bytes: usize,
     ) -> GptOssCudaResult<Self> {
-        let token_embedding = Tensor::from_slice(
-            weights.token_embedding(),
+        let GptOssWeights {
+            token_embedding: source_embedding,
+            layers: source_layers,
+            final_norm: source_norm,
+            lm_head: source_head,
+            ..
+        } = weights;
+        let token_embedding = Tensor::from_vec(
+            source_embedding,
             (config.vocab_size, config.hidden_size),
             device,
         )?;
         let mut layers = Vec::new();
         layers
-            .try_reserve_exact(weights.layers().len())
+            .try_reserve_exact(source_layers.len())
             .map_err(|error| GptOssCudaError::Backend {
                 message: format!("CUDA layer allocation failed: {error}"),
             })?;
         let mut packed_resident_bytes = 0usize;
-        for layer in weights.layers() {
-            let layer = CudaLayer::from_cpu(layer, device)?;
+        for source_layer in source_layers {
+            let upload = CudaLayer::from_cpu(&source_layer, device);
+            // Release each CPU layer after its uploads have completed.
+            let synchronized = device.synchronize();
+            let layer = upload?;
+            synchronized?;
+            drop(source_layer);
             packed_resident_bytes = packed_resident_bytes
                 .checked_add(layer.experts.packed_resident_bytes())
                 .ok_or(GptOssCudaError::Overflow {
@@ -322,9 +334,13 @@ impl CudaWeights {
                 })?;
             layers.push(layer);
         }
-        let final_norm =
-            Tensor::from_slice(weights.final_norm(), (weights.final_norm().len(),), device)?;
-        let lm_head = CudaLinear::from_cpu(weights.lm_head(), device)?;
+        let norm_len = source_norm.len();
+        let final_norm = Tensor::from_vec(source_norm, (norm_len,), device)?;
+        let upload = CudaLinear::from_cpu(&source_head, device);
+        let synchronized = device.synchronize();
+        let lm_head = upload?;
+        synchronized?;
+        drop(source_head);
         Ok(Self {
             token_embedding,
             layers,
@@ -409,7 +425,7 @@ impl GptOssCudaModel {
             }
         })?;
         let load_handle = weights.load_handle();
-        let weights = CudaWeights::from_cpu(&config, &weights, &device, static_resident_bytes)?;
+        let weights = CudaWeights::from_cpu(&config, weights, &device, static_resident_bytes)?;
         let cache = CudaCache::new(config.num_hidden_layers)?;
         Ok(Self {
             config,

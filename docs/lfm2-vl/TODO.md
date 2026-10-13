@@ -12,8 +12,8 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   optimization and qualified selectable GPT-OSS-20B consumer integration.
 - Why: Existing short experimental receipts do not establish a maintained
   loader, 32k capacity, performance improvement or coding-provider readiness.
-- When: The accepted plan is now in implementation; production profiling
-  still needs a clean source/binary-bound packet and fresh finite allowance.
+- When: Implementation is active; the first approved baseline is closed.
+  Any repaired production run needs fresh source/binary binding and allowance.
 - Where: GPT-OSS overlay; [current STATUS](../gpt-oss/STATUS.md) and
   [LOADING contract](../gpt-oss/LOADING.md). Edge/Symbio own their integrations.
 - How: Local loading/config/session fixture gate first, then profile before
@@ -26,14 +26,17 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   Target: 32 GiB host, 20e9 GPU bytes, 30,720 history/prompt + 2,048 generated
   tokens including reasoning. Responses remains90s; WorkerRuntime remains600s;
   one route's capacity never qualifies the other. No current BF16/32k claim.
-- Current disposition (2026-10-12): Local loading/session fixtures and complete
+- Current disposition (2026-10-13): Local loading/session fixtures and complete
   native/CUDA gates pass. The owner approved scoped local commits without
   push/inference; loading is checkpointed at `06a83835`, records at `eb6abe92`.
-  Common-session profiling preparation passes native/CUDA fixture and control
-  gates; the owner approved its scoped local checkpoint without push/inference.
-  Next build/bind release binaries and request the fresh two-device allowance in
-  [PROFILING.md](../gpt-oss/PROFILING.md). Existing finite validation/cache
-  commit are preserved. No production request, consumer pin or push is implied.
+  Profiling preparation is checkpointed at `3b16430b`; the approved direct
+  baseline completed CPU (16 forwards/23 token steps), then CUDA failed loading
+  before forwarding. The allowance is closed and release checks pass. The local
+  upload ownership repair releases source layers progressively; CPU 51/CUDA 59
+  fixtures and native/check/strict Clippy gates pass. Next obtain checkpoint authority,
+  bind a new release and prepare fresh CUDA proof per
+  [PROFILING.md](../gpt-oss/PROFILING.md). Profile CPU components before optimizing
+  the measured ~13s decode. No inference retry, consumer pin or push is implied.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -461,4 +464,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-profile-preparation | change=advanced the verified profiling gate while preserving prior d1 producer prerequisites
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-upload-ownership | change=prioritized CUDA load qualification and CPU component profiling after the closed baseline

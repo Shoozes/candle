@@ -68,6 +68,15 @@ QKV concatenation and backend upload also require temporary host memory.
 Physical host/GPU ceilings remain enforced by the owner launch and measured
 qualification, not inferred from logical cache accounting.
 
+CUDA construction consumes the assembled CPU weights. Embedding/norm vectors
+move through owned tensor storage; source layers remain alive through their
+uploads and synchronization, then drop individually. The source head drops
+after its upload. The model retains the registry lease. This reduces source
+retention overlap without changing F32 values, packed expert bytes or public
+construction signatures. The first maintained CUDA load at `3b16430b` failed
+near the host Job ceiling; this local repair still needs fresh production
+memory qualification and does not establish the cause of that allocation error.
+
 Configuration accepts original and Transformers aliases, reconciles equal
 duplicate aliases, and rejects conflicting expert/YaRN fields. Explicit layer
 types and RMS epsilon drive both executors. Missing layer types preserve the
@@ -112,4 +121,4 @@ Candle publication, followed by Edge qualification and Symbio consumption.
 GenEye remains pinned to `3fa7075e`.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-profile-preparation | change=documented optional forward timing while preserving cache and readback contracts
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-upload-ownership | change=documented progressive CPU-source release during CUDA construction

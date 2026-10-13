@@ -1,38 +1,36 @@
 # GPT-OSS Experimental Candle Status
 
-## Current maintained support, 2026-10-12
+## Current maintained support, 2026-10-13
 
-The accepted plan starts from native `main` at `f1278f94`; prior LFM review
-edits are preserved. The owner approved two local commits without push/inference.
-Loading code/API/routes are checkpointed at `06a83835`; records at `eb6abe92`.
-The complete native gate passed on clean `eb6abe92`. Checkpoint proof:
-`artifacts/gpt-oss/maintained-loading-20261012-c883332e419f4a1fabf27c1184d37f47/checkpoints.json`.
+Local checkpoints: loading/API `06a83835`, records `eb6abe92`, profiling
+preparation `3b16430b`. The complete native gate and separate release builds
+pass at clean `3b16430b`. Earlier LFM edits and historical receipts remain intact.
 
 Explicit GGUF and original/indexed packed safetensors load into CPU/CUDA F32.
 Experts stay packed; other supported types normalize to dense F32. Config,
 conversion, identity, bounds and ownership contracts are in [LOADING.md](LOADING.md).
 
-The profiling preparation adds optional forward/validation timing,
-a common-session CPU/CUDA example and native Job launcher. Frozen inputs,
-release guards, counts, memory/deadline and release requirements are in
-[PROFILING.md](PROFILING.md). Legacy performance receipts are preserved.
-Current native proof passes: CPU GPT 51, CUDA GPT 59 (one production ignore
-each), three example controls per feature, strict Clippy/checks and the full
-native gate. PS controls include real Job-tree teardown and CPU-failure gating.
-Proof: `artifacts/gpt-oss/session-profile-prep-20261012-c6cf04d4510548c1bfcbd94400ed64a3/`.
-Existing nonfatal CUDA `LNK4098` remains visible; WSL lacks offline dependencies.
-This is fixture proof; no production weights were loaded or model allowance
-consumed. No new speed, BF16, 32k or consumer-ready claim is made.
+The freshly approved direct packet completed CPU, then CUDA failed loading
+with `CUDA_ERROR_OUT_OF_MEMORY`. CPU completed 16 forwards/23 token steps;
+prefill was 103.885s and decode 12.79–13.32s. Both processes and registries are
+released. This allowance is closed; no CUDA forward ran. An earlier observer
+failure is independently closed with zero forwards and incomplete unload proof.
+Exact counts, limits and retained paths are in [PROFILING.md](PROFILING.md).
 
 Optional timing preserves validation/cancellation/cache commit. Its CUDA
 validation interval includes pending device work; caller readback is separate.
 
-The owner approved its scoped local checkpoint without push/inference. The exact
-commit/tree and clean gate are retained with the preparation proof.
-Next: build/bind release binaries and request fresh bounded CPU-first inference.
-No source from this batch is published. Measured optimization, packed-artifact,
-BF16, 32k and consumer qualification remain incomplete. Preserve 32 GiB host,
-20e9 GPU, Responses90s/WorkerRuntime600s and original historical receipts.
+Active local repair: `cuda.rs`, `model.rs` and `safetensors_tests.rs`, plus
+LOADING/PROFILING/STATUS and the LFM STATUS/TODO handoff. CPU source layers drop
+after synchronized CUDA upload. Native/check/strict Clippy and
+CPU 51/CUDA 59 tests pass (one production ignore each), including lease retention,
+failed-device release and independent numerical oracles. Proof:
+`artifacts/gpt-oss/upload-ownership-20261013/`.
+Next: request a scoped checkpoint, then bind/review a
+fresh CUDA packet. Production memory repair and CPU component optimization
+remain unproven. No push, BF16/32k or consumer-ready claim. Preserve 32 GiB
+host, 20e9 GPU and Responses90s/WorkerRuntime600s. Existing nonfatal LNK4098
+remains visible; WSL still lacks offline dependencies.
 
 ## Historical assignment state (2026-10-07)
 
@@ -406,4 +404,4 @@ infer Q8/default or broad maintained production support from this packet.
 
 ---
 
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-profile-preparation | change=recorded local checkpoints and verified profiling preparation without inference
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-upload-ownership | change=recorded closed baseline and local CUDA ownership repair

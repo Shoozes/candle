@@ -565,6 +565,9 @@ fn common_cuda_session_matches_cpu_and_releases() -> Result<()> {
         &registry,
         &cancel,
     )?;
+    assert!(
+        GptOssSession::load(&options(&fixture, GptOssDevice::Cpu)?, &registry, &cancel).is_err()
+    );
     let (actual, timing) = cuda.prefill_profiled(&[1, 2, 3, 4], &cancel)?;
     let validation = timing.cuda_final_validation_ms.ok_or_else(|| {
         candle::Error::Msg("profiled CUDA forward omitted validation timing".into())
@@ -580,6 +583,17 @@ fn common_cuda_session_matches_cpu_and_releases() -> Result<()> {
     cuda.reset_cache()?;
     assert_eq!(cuda.resource_usage()?.cache_capacity_bytes, 0);
     drop(cuda);
+    assert!(GptOssSession::load(
+        &options(
+            &fixture,
+            GptOssDevice::Cuda {
+                device_index: usize::MAX,
+            },
+        )?,
+        &registry,
+        &cancel,
+    )
+    .is_err());
     assert!(
         GptOssSession::load(&options(&fixture, GptOssDevice::Cpu)?, &registry, &cancel).is_ok()
     );

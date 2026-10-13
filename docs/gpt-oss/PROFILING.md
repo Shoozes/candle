@@ -63,9 +63,42 @@ release records are required; a forced stop cannot become a success claim.
 
 Build and test with locked/offline Cargo and the native model-free script.
 Production measurements need a newly approved packet at a clean checkpoint.
-No baseline has executed yet. Later measured optimizations, BF16, staged
-8k/16k/32k envelopes and Edge/Symbio route qualification retain their own gates;
-Responses remains 90 seconds and WorkerRuntime remains 600 seconds.
+## First baseline outcome, 2026-10-13
+
+The direct-launch packet at clean `3b16430b`, SHA-256
+`36eeaf372ae7f50cfb24a80834d5e15153166af6ca98da64c117dca7a7638dda`,
+completed CPU before admitting CUDA. Its retained output root is
+`artifacts/gpt-oss/session-profile-3b16430b-direct-4ac8e8b2a67d4690abcb442cb5ad58ed/`.
+CPU completed one load/request, sixteen forwards, 23 token steps and sixteen
+outputs. Load was 26.960 seconds, eight-token prefill 103.885 seconds and
+single-token decode approximately 12.79–13.32 seconds. Total including unload
+was 325.672 seconds; peak Job memory was 17,682,280,448 bytes. Job cleanup and
+zero registry entries pass. Readback/argmax are small; whole-forward timing
+does not attribute this cost to a particular layer or expert kernel.
+
+CUDA's one load failed with `CUDA_ERROR_OUT_OF_MEMORY`; no CUDA request or
+forward ran. Registry release and process absence pass. Peak Job memory was
+34,353,344,512 bytes against 34,359,738,368. The one-second whole-device samples
+peaked at 9,381,609,472 bytes; this cannot identify the failed allocation or
+exclude an unsampled peak. CUDA loaded DLL paths were not captured before exit.
+CPU's observed runtime paths are retained with the preparation proof.
+There is no CUDA timing, speedup, cross-device or consumer qualification.
+
+This allowance is closed with two load attempts, one request, sixteen forwards,
+23 token steps and sixteen outputs. The earlier packet `893bb1df…f2994` also
+remains closed: an added host observer failed during CPU loading, with one load
+attempt and zero requests/forwards; its forced-stop Job/unload receipts are
+incomplete. The corrected direct launcher does not reuse that allowance.
+
+The local upload repair consumes CPU weights and releases each source layer
+after a completed upload. Fixture proof can establish numerical/ownership
+behavior, but cannot prove it resolves the retained-model allocation failure.
+The native, fixture, check and strict Clippy repair gates pass locally.
+Next: obtain a scoped checkpoint authorization,
+bind its release binary and request fresh finite CUDA proof. CPU component
+profiling precedes CPU optimization. Later BF16, staged 8k/16k/32k and
+Edge/Symbio route qualification retain their own gates. Responses remains
+90 seconds and WorkerRuntime remains 600 seconds.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-profile-preparation | change=specified bounded common-session measurement without production execution
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-upload-ownership | change=recorded CPU baseline and closed CUDA load failure without a speedup claim
