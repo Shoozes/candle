@@ -18,6 +18,7 @@ try {
     Assert-ProfileTest ($plan.forward_calls -eq 16 -and $plan.token_steps -eq 23 -and $plan.loads -eq 1 -and $plan.requests -eq 1) 'forward/request accounting'
     Assert-ProfileTest ($plan.max_job_memory_bytes -eq 34359738368 -and $plan.max_gpu_bytes -eq 20000000000 -and $plan.deadline_seconds -eq 1800) 'frozen limits'
     Assert-ProfileTest ($plan.warmups -eq 0 -and $plan.retries -eq 0) 'no hidden work'
+    Assert-ProfileTest ($plan.timing_rounding_tolerance_ms -eq 0.001) 'explicit per-field millisecond rounding tolerance'
     $source='a'*40
     $frozen=(Get-Content -LiteralPath (Join-Path $PSScriptRoot '..\..\tests\fixtures\gpt_oss_task3_short_parity\reference.json') -Raw | ConvertFrom-Json).reference_prefix_token_ids
     $inputValue=[pscustomobject]@{schema='candle.gpt-oss.session-profile-input.v1';source_commit=$source;backend='cpu';device_index=0;model=[pscustomobject]@{sha256='b'*64;size_bytes=1};prompt_token_ids=$frozen;generated_tokens=16}
@@ -73,8 +74,8 @@ try {
     $binary=[pscustomobject]@{sha256='f'*64;size_bytes=1}
     $model=[pscustomobject]@{sha256='b'*64;size_bytes=1}
     $calls=@(for($index=0;$index -lt 16;$index++){[pscustomobject]@{input_tokens=if($index -eq 0){8}else{1};committed_sequence_tokens=8+$index;forward_ms=1.;caller_readback_ms=0.;argmax_ms=0.;cuda_final_validation_ms=$null}})
-    $progress=[pscustomobject]@{schema='candle.gpt-oss.session-profile-progress.v1';status='completed';input_sha256='e'*64;loads_attempted=1;requests_attempted=1;requests_completed=1;attempted_forward_calls=16;completed_forward_calls=16;attempted_token_steps_upper_bound=23;completed_token_steps=23;generated_token_ids=@(1)*16;calls=$calls;registry_entries_after_release=0;pid=123;consumed_files=@([pscustomobject]@{sha256=$model.sha256;size_bytes=$model.size_bytes})}
-    $job=[pscustomobject]@{contract='candle-lfm2-vl-bounded-oracle-v1';child_exit_code=0;pid_absent_after_cleanup=$true;assigned_before_resume=$true;job_assigned=$true;started_suspended=$true;max_job_memory_bytes=34359738368;timeout_seconds=1800;executable_sha256=$binary.sha256;executable_bytes=1;pid=123;peak_private_memory_bytes=1;peak_job_memory_bytes=1}
+    $progress=[pscustomobject]@{schema='candle.gpt-oss.session-profile-progress.v1';status='completed';input_sha256='e'*64;loads_attempted=1;requests_attempted=1;requests_completed=1;attempted_forward_calls=16;completed_forward_calls=16;attempted_token_steps_upper_bound=23;completed_token_steps=23;generated_token_ids=@(1)*16;calls=$calls;load_ms=1.;unload_ms=1.;total_ms=20.;static_weight_bytes=1;registry_entries_after_release=0;pid=123;error=$null;consumed_files=@([pscustomobject]@{sha256=$model.sha256;size_bytes=$model.size_bytes})}
+    $job=[pscustomobject]@{contract='candle-lfm2-vl-bounded-oracle-v1';child_exit_code=0;pid_absent_after_cleanup=$true;assigned_before_resume=$true;job_assigned=$true;started_suspended=$true;resumed=$true;termination_reason='exited';error=$null;max_job_memory_bytes=34359738368;timeout_seconds=1800;executable_sha256=$binary.sha256;executable_bytes=1;pid=123;peak_private_memory_bytes=1;peak_job_memory_bytes=1}
     Assert-SessionProfileCompletion $progress $job ('e'*64) $binary $model 'cpu'
     Assert-ProfileTest $true 'complete exact receipt'
     $progress.status='running'
@@ -94,6 +95,35 @@ try {
     $progress.calls[1].committed_sequence_tokens=9;$progress.calls[1].forward_ms=[double]::NaN
     Assert-ProfileReject { Assert-SessionProfileCompletion $progress $job ('e'*64) $binary $model 'cpu' } 'invalid timing'
     $progress.calls[1].forward_ms=1.
+    foreach($name in @('load_ms','unload_ms','total_ms')) {
+        $original=$progress.$name
+        foreach($value in @($true,'1',[double]::NaN,[double]::PositiveInfinity,-1,$null)) {
+            $progress.$name=$value
+            Assert-ProfileReject { Assert-SessionProfileCompletion $progress $job ('e'*64) $binary $model 'cpu' } 'invalid aggregate timing'
+        }
+        $progress.$name=$original
+        $withoutTiming=$progress | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+        $withoutTiming.PSObject.Properties.Remove($name)
+        Assert-ProfileReject { Assert-SessionProfileCompletion $withoutTiming $job ('e'*64) $binary $model 'cpu' } $name
+    }
+    foreach($value in @($true,1.1,'1',0,-1,$null,([UInt64]$plan.max_job_memory_bytes+1))) {
+        $progress.static_weight_bytes=$value
+        Assert-ProfileReject { Assert-SessionProfileCompletion $progress $job ('e'*64) $binary $model 'cpu' } 'unsigned integer'
+    }
+    $progress.static_weight_bytes=1
+    $progress.error='injected producer failure'
+    Assert-ProfileReject { Assert-SessionProfileCompletion $progress $job ('e'*64) $binary $model 'cpu' } 'work/release receipt'
+    $progress.error=$null
+    $job.resumed=$false
+    Assert-ProfileReject { Assert-SessionProfileCompletion $progress $job ('e'*64) $binary $model 'cpu' } 'bounded Job receipt'
+    $job.resumed=$true
+    foreach($value in @('timeout','memory_limit',$null)) {
+        $job.termination_reason=$value
+        Assert-ProfileReject { Assert-SessionProfileCompletion $progress $job ('e'*64) $binary $model 'cpu' } 'bounded Job receipt'
+    }
+    $job.termination_reason='exited';$job.error='injected Job failure'
+    Assert-ProfileReject { Assert-SessionProfileCompletion $progress $job ('e'*64) $binary $model 'cpu' } 'bounded Job receipt'
+    $job.error=$null
     foreach($name in @('loads_attempted','requests_attempted','requests_completed','attempted_forward_calls',
         'completed_forward_calls','attempted_token_steps_upper_bound','completed_token_steps','registry_entries_after_release','pid')) {
         $original=$progress.$name
@@ -103,7 +133,7 @@ try {
         }
         $progress.$name=$original
     }
-    foreach($name in @('pid_absent_after_cleanup','assigned_before_resume','job_assigned','started_suspended')) {
+    foreach($name in @('pid_absent_after_cleanup','assigned_before_resume','job_assigned','started_suspended','resumed')) {
         foreach($value in @('false','true',1,$null)) {
             $job.$name=$value
             Assert-ProfileReject { Assert-SessionProfileCompletion $progress $job ('e'*64) $binary $model 'cpu' } 'requires a boolean'
@@ -142,6 +172,9 @@ try {
     Assert-ProfileReject { Assert-SessionProfileCompletion $progress $job ('e'*64) $binary $model 'cpu' } 'unsigned integer'
     $binary.size_bytes=1
     $progress.calls | ForEach-Object { $_.cuda_final_validation_ms=0.5 }
+    $progress.static_weight_bytes=[UInt64]$plan.max_gpu_bytes+1
+    Assert-ProfileReject { Assert-SessionProfileCompletion $progress $job ('e'*64) $binary $model 'cuda' } 'unsigned integer'
+    $progress.static_weight_bytes=1
     Assert-SessionProfileCompletion $progress $job ('e'*64) $binary $model 'cuda'
     Assert-ProfileTest $true 'valid CUDA typed receipt'
     $progress.calls[0].cuda_final_validation_ms=$true
@@ -152,6 +185,52 @@ try {
     $parsedJob=$job | ConvertTo-Json -Depth 8 | ConvertFrom-Json
     Assert-SessionProfileCompletion $parsedProgress $parsedJob ('e'*64) $binary $model 'cpu'
     Assert-ProfileTest $true 'typed JSON round trip remains compatible'
+
+    foreach($backend in @('cpu','cuda')) {
+        $timedProgress=$progress | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+        $timedJob=$job | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+        $timedProgress.calls | ForEach-Object { $_.cuda_final_validation_ms=if($backend -eq 'cuda'){1.}else{$null} }
+        $timedProgress.total_ms=18.
+        Assert-SessionProfileCompletion $timedProgress $timedJob ('e'*64) $binary $model $backend
+        Assert-ProfileTest $true "$backend sequential sum; nested validation counted once"
+        $roundingMs=(2+3*$plan.forward_calls+1)*$plan.timing_rounding_tolerance_ms
+        $timedProgress.total_ms=18.-$roundingMs/2
+        Assert-SessionProfileCompletion $timedProgress $timedJob ('e'*64) $binary $model $backend
+        Assert-ProfileTest $true "$backend aggregate rounding inside tolerance"
+        $timedProgress.total_ms=18.-2*$roundingMs
+        Assert-ProfileReject { Assert-SessionProfileCompletion $timedProgress $timedJob ('e'*64) $binary $model $backend } 'aggregate timing is inconsistent'
+        $timedProgress.total_ms=18.
+        foreach($name in @('load_ms','unload_ms','total_ms','static_weight_bytes')) {
+            $requiredProgress=$timedProgress | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+            $requiredProgress.PSObject.Properties.Remove($name)
+            Assert-ProfileReject { Assert-SessionProfileCompletion $requiredProgress $timedJob ('e'*64) $binary $model $backend } $name
+            foreach($value in @($null,$true,'1',-1,[double]::PositiveInfinity)) {
+                $requiredProgress=$timedProgress | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+                $requiredProgress.$name=$value
+                Assert-ProfileReject { Assert-SessionProfileCompletion $requiredProgress $timedJob ('e'*64) $binary $model $backend } 'aggregate timing|unsigned integer'
+            }
+        }
+        if($backend -eq 'cuda') {
+            $timedProgress.calls[0].cuda_final_validation_ms=1.+$plan.timing_rounding_tolerance_ms
+            Assert-SessionProfileCompletion $timedProgress $timedJob ('e'*64) $binary $model $backend
+            Assert-ProfileTest $true 'CUDA nested rounding inside tolerance'
+            $timedProgress.calls[0].cuda_final_validation_ms=1.+3*$plan.timing_rounding_tolerance_ms
+            Assert-ProfileReject { Assert-SessionProfileCompletion $timedProgress $timedJob ('e'*64) $binary $model $backend } 'timing/backend'
+            $timedProgress.calls[0].cuda_final_validation_ms=1.
+        }
+        $roundTrip=$timedProgress | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+        Assert-SessionProfileCompletion $roundTrip $timedJob ('e'*64) $binary $model $backend
+        Assert-ProfileTest $true "$backend complete timing JSON round trip"
+        $timedProgress.load_ms=[double]::MaxValue
+        $timedProgress.unload_ms=[double]::MaxValue
+        $timedProgress.total_ms=[double]::MaxValue
+        Assert-ProfileReject { Assert-SessionProfileCompletion $timedProgress $timedJob ('e'*64) $binary $model $backend } 'aggregate timing is inconsistent'
+    }
+    $partialProgress=$progress | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+    $partialProgress.status='failed';$partialProgress.error='injected incomplete load'
+    $partialProgress.load_ms=$null;$partialProgress.unload_ms=$null;$partialProgress.static_weight_bytes=$null
+    Assert-ProfileReject { Assert-SessionProfileCompletion $partialProgress $job ('e'*64) $binary $model 'cpu' } 'unsigned integer|aggregate timing'
+    Assert-ProfileTest ($partialProgress.status -eq 'failed' -and $partialProgress.error -eq 'injected incomplete load' -and $null -eq $partialProgress.load_ms) 'partial failure remains unchanged and incomplete'
 
     $script:visitedLanes=@()
     $originalLane=(Get-Command Invoke-SessionProfileLane).ScriptBlock

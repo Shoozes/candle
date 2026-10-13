@@ -2,6 +2,52 @@
 
 ## Current maintained support, 2026-10-13
 
+Selected Work: supplied feedback Tasks 1/2, coordinated delivery plus the
+model-free completion gate. Reviewed Candle/Edge/Symbio heads remain
+`ced33ca5`/`72079502`/`86f9a478`; the local candidate adds timing consistency
+to the prior repair. 241 native model-free controls pass, including CPU/CUDA
+JSON shapes, malformed/missing metrics, explicit rounding, finite-sum overflow
+and partial failure preservation. Retained `5a7e392a` records pass unchanged.
+The full native locked/offline gate, affected manifests and current routes pass.
+Work proof: `artifacts/gpt-oss/delivery-work-ced33ca5-20261013/`.
+Edge and Symbio completed their bounded model-free preparation; current
+six/twelve-file identities and proof receipts verify. All three boards agree
+on Candle delivery → Edge native/exact-route qualification → Symbio consumption.
+Current ownership, source tuple and support rows are in
+[LOADING](LOADING.md#coordinated-delivery-boundary); timing rules are in
+[PROFILING](PROFILING.md#measurement-contract). The stale S3/S4 pin-hop queue
+is superseded by Edge's actual four-dependency graph and tokenizers declared
+0.23.1, locked 0.23.2/onig.
+The owner selected guarded publication of the seven profiling and delivery
+files: two scripts, GPT-OSS LOADING/STATUS/PROFILING and LFM STATUS/TODO.
+The canonical `artifacts/publication/last-push.json` binds the delivered
+commit/tree, clean-source native gate and remote equality. Publication closeout
+and the preserved `ced33ca5` receipt live in the Work proof root's
+`publication/` subdirectory. No model-code or route inventory changed.
+Next: bind/review a fresh CPU-first characterization packet to the delivered
+clean source, binaries, build inputs, helper and watcher, then obtain finite
+execution approval. Publication saves progress; native/provider gates stay open.
+
+### Prior local review evidence
+
+Review baseline: published `ced33ca590c7e2ca97fd0e0b79c5a942b1035d3e`,
+tree `8184388fad0dc810d1cd3b5de70f2b66fc86b135`, with a clean native intake.
+All six publication file identities and the canonical receipt match the
+retained closeout. Prior typed-count/flag/token fixes remain closed; the
+original `5a7e392a` CPU/CUDA progress bytes are unchanged.
+This review found omitted aggregate measurement validation and contradictory
+success/error fields. Scoped cleanup changes only the profiling validator,
+model-free controls and four handoff records: aggregate times must be finite
+nonnegative numbers, static weight bytes must be positive integers within the
+selected device budget, and completed progress/Job records must have null
+errors, a resumed Job and natural exit. 178 native model-free controls, the
+complete native locked/offline gate and both affected manifests pass. Both
+retained lanes pass revalidation without new model work. Compact proof:
+`artifacts/gpt-oss/receipt-review-ced33ca5-20261013/`.
+At that review, the six-file repair was uncommitted and no inference or
+publication was authorized. The current seven-file delivery includes it;
+new characterization must bind the delivered source rather than this intake.
+
 Local checkpoints: loading/API `06a83835`, records `eb6abe92`, profiling
 preparation `3b16430b`, CUDA upload ownership `5a7e392a`, CPU block dots
 `270bfc86` (tree `e1f153647c928e5be82ff87d3d2392a549181895`). Earlier LFM edits
@@ -441,4 +487,4 @@ infer Q8/default or broad maintained production support from this packet.
 
 ---
 
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-proof-publication | change=closed verified receipt repair for guarded progress publication while preserving remaining model gates
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-delivery-publication | change=closed verified profiling and coordinated delivery progress for guarded publication while retaining native gates

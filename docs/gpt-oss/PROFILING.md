@@ -42,6 +42,18 @@ attempted-token upper bound; they do not claim all partial internal work was
 observed. A completed forward remains counted if later readback fails. Output
 is a characterization record, with no invented speed or accuracy threshold.
 
+Completion requires all aggregate timings and positive bounded static-weight
+bytes, null producer/Job errors, a resumed Job and natural exit. Timing checks
+use a fixed `0.001 ms` rounding allowance per independently reported field.
+The sequential sum of load, unload and each call's forward/readback/argmax
+must not exceed total time by more than `0.051 ms` for the frozen 16-call
+workload (50 component fields plus total). CUDA final validation is nested in
+forward time: compare it with forward using `0.002 ms` allowance, and never
+add it again to the sequential sum. Nonfinite accumulated sums fail. Total
+need not equal the sum because registry work and progress I/O are also timed.
+These tolerances address reported-number rounding, not performance acceptance.
+Failed/forced-stop records may remain partial; they cannot pass completion.
+
 ## Native launch and release
 
 `scripts/gpt-oss/run-session-profile.ps1` requires a reviewed packet binding
@@ -234,5 +246,71 @@ retain `5a7e392a`; no prior allowance may be reused.
 Later BF16, staged 8k/16k/32k and Edge/Symbio route qualification retain their
 own gates. Responses remains 90 seconds and WorkerRuntime remains 600 seconds.
 
+## Published receipt recheck at `ced33ca5`
+
+The six published file identities and canonical publication receipt match
+the retained closeout. Prior typed-field repairs remain closed. Read-only
+in-memory controls found that aggregate load/unload/total timings and static
+weight bytes were still unchecked. Completed records also accepted non-null
+producer/Job errors, an unresumed Job or a timeout termination reason. The
+outer controller exit check catches ordinary launch failures; these defects
+affected persisted-record admission, not an observed failed-model bypass.
+
+Cleanup requires finite nonnegative aggregate times, positive integer static
+weight bytes within the CPU 32 GiB or CUDA 20e9-byte budget, null errors and a
+boolean resumed Job with `termination_reason="exited"`. Existing work, identity,
+per-call timing, release and CPU-first gates remain in force. The native script
+now passes 178 model-free controls; original `5a7e392a` CPU/CUDA receipts pass
+revalidation with unchanged bytes and no new model work. Proof is retained at
+`artifacts/gpt-oss/receipt-review-ced33ca5-20261013/`. No model arithmetic,
+sampling, allowance, consumer pin or qualification bound changes.
+
+Current cleanup also passes `cargo fmt --all -- --check` through the complete
+native `.tools/verify-before-push.ps1` gate, including maintained checks/tests,
+strict Clippy, Summary Bank/layout/overlay gates and `git diff --check HEAD`.
+The GPT-OSS and LFM manifest gates pass; inventories remain GPT44/overlay299,
+with 27 shared paths. Final handoff-only updates pass routing/whitespace checks.
+CUDA production and WSL lanes were not rerun for this host-script repair.
+
+That review left checkpoint/publication for separate authorization before
+fresh clean-source packet binding. The unchanged `9591dc7c…edcf653` proposal
+remains forbidden to execute; all earlier model allowances remain closed.
+
+## Supplied-feedback Work, 2026-10-13
+
+The aggregate-field/error repair above was already present in the local
+candidate when the drop-in arrived. Accepted remaining work adds the explicit
+timing inequalities and rounding bounds, rejects finite-field sum overflow,
+and exercises missing/malformed aggregate fields and JSON round trips on
+both CPU and CUDA shapes. All 241 native model-free controls pass, including
+partial failure preservation and actual harmless Job-tree cleanup. Original
+`5a7e392a` records pass without inference: CPU/CUDA aggregate slack is
+6.9700/6.0479 ms; receipt bytes and executed identities remain unchanged.
+
+The current complete native locked/offline gate, both manifests and existing
+Summary Bank/layout/overlay checks pass. Exact commands, runtime, source-file
+identities and retained-record revalidation are kept in
+`artifacts/gpt-oss/delivery-work-ced33ca5-20261013/`. Work left seven scoped
+files uncommitted. There are zero new production loads/forwards/output tokens;
+WSL and new production CUDA qualification were not run.
+
+The delivery order, owner results and reviewed tuple are in
+[LOADING.md](LOADING.md#coordinated-delivery-boundary). Whole-model speed/full-
+logit/DLL/context/consumer proof is still pending; none is supplied by these
+controls. New source delivery, packet approval and native execution remain
+separate events. No stale proposal or closed allowance can be reused.
+
+## Guarded progress closeout
+
+The owner selected Closeout/Publish for these seven files. The guarded helper's
+canonical receipt binds the delivered commit/tree, final native gate and exact
+remote equality. Compact proof and the preserved `ced33ca5` publication receipt
+are in `artifacts/gpt-oss/delivery-work-ced33ca5-20261013/publication/`.
+The 241-control result, retained-record compatibility and owner coordination
+are scoped progress; production numerical/speed/runtime/context/provider
+criteria remain open. Build source-bound inputs and review a new packet before
+requesting its finite allowance. No consumer edits, model runs or release tags
+belong to this publication.
+
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-proof-publication | change=recorded guarded publication scope and fresh source-bound characterization prerequisite
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-delivery-publication | change=retained complete measurement proof and guarded delivery closeout without production qualification

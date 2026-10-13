@@ -2,6 +2,44 @@
 
 ## Independent GPT-OSS work, 2026-10-13
 
+Current Work accepts supplied-feedback Tasks 1/2: one owner-ordered delivery
+and the complete profiling receipt gate. The local candidate extends the prior
+repair with explicit timing-rounding inequalities and overflow rejection;
+241 native model-free controls pass on CPU/CUDA shapes, and original
+`5a7e392a` records still pass without new model work. Work proof is retained at
+`artifacts/gpt-oss/delivery-work-ced33ca5-20261013/`; the complete native gate,
+affected manifests and routing checks pass. The reviewed tuple is
+Candle `ced33ca5`, Edge `72079502`, Symbio `86f9a478`; actual Edge pin/tokenizer
+evidence supersedes the historical S3/S4 pin hop. Native ownership and consumer
+failure preparation are locally complete in their own agents; their exact
+six/twelve-file identities and receipts verify, with native gates still held. See
+[the delivery contract](../gpt-oss/LOADING.md#coordinated-delivery-boundary).
+The owner selected guarded publication of the seven-file profiling/delivery
+batch: two scripts, GPT-OSS LOADING/STATUS/PROFILING and this STATUS/TODO.
+The canonical publication receipt binds its exact commit/tree, final native
+gate and remote equality. Compact closeout and the preserved `ced33ca5`
+receipt are in the Work root's `publication/` subdirectory. No weights,
+consumer pins or activation changed here. Exact next task: bind/review a fresh
+clean-source/build/helper/watcher CPU-first packet, then obtain finite approval.
+Native/provider criteria remain open; no old allowance may be reused.
+
+### Prior local review evidence
+
+Latest review/recheck starts at clean published `ced33ca5`, tree
+`8184388fad0dc810d1cd3b5de70f2b66fc86b135`. All six publication identities
+and the canonical receipt match. Prior typed-field findings remain closed.
+Scoped cleanup closes omitted aggregate timing/static-byte admission and
+contradictory completion/Job errors, resume and termination fields. 178 native
+model-free controls and the complete native locked/offline gate pass. Both
+affected manifests and existing routes pass; original `5a7e392a` CPU/CUDA
+records pass without new forwards or altered receipts. Active files are the
+two profiling scripts, GPT-OSS STATUS/PROFILING and LFM STATUS/TODO. That
+review left the local six-file repair uncommitted. It is included in the
+current seven-file delivery; production proof remains separately authorized.
+The selected successor Work closes timing consistency and delivery ordering.
+Proof:
+`artifacts/gpt-oss/receipt-review-ced33ca5-20261013/`.
+
 The owner resumed the accepted maintained GPT-OSS plan on `f1278f94`.
 The first local slice adds config normalization, explicit GGUF and full packed
 native loading, and a common F32 CPU/CUDA session. Current truth and remaining
@@ -1004,4 +1042,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-proof-publication | change=closed GPT-OSS progress for guarded publication and retained exact prior d1 publication evidence
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-delivery-publication | change=closed seven-file GPT-OSS progress for guarded publication while preserving independent d1 proof

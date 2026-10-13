@@ -13,6 +13,7 @@ function Get-SessionProfilePlan {
         token_steps = 23; loads = 1; requests = 1; warmups = 0; retries = 0
         max_job_memory_bytes = [UInt64]34359738368
         max_gpu_bytes = [UInt64]20000000000; deadline_seconds = 1800
+        timing_rounding_tolerance_ms = 0.001
     }
 }
 
@@ -87,6 +88,11 @@ function Assert-SessionProfileCompletion {
         Assert-SessionProfileUnsignedInteger $Progress.$name "receipt $name"
     }
     Assert-SessionProfileUnsignedInteger $Progress.pid 'runner PID' 1 ([int]::MaxValue)
+    $weightCeiling=if($Backend -eq 'cuda'){$plan.max_gpu_bytes}else{$plan.max_job_memory_bytes}
+    Assert-SessionProfileUnsignedInteger $Progress.static_weight_bytes 'static weight bytes' 1 $weightCeiling
+    foreach($name in @('load_ms','unload_ms','total_ms')) {
+        if (-not (Test-SessionProfileTiming $Progress.$name)) { throw 'Profile returned invalid aggregate timing' }
+    }
     foreach($token in $Progress.generated_token_ids) {
         Assert-SessionProfileUnsignedInteger $token 'generated token ID' 0 ([UInt32]::MaxValue)
     }
@@ -94,13 +100,14 @@ function Assert-SessionProfileCompletion {
         Assert-SessionProfileUnsignedInteger $Job.$name "Job $name"
     }
     Assert-SessionProfileUnsignedInteger $Job.pid 'Job PID' 1 ([int]::MaxValue)
-    foreach($name in @('pid_absent_after_cleanup','assigned_before_resume','job_assigned','started_suspended')) {
+    foreach($name in @('pid_absent_after_cleanup','assigned_before_resume','job_assigned','started_suspended','resumed')) {
         if($Job.$name -isnot [bool]) { throw "Profile bounded Job $name requires a boolean" }
     }
     Assert-SessionProfileUnsignedInteger $BinaryIdentity.size_bytes 'binary size' 1
     Assert-SessionProfileUnsignedInteger $ModelIdentity.size_bytes 'expected model size' 1
     if ($Progress.schema -ne 'candle.gpt-oss.session-profile-progress.v1' -or
         $Progress.status -ne 'completed' -or $Progress.input_sha256 -ne $InputHash -or
+        $null -ne $Progress.error -or
         [int]$Progress.loads_attempted -ne $plan.loads -or
         [int]$Progress.requests_attempted -ne $plan.requests -or
         [int]$Progress.requests_completed -ne $plan.requests -or
@@ -115,7 +122,8 @@ function Assert-SessionProfileCompletion {
     if ($Job.contract -ne 'candle-lfm2-vl-bounded-oracle-v1' -or
         $Job.child_exit_code -ne 0 -or -not $Job.pid_absent_after_cleanup -or
         -not $Job.assigned_before_resume -or
-        -not $Job.job_assigned -or -not $Job.started_suspended -or
+        -not $Job.job_assigned -or -not $Job.started_suspended -or -not $Job.resumed -or
+        $Job.termination_reason -ne 'exited' -or $null -ne $Job.error -or
         $Job.executable_sha256 -ne $BinaryIdentity.sha256 -or
         [UInt64]$Job.executable_bytes -ne [UInt64]$BinaryIdentity.size_bytes -or
         [int]$Job.pid -ne [int]$Progress.pid -or
@@ -128,6 +136,8 @@ function Assert-SessionProfileCompletion {
     if ($consumed.Count -ne 1 -or $consumed[0].sha256 -ne $ModelIdentity.sha256 -or
         [UInt64]$consumed[0].size_bytes -ne [UInt64]$ModelIdentity.size_bytes) { throw 'Profile consumed model identity mismatch' }
     $position=0
+    $measuredMs=[double]$Progress.load_ms+[double]$Progress.unload_ms
+    $measuredFields=2
     for ($index=0; $index -lt $plan.forward_calls; $index++) {
         $call=$Progress.calls[$index]
         Assert-SessionProfileUnsignedInteger $call.input_tokens 'per-call input count'
@@ -137,10 +147,19 @@ function Assert-SessionProfileCompletion {
         if ($call.input_tokens -ne $incoming -or $call.committed_sequence_tokens -ne $position) { throw 'Profile per-call cache/work count mismatch' }
         foreach($name in @('forward_ms','caller_readback_ms','argmax_ms')) {
             if (-not (Test-SessionProfileTiming $call.$name)) { throw 'Profile returned invalid timing' }
+            $measuredMs+=[double]$call.$name
+            $measuredFields++
         }
         if (($Backend -eq 'cpu' -and $null -ne $call.cuda_final_validation_ms) -or
             ($Backend -eq 'cuda' -and (-not (Test-SessionProfileTiming $call.cuda_final_validation_ms) -or
-            [double]$call.cuda_final_validation_ms -gt [double]$call.forward_ms))) { throw 'Profile validation timing/backend mismatch' }
+            [double]$call.cuda_final_validation_ms-[double]$call.forward_ms -gt
+            (2*$plan.timing_rounding_tolerance_ms)))) { throw 'Profile validation timing/backend mismatch' }
+    }
+    # CUDA validation is nested in forward_ms, not another elapsed component.
+    $roundingMs=($measuredFields+1)*$plan.timing_rounding_tolerance_ms
+    if (-not [double]::IsFinite($measuredMs) -or
+        $measuredMs-[double]$Progress.total_ms -gt $roundingMs) {
+        throw 'Profile aggregate timing is inconsistent with total'
     }
 }
 

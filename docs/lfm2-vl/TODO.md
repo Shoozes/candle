@@ -26,34 +26,32 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   Target: 32 GiB host, 20e9 GPU bytes, 30,720 history/prompt + 2,048 generated
   tokens including reasoning. Responses remains90s; WorkerRuntime remains600s;
   one route's capacity never qualifies the other. No current BF16/32k claim.
-- Current disposition (2026-10-13): Local loading/session fixtures and complete
-  native/CUDA gates pass. The owner approved scoped local commits without
-  push/inference; loading is checkpointed at `06a83835`, records at `eb6abe92`.
-  Profiling preparation is checkpointed at `3b16430b`; the approved direct
-  baseline completed CPU, then CUDA failed loading before forwarding; that
-  allowance remains closed. Upload ownership is checkpointed at `5a7e392a`.
-  Fresh CPU/CUDA repair proof completes two loads/two requests, 32 forwards,
-  46 token steps and 32 outputs under the declared bounds; sixteen greedy IDs
-  agree and Job/registry release passes. Its allowance is closed. Full-logit
-  parity and live CUDA DLL provenance remain incomplete. The CPU helper
-  preserves scalar F32 bits while computing each block scale/lookup once;
-  frozen synthetic means improve 8.7–8.8x. CPU 53/CUDA 61 fixtures, checks and
-  strict CUDA Clippy and the complete native locked/offline gate pass. The owner
-  saved its nine-file checkpoint at `270bfc86`; clean native and CPU/CUDA release
-  gates pass. Read-only review/recheck recovers prior identities and proof with
-  no packed-dot/cache/cancellation defect. Scoped cleanup repairs a reproduced
-  proof-validator false-pass for implicit count/flag/token/timing conversions.
-  139 native model-free controls, retained-record revalidation, the complete
-  native gate and affected route/manifest checks pass with zero new model work.
-  The owner selected guarded progress publication of the repair and related
-  GPT-OSS checkpoints; full model/provider Done When remains open. Next bind
-  the delivered clean source, release binaries, helper and passive watcher to
-  a fresh reviewed CPU-first characterization packet, then obtain a separate
-  finite inference allowance per [PROFILING.md](../gpt-oss/PROFILING.md). The original
-  18,210-byte `9591dc7c…edcf653` packet stays unchanged but is source/helper-stale
-  and must not execute, even if its pending approval arrives. Production
-  CPU speedup, BF16, larger context and consumer routes remain unqualified.
-  No inference retry, consumer repin, activation or deployment is implied.
+- Selected batch (2026-10-13): supplied-feedback Tasks 1/2, coordinated delivery
+  and complete model-free profiling admission. Task 2 now has typed required
+  aggregate/static fields, coherent success/Job state and explicit timing
+  inequalities/rounding/overflow checks. 241 native model-free controls pass;
+  original CPU/CUDA `5a7e392a` records remain accepted without new inference.
+  Current native gate and routing/manifests pass; source-bound Work proof is
+  `artifacts/gpt-oss/delivery-work-ced33ca5-20261013/`.
+- Owner order: Candle clean delivery/current-source characterization, then one
+  measured CUDA bottleneck and staged capacity; Edge owns native graph/slot,
+  trusted backing-report and per-route qualification; Symbio owns consumption
+  only after its exact maintained Responses row. Release promotion is separate.
+  Current tuple, observable results and exclusions are in
+  [LOADING.md](../gpt-oss/LOADING.md#coordinated-delivery-boundary).
+  Edge/Symbio model-free owner returns and current six/twelve-file identities
+  verify; their boards agree on this order. Native Task 5/6 criteria remain open.
+- Closeout disposition: The owner selected guarded seven-file Candle publication;
+  exact delivered commit/tree and native gate are bound by the canonical
+  receipt, with compact proof in the Work root's `publication/` subdirectory.
+  This saves complete model-free admission/coordination criteria only.
+- Next: bind delivered clean source/build/lock/features/compiler/helper/watcher
+  to a fresh CPU-first packet with applicable full-logit and loaded-DLL proof;
+  obtain finite execution
+  approval before running. Native consumer adoption/activation remain held.
+  The unchanged `9591dc7c…edcf653` proposal is forbidden even if its old pending
+  approval arrives. All consumed allowances remain closed. Whole-model speed,
+  BF16/32k and provider/release Done When remain open; Q8 and GenEye pins stay.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -167,29 +165,11 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   read before its allocation guard: one regression plus the thirteen neighbors
   pass. Use the refreshed importer contract for any future exact approval.
 
-The 2026-09-27 pinned upstream sync is independent of the older consumer
-pin-adoption task below. Consumer pins and historical selection identities
-must be reviewed in their owning repository; they do not block Candle sync.
-Integration proof lives in `UPSTREAM_SYNC.md`.
-
-### [ ] Edge pin-adoption of published S3/S4 SHA (not LFM2-VL C0)
-
-- What: Adopt published Shoozes/candle `4c1feb82eccd60a14f9f00f84ef6c9bdedcddd06`
-  in Edge together with `tokenizers` 0.23/`onig`. Do not silently unify 0.22
-  and 0.23 `Tokenizer` types.
-- Why: Overlay and consumer gates passed. `TokenizerFromGguf` is implemented
-  for candle-core's tokenizers crate version, so Edge 0.22 and this SHA's
-  0.23 cannot share one `Tokenizer` type.
-- When: After this published SHA. Before the LFM2-VL/Edge C0 chain.
-- Where: Edge `source/backend/Cargo.toml` tokenizers line and the four
-  `candle-*` git revs. Keep historical VL selection `dca98495…`.
-- How: Bind new Edge evidence to the new pin; do not rewrite pack-selection
-  identity. Do not open the LFM2-VL C0 chain from the pin bump.
-- Done when: Edge pin and tokenizers move together, historical VL selection
-  stays `dca98495…`, and the LFM2-VL C0 chain remains unopened until that
-  pin-adoption lands.
-- Verification: Edge `cargo check --locked` against `4c1feb82…` with
-  `tokenizers` 0.23/`onig`.
+The old S3/S4 `4c1feb82`/tokenizers adoption item is superseded by Edge's
+current `0c0bc3ec` graph and tokenizers declared 0.23.1, locked 0.23.2/onig.
+Its historical receipts remain intact; the next single graph adoption is owned
+by the maintained GPT-OSS item above. Upstream integration proof remains in
+`UPSTREAM_SYNC.md`.
 
 ### [ ] Publish the immutable combined-overlay 0.2.0 snapshot
 
@@ -481,4 +461,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-proof-publication | change=kept maintained-model acceptance open after guarded progress closeout and selected fresh characterization binding
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-delivery-publication | change=closed scoped delivery progress and retained fresh characterization and consumer acceptance prerequisites
