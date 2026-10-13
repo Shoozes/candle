@@ -2,9 +2,16 @@
 
 ## Current maintained support, 2026-10-13
 
-Published baseline remains `0232662335b393da3c8f5b64d08302c5e3a92a47`.
-The authorized local checkpoint is `e3e1afcb9732268170d04bdbeb4b0c368bfa28c0`,
-tree `85d83b28ac96d6dccf1622d5b55af887ef7a6cba`; it has not been pushed.
+The prior published baseline is `0232662335b393da3c8f5b64d08302c5e3a92a47`.
+The qualified production source is `e3e1afcb9732268170d04bdbeb4b0c368bfa28c0`,
+tree `85d83b28ac96d6dccf1622d5b55af887ef7a6cba`. The subsequent owner-metadata
+repair is checkpointed at `892108cf`, and study records at
+`a0c70e1d632e1f5989ab05ef9294d00bb259ccf2`, tree
+`f66662a42cfb9503b7c0ecba8c8d1cce143d26a6`. Its clean native gate passes.
+The owner selected guarded publication of these four scoped checkpoints and
+the current three-file handoff closeout. `artifacts/publication/last-push.json`
+binds the delivered commit/tree, final native gate and exact remote equality;
+publication does not change the executed qualification source.
 The prior receipt repair, its 241 controls and original `5a7e392a` observations
 remain unchanged.
 
@@ -30,9 +37,10 @@ paths and native model/Job/binary identities are complete; held handles released
 The scoped future-owner repair uses bounded live PID/UTC-creation/path checks
 and passes 19 model-free observer controls, the complete native gate and
 independent review. It does not
-rewrite or requalify the production receipts. Active work is three supervisor
-scripts/controls, six handoff/contract/manifest docs and the existing bank route.
-No Rust/model arithmetic, limits, oracle or consumer changes are included.
+rewrite or requalify the production receipts. The scripts, controls, study records
+and bank route are checkpointed. The handoff closeout changes only GPT/LFM
+STATUS and LFM TODO; no implementation files remain active. No Rust/model
+arithmetic, limits, oracle or consumer changes are included.
 The older `6fd22840…` zero-work CLI attempt remains separately closed.
 
 The owner-requested oracle regeneration recovered the exact pinned bytes.
@@ -52,13 +60,14 @@ against return receipt SHA `8343d2e0…5fb44`. Neither is native consumer
 qualification. Q8/GenEye pins, Responses
 90s, WorkerRuntime 600s, engine 0.154 and all activation holds remain unchanged.
 
-Exact next task: obtain scoped authority for the verified ten-file local
-owner-metadata/records checkpoint. The next measured CUDA target is the 32.105ms
-mean decode final-validation boundary: separately attribute synchronization,
+Exact next task after guarded publication: prepare model-free attribution of
+the CUDA final-validation boundary. Its measured mean decode interval is
+32.105ms: separately attribute synchronization,
 host materialization and finite scan before optimizing. It includes pending GPU
 work, so it is not an isolated kernel/transfer measurement. New production work
 needs a reviewed clean packet and finite allowance; `521d4295…` and `6fd22840…`
-are closed. No new commit, push or consumer adoption is authorized.
+are closed. This closeout authorizes scoped saving/publication only; further
+production work and consumer adoption require their own task authority.
 The stale `9591dc7c…edcf653` packet also stays forbidden and older allowances closed.
 Controlled speed estimates, BF16/32k, native consumers and release promotion remain open.
 
@@ -521,4 +530,4 @@ infer Q8/default or broad maintained production support from this packet.
 
 ---
 
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-short-qualification | change=recorded source-bound short proof and scoped owner metadata repair
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-qualification-publication | change=closed checkpoint handoff and bound guarded publication without relabeling model proof

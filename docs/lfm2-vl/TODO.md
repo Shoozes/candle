@@ -33,15 +33,19 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   independent 5/6/7-token row capture and replay, actual loaded-module paths,
   typed source/build/DLL admission and release-package preparation. Preserve
   the frozen historical eight/16 contract and all original receipts.
-- Current proof: local `e3e1afcb` completes the fresh `521d4295…` short F32
+- Completed short proof: source `e3e1afcb` completes the fresh `521d4295…` F32
   common-session proof: oracle/replay, actual DLLs, Jobs and registry release
   pass; two loads/44 forwards/74 steps/32 outputs and allowance are closed.
   CPU prefill/mean decode 17.460s/2.187s are historically lower; no controlled
   speed estimate or native consumer qualification follows. The earlier zero-work
   CLI attempt remains separately closed. Null secondary owner executable fields
   are retained honestly; bounded future-owner identity repair passes 19 controls,
-  the complete native gate and source review. No model arithmetic changes or repeat inference belong to
-  this local closeout. Exact oracle bytes were recovered by one
+  the complete native gate and source review. Owner repair `892108cf` and
+  records `a0c70e1d` are checkpointed; the owner selected guarded publication
+  plus the three-file current handoff closeout. The canonical publication receipt
+  binds delivered source/gate/remote equality without relabeling model proof.
+  No model arithmetic changes or repeat inference belong to this closeout.
+  Exact oracle bytes were recovered by one
   separately owned b11379 load/chunk, zero output tokens or model retries;
   offload execution remains unclaimed. See
   [CHARACTERIZATION.md](../gpt-oss/CHARACTERIZATION.md) for paths and bounds.
@@ -50,8 +54,8 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   backing report and route proof; Symbio owns coding consumption afterward.
   Symbio's published twelve-file `e43eeeac` preparation is byte-verified;
   Edge's local twelve-file return and proof journal are also byte-verified.
-- Selected next batch: obtain authority for the verified ten-file local
-  metadata/records checkpoint. Then attribute the CUDA final-validation boundary
+- Selected next batch after guarded publication: prepare model-free attribution
+  of the CUDA final-validation boundary
   (mean decode 32.105ms, including pending GPU work): separate synchronize,
   host materialization and finite scan with opt-in timing, preserving normal
   arithmetic/reduction/cache/cancellation behavior. Do not optimize or label
@@ -61,8 +65,9 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   timing nesting/default behavior, then a clean reviewed packet freezes the
   minimal additional measurement work and obtains its own finite allowance.
   Existing CPU traces remain bound to `e3e1afcb`; no closed packet is reused.
-  Keep diagnostic 32GiB/1,800s Jobs and 20e9 GPU ceiling. No new commit/push or
-  inference is authorized; BF16/32k/native provider/release gates remain open.
+  Keep diagnostic 32GiB/1,800s Jobs and 20e9 GPU ceiling. Current publication
+  grants no new inference or consumer activation; BF16/32k/native provider/
+  release gates remain open.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -472,4 +477,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-short-qualification | change=closed finite proof and selected measured CUDA validation attribution
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-qualification-publication | change=removed completed checkpoint authority step and retained the next bounded attribution criteria

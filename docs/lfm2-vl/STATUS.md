@@ -2,10 +2,16 @@
 
 ## Independent GPT-OSS work, 2026-10-13
 
-Current published baseline remains `0232662335b393da3c8f5b64d08302c5e3a92a47`.
-The authorized local checkpoint is `e3e1afcb9732268170d04bdbeb4b0c368bfa28c0`,
-tree `85d83b28ac96d6dccf1622d5b55af887ef7a6cba`, unpushed. Its clean native gate
-and reviewed CPU/CUDA release packet pass. The fresh `521d4295…` diagnostic
+The prior published baseline is `0232662335b393da3c8f5b64d08302c5e3a92a47`.
+Qualified production source `e3e1afcb9732268170d04bdbeb4b0c368bfa28c0`,
+tree `85d83b28ac96d6dccf1622d5b55af887ef7a6cba`, retains its original
+CPU/CUDA packet and receipts. The owner-metadata repair is checkpointed at
+`892108cf`; records are checkpointed at `a0c70e1d`, tree
+`f66662a42cfb9503b7c0ecba8c8d1cce143d26a6`, with a clean native gate.
+The owner selected guarded publication of the four related checkpoints and
+this three-file handoff closeout. `artifacts/publication/last-push.json` binds
+the delivered commit/tree, final gate and remote equality.
+The fresh `521d4295…` diagnostic
 completes CPU then CUDA: two loads/six segments/44 forwards/74 steps/32 outputs,
 no warmup/retry. Independent oracle, exact replay, actual loaded-DLL, native Job
 and registry checks pass, all six study owners are absent and allowance closed.
@@ -18,8 +24,9 @@ receipt. Watcher self-owner and native model identities are complete and held
 handles released. The subsequent bounded owner-identity repair passes 19
 model-free controls, the complete native gate and source review; it does not
 requalify the changed helper.
-Active files are three supervisor scripts/controls, six current docs and the bank
-route, with no Rust/model arithmetic or consumer changes. See
+Implementation, controls, study records and routes are checkpointed. The
+handoff closeout changes only GPT/LFM STATUS and LFM TODO; no implementation
+files remain active and no Rust/model arithmetic or consumer changes are included. See
 [GPT status](../gpt-oss/STATUS.md) and [the contract](../gpt-oss/CHARACTERIZATION.md).
 
 The owner-requested independent oracle regeneration reproduces the exact
@@ -30,12 +37,13 @@ Symbio's published twelve-file `e43eeeac` candidate bytes are reconciled; Edge's
 local twelve-file return and proof journal are also byte-verified. Native consumer,
 32k/BF16 and provider gates remain held. Q8 and GenEye's `3fa7075e` pin stay.
 
-Exact next task: obtain scoped authority for the verified ten-file local
-owner-metadata/records checkpoint. Next CUDA attribution isolates the 32.105ms nested final
-validation interval's synchronize/materialize/finite-scan parts before optimizing;
+Exact next task after guarded publication: prepare model-free CUDA attribution
+of the 32.105ms nested final-validation interval's synchronization,
+host materialization and finite scan before optimizing;
 new production calls require a clean reviewed packet and finite allowance.
-All prior packets/allowances are closed; no new commit, push or consumer change
-is authorized.
+All prior packets/allowances are closed. This closeout authorizes scoped
+saving/publication only; further production work and consumer changes require
+their own task authority.
 The retained d1 phase below is unchanged.
 
 ### Prior local review evidence
@@ -1057,4 +1065,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-short-qualification | change=recorded short proof limits and scoped future-owner repair
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-qualification-publication | change=closed checkpoint handoff while preserving source-bound short proof and consumer holds
