@@ -1,6 +1,44 @@
 # GPT-OSS Experimental Candle Status
 
-## Assignment state
+## Active maintained-loading slice, 2026-10-12
+
+The accepted plan starts from native `main` at `f1278f94`; prior LFM review
+edits are preserved. The owner approved two local commits without push/inference.
+Loading code/API/routes are checkpointed at `06a83835`; three STATUS/TODO
+records form the second responsibility. All nine runtime hashes match the
+verified uncommitted candidate below.
+
+Explicit GGUF and original/indexed packed safetensors load into CPU/CUDA F32.
+Experts stay packed; other supported types normalize to dense F32. Config,
+conversion, identity, bounds and ownership contracts are in [LOADING.md](LOADING.md).
+
+Baseline native GPT tests passed 38 with one retained-production ignore.
+Candidate CPU proof passed 51 with one retained-production ignore, including
+both native layouts and indexed shards against the existing independent
+two-layer oracle, float16 types, Q8 signed decode, public sessions and recovery.
+CUDA fixture proof passed 59 with one retained-production ignore. Combined
+static/cache/workspace limits reject before mutation on both session backends.
+The complete native gate and CUDA strict Clippy/example checks pass. Proof:
+`artifacts/gpt-oss/maintained-loading-20261012-c883332e419f4a1fabf27c1184d37f47/`:
+`completion.json`, `candidate.json`, `native-gate.log` retain source, hashes,
+commands and exit zero. The owned process exited. Existing nonfatal CUDA
+`LNK4098` remains visible; WSL lacks offline dependencies. No packages fetched.
+This is fixture proof; no production weights were loaded or model allowance
+consumed. No new speed, BF16, 32k or consumer-ready claim is made.
+
+Read-only review found no new loader/ownership/transaction defect. Profile the
+existing CUDA finite-validation host transfer; it precedes cache commit and
+differs from caller `into_cpu` readback. Preserve failure atomicity.
+
+Next: prepare the common-session CPU/CUDA harness and fresh source/binary-bound
+packet. The existing CUDA-only wrapper lacks a physical host ceiling; add CPU
+selection, host admission and transfer timing while preserving old receipts.
+Full maintained support remains incomplete until measured
+optimization and retained-model/device/route qualification pass. The 32 GiB
+host/20e9 GPU target is owner policy; Responses90s and WorkerRuntime600s remain
+unchanged. The historical records below retain their original identities.
+
+## Historical assignment state (2026-10-07)
 
 Documentation closeout (2026-10-07) reviewed native `main` at
 `b274902312a39cbe1b0028141276f43e64b56096`. The corrected evidence descriptions
@@ -372,4 +410,4 @@ infer Q8/default or broad maintained production support from this packet.
 
 ---
 
-AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=evidence-cleanup | change=reconciled historical evidence language while preserving deferred acceleration research
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-local-loading | change=recorded local fixture proof and remaining maintained qualification gates

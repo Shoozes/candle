@@ -1,5 +1,21 @@
 # LFM2.5-VL Current Status
 
+## Independent GPT-OSS work, 2026-10-12
+
+The owner resumed the accepted maintained GPT-OSS plan on `f1278f94`.
+The first local slice adds config normalization, explicit GGUF and full packed
+native loading, and a common F32 CPU/CUDA session. Current truth and remaining
+proof gates live in [GPT-OSS STATUS](../gpt-oss/STATUS.md) and
+[the API contract](../gpt-oss/LOADING.md). The complete native gate and focused
+CPU/CUDA fixture, strict Clippy and example checks pass. The owner approved
+two scoped local commits without push/inference; loading code/API/routes are
+checkpointed at `06a83835`. Next is the common-session CPU/CUDA profiling
+harness and a fresh source-bound production packet.
+Prior two-file LFM review edits below
+remain intact; their original d1 qualification and closed allowance do not
+qualify GPT-OSS. No production inference, consumer activation or publication
+belongs to the current local loading checks. GenEye stays at `3fa7075e`.
+
 ## Current phase and source
 
 The owner selected guarded closeout/publication of only the two STATUS/TODO
@@ -11,27 +27,27 @@ closeout is retained under the existing t01 proof root as
 bound to `7568791a`; the eight-request allowance remains closed. No runtime
 or consumer code changes belong to this record-only publication.
 
-Published parity-record review/recheck (2026-10-12) starts from clean native
-`main` at `8b5ad42b6cda155fceb38bd1c7ee1e834f1e791f`, tree
-`597f6e1d6ee6fde2c2cca11a9bae7c2521ed22ee`. At intake, the five document byte
-identities, canonical publication receipt and retained proof match the
-publication closeout. Read-only `compare(...)` re-evaluation of all eight
-saved t01 runs exactly reproduces the final receipt, including report hashes and numerical
-errors, with zero model forwards or output files. Prior sentinel/reference,
-typed-accounting, cancellation/recovery and Qwen failure-prefix findings stay
-closed; no new runtime, receipt or routing repair is indicated. The original
-native publication gate remains source-bound proof, not a newly run review
-result. This task updates only STATUS/TODO disposition; the completed d1
-qualification stays out of the active queue. Remaining model gates below keep
-their original owners, acceptance criteria and fresh-allowance requirements.
+Latest STATUS/TODO review/recheck (2026-10-12) starts from clean native `main`
+at `f1278f94b1bb97c8191474250b4249fc207bc13c`, tree
+`aefea6e22b09b6fa2c3ba838c976d99f0730d8cd`. At intake, both document byte
+identities, the canonical receipt, helper log and released owner match the
+two-document publication closeout. The preserved `8b5ad42b` receipt recovers
+exactly; the original qualification and approved packet are unchanged.
+The preceding read-only eight-run comparison at `8b5ad42b` retains its exact
+saved result and source identity; no new comparison or model forward was
+needed for this docs-only delta. Prior sentinel/reference, typed-accounting,
+cancellation/recovery and Qwen failure-prefix findings stay closed. No new
+runtime, receipt or routing repair is indicated. This task consolidates only
+STATUS/TODO disposition; completed d1 qualification stays out of the queue.
+Remaining gates retain their owners, criteria and fresh-allowance requirements.
 
 Fresh local review checks pass with exit zero: `cargo fmt --all -- --check`,
 `cargo check --locked --offline -j 2 -p candle-core -p candle-nn
 -p candle-transformers -p candle-vlm`, seven `test_compare_text_loading.py`
 controls and six `test_verify_run.py` controls using `.venv/Scripts/python.exe
 -B`. Summary Bank, LFM manifest, overlay and whitespace gates also pass.
-The preceding review did not rerun the full native/CUDA gates; guarded
-publication separately replays the native gate on this clean docs commit.
+This review reuses the full native publication gate only at `f1278f94`;
+full native/CUDA gates were not rerun for the documentation-only cleanup.
 
 Retained t01 text-loading qualification is complete locally (2026-10-12) at
 clean checkpoint `7568791adbdffd7216a6882baf4a1259c6fe698e`, tree
@@ -958,4 +974,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=d1-review-status-todo-publish | change=closed out the scoped review records without rebinding original model proof
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-local-loading | change=recorded verified independent loading while preserving the prior d1 review disposition

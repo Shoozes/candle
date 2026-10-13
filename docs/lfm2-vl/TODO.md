@@ -6,6 +6,34 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 
 ## Active Candle backlog
 
+### [ ] Maintained GPT-OSS support through EdgeSymbio and symbio-code
+
+- What: Finish explicit GGUF/packed local loading, measured CPU/CUDA
+  optimization and qualified selectable GPT-OSS-20B consumer integration.
+- Why: Existing short experimental receipts do not establish a maintained
+  loader, 32k capacity, performance improvement or coding-provider readiness.
+- When: The accepted plan is now in implementation; production profiling
+  still needs a clean source/binary-bound packet and fresh finite allowance.
+- Where: GPT-OSS overlay; [current STATUS](../gpt-oss/STATUS.md) and
+  [LOADING contract](../gpt-oss/LOADING.md). Edge/Symbio own their integrations.
+- How: Local loading/config/session fixture gate first, then profile before
+  optimization, CPU before CUDA, staged 8k/16k/32k qualification, strict F32
+  default and independently proven BF16. Preserve Q8 defaults and GenEye pin.
+- Done when: Each advertised artifact/device/mode/route has observed parity,
+  bounded memory, context/output and recovery proof, measured improvement,
+  and actual Responses/tool/coding integration after authorized publication.
+- Verification: Native focused/all gates and source-bound retained proof.
+  Target: 32 GiB host, 20e9 GPU bytes, 30,720 history/prompt + 2,048 generated
+  tokens including reasoning. Responses remains90s; WorkerRuntime remains600s;
+  one route's capacity never qualifies the other. No current BF16/32k claim.
+- Current disposition (2026-10-12): Local loading/session fixtures and complete
+  native/CUDA gates pass. The owner approved scoped local commits without
+  push/inference; loading code/API/routes are checkpointed at `06a83835`.
+  Prepare a common-session CPU/CUDA harness with a physical host ceiling and
+  bind the fresh baseline profiling packet. Include the existing CUDA
+  finite-validation transfer in profiling; preserve failure-atomic cache commit. No production
+  request, inference allowance, consumer pin or publication is implied.
+
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
 - What: Admit an immutable trained text adapter for the accepted
@@ -32,13 +60,14 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 - Verification: Exact-byte artifact hashes, model-generated target inventory,
   focused Candle admission tests, Edge job/API replay, and independent held-out
   comparison. No CUDA LoRA or 2.6B quality claim follows from synthetic tests.
-- Candle proof-record disposition (2026-10-12 review baseline `8b5ad42b`):
-  Published d1 records and prior findings recheck cleanly. Read-only replay of the eight
-  retained t01 comparisons exactly matches the saved receipt at `7568791a`;
-  no new model forwards occurred and its allowance remains closed. No d1
-  runtime repair or repeated qualification is queued. This evidence supplies
-  no trained 2.6B adapter or held-out quality result; the producer/Edge
-  prerequisites and this task's Done When remain unchanged.
+- Candle proof-record disposition (2026-10-12 review baseline `f1278f94`):
+  Both published STATUS/TODO identities, canonical/helper proof and prior
+  `8b5ad42b` receipt recovery pass. Prior findings remain closed; the original
+  t01 qualification at `7568791a` and approved packet are unchanged. No new
+  model forwards, runtime repair or repeated qualification are queued, and
+  its consumed allowance remains closed. This evidence supplies no trained
+  2.6B adapter or held-out quality result; producer/Edge prerequisites and
+  this task's Done When remain unchanged.
 - Current disposition (2026-10-07): Candle's F32 coefficient prerequisite now
   rejects conversion overflow/underflow before adapter or cache mutation; its
   five local LoRA tests, 46 neighboring LFM tests, and native maintained CPU
@@ -431,4 +460,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=d1-review-status-todo-publish | change=saved verified d1 review disposition while retaining actual producer prerequisites
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-local-loading | change=advanced the maintained support gate while preserving prior d1 producer prerequisites
