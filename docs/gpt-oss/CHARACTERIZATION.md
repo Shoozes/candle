@@ -78,6 +78,63 @@ requires `nvcuda.dll`, `cublas64_13.dll`, `cublasLt64_13.dll` and
 launch and against actual observations. OS modules outside this selected
 closure remain inventory rather than a claim that every DLL was packaged.
 
+## Short outcome at `e3e1afcb`, 2026-10-13
+
+Fresh packet SHA-256
+`521d4295f226c03b02e14ebba02296ee6d7e564b163ead1a69bc9f31063ee33b`
+completed at clean `e3e1afcb9732268170d04bdbeb4b0c368bfa28c0`, tree
+`85d83b28ac96d6dccf1622d5b55af887ef7a6cba`. CPU numerical and complete release
+checks passed before CUDA admission. Actual work equals the frozen proposal:
+two loads/six segments/44 forwards/74 steps/32 outputs, zero warmups/retries.
+Both Jobs exited naturally; registries are zero and all six model/controller/
+watcher owners are absent. The allowance is closed; no inference follows.
+
+| Measurement | CPU | CUDA |
+| --- | ---: | ---: |
+| Load / unload | 27.525s / 734.472ms | 29.419s / 90.688ms |
+| Cold eight-token prefill | 17.460s | 689.292ms |
+| Mean of fifteen decode forwards | 2.187s | 71.655ms |
+| Numerical / replay segments | 15.267s / 15.147s | 550.704ms / 496.173ms |
+| Total including new segments | 108.963s | 32.353s |
+| Peak Job bytes, limit 34,359,738,368 | 17,685,397,504 | 20,569,268,224 |
+| Sampled whole-GPU bytes, limit 20e9 | Not applicable | 18,935,185,408 |
+
+All three contexts have exact oracle top-1 IDs 1072/290/29082. Maximum
+top-eight-union errors are 0.131067/0.131048, full-row mean errors
+0.00205427/0.00205423 and probability TV 0.00485888/0.00485843 (CPU/CUDA).
+These pass the original 0.25/0.01/0.01 bounds. All six replay comparisons are
+raw-logit exact. Sixteen cold output IDs match CPU/CUDA and the retained 5a run.
+Captured rows were independently revalidated by the bound host executable.
+
+Loaded-module inventories contain 6/57 entries and the declared DLL paths/digests
+pass. CPU/CUDA module probes consume 57.067s/17.669s over 202/59 calls; CUDA's 33
+GPU probes consume 2.010s. These overlap model execution and are not added to
+forward/total times; sampling can miss peaks and observers change run conditions.
+Compared with historical 5a CPU prefill/decode 103.463s/17.479s, the new values
+are lower. CUDA's historical 675.021ms/67.382ms is close to the current values.
+One run per source and different observation/work prevent a causal estimate.
+
+The next CUDA attribution target is the nested final-validation boundary:
+mean decode 32.105ms versus 0.114ms caller readback and 0.526ms argmax. Split
+synchronization, host materialization and finite scan in a future bounded
+profile, preserving arithmetic/order/cache/cancellation. Synchronization waits
+for queued GPU work; this does not identify a kernel bottleneck. Any additional
+model calls require a newly reviewed source/binary/helper packet and allowance.
+
+Proof is retained under
+`artifacts/gpt-oss/characterization-e3e1afcb-d5726687beae43a0b3f9f0eb3544b83f/`.
+`report.json` binds compact receipts; the approved helper bytes are preserved
+once under `source-bindings/`. Raw rows retain verifier byte/path contracts.
+
+Secondary parent owner records have null controller executable paths on both
+lanes and a null parent CUDA watcher path. Watcher self-observations and native
+model/Job/binary identities are complete; held handles and all six owners are
+released. The raw receipts stay unchanged. A subsequent model-free repair
+records bounded live PID/UTC-tick/executable identity instead of the nullable
+adapted parent `Process.Path`, with wrong-executable/creation rejection. It does
+not retrospectively qualify the changed helper or any consumer. Raw-token short
+F32 proof supplies no Harmony, BF16/32k, route deadline or activation sign-off.
+
 ## Closed entry-point attempt and repair, 2026-10-13
 
 Local checkpoint `03228e54595cf783e6186ba86f11e55a0fd63696` passed the clean
@@ -123,4 +180,4 @@ physical memory, 28.48 GB commit against a 73.38 GB limit and 1.146 GB GPU use.
 Keep these new producer records separate even though their output digest matches.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cli-admission | change=preserved closed zero-work attempt and real CLI admission contract
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-short-qualification | change=recorded measured numerical runtime release proof and its precise limits

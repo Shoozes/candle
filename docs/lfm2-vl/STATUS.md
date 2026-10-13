@@ -3,19 +3,23 @@
 ## Independent GPT-OSS work, 2026-10-13
 
 Current published baseline remains `0232662335b393da3c8f5b64d08302c5e3a92a47`.
-The authorized local checkpoint is `03228e54595cf783e6186ba86f11e55a0fd63696`,
-tree `d65aac1a5d94ded3e95acbecebdacba56261180a`, unpushed. Its clean native gate
-and reviewed CPU/CUDA release package passed. The approved `6fd22840…` packet
-then exited before admission because importing the legacy helper overwrote the
-caller's `AsLibrary` switch. No model load, request, forward, token or watcher
-ran and no model output root exists. The attempt is incomplete and its allowance
-is closed without retry; historical source, packets and receipts remain intact.
+The authorized local checkpoint is `e3e1afcb9732268170d04bdbeb4b0c368bfa28c0`,
+tree `85d83b28ac96d6dccf1622d5b55af887ef7a6cba`, unpushed. Its clean native gate
+and reviewed CPU/CUDA release packet pass. The fresh `521d4295…` diagnostic
+completes CPU then CUDA: two loads/six segments/44 forwards/74 steps/32 outputs,
+no warmup/retry. Independent oracle, exact replay, actual loaded-DLL, native Job
+and registry checks pass, all six study owners are absent and allowance closed.
+CPU prefill/mean decode are 17.460s/2.187s; CUDA 689.292ms/71.655ms. These are
+historical descriptive comparisons, not causal speed estimates or consumer proof.
+The older zero-work `6fd22840…` attempt remains separately closed.
 
-The scoped runner repair preserves CLI/library intent across the import;
-145 model-free controls include actual `pwsh -File` refusal and library-mode
-checks; the complete locked/offline native gate and independent source review
-pass. Active files are the runner/controls
-and five current docs, with no model arithmetic or consumer changes. See
+Secondary parent owner executable fields are incomplete in that immutable
+receipt. Watcher self-owner and native model identities are complete and held
+handles released. The subsequent bounded owner-identity repair passes 19
+model-free controls, the complete native gate and source review; it does not
+requalify the changed helper.
+Active files are three supervisor scripts/controls, six current docs and the bank
+route, with no Rust/model arithmetic or consumer changes. See
 [GPT status](../gpt-oss/STATUS.md) and [the contract](../gpt-oss/CHARACTERIZATION.md).
 
 The owner-requested independent oracle regeneration reproduces the exact
@@ -26,10 +30,12 @@ Symbio's published twelve-file `e43eeeac` candidate bytes are reconciled; Edge's
 local twelve-file return and proof journal are also byte-verified. Native consumer,
 32k/BF16 and provider gates remain held. Q8 and GenEye's `3fa7075e` pin stay.
 
-Exact next task: obtain new authority for the verified seven-file repair
-checkpoint, rebuild/review a clean final packet, then seek a separate finite
-CPU-first allowance. Neither the closed `6fd22840…` packet nor stale
-`9591dc7c…edcf653` may run. No new commit, push or consumer change is authorized.
+Exact next task: obtain scoped authority for the verified ten-file local
+owner-metadata/records checkpoint. Next CUDA attribution isolates the 32.105ms nested final
+validation interval's synchronize/materialize/finite-scan parts before optimizing;
+new production calls require a clean reviewed packet and finite allowance.
+All prior packets/allowances are closed; no new commit, push or consumer change
+is authorized.
 The retained d1 phase below is unchanged.
 
 ### Prior local review evidence
@@ -1051,4 +1057,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cli-admission | change=recorded held GPT-OSS qualification and scoped entry-point recovery
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-short-qualification | change=recorded short proof limits and scoped future-owner repair

@@ -3,29 +3,37 @@
 ## Current maintained support, 2026-10-13
 
 Published baseline remains `0232662335b393da3c8f5b64d08302c5e3a92a47`.
-The authorized local checkpoint is `03228e54595cf783e6186ba86f11e55a0fd63696`,
-tree `d65aac1a5d94ded3e95acbecebdacba56261180a`; it has not been pushed.
+The authorized local checkpoint is `e3e1afcb9732268170d04bdbeb4b0c368bfa28c0`,
+tree `85d83b28ac96d6dccf1622d5b55af887ef7a6cba`; it has not been pushed.
 The prior receipt repair, its 241 controls and original `5a7e392a` observations
 remain unchanged.
 
-The checkpoint's clean native gate, CPU/CUDA release builds and model-free
-startup/host verification passed. Its reviewed final packet was 8,794 bytes,
-SHA-256 `6fd228404aa00ca2e1245b1d87046b26735c4838472db5452d929eece36680ff`.
-The separately approved invocation exited zero before admission or dispatch:
-dot-sourcing the legacy helper overwrote the runner's `AsLibrary` parameter.
-No output root, model load, request, forward, token or watcher was created.
-This attempt is incomplete, and its allowance is closed without retry. Original
-packet and invocation bytes are retained; this is no model qualification.
+Its clean native gate, 145 controls, CPU/CUDA release builds and actual CLI
+admission checks passed. Fresh packet `521d4295…ee33b` completed CPU then CUDA:
+two loads/six segments/44 forwards/74 processed steps/32 outputs, no warmups
+or retries. All contexts pass the pinned independent oracle and exact replay;
+sixteen cold IDs match both devices and the historical `5a7e392a` run. Native
+Jobs exit naturally, registries are zero and all six study owners are absent.
+Actual DLL paths are observed on both devices. The allowance is closed.
 
-The scoped repair captures library intent before importing helpers. Real
-`pwsh -File` regressions now reject missing arguments and malformed packets,
-preserve explicit library mode and prove rejection precedes output creation.
-145 native controls and the complete locked/offline native gate pass;
-independent two-file source review passes.
-Active work is the runner, its controls and five current handoff/contract docs.
+CPU load/prefill/mean decode are 27.525s/17.460s/2.187s; CUDA values are
+29.419s/689.292ms/71.655ms. Historical CPU prefill/decode were 103.463s/17.479s;
+this is descriptive single-run evidence, not a controlled causal speedup.
+CUDA sampled peak is 18,935,185,408 bytes against 20e9. Totals include the new
+numerical/replay segments and cannot be compared with the old cold-only totals.
+Source-bound `report.json`, rows and immutable receipts are retained under
+`artifacts/gpt-oss/characterization-e3e1afcb-d5726687beae43a0b3f9f0eb3544b83f/`.
+
+Qualification has a secondary metadata limitation: both parent controller
+executable fields and the parent CUDA watcher path are null. Watcher self-owner
+paths and native model/Job/binary identities are complete; held handles released.
+The scoped future-owner repair uses bounded live PID/UTC-creation/path checks
+and passes 19 model-free observer controls, the complete native gate and
+independent review. It does not
+rewrite or requalify the production receipts. Active work is three supervisor
+scripts/controls, six handoff/contract/manifest docs and the existing bank route.
 No Rust/model arithmetic, limits, oracle or consumer changes are included.
-Compact proof and the closed-attempt receipt are in
-`artifacts/gpt-oss/characterization-prep-02326623-20261013/`.
+The older `6fd22840…` zero-work CLI attempt remains separately closed.
 
 The owner-requested oracle regeneration recovered the exact pinned bytes.
 The single b11379 producer load used one eight-token chunk, three saved rows
@@ -34,7 +42,8 @@ Its raw terminal remains incomplete because no layer-offload count was logged;
 artifact recovery establishes no CUDA execution or new Candle qualification.
 See [the characterization contract](CHARACTERIZATION.md) for exact provenance,
 counts, resource bounds and the retained recovery receipt. The historical fixture
-and receipts are unchanged. No Candle production forwards ran in this batch.
+and receipts are unchanged. The oracle-regeneration step itself ran no Candle
+production forwards.
 
 Symbio's twelve-file preparation is published at `e43eeeac`; its candidate
 receipt SHA `b5e2df7e…d817` and all twelve current file identities are verified.
@@ -43,12 +52,15 @@ against return receipt SHA `8343d2e0…5fb44`. Neither is native consumer
 qualification. Q8/GenEye pins, Responses
 90s, WorkerRuntime 600s, engine 0.154 and all activation holds remain unchanged.
 
-Exact next task: obtain scoped authority for the verified seven-file repair
-checkpoint, then rebuild and independently review a final
-clean packet. Execution needs a new finite allowance; the closed `6fd22840…`
-packet must not run again. No new commit, push or consumer adoption is authorized.
+Exact next task: obtain scoped authority for the verified ten-file local
+owner-metadata/records checkpoint. The next measured CUDA target is the 32.105ms
+mean decode final-validation boundary: separately attribute synchronization,
+host materialization and finite scan before optimizing. It includes pending GPU
+work, so it is not an isolated kernel/transfer measurement. New production work
+needs a reviewed clean packet and finite allowance; `521d4295…` and `6fd22840…`
+are closed. No new commit, push or consumer adoption is authorized.
 The stale `9591dc7c…edcf653` packet also stays forbidden and older allowances closed.
-Whole-model speed, BF16/32k, native consumers and release promotion remain open.
+Controlled speed estimates, BF16/32k, native consumers and release promotion remain open.
 
 ### Prior local review evidence
 
@@ -509,4 +521,4 @@ infer Q8/default or broad maintained production support from this packet.
 
 ---
 
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cli-admission | change=recorded zero-work closed attempt and verified real entry-point repair
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-short-qualification | change=recorded source-bound short proof and scoped owner metadata repair

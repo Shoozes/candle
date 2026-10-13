@@ -10,8 +10,10 @@ promote GPT-OSS to the product default.
 
 - Common-session characterization now captures fixed-prefix numerical rows,
   independent comparisons and reset/replay, with bounded observer Jobs, actual
-  loaded-DLL proof and clean source/build admission. Local model-free checks
-  and the complete native gate pass; production characterization is held.
+  loaded-DLL proof and clean source/build admission. Short F32 qualification
+  completes at `e3e1afcb`; closed receipts preserve secondary owner-metadata
+  limits. The subsequent live owner-identity repair is model-free only;
+  consumers and broader production profiles remain held.
   See `CHARACTERIZATION.md`. This manifest now owns 57 paths; the live union
   is 311 paths with 28 shared paths, recomputed from the actual candidate.
 
@@ -210,4 +212,4 @@ remain outside this opt-in receipt.
 
 ---
 
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=implemented bounded numerical and runtime preparation with exact oracle recovery
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-short-qualification | change=recorded scoped short F32 proof and future-owner metadata boundary

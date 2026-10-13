@@ -33,15 +33,15 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   independent 5/6/7-token row capture and replay, actual loaded-module paths,
   typed source/build/DLL admission and release-package preparation. Preserve
   the frozen historical eight/16 contract and all original receipts.
-- Current proof: preparation is saved locally at `03228e54`; its clean native
-  gate, CPU/CUDA release/startup checks and final packet review passed. The
-  approved `6fd22840…` invocation returned before dispatch because a helper
-  import overwrote CLI/library intent. No loads, requests, forwards or tokens
-  ran. The attempt is incomplete and its no-retry allowance is closed.
-  The scoped repair passes 145 model-free controls, including real `-File`
-  refusal/library-mode checks, the complete native gate and independent source
-  review. Exact oracle
-  bytes were recovered by one
+- Current proof: local `e3e1afcb` completes the fresh `521d4295…` short F32
+  common-session proof: oracle/replay, actual DLLs, Jobs and registry release
+  pass; two loads/44 forwards/74 steps/32 outputs and allowance are closed.
+  CPU prefill/mean decode 17.460s/2.187s are historically lower; no controlled
+  speed estimate or native consumer qualification follows. The earlier zero-work
+  CLI attempt remains separately closed. Null secondary owner executable fields
+  are retained honestly; bounded future-owner identity repair passes 19 controls,
+  the complete native gate and source review. No model arithmetic changes or repeat inference belong to
+  this local closeout. Exact oracle bytes were recovered by one
   separately owned b11379 load/chunk, zero output tokens or model retries;
   offload execution remains unclaimed. See
   [CHARACTERIZATION.md](../gpt-oss/CHARACTERIZATION.md) for paths and bounds.
@@ -50,17 +50,19 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   backing report and route proof; Symbio owns coding consumption afterward.
   Symbio's published twelve-file `e43eeeac` preparation is byte-verified;
   Edge's local twelve-file return and proof journal are also byte-verified.
-- Selected next batch: obtain authority for the verified seven-file local
-  entry-point repair checkpoint, then rebuild/review a final clean
-  source/release/helper packet. Execution afterward needs a fresh finite allowance:
-  CPU first, then CUDA only after complete numerical and release proof; at most
-  two loads/six segments/44 public forwards/74 steps/32 outputs, no warmup/retry,
-  with diagnostic 32 GiB/1,800s Jobs and 20e9 sampled GPU ceiling.
-- Preparation Done when: a reviewed final packet binds clean source/build,
-  helper/watcher/probe/oracle, all work counts and resource/release bounds.
-  The new repair has no commit/push or model allowance. The closed `6fd22840…`
-  packet and stale `9591dc7c…edcf653` proposal must not execute; no consumer
-  adoption follows. BF16/32k/native provider/release gates remain open.
+- Selected next batch: obtain authority for the verified ten-file local
+  metadata/records checkpoint. Then attribute the CUDA final-validation boundary
+  (mean decode 32.105ms, including pending GPU work): separate synchronize,
+  host materialization and finite scan with opt-in timing, preserving normal
+  arithmetic/reduction/cache/cancellation behavior. Do not optimize or label
+  a kernel bottleneck from that aggregate. Why: caller readback 0.114ms and
+  argmax 0.526ms are small while validation is a large nested part of 71.655ms.
+- Attribution Done when: model-free fixtures prove identical results and
+  timing nesting/default behavior, then a clean reviewed packet freezes the
+  minimal additional measurement work and obtains its own finite allowance.
+  Existing CPU traces remain bound to `e3e1afcb`; no closed packet is reused.
+  Keep diagnostic 32GiB/1,800s Jobs and 20e9 GPU ceiling. No new commit/push or
+  inference is authorized; BF16/32k/native provider/release gates remain open.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -470,4 +472,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cli-admission | change=selected verified entry-point repair before fresh checkpoint and finite qualification
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-short-qualification | change=closed finite proof and selected measured CUDA validation attribution

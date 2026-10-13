@@ -804,7 +804,7 @@
       ]
     },
     "feature__gpt_oss_characterization": {
-      "description": "Common-session cold timing, independently pinned numerical rows, reset/replay, bounded observer/loaded-DLL ownership and clean release-packet binding; model-free preparation only, expand session profiling for historical receipts.",
+      "description": "Common-session cold timing, independently pinned numerical rows, reset/replay, bounded observer/loaded-DLL ownership and source/build binding; short F32 qualification only, expand session profiling for historical receipts.",
       "status": "active",
       "paths": [
         "docs/gpt-oss/CHARACTERIZATION.md",
