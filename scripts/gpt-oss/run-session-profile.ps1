@@ -6,6 +6,7 @@ param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'observer.ps1')
 
 function Get-SessionProfilePlan {
     [pscustomobject]@{
@@ -169,16 +170,19 @@ function Write-SessionProfileJson {
 }
 
 function Get-SessionProfileGpuSample {
-    param([int]$DeviceIndex)
-    $lines = @(& nvidia-smi.exe --id $DeviceIndex --query-gpu=memory.used --format=csv,noheader,nounits 2>$null)
-    if ($LASTEXITCODE -ne 0 -or $lines.Count -ne 1) { throw 'GPU monitor returned no unique sample' }
+    param([int]$DeviceIndex, [string]$ProbePath=(Get-Command nvidia-smi.exe -ErrorAction Stop).Source,
+        [AllowEmptyCollection()][string[]]$ProbeArguments=@('--id',[string]$DeviceIndex,'--query-gpu=memory.used','--format=csv,noheader,nounits'),
+        [ValidateRange(50,10000)][int]$TimeoutMilliseconds=5000)
+    $probe=Invoke-SessionProfileProbe $ProbePath $ProbeArguments $TimeoutMilliseconds 4096
+    $lines=@($probe.Stdout.Trim() -split '\r?\n')
+    if ($probe.ExitCode -ne 0 -or $lines.Count -ne 1) { throw 'GPU monitor returned no unique sample' }
     [UInt64]$mib = 0
     if (-not [UInt64]::TryParse(([string]$lines[0]).Trim(), [ref]$mib) -or
         $mib -gt ([UInt64]::MaxValue / 1048576)) { throw 'GPU monitor returned invalid memory' }
     [UInt64]$bytes = $mib * [UInt64]1048576
     $plan = Get-SessionProfilePlan
     if ($bytes -gt $plan.max_gpu_bytes) { throw "GPU usage $bytes exceeded $($plan.max_gpu_bytes) bytes" }
-    [pscustomobject]@{ observed_utc=[DateTimeOffset]::UtcNow.ToString('o'); used_bytes=$bytes }
+    [pscustomobject]@{ observed_utc=[DateTimeOffset]::UtcNow.ToString('o'); used_bytes=$bytes; observer_ms=$probe.ElapsedMs }
 }
 
 function Quote-SessionProfileLiteral {
@@ -203,14 +207,16 @@ function Invoke-SessionProfileBatch {
 }
 
 function Invoke-SessionProfileLane {
-    param($Lane, [string]$Source, [string]$Directory, [string]$Helper, [string]$RepoRoot)
+    param($Lane, [string]$Source, [string]$Directory, [string]$Helper, [string]$RepoRoot,
+        [scriptblock]$InputValidator, [scriptblock]$CompletionValidator, [scriptblock]$Observe, [scriptblock]$SampleGpu,
+        [string]$Qualification='raw-token baseline only; no provider, BF16, 32k or speedup claim')
     $plan = Get-SessionProfilePlan
     $inputPath = Assert-SessionProfileIdentity $Lane.input
     $binaryPath = Assert-SessionProfileIdentity $Lane.binary
     $inputValue = Get-Content -LiteralPath $inputPath -Raw | ConvertFrom-Json
-    Assert-SessionProfileInput $inputValue $Source ([string]$Lane.backend)
+    if($null -eq $InputValidator){Assert-SessionProfileInput $inputValue $Source ([string]$Lane.backend)}
+    else {& $InputValidator $inputValue $Source ([string]$Lane.backend)}
     $gpuSamples = [Collections.Generic.List[object]]::new()
-    if ($Lane.backend -eq 'cuda') { $gpuSamples.Add((Get-SessionProfileGpuSample ([int]$inputValue.device_index))) }
     New-Item -ItemType Directory -Path $Directory -ErrorAction Stop | Out-Null
     $jobPath = Join-Path $Directory 'job.json'
     $progressPath = Join-Path $Directory 'progress.json'
@@ -226,21 +232,23 @@ function Invoke-SessionProfileLane {
     $status = 'failed'
     $failure = $null
     try {
+        if ($Lane.backend -eq 'cuda') { $gpuSamples.Add($(if($null -eq $SampleGpu){Get-SessionProfileGpuSample ([int]$inputValue.device_index)}else{& $SampleGpu ([int]$inputValue.device_index)})) }
         $controller = Start-Process -FilePath (Get-Command pwsh).Source -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $Directory 'controller.stdout.log') -RedirectStandardError (Join-Path $Directory 'controller.stderr.log')
         $owner = [ordered]@{ owner='Candle GPT-OSS session profile'; source_commit=$Source; pid=$controller.Id; creation_utc=$controller.StartTime.ToUniversalTime().ToString('o'); executable=$controller.Path; intended_lifetime='one 1800-second bounded Job plus cleanup'; endpoints=@(); binary=$Lane.binary; input=$Lane.input; shutdown='Stop only this creation-time/executable-verified controller; closing its native Job kills the owned runner'; output_root=$Directory }
         Write-SessionProfileJson (Join-Path $Directory 'owner.json') $owner
         $timer = [Diagnostics.Stopwatch]::StartNew()
         while (-not $controller.HasExited) {
             if ($timer.Elapsed.TotalSeconds -gt ($plan.deadline_seconds + 60)) { throw 'Profile controller exceeded Job deadline plus cleanup' }
-            if ($Lane.backend -eq 'cuda') { $gpuSamples.Add((Get-SessionProfileGpuSample ([int]$inputValue.device_index))) }
+            if($null -ne $Observe){& $Observe}
+            if ($Lane.backend -eq 'cuda') { $gpuSamples.Add($(if($null -eq $SampleGpu){Get-SessionProfileGpuSample ([int]$inputValue.device_index)}else{& $SampleGpu ([int]$inputValue.device_index)})) }
             if ($null -eq $runnerIdentity -and (Test-Path -LiteralPath $progressPath -PathType Leaf)) {
                 # Partial progress may be in the middle of a bounded rewrite.
                 $progress = $null
                 try { $progress = Get-Content -LiteralPath $progressPath -Raw | ConvertFrom-Json } catch { }
                 if ($null -ne $progress) {
-                    $native = Get-CimInstance Win32_Process -Filter "ProcessId=$([int]$progress.pid)"
-                    if ($null -ne $native -and $native.ExecutablePath -eq $binaryPath) {
-                        $runnerIdentity = [ordered]@{ pid=$native.ProcessId; creation_utc=$native.CreationDate.ToUniversalTime().ToString('o'); executable=$native.ExecutablePath }
+                    $native = Get-SessionProfileProcessSnapshot ([int]$progress.pid)
+                    if ($null -ne $native -and $native.executable -eq $binaryPath) {
+                        $runnerIdentity = [ordered]@{ pid=$native.pid; creation_utc=$native.creation_utc; executable=$native.executable }
                         $owner.runner = $runnerIdentity
                         Write-SessionProfileJson (Join-Path $Directory 'owner.json') $owner
                     }
@@ -253,8 +261,9 @@ function Invoke-SessionProfileLane {
         $job = Get-Content -LiteralPath $jobPath -Raw | ConvertFrom-Json
         $progress = Get-Content -LiteralPath $progressPath -Raw | ConvertFrom-Json
         if ($progress.source_commit -ne $Source) { throw 'Profile runner source identity mismatch' }
-        Assert-SessionProfileCompletion $progress $job ([string]$Lane.input.sha256) $Lane.binary $inputValue.model ([string]$Lane.backend)
-        if ($Lane.backend -eq 'cuda') { $gpuSamples.Add((Get-SessionProfileGpuSample ([int]$inputValue.device_index))) }
+        if($null -eq $CompletionValidator){Assert-SessionProfileCompletion $progress $job ([string]$Lane.input.sha256) $Lane.binary $inputValue.model ([string]$Lane.backend)}
+        else {& $CompletionValidator $progress $job $Lane $inputValue $Directory}
+        if ($Lane.backend -eq 'cuda') { $gpuSamples.Add($(if($null -eq $SampleGpu){Get-SessionProfileGpuSample ([int]$inputValue.device_index)}else{& $SampleGpu ([int]$inputValue.device_index)})) }
         $status = 'completed'
     } catch { $failure = $_.Exception.Message } finally {
         if ($null -ne $controller) {
@@ -266,12 +275,14 @@ function Invoke-SessionProfileLane {
             $controller.Dispose()
         }
         if ($null -ne $runnerIdentity) {
-            $live = Get-CimInstance Win32_Process -Filter "ProcessId=$($runnerIdentity.pid)"
-            if ($null -ne $live -and $live.CreationDate.ToUniversalTime().ToString('o') -eq $runnerIdentity.creation_utc -and $live.ExecutablePath -eq $runnerIdentity.executable) {
-                $failure = 'Owned profile runner remains after controller cleanup'; $status='failed'
-            }
+            try {
+                $live = Get-SessionProfileProcessSnapshot ([int]$runnerIdentity.pid)
+                if ($null -ne $live -and $live.creation_utc -eq $runnerIdentity.creation_utc -and $live.executable -eq $runnerIdentity.executable) {
+                    throw 'Owned profile runner remains after controller cleanup'
+                }
+            } catch { $failure=$_.Exception.Message; $status='failed' }
         }
-        Write-SessionProfileJson (Join-Path $Directory 'terminal.json') ([ordered]@{status=$status;error=$failure;backend=$Lane.backend;source_commit=$Source;job=$jobPath;progress=$progressPath;gpu_samples=@($gpuSamples);runner_identity=$runnerIdentity;qualification='raw-token baseline only; no provider, BF16, 32k or speedup claim'})
+        Write-SessionProfileJson (Join-Path $Directory 'terminal.json') ([ordered]@{status=$status;error=$failure;backend=$Lane.backend;source_commit=$Source;job=$jobPath;progress=$progressPath;gpu_samples=@($gpuSamples);runner_identity=$runnerIdentity;qualification=$Qualification})
     }
     if ($status -ne 'completed') { throw "Profile lane failed: $failure" }
 }

@@ -8,6 +8,13 @@ promote GPT-OSS to the product default.
 
 ## Current state
 
+- Common-session characterization now captures fixed-prefix numerical rows,
+  independent comparisons and reset/replay, with bounded observer Jobs, actual
+  loaded-DLL proof and clean source/build admission. Local model-free checks
+  and the complete native gate pass; production characterization is held.
+  See `CHARACTERIZATION.md`. This manifest now owns 57 paths; the live union
+  is 311 paths with 28 shared paths, recomputed from the actual candidate.
+
 - Maintained loading preparation adds a common F32 CPU/CUDA session, explicit
   GGUF identities, bounded full original/indexed safetensors assembly and
   normalized official configuration. Fixture proof does not enable a provider
@@ -87,6 +94,7 @@ SHA-256 `616b188eadb04b27f7834a952d45a7cfd8ec9ff8a0b68413ce8a5aa468a71431`.
 - `docs/gpt-oss/STATUS.md`
 - `docs/gpt-oss/LOADING.md`
 - `docs/gpt-oss/PROFILING.md`
+- `docs/gpt-oss/CHARACTERIZATION.md`
 - `candle-transformers/src/models/gpt_oss/mod.rs`
 - `candle-transformers/src/models/gpt_oss/checkpoint.rs`
 - `candle-transformers/src/models/gpt_oss/cuda.rs`
@@ -111,6 +119,17 @@ SHA-256 `616b188eadb04b27f7834a952d45a7cfd8ec9ff8a0b68413ce8a5aa468a71431`.
 - `scripts/gpt-oss/run-short-parity.ps1`
 - `candle-examples/examples/gpt-oss-performance.rs`
 - `candle-examples/examples/gpt-oss-session-profile.rs`
+- `candle-examples/examples/gpt-oss-characterize.rs`
+- `candle-examples/examples/gpt_oss_reference/mod.rs`
+- `scripts/gpt-oss/observer.cs`
+- `scripts/gpt-oss/observer.ps1`
+- `scripts/gpt-oss/observer-worker.ps1`
+- `scripts/gpt-oss/test-observer.ps1`
+- `scripts/gpt-oss/watch-runtime.ps1`
+- `scripts/gpt-oss/test-watch-runtime.ps1`
+- `scripts/gpt-oss/run-characterization.ps1`
+- `scripts/gpt-oss/prepare-characterization.ps1`
+- `scripts/gpt-oss/test-characterization.ps1`
 - `scripts/gpt-oss/run-session-profile.ps1`
 - `scripts/gpt-oss/test-session-profile.ps1`
 - `scripts/gpt-oss/run-performance.ps1`
@@ -132,6 +151,7 @@ repository-wide shared-path registry:
 - `docs/lfm2-vl/TODO.md`
 - `scripts/verify-fork-overlays.sh`
 - `summary_bank.json`
+- `.tools/verify-before-push.ps1`
 
 ## Public Candle interfaces
 
@@ -190,4 +210,4 @@ remain outside this opt-in receipt.
 
 ---
 
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cpu-dot | change=registered ordered packed CPU helper and bounded primitive evidence
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=implemented bounded numerical and runtime preparation with exact oracle recovery

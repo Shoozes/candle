@@ -183,7 +183,7 @@
       ]
     },
     "feature__gpt_oss_task2_proof": {
-      "description": "Independent GPT-OSS packed/router/attention/cache oracle plus exact token/KV-byte admission, retained-file identity and chunk-cancellation checks, model-lifetime RAII load ownership, and bounded GGUF-to-weights assembly proof.",
+      "description": "Independent GPT-OSS packed/router/attention/cache oracle plus exact token/KV-byte admission, retained-file identity and chunk-cancellation checks, model-lifetime RAII load ownership, and bounded GGUF-to-weights assembly proof. Current work status is routed through feature__gpt_oss_characterization.",
       "status": "active",
       "paths": [
         "candle-transformers/src/models/gpt_oss/gguf.rs",
@@ -193,8 +193,7 @@
         "tests/fixtures/gpt_oss_task2/README.md",
         "tests/fixtures/gpt_oss_task2/oracle.json",
         "docs/gpt-oss/MOD_MANIFEST.md",
-        "docs/gpt-oss/SOURCES.md",
-        "docs/gpt-oss/STATUS.md"
+        "docs/gpt-oss/SOURCES.md"
       ]
     },
     "feature__gpt_oss_task3_cuda": {
@@ -802,6 +801,28 @@
         "tools/lfm2_vl/d1/compare_text_loading.py",
         "tools/lfm2_vl/d1/test_compare_text_loading.py",
         "docs/lfm2-vl/MAINTAINED_MODELS.md"
+      ]
+    },
+    "feature__gpt_oss_characterization": {
+      "description": "Common-session cold timing, independently pinned numerical rows, reset/replay, bounded observer/loaded-DLL ownership and clean release-packet binding; model-free preparation only, expand session profiling for historical receipts.",
+      "status": "active",
+      "paths": [
+        "docs/gpt-oss/CHARACTERIZATION.md",
+        "candle-transformers/src/models/gpt_oss/session.rs",
+        "candle-examples/examples/gpt-oss-characterize.rs",
+        "candle-examples/examples/gpt_oss_reference/mod.rs",
+        "scripts/gpt-oss/run-characterization.ps1",
+        "scripts/gpt-oss/prepare-characterization.ps1",
+        "scripts/gpt-oss/run-session-profile.ps1",
+        "scripts/gpt-oss/observer.ps1",
+        "scripts/gpt-oss/observer.cs",
+        "scripts/gpt-oss/observer-worker.ps1",
+        "scripts/gpt-oss/watch-runtime.ps1",
+        "scripts/gpt-oss/test-observer.ps1",
+        "scripts/gpt-oss/test-characterization.ps1",
+        "scripts/gpt-oss/test-watch-runtime.ps1",
+        "tests/fixtures/gpt_oss_task3_short_parity/reference.json",
+        "docs/gpt-oss/STATUS.md"
       ]
     }
   },

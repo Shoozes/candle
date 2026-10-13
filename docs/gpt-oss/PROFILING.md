@@ -1,5 +1,12 @@
 # GPT-OSS maintained-session baseline profiling
 
+The next characterization uses a separate [common-session contract](CHARACTERIZATION.md)
+and executable. It adds fixed-context numerical rows, reset/replay and observed
+DLL validation without changing this frozen historical eight/16 workload.
+Its model-free preparation is active at `02326623`; the missing pinned oracle
+has been recovered with exactly matching bytes. Fresh Candle measurements
+still require a clean source/binary-bound packet and separate finite allowance.
+
 The first maintained baseline characterizes the public `GptOssSession` on CPU
 then CUDA, using F32 activations and retained GGUF MXFP4 experts. The historical
 CUDA-only performance example, wrapper and receipts stay at their original
@@ -313,4 +320,4 @@ requesting its finite allowance. No consumer edits, model runs or release tags
 belong to this publication.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-delivery-publication | change=retained complete measurement proof and guarded delivery closeout without production qualification
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=implemented bounded numerical and runtime preparation with exact oracle recovery

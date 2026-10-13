@@ -1,5 +1,17 @@
 # LFM2.5-VL Decisions
 
+## D-0078: Keep characterization and historical profiling separate
+
+The 2026-10-13 drop-in selects common-session cold timing, independent 5/6/7
+numerical rows and reset/replay under a new diagnostic packet contract. Extract
+the existing comparator without weakening its fixture or tolerances. Bound
+observer process trees as well as model work; require actual loaded DLL paths
+and digests. Clean source/build binding and a fresh finite allowance precede
+Candle model execution. The owner-requested oracle regeneration reproduces the
+original bytes exactly; retain the b11379 producer/recovery provenance separately
+and preserve its incomplete offload observation. It adds no CUDA or consumer
+qualification. Detailed counts and proof remain in GPT-OSS CHARACTERIZATION.
+
 ## D-0077: Independently adopt the VAE input repair
 
 The accepted 2026-10-12 maintained-model plan selects the isolated VAE repair
@@ -1802,4 +1814,4 @@ it consumed zero model forwards. Quality and consumer package acceptance remain
 separately owned. No publication follows from this local qualification.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models | change=implemented and verified scoped model improvements
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=preserved frozen proof contract and added separate common-session characterization

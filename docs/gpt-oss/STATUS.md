@@ -2,43 +2,43 @@
 
 ## Current maintained support, 2026-10-13
 
-Tasks 1/2, coordinated delivery and model-free completion admission, are
-published at `d61e85a077c47555bc52ecd8d018bfb5d15f58cc`, tree
-`8688673d352e7f2c285956ad3b20e3069b35ded4`. The review started from clean
-native `main`; all seven file identities and the canonical publication receipt
-matched the retained closeout at intake. Its recorded 241-control result and
-native gate belong to that publication. Work/publication proof remains in
-`artifacts/gpt-oss/delivery-work-ced33ca5-20261013/`.
+Current baseline is published `0232662335b393da3c8f5b64d08302c5e3a92a47`, tree
+`264a2fee58669d03ab649465666da3644700f108`. The prior receipt repair remains
+closed, with its 241 controls and original `5a7e392a` observations unchanged.
 
-Recheck against `ced33ca5`: typed counts/flags/tokens, required aggregate/static
-fields, terminal Job state and timing consistency remain closed. The Rust
-producer's timers agree with the validator's sequential sum and nested CUDA
-validation contract. Original `5a7e392a` CPU/CUDA receipts pass read-only
-revalidation with unchanged bytes; this supplies no new-source model parity.
-No additional runtime defect was found. Scoped cleanup corrects the current
-handoff in this STATUS and LFM STATUS/TODO; scripts and model code are unchanged.
-Fresh review verification passes: 241 native model-free controls and the
-complete locked/offline `.tools/verify-before-push.ps1` gate. Compact current
-logs are in `artifacts/gpt-oss/review-d61e85a0-20261013/`. The review left three
-documentation edits uncommitted. The owner selected their guarded publication;
-its commit/tree, final clean-source native gate and remote equality are bound
-by `artifacts/publication/last-push.json`. Compact closeout and the preserved
-`d61e85a0` receipt are in the review root's `publication/` subdirectory.
-No production inference ran.
+The accepted drop-in's Task 1 is implemented locally: bounded GPU/process
+probes, common-session cold/numerical/replay capture, shared pinned comparator,
+loaded-DLL watcher, source/build admission and release-package preparation.
+Active paths are the characterization/example helper, GPT-OSS scripts, native
+verification step and affected docs/routes; no model arithmetic changed.
+Focused native checks pass: 140 characterization, 16 observer and 12 watcher
+controls; CPU examples 6/3 tests and strict Clippy. The complete native gate and
+CUDA examples 6/6 tests/checks/strict Clippy pass; CPU/CUDA bounded release builds
+pass. The revised draft also proves CPU/CUDA no-model startup and CPU host
+verification of both device metadata; independent draft review passes. Proof is in
+`artifacts/gpt-oss/characterization-prep-02326623-20261013/`.
 
-The reviewed Edge `72079502` and Symbio `86f9a478` preparation remains
-historical owner-bound evidence; this review does not requalify their current
-working trees. Owner ordering and support exclusions remain in
-[LOADING](LOADING.md#coordinated-delivery-boundary), with timing rules in
-[PROFILING](PROFILING.md#measurement-contract). No consumer pin or activation
-changes. Exact next batch: prepare and review a fresh CPU-first characterization
-packet bound to the next clean delivered source/build/lock/features/compiler,
-binaries, helper and watcher, including applicable full-logit comparison and
-loaded-DLL capture/validation procedures. Their fresh observations belong to
-the separately approved run.
-Preparation is model-free; execution needs separate finite approval. The stale
-`9591dc7c…edcf653` proposal stays forbidden and all earlier allowances closed.
-Whole-model speed, numerical/runtime/context and native consumer gates stay open.
+The owner-requested oracle regeneration recovered the exact pinned bytes.
+The single b11379 producer load used one eight-token chunk, three saved rows
+and zero outputs/warmups/model retries. Job/child release and codec checks pass.
+Its raw terminal remains incomplete because no layer-offload count was logged;
+artifact recovery establishes no CUDA execution or new Candle qualification.
+See [the characterization contract](CHARACTERIZATION.md) for exact provenance,
+counts, resource bounds and the retained recovery receipt. The historical fixture
+and receipts are unchanged. No Candle production forwards ran in this batch.
+
+Symbio's twelve-file preparation is published at `e43eeeac`; its candidate
+receipt SHA `b5e2df7e…d817` and all twelve current file identities are verified.
+Edge's twelve local file identities and proof journal are verified
+against return receipt SHA `8343d2e0…5fb44`. Neither is native consumer
+qualification. Q8/GenEye pins, Responses
+90s, WorkerRuntime 600s, engine 0.154 and all activation holds remain unchanged.
+
+Exact next task: obtain explicit local checkpoint authority
+for a final clean packet. Candle characterization needs its own fresh finite
+allowance afterward; no commit, push or consumer adoption belongs to this Work.
+The stale `9591dc7c…edcf653` packet stays forbidden and earlier allowances closed.
+Whole-model speed, BF16/32k, native consumers and release promotion remain open.
 
 ### Prior local review evidence
 
@@ -499,4 +499,4 @@ infer Q8/default or broad maintained production support from this packet.
 
 ---
 
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-review-publication | change=closed three-file review records for guarded publication and clarified future evidence collection
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=implemented bounded numerical and runtime preparation with exact oracle recovery

@@ -141,9 +141,9 @@ Reviewed heads, independently rechecked locally:
 
 | Owner | Source | Current boundary |
 | --- | --- | --- |
-| Candle | `ced33ca590c7e2ca97fd0e0b79c5a942b1035d3e` | Reviewed baseline; the seven-file profiling/delivery successor is bound by the canonical publication receipt, not by these historical model observations. |
-| EdgeSymbio | `7207950284e70e53fd4bdcd700b40c8f665204dc` | Four Candle dependencies stay at `0c0bc3ecb7eed3eb22c8fa08a190741c84f2bb56`; tokenizers declared 0.23.1, locked 0.23.2/onig; maintained profile disabled. |
-| symbio-code | `86f9a478f5eccb8ddd1aad10dfba8afebd3b78cf` | Consumer guards prepared; retained Codex 0.154.0 and current pins remain. Native coding is held. |
+| Candle | `0232662335b393da3c8f5b64d08302c5e3a92a47` | Published receipt repair; common-session characterization implementation is local, with final clean packet and inference allowance held. |
+| EdgeSymbio | `5d34c7bb773a9929bf46b03679cdeb92a9fea12f` | Twelve-file local backing-report/held-launch/recovery preparation verified; four Candle pins remain `0c0bc3ec`, tokenizers locked 0.23.2/onig and maintained profile disabled. |
+| symbio-code | `e43eeeaccee1bae782eddb4faf677c0d9226ea59` | Twelve-file failure/replay preparation published and byte-verified; Codex 0.154.0 and pins retained. Native coding held. |
 
 The old `4c1feb82`/tokenizers pin-hop task is superseded: `4c1feb82` is an
 ancestor of Edge's actual `0c0bc3ec` pin, and the tokenizer upgrade is present
@@ -154,10 +154,10 @@ VL selection/receipts are preserved; no intermediate obsolete hop is queued.
 
 | Order and owner | Observable result | Predecessor |
 | --- | --- | --- |
-| Candle, completion proof | Complete typed metrics, coherent timing and success/release records; model-free CPU/CUDA controls and native gate. | Current local batch. |
+| Candle, completion proof | Complete typed metrics, coherent timing and success/release records; model-free CPU/CUDA controls and native gate. | Delivered at `02326623`; no reopened repair. |
 | Candle, production characterization | Clean source/build/lock/features/compiler/helper/watcher binding; fresh finite CPU-first whole-model timing, applicable full-logit comparison, loaded DLL paths/hashes and release proof. | Completion repair delivered and a newly approved packet. |
 | Candle, one CUDA optimization at a time | Measured bottleneck improvement and numerical/recovery proof, then Short/8k/16k/32k capacity stages; stop at the first failed stage. | Trustworthy current-source baseline. |
-| Edge, native qualification | One resident owner/broker lease, safe post-commit readback recovery, exact tokenizer/Harmony admission, trusted backing report and profile-specific launch proof. | Model-free design now; adoption/execution only after qualified delivery and separate authority. |
+| Edge, native qualification | One resident owner/broker lease, safe post-commit readback recovery, exact tokenizer/Harmony admission, trusted backing report and profile-specific launch proof. | Model-free backing reader and held launch path implemented; native adoption/execution follows qualified delivery and separate authority. |
 | Symbio, coding consumption | Exact Responses evidence/policy, independently applicable verified patch, failure/replay controls and contained cleanup using the retained engine. | Edge's matching maintained Responses row; model-free preparation may proceed now. |
 | Each release owner | Reproducible immutable tuple, installed lifecycle/rollback and explicit support exclusions. | Selected native and consumer rows proven; separate release authority. |
 
@@ -184,7 +184,20 @@ Symbio controls supply no native capacity. No new wire schema or signing service
 is selected. Optional accelerators, engine upgrades, new downloads, voice/vision,
 adapter training and consumer activation are outside this batch.
 
-The model-free owner returns are verified against their current local file
+The current Edge return is 13,889 bytes, SHA-256
+`8343d2e0fad3f088721755c3cd796fc07dfacd33f5ecdafe3eaa60490ff5fb44`, at
+`runtime-data/proofs/gpt-oss-task3-return-20261013-01/return.json` in Edge's
+checkout. All twelve named file identities and its proof journal are verified.
+Its owner-run result is 1,085 backend, two API and 58 Python tests, with three
+backend ignores/five Python skips; Candle did not rerun those tests. Symbio's
+published candidate SHA is `b5e2df7e…d817`, with all twelve files verified and
+publication closeout `0129feed…c41` matched. The current reconciliation is
+`artifacts/gpt-oss/characterization-prep-02326623-20261013/consumer-reconciliation.json`.
+These are model-free preparation; native cleanup, capacity, coding and activation
+remain held. The 32 GiB GPT-only launch path refuses execution pending approval;
+the general launcher remains 8 GiB. No consumer is repinned by this Candle work.
+
+Prior model-free owner returns were verified against their then-current file
 identities: Edge's six-path preparation adds recovery quarantine (13 lane
 tests; 1,078 backend tests, three ignores; strict Clippy and context checks).
 Symbio's twelve-path preparation adds failure/replay controls and the exact
@@ -200,4 +213,4 @@ Consumer source/pin adoption and native qualification remain separate. No old
 model receipt or allowance is rebound to the delivered revision.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-delivery-publication | change=bound delivered Candle source to guarded receipt while preserving reviewed tuple and independent consumer gates
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=reconciled current Edge and Symbio preparation identities

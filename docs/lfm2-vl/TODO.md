@@ -26,35 +26,35 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   Target: 32 GiB host, 20e9 GPU bytes, 30,720 history/prompt + 2,048 generated
   tokens including reasoning. Responses remains90s; WorkerRuntime remains600s;
   one route's capacity never qualifies the other. No current BF16/32k claim.
-- Review disposition (2026-10-13): Tasks 1/2 are delivered at `d61e85a0`.
-  All seven published identities and the canonical receipt matched at intake. Prior
-  typed-field, aggregate/static, terminal-state and timing findings are closed;
-  original CPU/CUDA `5a7e392a` records pass unchanged read-only revalidation.
-  No new runtime defect was found. The recorded 241 controls/native gate keep
-  their publication identity; proof remains in
-  `artifacts/gpt-oss/delivery-work-ced33ca5-20261013/publication/`.
-- Owner order: Candle clean delivery/current-source characterization, then one
-  measured CUDA bottleneck and staged capacity; Edge owns native graph/slot,
-  trusted backing-report and per-route qualification; Symbio owns consumption
-  only after its exact maintained Responses row. Release promotion is separate.
-  Current tuple, observable results and exclusions are in
-  [LOADING.md](../gpt-oss/LOADING.md#coordinated-delivery-boundary).
-  Edge/Symbio model-free returns keep their reviewed six/twelve-file identities;
-  this review does not refresh consumer proof. Native Task 5/6 stay open.
-- Selected next batch: model-free preparation and review of a fresh CPU-first
-  characterization packet. Bind the next clean delivered source/tree, release
-  binaries, build/lock/features/compiler, helper, watcher and frozen inputs.
-  Specify applicable full-logit comparison and loaded-DLL capture/validation
-  procedures; fresh observations belong to the separately approved run.
-  Keep original `5a7e392a` observations at their executed identity.
-- Preparation Done when: packet identities and workload/resource/cleanup bounds
-  are independently reviewed, with an explicit finite execution proposal.
-  Stop before model loading until separate approval; native consumer adoption
-  and activation remain held. The owner selected guarded publication of these
-  three review records; the canonical receipt binds delivery and its final gate.
-  The unchanged `9591dc7c…edcf653` proposal is forbidden even if its old pending
-  approval arrives. All consumed allowances remain closed. Whole-model speed,
-  BF16/32k and provider/release Done When remain open; Q8 and GenEye pins stay.
+- Review disposition (2026-10-13): the published receipt repair at `02326623`
+  stays closed. The accepted next drop-in selects actual common-session
+  characterization and observer liveness work, not another records-only batch.
+- Current implementation: bounded GPU/process probes with kill-on-close Jobs,
+  independent 5/6/7-token row capture and replay, actual loaded-module paths,
+  typed source/build/DLL admission and release-package preparation. Preserve
+  the frozen historical eight/16 contract and all original receipts.
+- Current proof: 140 characterization, 16 observer and 12 watcher model-free
+  controls; CPU/CUDA example tests/checks and strict Clippy, full native
+  gate and bounded release builds pass. The revised draft is independently reviewed. Exact oracle bytes were recovered by one
+  separately owned b11379 load/chunk, zero output tokens or model retries;
+  offload execution remains unclaimed. See
+  [CHARACTERIZATION.md](../gpt-oss/CHARACTERIZATION.md) for paths and bounds.
+- Owner order: Candle clean source/current characterization, then one measured
+  CUDA bottleneck and staged capacity; Edge owns native slot/broker, trusted
+  backing report and route proof; Symbio owns coding consumption afterward.
+  Symbio's published twelve-file `e43eeeac` preparation is byte-verified;
+  Edge's local twelve-file return and proof journal are also byte-verified.
+- Selected next batch: the local gate and independent draft review pass.
+  Obtain explicit local checkpoint authority and bind final clean
+  source/release binaries. Execution afterward needs a fresh finite allowance:
+  CPU first, then CUDA only after complete numerical and release proof; at most
+  two loads/six segments/44 public forwards/74 steps/32 outputs, no warmup/retry,
+  with diagnostic 32 GiB/1,800s Jobs and 20e9 sampled GPU ceiling.
+- Preparation Done when: a reviewed final packet binds clean source/build,
+  helper/watcher/probe/oracle, all work counts and resource/release bounds.
+  The current Work grants no commit, push, consumer adoption or Candle model
+  inference. The stale `9591dc7c…edcf653` proposal stays forbidden; consumed
+  allowances remain closed. BF16/32k/native provider/release gates remain open.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -464,4 +464,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-review-publication | change=closed review progress for publication and preserved bounded model-free packet preparation
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=implemented bounded numerical and runtime preparation with exact oracle recovery

@@ -41,7 +41,9 @@ sed -n \
     -e 's/^- `\([^`]*\)`$/\1/p' \
     "$MANIFEST" | tr -d '\r' | sort -u >"$MANIFEST_PATHS"
 
-if grep -E '^(.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' "$MANIFEST_PATHS"; then
+# Only the tracked native verifier is shared with the publication overlay.
+if grep -vFx '.tools/verify-before-push.ps1' "$MANIFEST_PATHS" | \
+    grep -E '^(\.tools/|\.venv/|artifacts/|downloads/|models/|target/)|(^|/)__pycache__/' ; then
     printf 'error: GPT-OSS manifest contains a prohibited local/runtime path\n' >&2
     exit 1
 fi

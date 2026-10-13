@@ -79,6 +79,24 @@ CUDA/nvcc 13.3, NVIDIA driver 616.92, and an NVIDIA GeForce RTX 4090 with
 24,564 MiB. This is toolchain/device provenance for the bounded synthetic
 receipt only, not production checkpoint evidence.
 
+## Characterization helper and oracle recovery
+
+The shared example decoder/comparator is extracted from our existing
+short-parity implementation; its original fixture and bounds remain unchanged.
+The new common-session runner is Candle-native code, with no copied external
+implementation. Bounded observer tests cover the timed-wait and concurrent
+pipe-drain behavior described by [Microsoft's Process documentation](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit?view=net-10.0).
+
+Exact historical oracle bytes were recovered with retained llama.cpp b11379
+at `1537a0a8b2f8711d840878b0a0677ab2213c882c` (MIT, reference only):
+[perplexity codec/work scheduling](https://github.com/ggml-org/llama.cpp/blob/1537a0a8b2f8711d840878b0a0677ab2213c882c/tools/perplexity/perplexity.cpp),
+[argument parsing](https://github.com/ggml-org/llama.cpp/blob/1537a0a8b2f8711d840878b0a0677ab2213c882c/common/arg.cpp),
+[warmup](https://github.com/ggml-org/llama.cpp/blob/1537a0a8b2f8711d840878b0a0677ab2213c882c/common/common.cpp).
+One chunk at context/batch/microbatch eight produces three prediction rows
+after 5/6/7 tokens; `--no-warmup` is explicit. New producer provenance and
+the incomplete offload observation remain separate from the original receipt;
+see [CHARACTERIZATION](CHARACTERIZATION.md#oracle-recovery-2026-10-13).
+
 ## Task 3 short-parity reference
 
 The opt-in short runner uses the owner-provided `llama-perplexity` executable
@@ -96,4 +114,4 @@ in this repository.
 
 ---
 
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-local-loading | change=pinned official native metadata and retained independent fixture authority
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=implemented bounded numerical and runtime preparation with exact oracle recovery

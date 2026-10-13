@@ -2,34 +2,30 @@
 
 ## Independent GPT-OSS work, 2026-10-13
 
-Tasks 1/2 are published at `d61e85a077c47555bc52ecd8d018bfb5d15f58cc`,
-tree `8688673d352e7f2c285956ad3b20e3069b35ded4`. The review started from
-clean native `main`. All seven publication file identities and the canonical
-receipt matched at intake; its 241 model-free controls and complete native gate
-retain their published source identity. Compact proof and the preserved `ced33ca5`
-receipt remain in `artifacts/gpt-oss/delivery-work-ced33ca5-20261013/publication/`.
-Prior typed-field, aggregate/static, terminal-state and timing-consistency
-findings remain closed; Rust timers match the validator's nesting contract.
-Original `5a7e392a` CPU/CUDA receipts pass read-only revalidation unchanged.
-No new runtime defect was found. Review cleanup covers GPT-OSS STATUS,
-this STATUS and TODO, correcting the delivered-state handoff only.
-Last green review verification: 241 native model-free controls and the complete
-locked/offline native gate; current logs are in
-`artifacts/gpt-oss/review-d61e85a0-20261013/`. The review left three documentation
-edits uncommitted; the owner selected their guarded publication. Its commit/tree,
-final clean-source native gate and remote equality are bound by the canonical
-receipt, with closeout and the preserved `d61e85a0` receipt in the review root's
-`publication/` subdirectory. No production inference was performed here.
-The earlier Edge `72079502`/Symbio `86f9a478` returns retain their original
-owner identities; their current working trees were not requalified here. See
-[the delivery contract](../gpt-oss/LOADING.md#coordinated-delivery-boundary).
-Exact next task: model-free preparation/review of a fresh CPU-first packet,
-bound to the next clean delivered source/build/lock/features/compiler,
-binaries, helper and watcher, with applicable full-logit comparison and
-loaded-DLL capture/validation procedures. Execution and fresh observations need
-separate finite approval. No weights, consumer pins, defaults
-or activation change; native/provider criteria remain open. The stale
-`9591dc7c…edcf653` proposal is forbidden and earlier allowances stay closed.
+Current published baseline is `0232662335b393da3c8f5b64d08302c5e3a92a47`, tree
+`264a2fee58669d03ab649465666da3644700f108`. Prior typed receipt/timing findings
+remain closed. The next common-session characterization harness is implemented
+locally with bounded observers, fixed 5/6/7-token rows, replay, actual DLL paths
+and clean source/build admission; historical packets and model arithmetic stay
+unchanged. Focused CPU/CUDA examples and strict Clippy, complete native gate and
+bounded release builds pass. The revised draft is independently reviewed. Active files are the
+GPT examples/scripts, verifier
+and affected docs/routes; see [GPT status](../gpt-oss/STATUS.md) and
+[the contract](../gpt-oss/CHARACTERIZATION.md).
+
+The owner-requested independent oracle regeneration reproduces the exact
+historical size/digest. Its producer Job/child released and codec checks pass;
+no layer-offload or new Candle model qualification is claimed. Compact proof is
+in `artifacts/gpt-oss/characterization-prep-02326623-20261013/`.
+Symbio's published twelve-file `e43eeeac` candidate bytes are reconciled; Edge's
+local twelve-file return and proof journal are also byte-verified. Native consumer,
+32k/BF16 and provider gates remain held. Q8 and GenEye's `3fa7075e` pin stay.
+
+Exact next task: obtain explicit local
+checkpoint authority, bind the final clean packet, then seek a separate finite
+CPU-first Candle allowance. No commit, push or consumer change is authorized
+by the current Work. The stale `9591dc7c…edcf653` packet remains forbidden;
+closed allowances are not reused. The retained d1 phase below is unchanged.
 
 ### Prior local review evidence
 
@@ -1050,4 +1046,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-review-publication | change=closed three-file GPT-OSS review progress for guarded publication while preserving d1 proof
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=implemented bounded numerical and runtime preparation with exact oracle recovery

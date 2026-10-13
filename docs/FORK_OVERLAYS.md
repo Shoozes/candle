@@ -107,11 +107,19 @@ product-specific names.
 
 ## Shared-path registry
 
+The GPT-OSS overlay owns the characterization example/control additions to
+`.tools/verify-before-push.ps1`; existing LFM2-VL verification steps retain their
+ownership. Its Summary Bank edits route the new harness and move current GPT
+status out of the bounded synthetic-oracle group. The native live inventory is
+311 union paths across five overlays, with 28 shared paths. Frozen inventories
+and release identities are unchanged.
+
 An overlapping path must be listed here before two overlay manifests may claim
 it. Every change to such a path must state which overlay owns each hunk and
 must pass both affected focused gates plus the repository-wide overlay gate.
 
 <!-- shared-paths:start -->
+- `.tools/verify-before-push.ps1`
 - `candle-core/src/quantized/k_quants.rs`
 - `candle-core/src/quantized/mod.rs`
 - `candle-core/src/quantized/cuda.rs`
@@ -184,4 +192,4 @@ the one-row kernel and Qwen's separate MMVQ/MMQ branch retain their behavior.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models | change=implemented and verified scoped model improvements
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=implemented bounded numerical and runtime preparation with exact oracle recovery

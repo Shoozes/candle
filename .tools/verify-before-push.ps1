@@ -93,6 +93,20 @@ try {
     Invoke-Step "d1 clippy" {
         & cargo clippy --locked --offline -j 2 -p candle-vlm --lib -p candle-examples --example lfm2-d1 -- -D warnings
     }
+    Invoke-Step "GPT-OSS characterization example tests" {
+        & cargo test --locked --offline -j 2 -p candle-examples --example gpt-oss-characterize --example gpt-oss-short-parity
+    }
+    Invoke-Step "GPT-OSS characterization example check" {
+        & cargo check --locked --offline -j 2 -p candle-examples --example gpt-oss-characterize --example gpt-oss-short-parity
+    }
+    Invoke-Step "GPT-OSS characterization example clippy" {
+        & cargo clippy --locked --offline -j 2 -p candle-examples --example gpt-oss-characterize --example gpt-oss-short-parity -- -D warnings
+    }
+    foreach ($control in @('test-session-profile','test-observer','test-characterization','test-watch-runtime')) {
+        Invoke-Step "GPT-OSS model-free controls: $control" {
+            & pwsh -NoProfile -File (Join-Path $repoRoot "scripts\gpt-oss\$control.ps1")
+        }
+    }
     Invoke-Step "summary bank" {
         & pwsh -NoProfile -File (Join-Path $repoRoot "scripts\lfm2-vl\verify-summary-bank.ps1")
     }
