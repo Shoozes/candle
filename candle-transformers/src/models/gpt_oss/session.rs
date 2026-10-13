@@ -6,6 +6,7 @@ use super::{
     GptOssSafetensorsArtifact, GptOssSafetensorsSource,
 };
 use candle::{bail, DType, Result};
+use std::time::Instant;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GptOssDevice {
@@ -44,6 +45,15 @@ pub enum GptOssLogits {
     Cpu(Vec<f32>),
     #[cfg(feature = "cuda")]
     Cuda(candle::Tensor),
+}
+
+/// Successful forward wall time, excluding caller readback. CUDA validation
+/// includes waiting for outstanding device work, transfer and finite checking;
+/// it is not an isolated DMA or kernel timing.
+#[derive(Debug, Clone, Copy)]
+pub struct GptOssForwardTimings {
+    pub forward_ms: f64,
+    pub cuda_final_validation_ms: Option<f64>,
 }
 
 impl GptOssLogits {
@@ -258,6 +268,43 @@ impl GptOssSession {
                 .map(GptOssLogits::Cuda)
                 .map_err(candle::Error::wrap),
         }
+    }
+
+    pub fn prefill_profiled(
+        &mut self,
+        tokens: &[u32],
+        cancel: &GptOssCancellationToken,
+    ) -> Result<(GptOssLogits, GptOssForwardTimings)> {
+        self.admit_forward(tokens.len())?;
+        let start = Instant::now();
+        let (logits, validation_ms) = match &mut self.backend {
+            Backend::Cpu(model) => (GptOssLogits::Cpu(model.prefill(tokens, cancel)?), None),
+            #[cfg(feature = "cuda")]
+            Backend::Cuda(model) => {
+                let (logits, validation) = model
+                    .forward_with_validation_timing(tokens, cancel)
+                    .map_err(candle::Error::wrap)?;
+                (
+                    GptOssLogits::Cuda(logits),
+                    Some(validation.as_secs_f64() * 1000.),
+                )
+            }
+        };
+        Ok((
+            logits,
+            GptOssForwardTimings {
+                forward_ms: start.elapsed().as_secs_f64() * 1000.,
+                cuda_final_validation_ms: validation_ms,
+            },
+        ))
+    }
+
+    pub fn decode_profiled(
+        &mut self,
+        token: u32,
+        cancel: &GptOssCancellationToken,
+    ) -> Result<(GptOssLogits, GptOssForwardTimings)> {
+        self.prefill_profiled(&[token], cancel)
     }
 
     pub fn reset_cache(&mut self) -> Result<()> {

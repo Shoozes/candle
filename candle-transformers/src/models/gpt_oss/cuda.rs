@@ -15,6 +15,7 @@ use candle::cuda_backend::cudarc::driver::{DevicePtr, DevicePtrMut};
 use candle::{DType, Device, Shape, Storage, Tensor, D};
 use candle_nn::{ops, rotary_emb};
 use std::fmt::{Display, Formatter};
+use std::time::{Duration, Instant};
 
 const F32_BYTES: usize = std::mem::size_of::<f32>();
 const SWIGLU_ALPHA: f64 = 1.702;
@@ -477,7 +478,7 @@ impl GptOssCudaModel {
         input_ids: &[u32],
         cancellation: &GptOssCancellationToken,
     ) -> GptOssCudaResult<Tensor> {
-        self.forward_transaction(input_ids, cancellation)
+        self.forward_transaction(input_ids, cancellation, None)
     }
 
     pub fn decode(
@@ -485,7 +486,7 @@ impl GptOssCudaModel {
         input_id: u32,
         cancellation: &GptOssCancellationToken,
     ) -> GptOssCudaResult<Tensor> {
-        self.forward_transaction(&[input_id], cancellation)
+        self.forward_transaction(&[input_id], cancellation, None)
     }
 
     pub fn forward_with_cancellation(
@@ -493,7 +494,7 @@ impl GptOssCudaModel {
         input_ids: &[u32],
         cancellation: &GptOssCancellationToken,
     ) -> GptOssCudaResult<Tensor> {
-        self.forward_transaction(input_ids, cancellation)
+        self.forward_transaction(input_ids, cancellation, None)
     }
 
     pub fn forward_uncached(
@@ -503,13 +504,24 @@ impl GptOssCudaModel {
     ) -> GptOssCudaResult<Tensor> {
         let mut model = self.clone();
         model.reset_cache()?;
-        model.forward_transaction(input_ids, cancellation)
+        model.forward_transaction(input_ids, cancellation, None)
+    }
+
+    pub(crate) fn forward_with_validation_timing(
+        &mut self,
+        input_ids: &[u32],
+        cancellation: &GptOssCancellationToken,
+    ) -> GptOssCudaResult<(Tensor, Duration)> {
+        let mut validation = Duration::ZERO;
+        let logits = self.forward_transaction(input_ids, cancellation, Some(&mut validation))?;
+        Ok((logits, validation))
     }
 
     fn forward_transaction(
         &mut self,
         input_ids: &[u32],
         cancellation: &GptOssCancellationToken,
+        validation_timing: Option<&mut Duration>,
     ) -> GptOssCudaResult<Tensor> {
         validate_input_ids(&self.config, input_ids)?;
         cancellation_checkpoint(cancellation)?;
@@ -548,12 +560,16 @@ impl GptOssCudaModel {
         let logits = logits.ok_or_else(|| GptOssCudaError::Invalid {
             message: "CUDA forward produced no logits".to_string(),
         })?;
+        let validation_start = validation_timing.as_ref().map(|_| Instant::now());
         self.device.synchronize()?;
         let output = logits.flatten_all()?.to_vec1::<f32>()?;
         if output.iter().any(|value| !value.is_finite()) {
             return Err(GptOssCudaError::Invalid {
                 message: "CUDA forward produced non-finite logits".to_string(),
             });
+        }
+        if let (Some(timing), Some(start)) = (validation_timing, validation_start) {
+            *timing = start.elapsed();
         }
         cancellation_checkpoint(cancellation)?;
         self.cache = working;

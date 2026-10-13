@@ -39,6 +39,10 @@ validation preserves the old cache. A later caller-requested `into_cpu` failure
 leaves the completed forward committed. Returning a CUDA tensor does not yet
 eliminate the executor's validation transfer; profile that transfer before
 changing the safety boundary or claiming a latency improvement.
+Optional `prefill_profiled`/`decode_profiled` also return `GptOssForwardTimings`.
+They separate forward wall time from the CUDA final validation block; ordinary
+calls do not read a profiling clock. The validation interval includes pending
+GPU work. Caller readback remains separate. See [PROFILING.md](PROFILING.md).
 
 Both loaders preserve MXFP4 expert blocks/scales. Original safetensors store
 adjacent low/high nibbles and alternating gate/up rows; only GGUF wire bytes
@@ -108,4 +112,4 @@ Candle publication, followed by Edge qualification and Symbio consumption.
 GenEye remains pinned to `3fa7075e`.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-local-loading | change=documented implemented loading and pending measured qualification
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-profile-preparation | change=documented optional forward timing while preserving cache and readback contracts

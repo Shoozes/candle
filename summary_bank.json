@@ -142,6 +142,20 @@
         "docs/gpt-oss/SOURCES.md"
       ]
     },
+    "feature__gpt_oss_session_profiling": {
+      "description": "Bounded CPU-first common-session baseline preparation, optional CUDA final-validation timing, distinct caller readback, finite work counts and identity-bound native Job/physical GPU release proof; no production inference permission.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/gpt_oss/session.rs",
+        "candle-transformers/src/models/gpt_oss/cuda.rs",
+        "candle-transformers/src/models/gpt_oss/safetensors_tests.rs",
+        "candle-examples/examples/gpt-oss-session-profile.rs",
+        "scripts/gpt-oss/run-session-profile.ps1",
+        "scripts/gpt-oss/test-session-profile.ps1",
+        "docs/gpt-oss/PROFILING.md",
+        "tests/fixtures/gpt_oss_task3_short_parity/reference.json"
+      ]
+    },
     "feature__gpt_oss_experimental": {
       "description": "Experimental GPT-OSS checkpoint admission, packed MXFP4 blocks/scales, and hash-pinned source/config records.",
       "status": "active",

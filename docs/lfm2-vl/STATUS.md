@@ -9,8 +9,11 @@ proof gates live in [GPT-OSS STATUS](../gpt-oss/STATUS.md) and
 [the API contract](../gpt-oss/LOADING.md). The complete native gate and focused
 CPU/CUDA fixture, strict Clippy and example checks pass. The owner approved
 two scoped local commits without push/inference; loading code/API/routes are
-checkpointed at `06a83835`. Next is the common-session CPU/CUDA profiling
-harness and a fresh source-bound production packet.
+checkpointed at `06a83835`, records at `eb6abe92`; the clean checkpoint's native
+gate passes. The new common-session CPU/CUDA profiling preparation is locally
+verified; the owner approved its scoped local checkpoint without push/inference.
+See [its contract](../gpt-oss/PROFILING.md). Next is release binary binding and
+a fresh production allowance. No inference has run.
 Prior two-file LFM review edits below
 remain intact; their original d1 qualification and closed allowance do not
 qualify GPT-OSS. No production inference, consumer activation or publication
@@ -974,4 +977,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-local-loading | change=recorded verified independent loading while preserving the prior d1 review disposition
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-profile-preparation | change=recorded independent profiling preparation while preserving the prior d1 review disposition

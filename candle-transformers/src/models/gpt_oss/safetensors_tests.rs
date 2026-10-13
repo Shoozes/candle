@@ -420,18 +420,21 @@ fn common_session_preserves_prefix_and_releases_after_failures() -> Result<()> {
     session.prefill(&[1, 2], &cancel)?;
     let prefix = session.resource_usage()?;
     assert!(session
-        .prefill(&[3, 4, 5], &GptOssCancellationToken::cancel_after_checks(4))
+        .prefill_profiled(&[3, 4, 5], &GptOssCancellationToken::cancel_after_checks(4))
         .is_err());
     assert_eq!(
         session.resource_usage()?.sequence_tokens,
         prefix.sequence_tokens
     );
-    assert!(session.decode(99, &cancel).is_err());
+    assert!(session.decode_profiled(99, &cancel).is_err());
     assert_eq!(
         session.resource_usage()?.sequence_tokens,
         prefix.sequence_tokens
     );
-    let recovered = session.decode(3, &cancel)?.into_cpu()?;
+    let (recovered, timing) = session.decode_profiled(3, &cancel)?;
+    assert!(timing.forward_ms.is_finite() && timing.forward_ms >= 0.);
+    assert!(timing.cuda_final_validation_ms.is_none());
+    let recovered = recovered.into_cpu()?;
     session.reset_cache()?;
     assert_eq!(session.resource_usage()?.cache_bytes, 0);
     assert_eq!(session.prefill(&[1, 2, 3], &cancel)?.into_cpu()?, recovered);
@@ -562,10 +565,18 @@ fn common_cuda_session_matches_cpu_and_releases() -> Result<()> {
         &registry,
         &cancel,
     )?;
-    let actual = cuda.prefill(&[1, 2, 3, 4], &cancel)?.into_cpu()?;
+    let (actual, timing) = cuda.prefill_profiled(&[1, 2, 3, 4], &cancel)?;
+    let validation = timing.cuda_final_validation_ms.ok_or_else(|| {
+        candle::Error::Msg("profiled CUDA forward omitted validation timing".into())
+    })?;
+    assert!(validation.is_finite() && validation >= 0. && validation <= timing.forward_ms);
+    let actual = actual.into_cpu()?;
     for (actual, expected) in actual.iter().zip(&expected) {
         assert!((actual - expected).abs() <= 1e-4);
     }
+    let prefix = cuda.resource_usage()?.sequence_tokens;
+    assert!(cuda.decode_profiled(99, &cancel).is_err());
+    assert_eq!(cuda.resource_usage()?.sequence_tokens, prefix);
     cuda.reset_cache()?;
     assert_eq!(cuda.resource_usage()?.cache_capacity_bytes, 0);
     drop(cuda);

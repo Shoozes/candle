@@ -38,4 +38,7 @@ pub use safetensors::{
     load_gpt_oss_safetensors, GptOssFileIdentity, GptOssSafetensorsArtifact,
     GptOssSafetensorsLayout, GptOssSafetensorsSource,
 };
-pub use session::{GptOssDevice, GptOssLoadOptions, GptOssLogits, GptOssSession, GptOssSource};
+pub use session::{
+    GptOssDevice, GptOssForwardTimings, GptOssLoadOptions, GptOssLogits, GptOssSession,
+    GptOssSource,
+};

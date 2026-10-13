@@ -1,42 +1,38 @@
 # GPT-OSS Experimental Candle Status
 
-## Active maintained-loading slice, 2026-10-12
+## Current maintained support, 2026-10-12
 
 The accepted plan starts from native `main` at `f1278f94`; prior LFM review
 edits are preserved. The owner approved two local commits without push/inference.
-Loading code/API/routes are checkpointed at `06a83835`; three STATUS/TODO
-records form the second responsibility. All nine runtime hashes match the
-verified uncommitted candidate below.
+Loading code/API/routes are checkpointed at `06a83835`; records at `eb6abe92`.
+The complete native gate passed on clean `eb6abe92`. Checkpoint proof:
+`artifacts/gpt-oss/maintained-loading-20261012-c883332e419f4a1fabf27c1184d37f47/checkpoints.json`.
 
 Explicit GGUF and original/indexed packed safetensors load into CPU/CUDA F32.
 Experts stay packed; other supported types normalize to dense F32. Config,
 conversion, identity, bounds and ownership contracts are in [LOADING.md](LOADING.md).
 
-Baseline native GPT tests passed 38 with one retained-production ignore.
-Candidate CPU proof passed 51 with one retained-production ignore, including
-both native layouts and indexed shards against the existing independent
-two-layer oracle, float16 types, Q8 signed decode, public sessions and recovery.
-CUDA fixture proof passed 59 with one retained-production ignore. Combined
-static/cache/workspace limits reject before mutation on both session backends.
-The complete native gate and CUDA strict Clippy/example checks pass. Proof:
-`artifacts/gpt-oss/maintained-loading-20261012-c883332e419f4a1fabf27c1184d37f47/`:
-`completion.json`, `candidate.json`, `native-gate.log` retain source, hashes,
-commands and exit zero. The owned process exited. Existing nonfatal CUDA
-`LNK4098` remains visible; WSL lacks offline dependencies. No packages fetched.
+The profiling preparation adds optional forward/validation timing,
+a common-session CPU/CUDA example and native Job launcher. Frozen inputs,
+release guards, counts, memory/deadline and release requirements are in
+[PROFILING.md](PROFILING.md). Legacy performance receipts are preserved.
+Current native proof passes: CPU GPT 51, CUDA GPT 59 (one production ignore
+each), three example controls per feature, strict Clippy/checks and the full
+native gate. PS controls include real Job-tree teardown and CPU-failure gating.
+Proof: `artifacts/gpt-oss/session-profile-prep-20261012-c6cf04d4510548c1bfcbd94400ed64a3/`.
+Existing nonfatal CUDA `LNK4098` remains visible; WSL lacks offline dependencies.
 This is fixture proof; no production weights were loaded or model allowance
 consumed. No new speed, BF16, 32k or consumer-ready claim is made.
 
-Read-only review found no new loader/ownership/transaction defect. Profile the
-existing CUDA finite-validation host transfer; it precedes cache commit and
-differs from caller `into_cpu` readback. Preserve failure atomicity.
+Optional timing preserves validation/cancellation/cache commit. Its CUDA
+validation interval includes pending device work; caller readback is separate.
 
-Next: prepare the common-session CPU/CUDA harness and fresh source/binary-bound
-packet. The existing CUDA-only wrapper lacks a physical host ceiling; add CPU
-selection, host admission and transfer timing while preserving old receipts.
-Full maintained support remains incomplete until measured
-optimization and retained-model/device/route qualification pass. The 32 GiB
-host/20e9 GPU target is owner policy; Responses90s and WorkerRuntime600s remain
-unchanged. The historical records below retain their original identities.
+The owner approved its scoped local checkpoint without push/inference. The exact
+commit/tree and clean gate are retained with the preparation proof.
+Next: build/bind release binaries and request fresh bounded CPU-first inference.
+No source from this batch is published. Measured optimization, packed-artifact,
+BF16, 32k and consumer qualification remain incomplete. Preserve 32 GiB host,
+20e9 GPU, Responses90s/WorkerRuntime600s and original historical receipts.
 
 ## Historical assignment state (2026-10-07)
 
@@ -410,4 +406,4 @@ infer Q8/default or broad maintained production support from this packet.
 
 ---
 
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-local-loading | change=recorded local fixture proof and remaining maintained qualification gates
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-profile-preparation | change=recorded local checkpoints and verified profiling preparation without inference

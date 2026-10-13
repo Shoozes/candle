@@ -12,6 +12,9 @@ promote GPT-OSS to the product default.
   GGUF identities, bounded full original/indexed safetensors assembly and
   normalized official configuration. Fixture proof does not enable a provider
   or broaden the retained performance envelope. See `docs/gpt-oss/LOADING.md`.
+- Maintained baseline preparation adds optional forward/validation timing,
+  a CPU/CUDA common-session example and an identity-bound native Job launcher.
+  Its frozen eight/16 workload needs a fresh allowance; see `PROFILING.md`.
 
 - C0 is delivered: local checkpoint admission rejects missing/model-free
   directories and never downloads weights.
@@ -78,6 +81,7 @@ SHA-256 `616b188eadb04b27f7834a952d45a7cfd8ec9ff8a0b68413ce8a5aa468a71431`.
 - `docs/gpt-oss/SOURCES.md`
 - `docs/gpt-oss/STATUS.md`
 - `docs/gpt-oss/LOADING.md`
+- `docs/gpt-oss/PROFILING.md`
 - `candle-transformers/src/models/gpt_oss/mod.rs`
 - `candle-transformers/src/models/gpt_oss/checkpoint.rs`
 - `candle-transformers/src/models/gpt_oss/cuda.rs`
@@ -100,6 +104,9 @@ SHA-256 `616b188eadb04b27f7834a952d45a7cfd8ec9ff8a0b68413ce8a5aa468a71431`.
 - `candle-examples/examples/gpt-oss-short-parity.rs`
 - `scripts/gpt-oss/run-short-parity.ps1`
 - `candle-examples/examples/gpt-oss-performance.rs`
+- `candle-examples/examples/gpt-oss-session-profile.rs`
+- `scripts/gpt-oss/run-session-profile.ps1`
+- `scripts/gpt-oss/test-session-profile.ps1`
 - `scripts/gpt-oss/run-performance.ps1`
 - `scripts/gpt-oss/test-performance.ps1`
 - `scripts/gpt-oss/verify-mod-manifest.sh`
@@ -177,4 +184,4 @@ remain outside this opt-in receipt.
 
 ---
 
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-local-loading | change=registered bounded local loading and common session without broadening production qualification
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-profile-preparation | change=registered optional common-session measurement and bounded native launch without production execution

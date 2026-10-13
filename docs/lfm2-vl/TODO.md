@@ -28,11 +28,12 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   one route's capacity never qualifies the other. No current BF16/32k claim.
 - Current disposition (2026-10-12): Local loading/session fixtures and complete
   native/CUDA gates pass. The owner approved scoped local commits without
-  push/inference; loading code/API/routes are checkpointed at `06a83835`.
-  Prepare a common-session CPU/CUDA harness with a physical host ceiling and
-  bind the fresh baseline profiling packet. Include the existing CUDA
-  finite-validation transfer in profiling; preserve failure-atomic cache commit. No production
-  request, inference allowance, consumer pin or publication is implied.
+  push/inference; loading is checkpointed at `06a83835`, records at `eb6abe92`.
+  Common-session profiling preparation passes native/CUDA fixture and control
+  gates; the owner approved its scoped local checkpoint without push/inference.
+  Next build/bind release binaries and request the fresh two-device allowance in
+  [PROFILING.md](../gpt-oss/PROFILING.md). Existing finite validation/cache
+  commit are preserved. No production request, consumer pin or push is implied.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -460,4 +461,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-local-loading | change=advanced the maintained support gate while preserving prior d1 producer prerequisites
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-profile-preparation | change=advanced the verified profiling gate while preserving prior d1 producer prerequisites
