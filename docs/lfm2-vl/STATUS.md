@@ -2,30 +2,38 @@
 
 ## Independent GPT-OSS work, 2026-10-13
 
-Current Work accepts supplied-feedback Tasks 1/2: one owner-ordered delivery
-and the complete profiling receipt gate. The local candidate extends the prior
-repair with explicit timing-rounding inequalities and overflow rejection;
-241 native model-free controls pass on CPU/CUDA shapes, and original
-`5a7e392a` records still pass without new model work. Work proof is retained at
-`artifacts/gpt-oss/delivery-work-ced33ca5-20261013/`; the complete native gate,
-affected manifests and routing checks pass. The reviewed tuple is
-Candle `ced33ca5`, Edge `72079502`, Symbio `86f9a478`; actual Edge pin/tokenizer
-evidence supersedes the historical S3/S4 pin hop. Native ownership and consumer
-failure preparation are locally complete in their own agents; their exact
-six/twelve-file identities and receipts verify, with native gates still held. See
+Tasks 1/2 are published at `d61e85a077c47555bc52ecd8d018bfb5d15f58cc`,
+tree `8688673d352e7f2c285956ad3b20e3069b35ded4`. The review started from
+clean native `main`. All seven publication file identities and the canonical
+receipt matched at intake; its 241 model-free controls and complete native gate
+retain their published source identity. Compact proof and the preserved `ced33ca5`
+receipt remain in `artifacts/gpt-oss/delivery-work-ced33ca5-20261013/publication/`.
+Prior typed-field, aggregate/static, terminal-state and timing-consistency
+findings remain closed; Rust timers match the validator's nesting contract.
+Original `5a7e392a` CPU/CUDA receipts pass read-only revalidation unchanged.
+No new runtime defect was found. Review cleanup covers GPT-OSS STATUS,
+this STATUS and TODO, correcting the delivered-state handoff only.
+Last green review verification: 241 native model-free controls and the complete
+locked/offline native gate; current logs are in
+`artifacts/gpt-oss/review-d61e85a0-20261013/`. The review left three documentation
+edits uncommitted; the owner selected their guarded publication. Its commit/tree,
+final clean-source native gate and remote equality are bound by the canonical
+receipt, with closeout and the preserved `d61e85a0` receipt in the review root's
+`publication/` subdirectory. No production inference was performed here.
+The earlier Edge `72079502`/Symbio `86f9a478` returns retain their original
+owner identities; their current working trees were not requalified here. See
 [the delivery contract](../gpt-oss/LOADING.md#coordinated-delivery-boundary).
-The owner selected guarded publication of the seven-file profiling/delivery
-batch: two scripts, GPT-OSS LOADING/STATUS/PROFILING and this STATUS/TODO.
-The canonical publication receipt binds its exact commit/tree, final native
-gate and remote equality. Compact closeout and the preserved `ced33ca5`
-receipt are in the Work root's `publication/` subdirectory. No weights,
-consumer pins or activation changed here. Exact next task: bind/review a fresh
-clean-source/build/helper/watcher CPU-first packet, then obtain finite approval.
-Native/provider criteria remain open; no old allowance may be reused.
+Exact next task: model-free preparation/review of a fresh CPU-first packet,
+bound to the next clean delivered source/build/lock/features/compiler,
+binaries, helper and watcher, with applicable full-logit comparison and
+loaded-DLL capture/validation procedures. Execution and fresh observations need
+separate finite approval. No weights, consumer pins, defaults
+or activation change; native/provider criteria remain open. The stale
+`9591dc7c…edcf653` proposal is forbidden and earlier allowances stay closed.
 
 ### Prior local review evidence
 
-Latest review/recheck starts at clean published `ced33ca5`, tree
+The prior review/recheck started at clean published `ced33ca5`, tree
 `8184388fad0dc810d1cd3b5de70f2b66fc86b135`. All six publication identities
 and the canonical receipt match. Prior typed-field findings remain closed.
 Scoped cleanup closes omitted aggregate timing/static-byte admission and
@@ -1042,4 +1050,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-delivery-publication | change=closed seven-file GPT-OSS progress for guarded publication while preserving independent d1 proof
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-review-publication | change=closed three-file GPT-OSS review progress for guarded publication while preserving d1 proof

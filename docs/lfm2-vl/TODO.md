@@ -26,29 +26,32 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   Target: 32 GiB host, 20e9 GPU bytes, 30,720 history/prompt + 2,048 generated
   tokens including reasoning. Responses remains90s; WorkerRuntime remains600s;
   one route's capacity never qualifies the other. No current BF16/32k claim.
-- Selected batch (2026-10-13): supplied-feedback Tasks 1/2, coordinated delivery
-  and complete model-free profiling admission. Task 2 now has typed required
-  aggregate/static fields, coherent success/Job state and explicit timing
-  inequalities/rounding/overflow checks. 241 native model-free controls pass;
-  original CPU/CUDA `5a7e392a` records remain accepted without new inference.
-  Current native gate and routing/manifests pass; source-bound Work proof is
-  `artifacts/gpt-oss/delivery-work-ced33ca5-20261013/`.
+- Review disposition (2026-10-13): Tasks 1/2 are delivered at `d61e85a0`.
+  All seven published identities and the canonical receipt matched at intake. Prior
+  typed-field, aggregate/static, terminal-state and timing findings are closed;
+  original CPU/CUDA `5a7e392a` records pass unchanged read-only revalidation.
+  No new runtime defect was found. The recorded 241 controls/native gate keep
+  their publication identity; proof remains in
+  `artifacts/gpt-oss/delivery-work-ced33ca5-20261013/publication/`.
 - Owner order: Candle clean delivery/current-source characterization, then one
   measured CUDA bottleneck and staged capacity; Edge owns native graph/slot,
   trusted backing-report and per-route qualification; Symbio owns consumption
   only after its exact maintained Responses row. Release promotion is separate.
   Current tuple, observable results and exclusions are in
   [LOADING.md](../gpt-oss/LOADING.md#coordinated-delivery-boundary).
-  Edge/Symbio model-free owner returns and current six/twelve-file identities
-  verify; their boards agree on this order. Native Task 5/6 criteria remain open.
-- Closeout disposition: The owner selected guarded seven-file Candle publication;
-  exact delivered commit/tree and native gate are bound by the canonical
-  receipt, with compact proof in the Work root's `publication/` subdirectory.
-  This saves complete model-free admission/coordination criteria only.
-- Next: bind delivered clean source/build/lock/features/compiler/helper/watcher
-  to a fresh CPU-first packet with applicable full-logit and loaded-DLL proof;
-  obtain finite execution
-  approval before running. Native consumer adoption/activation remain held.
+  Edge/Symbio model-free returns keep their reviewed six/twelve-file identities;
+  this review does not refresh consumer proof. Native Task 5/6 stay open.
+- Selected next batch: model-free preparation and review of a fresh CPU-first
+  characterization packet. Bind the next clean delivered source/tree, release
+  binaries, build/lock/features/compiler, helper, watcher and frozen inputs.
+  Specify applicable full-logit comparison and loaded-DLL capture/validation
+  procedures; fresh observations belong to the separately approved run.
+  Keep original `5a7e392a` observations at their executed identity.
+- Preparation Done when: packet identities and workload/resource/cleanup bounds
+  are independently reviewed, with an explicit finite execution proposal.
+  Stop before model loading until separate approval; native consumer adoption
+  and activation remain held. The owner selected guarded publication of these
+  three review records; the canonical receipt binds delivery and its final gate.
   The unchanged `9591dc7c…edcf653` proposal is forbidden even if its old pending
   approval arrives. All consumed allowances remain closed. Whole-model speed,
   BF16/32k and provider/release Done When remain open; Q8 and GenEye pins stay.
@@ -461,4 +464,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-delivery-publication | change=closed scoped delivery progress and retained fresh characterization and consumer acceptance prerequisites
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-review-publication | change=closed review progress for publication and preserved bounded model-free packet preparation
