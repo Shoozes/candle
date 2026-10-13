@@ -128,6 +128,20 @@
         "candle-transformers/src/models/quantized_lfm2/embedding/tests.rs"
       ]
     },
+    "feature__gpt_oss_local_loading": {
+      "description": "Explicit local GPT-OSS GGUF/packed-safetensors identities, official config normalization, bounded original/indexed shard assembly and a common F32 CPU/CUDA session; fixture proof and remaining provider/production boundaries.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/gpt_oss/config.rs",
+        "candle-transformers/src/models/gpt_oss/mod.rs",
+        "candle-transformers/src/models/gpt_oss/safetensors.rs",
+        "candle-transformers/src/models/gpt_oss/safetensors_tests.rs",
+        "candle-transformers/src/models/gpt_oss/session.rs",
+        "docs/gpt-oss/LOADING.md",
+        "docs/gpt-oss/MOD_MANIFEST.md",
+        "docs/gpt-oss/SOURCES.md"
+      ]
+    },
     "feature__gpt_oss_experimental": {
       "description": "Experimental GPT-OSS checkpoint admission, packed MXFP4 blocks/scales, and hash-pinned source/config records.",
       "status": "active",

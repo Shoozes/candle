@@ -164,6 +164,12 @@ impl GptOssResourceLimits {
         if self.max_sequence_tokens == 0 {
             bail!("GPT-OSS max_sequence_tokens must be greater than zero");
         }
+        if config
+            .max_position_embeddings
+            .is_some_and(|maximum| self.max_sequence_tokens > maximum)
+        {
+            bail!("GPT-OSS sequence limit exceeds checkpoint max_position_embeddings");
+        }
         if self.max_cache_bytes == 0 {
             bail!("GPT-OSS max_cache_bytes must be greater than zero");
         }
@@ -433,6 +439,9 @@ mod tests {
             rope_ntk_alpha: 1.0,
             rope_ntk_beta: 32.0,
             architectures: vec!["GptOssForCausalLM".to_string()],
+            layer_types: Vec::new(),
+            rms_norm_eps: 1e-5,
+            max_position_embeddings: None,
         }
     }
 

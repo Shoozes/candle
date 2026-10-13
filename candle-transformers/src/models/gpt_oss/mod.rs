@@ -1,8 +1,9 @@
-//! Experimental GPT-OSS building blocks.
+//! GPT-OSS local loading and packed CPU/CUDA execution.
 //!
 //! This module is intentionally separate from the maintained LFM2-VL/Q8
-//! product path. It provides checkpoint admission, packed MXFP4 ownership,
-//! a CPU reference, and an opt-in, feature-gated CUDA executor. Component
+//! product path. It provides explicit GGUF/packed checkpoint loading, a common
+//! raw-token session, packed MXFP4 ownership, a CPU reference and a feature-gated
+//! CUDA executor. Component
 //! fixtures and source-bound external short-parity/performance diagnostics
 //! have separate evidence boundaries recorded in `docs/gpt-oss/STATUS.md`.
 //! The maintained product default and broader qualification remain separate.
@@ -15,9 +16,11 @@ mod gguf;
 mod model;
 pub mod mxfp4;
 mod runtime;
+mod safetensors;
+mod session;
 
 pub use checkpoint::GptOssCheckpoint;
-pub use config::GptOssConfig;
+pub use config::{GptOssAttentionType, GptOssConfig};
 #[cfg(feature = "cuda")]
 pub use cuda::{GptOssCudaConfig, GptOssCudaError, GptOssCudaModel, GptOssCudaResult};
 pub use gguf::{
@@ -31,3 +34,8 @@ pub use runtime::{
     GptOssLoadLease, GptOssLoadRegistry, GptOssLoadedHandle, GptOssResourceLimits,
     GptOssResourceUsage, EDGE_DEVICE_CEILING_BYTES,
 };
+pub use safetensors::{
+    load_gpt_oss_safetensors, GptOssFileIdentity, GptOssSafetensorsArtifact,
+    GptOssSafetensorsLayout, GptOssSafetensorsSource,
+};
+pub use session::{GptOssDevice, GptOssLoadOptions, GptOssLogits, GptOssSession, GptOssSource};

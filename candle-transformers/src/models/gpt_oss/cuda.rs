@@ -534,7 +534,8 @@ impl GptOssCudaModel {
                 )?;
                 cancellation_checkpoint(cancellation)?;
             }
-            let hidden = ops::rms_norm(&hidden, &self.weights.final_norm, 1e-5)?;
+            let hidden =
+                ops::rms_norm(&hidden, &self.weights.final_norm, self.config.rms_norm_eps)?;
             logits = Some(self.weights.lm_head.forward(&hidden)?);
             working.tokens = working
                 .tokens
@@ -622,7 +623,7 @@ impl GptOssCudaModel {
         position: usize,
         layer_index: usize,
     ) -> GptOssCudaResult<CudaLayerTrace> {
-        let normalized = ops::rms_norm(&hidden, &layer.attention_norm, 1e-5)?;
+        let normalized = ops::rms_norm(&hidden, &layer.attention_norm, self.config.rms_norm_eps)?;
         let qkv = layer.qkv.forward(&normalized)?;
         let q_width = self
             .config
@@ -687,14 +688,19 @@ impl GptOssCudaModel {
             &next_values,
             &layer.sinks,
             &self.config,
-            layer_index.is_multiple_of(2),
+            self.config.attention_type(layer_index)?
+                == super::GptOssAttentionType::SlidingAttention,
         )?;
         cache.keys = Some(next_keys);
         cache.values = Some(next_values);
         let attention_update = layer.attention_out.forward(&attended)?;
         let post_attention_hidden = hidden.broadcast_add(&attention_update)?;
 
-        let normalized = ops::rms_norm(&post_attention_hidden, &layer.moe_norm, 1e-5)?;
+        let normalized = ops::rms_norm(
+            &post_attention_hidden,
+            &layer.moe_norm,
+            self.config.rms_norm_eps,
+        )?;
         let gate = layer.gate.forward(&normalized)?;
         let top_k = self.config.experts_per_token;
         let (sorted_values, sorted_indices) = gate.sort_last_dim(false)?;
@@ -1310,6 +1316,9 @@ mod tests {
             rope_ntk_alpha: 1.0,
             rope_ntk_beta: 32.0,
             architectures: vec!["GptOssForCausalLM".to_string()],
+            layer_types: Vec::new(),
+            rms_norm_eps: 1e-5,
+            max_position_embeddings: None,
         }
     }
 

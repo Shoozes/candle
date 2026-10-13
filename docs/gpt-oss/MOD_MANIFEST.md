@@ -8,6 +8,11 @@ promote GPT-OSS to the product default.
 
 ## Current state
 
+- Maintained loading preparation adds a common F32 CPU/CUDA session, explicit
+  GGUF identities, bounded full original/indexed safetensors assembly and
+  normalized official configuration. Fixture proof does not enable a provider
+  or broaden the retained performance envelope. See `docs/gpt-oss/LOADING.md`.
+
 - C0 is delivered: local checkpoint admission rejects missing/model-free
   directories and never downloads weights.
 - C1a is delivered: safetensors `*.blocks`/`*.scales` U8 payloads remain
@@ -52,8 +57,9 @@ are separate evidence boundaries. The C2a loader admits one exact GGUF byte
 identity, normalizes its directory and serialized MXFP4 wire layout, and can
 assemble a live CPU model object through one retained file session without
 per-tensor reopen/rehash. The load lease is held by the live model/runtime
-owner; Q8_0 dense text assembly and maintained product integration remain
-deferred. Task 2 exercises the synthetic CPU reference and bounded ownership
+owner. Q8_0 non-expert assembly now normalizes to F32 dense execution;
+native-Q8 non-expert storage, BF16 and maintained provider qualification remain
+separate. Task 2 exercises the synthetic CPU reference and bounded ownership
 contracts; Task 3 exercises an
 explicit opt-in CUDA executor over the same bounded weights. Exact assembly
 alone does not prove inference; the separately retained short-parity receipt
@@ -71,6 +77,7 @@ SHA-256 `616b188eadb04b27f7834a952d45a7cfd8ec9ff8a0b68413ce8a5aa468a71431`.
 - `docs/gpt-oss/MOD_MANIFEST.md`
 - `docs/gpt-oss/SOURCES.md`
 - `docs/gpt-oss/STATUS.md`
+- `docs/gpt-oss/LOADING.md`
 - `candle-transformers/src/models/gpt_oss/mod.rs`
 - `candle-transformers/src/models/gpt_oss/checkpoint.rs`
 - `candle-transformers/src/models/gpt_oss/cuda.rs`
@@ -79,6 +86,9 @@ SHA-256 `616b188eadb04b27f7834a952d45a7cfd8ec9ff8a0b68413ce8a5aa468a71431`.
 - `candle-transformers/src/models/gpt_oss/mxfp4.rs`
 - `candle-transformers/src/models/gpt_oss/model.rs`
 - `candle-transformers/src/models/gpt_oss/runtime.rs`
+- `candle-transformers/src/models/gpt_oss/safetensors.rs`
+- `candle-transformers/src/models/gpt_oss/safetensors_tests.rs`
+- `candle-transformers/src/models/gpt_oss/session.rs`
 - `candle-kernels/src/ffi.rs`
 - `candle-kernels/src/gpt_oss_mxfp4.cu`
 - `tests/fixtures/gpt_oss_task2/README.md`
@@ -111,6 +121,11 @@ repository-wide shared-path registry:
 - `summary_bank.json`
 
 ## Public Candle interfaces
+
+- `GptOssSession` unifies explicit local GGUF/packed loading and device-native
+  CPU/CUDA logits, cancellation/recovery, consumed-file inventory and combined
+  weight/cache/workspace admission. See `LOADING.md`; no precision acceleration
+  or provider-readiness claim follows from its fixture checks.
 
 - `candle_transformers::models::gpt_oss::GptOssCheckpoint` validates a local
   original-format checkpoint layout and rejects model-free input.
@@ -162,4 +177,4 @@ remain outside this opt-in receipt.
 
 ---
 
-AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=evidence-cleanup | change=reconciled bounded external diagnostics without expanding product qualification
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-local-loading | change=registered bounded local loading and common session without broadening production qualification

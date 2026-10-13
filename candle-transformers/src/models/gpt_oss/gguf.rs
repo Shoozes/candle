@@ -40,7 +40,7 @@ const GGUF_DEFAULT_ALIGNMENT: u64 = 32;
 const MAX_RAW_TENSOR_BYTES: u64 = 4 * 1024 * 1024 * 1024;
 const GGUF_READ_CHUNK_BYTES: usize = 1024 * 1024;
 
-fn open_retained_file(path: &Path) -> Result<File> {
+pub(crate) fn open_retained_file(path: &Path) -> Result<File> {
     let mut options = OpenOptions::new();
     options.read(true);
     #[cfg(windows)]
@@ -200,11 +200,22 @@ impl GptOssGgufArtifact {
         Self::open_with_expected_sha(path, SELECTED_GPT_OSS_GGUF_SHA256, None)
     }
 
+    /// Admit an explicitly identified local artifact without changing the
+    /// historical owner-selected default.
+    pub fn open_with_sha256(path: impl AsRef<Path>, sha256: &str) -> Result<Self> {
+        Self::open_with_expected_sha(path, sha256, None)
+    }
+
     fn open_with_expected_sha(
         path: impl AsRef<Path>,
         expected_sha256: &str,
         cancellation: Option<&GptOssCancellationToken>,
     ) -> Result<Self> {
+        if expected_sha256.len() != 64
+            || !expected_sha256.bytes().all(|byte| byte.is_ascii_hexdigit())
+        {
+            bail!("GPT-OSS GGUF admission requires an explicit SHA-256 digest");
+        }
         let path = path.as_ref().to_path_buf();
         let mut file = open_retained_file(&path)?;
         let metadata = file.metadata().map_err(|error| {
@@ -222,7 +233,7 @@ impl GptOssGgufArtifact {
             cancellation.checkpoint()?;
         }
         let sha256 = sha256_reader(&mut file, cancellation)?;
-        if sha256 != expected_sha256 {
+        if !sha256.eq_ignore_ascii_case(expected_sha256) {
             bail!(
                 "GPT-OSS GGUF artifact identity mismatch: expected {}, got {}",
                 expected_sha256,
@@ -263,6 +274,20 @@ impl GptOssGgufArtifact {
         registry: &GptOssLoadRegistry,
         cancellation: Option<&GptOssCancellationToken>,
     ) -> Result<(Self, GptOssLoadedHandle)> {
+        Self::open_identified_with_registry(
+            path,
+            SELECTED_GPT_OSS_GGUF_SHA256,
+            registry,
+            cancellation,
+        )
+    }
+
+    pub fn open_identified_with_registry(
+        path: impl AsRef<Path>,
+        sha256: &str,
+        registry: &GptOssLoadRegistry,
+        cancellation: Option<&GptOssCancellationToken>,
+    ) -> Result<(Self, GptOssLoadedHandle)> {
         let path = path.as_ref();
         let canonical_path = std::fs::canonicalize(path).map_err(|error| {
             candle::Error::Msg(format!(
@@ -278,11 +303,7 @@ impl GptOssGgufArtifact {
         if let Some(cancellation) = cancellation {
             cancellation.checkpoint()?;
         }
-        let artifact = Self::open_with_expected_sha(
-            &canonical_path,
-            SELECTED_GPT_OSS_GGUF_SHA256,
-            cancellation,
-        )?;
+        let artifact = Self::open_with_expected_sha(&canonical_path, sha256, cancellation)?;
         if let Some(cancellation) = cancellation {
             cancellation.checkpoint()?;
         }
@@ -853,10 +874,21 @@ fn decode_dense_values(tensor: &GptOssGgufTensor, bytes: &[u8]) -> Result<Vec<f3
         GptOssGgufDType::F16 => DType::F16,
         GptOssGgufDType::BF16 => DType::BF16,
         GptOssGgufDType::Q8_0 => {
-            bail!(
-                "GPT-OSS GGUF tensor {:?} uses Q8_0; quantized dense text assembly is deferred",
-                tensor.name
-            )
+            let expected_bytes = tensor.dtype.byte_len(count as u64)?;
+            if bytes.len() as u64 != expected_bytes {
+                bail!(
+                    "GPT-OSS Q8_0 tensor {:?} payload length mismatch",
+                    tensor.name
+                );
+            }
+            return candle::quantized::ggml_file::qtensor_from_ggml(
+                candle::quantized::GgmlDType::Q8_0,
+                bytes,
+                vec![count],
+                &Device::Cpu,
+            )?
+            .dequantize(&Device::Cpu)?
+            .to_vec1::<f32>();
         }
         GptOssGgufDType::Mxfp4 => {
             bail!(
@@ -1139,7 +1171,7 @@ fn validate_file_size(file_size: u64) -> Result<()> {
     Ok(())
 }
 
-fn sha256_reader<R: Read + Seek>(
+pub(crate) fn sha256_reader<R: Read + Seek>(
     reader: &mut R,
     cancellation: Option<&GptOssCancellationToken>,
 ) -> Result<String> {
@@ -1659,6 +1691,13 @@ fn normalize_config(metadata: &BTreeMap<String, MetadataValue>) -> Result<Normal
         rope_ntk_alpha,
         rope_ntk_beta,
         architectures: vec!["GptOssForCausalLM".to_string()],
+        layer_types: Vec::new(),
+        rms_norm_eps: if metadata.contains_key("gpt-oss.attention.layer_norm_rms_epsilon") {
+            required_f32(metadata, "gpt-oss.attention.layer_norm_rms_epsilon")?
+        } else {
+            1e-5
+        },
+        max_position_embeddings: Some(context_length),
     };
     let value_length = required_usize(metadata, "gpt-oss.attention.value_length")?;
     if value_length != config.head_dim {
@@ -2080,6 +2119,66 @@ fn validate_dtype(role: &GptOssTensorRole, dtype: GptOssGgufDType, name: &str) -
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn q8_dense_decode_checks_payload_and_preserves_signed_values() -> Result<()> {
+        let tensor = GptOssGgufTensor {
+            name: "output.weight".into(),
+            shape: vec![1, 32],
+            dtype: GptOssGgufDType::Q8_0,
+            role: GptOssTensorRole::Output,
+            offset: 0,
+            byte_len: 34,
+        };
+        let mut bytes = vec![0u8, 0x3c];
+        bytes.extend((-16i8..16).map(|value| value as u8));
+        let actual = decode_dense_values(&tensor, &bytes)?;
+        assert_eq!(
+            actual,
+            (-16..16).map(|value| value as f32).collect::<Vec<_>>()
+        );
+        assert!(decode_dense_values(&tensor, &bytes[..33]).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn explicit_gguf_identity_and_common_session_preserve_legacy_admission() -> Result<()> {
+        use crate::models::gpt_oss::{
+            GptOssDevice, GptOssFileIdentity, GptOssLoadOptions, GptOssModel, GptOssResourceLimits,
+            GptOssSession, GptOssSource,
+        };
+        let bytes = tiny_nonzero_fused_gguf()?;
+        let path = temporary_gguf_path("public-session", &bytes)?;
+        let hash = format!("{:x}", Sha256::digest(&bytes));
+        let artifact = GptOssGgufArtifact::open_with_sha256(&path.0, &hash)?;
+        assert!(GptOssGgufArtifact::open(&path.0).is_err());
+        let config = artifact.config().clone();
+        let weights = artifact.load_weights(1024 * 1024)?;
+        let expected = GptOssModel::new(config.clone(), weights)?.forward(&[1, 2, 3])?;
+        let options = GptOssLoadOptions {
+            source: GptOssSource::Gguf(GptOssFileIdentity {
+                path: path.0.clone(),
+                sha256: hash,
+                size_bytes: bytes.len() as u64,
+            }),
+            device: GptOssDevice::Cpu,
+            limits: GptOssResourceLimits::for_config(&config)?,
+            max_weight_bytes: 1024 * 1024,
+        };
+        let mut session = GptOssSession::load(
+            &options,
+            &GptOssLoadRegistry::default(),
+            &GptOssCancellationToken::new(),
+        )?;
+        assert_eq!(session.consumed_files().len(), 1);
+        assert_eq!(
+            session
+                .prefill(&[1, 2, 3], &GptOssCancellationToken::new())?
+                .into_cpu()?,
+            expected
+        );
+        Ok(())
+    }
     use crate::models::gpt_oss::GptOssLoadRegistry;
     use std::io::Write;
     use std::path::PathBuf;

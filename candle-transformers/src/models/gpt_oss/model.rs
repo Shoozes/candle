@@ -588,7 +588,7 @@ impl GptOssModel {
             for (layer_index, layer) in weights.layers.iter().enumerate() {
                 hidden = Self::forward_layer(config, layer, layer_index, hidden, cache, position)?;
             }
-            let hidden = rms_norm(&hidden, &weights.final_norm, 1e-5)?;
+            let hidden = rms_norm(&hidden, &weights.final_norm, config.rms_norm_eps)?;
             logits = weights.lm_head.forward(&hidden)?;
             cache.tokens = cache
                 .tokens
@@ -623,7 +623,7 @@ impl GptOssModel {
         cache: &mut GptOssCache,
         position: usize,
     ) -> Result<CpuLayerTrace> {
-        let normalized = rms_norm(&hidden, &layer.attention_norm, 1e-5)?;
+        let normalized = rms_norm(&hidden, &layer.attention_norm, config.rms_norm_eps)?;
         let qkv = layer.qkv.forward(&normalized)?;
         let q_width = config
             .num_attention_heads
@@ -699,13 +699,13 @@ impl GptOssModel {
             &layer_cache.values,
             &layer.sinks,
             layer_cache.tokens,
-            layer_index.is_multiple_of(2),
+            config.attention_type(layer_index)? == super::GptOssAttentionType::SlidingAttention,
             config,
         )?;
         let attention_update = layer.attention_out.forward(&attended)?;
         let post_attention_hidden = add_vectors(&hidden, &attention_update)?;
 
-        let normalized = rms_norm(&post_attention_hidden, &layer.moe_norm, 1e-5)?;
+        let normalized = rms_norm(&post_attention_hidden, &layer.moe_norm, config.rms_norm_eps)?;
         let gate = layer.gate.forward(&normalized)?;
         let (expert_indices, expert_weights) =
             route_top_k(&gate, config.experts_per_token, config.num_experts)?;
@@ -1171,6 +1171,9 @@ mod tests {
             rope_ntk_alpha: 1.0,
             rope_ntk_beta: 32.0,
             architectures: vec!["GptOssForCausalLM".to_string()],
+            layer_types: Vec::new(),
+            rms_norm_eps: 1e-5,
+            max_position_embeddings: None,
         }
     }
 

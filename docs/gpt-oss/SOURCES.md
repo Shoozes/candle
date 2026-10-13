@@ -1,5 +1,18 @@
 # GPT-OSS Experimental Source Record
 
+## Official packed checkpoint loading
+
+Original and Transformers layout/config/index metadata are pinned to
+`openai/gpt-oss-20b` revision `f81fef1ddd90d214968e951a76834f1ded130a18`:
+[original config](https://huggingface.co/openai/gpt-oss-20b/blob/f81fef1ddd90d214968e951a76834f1ded130a18/original/config.json),
+[Transformers config](https://huggingface.co/openai/gpt-oss-20b/blob/f81fef1ddd90d214968e951a76834f1ded130a18/config.json)
+and [shard index](https://huggingface.co/openai/gpt-oss-20b/blob/f81fef1ddd90d214968e951a76834f1ded130a18/model.safetensors.index.json).
+Apache-2.0 checkpoint metadata and the pinned OpenAI behavior below define
+aliases, Q/K/V order, output-major dense rows, adjacent nibble packing and
+alternating gate/up expert rows. No weight bytes were downloaded for this work.
+Synthetic serialized checkpoints use the already-pinned independent two-layer
+fixture recipe and compare against its unchanged expected logits/digest.
+
 The implementation is a fresh Candle-native reference. The pinned behavioral
 source is OpenAI's `gpt-oss` repository at commit
 `7b583341fe16729127f6d5b94a7b09ccae97e1a1` (the `main` tip resolved on
@@ -83,4 +96,4 @@ in this repository.
 
 ---
 
-AI-edited: 2026-10-07 | agent=Codex/root | model=unknown | effort=unknown | task=evidence-cleanup | change=distinguished committed fixtures from separately admitted external diagnostics
+AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-local-loading | change=pinned official native metadata and retained independent fixture authority
