@@ -222,8 +222,10 @@ function Invoke-CharacterizationLane($Lane,$Packet,[string]$PacketFile,[string]$
         $watchCommand='& '+(Quote-SessionProfileLiteral $Packet.watcher.path)+' -PacketPath '+(Quote-SessionProfileLiteral $PacketFile)+
             ' -ObservationPath '+(Quote-SessionProfileLiteral $observation)+' -Backend '+(Quote-SessionProfileLiteral $Lane.backend)
         $watchEncoded=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($watchCommand))
-        $watcher=Start-Process -FilePath (Get-Command pwsh).Source -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$watchEncoded) -PassThru -WindowStyle Hidden
-        $watchOwner=[ordered]@{owner='Candle characterization runtime watcher';pid=$watcher.Id;creation_utc=$watcher.StartTime.ToUniversalTime().ToString('o');executable=$watcher.Path;
+        $watcherExecutable=(Get-Command pwsh).Source
+        $watcher=Start-Process -FilePath $watcherExecutable -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$watchEncoded) -PassThru -WindowStyle Hidden
+        $watcherIdentity=Get-SessionProfileOwnerIdentity $watcher.Id $watcher.StartTime $watcherExecutable
+        $watchOwner=[ordered]@{owner='Candle characterization runtime watcher';pid=$watcherIdentity.pid;creation_utc=$watcherIdentity.creation_utc;executable=$watcherIdentity.executable;
             source_commit=$Packet.source_commit;intended_lifetime='One bounded diagnostic lane, at most1860s';endpoints=@();output_root=$observation;shutdown='Stop this exact watcher handle after terminal/runtime validation'}
         Write-SessionProfileJson (Join-Path $Output ($Lane.backend+'-watcher-owner.json')) $watchOwner
         $arm=[Diagnostics.Stopwatch]::StartNew();$armed=$false

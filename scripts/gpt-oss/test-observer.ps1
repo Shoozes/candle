@@ -44,6 +44,16 @@ Start-Sleep -Seconds 30
     Test-ObserverAssert ($selfSnapshot.pid -eq $PID -and $selfSnapshot.executable -eq $shell) 'bounded process identity discovery'
     Test-ObserverReject {Get-SessionProfileProcessSnapshot $PID 'identity' 50} 'deadline|cancel'
 
+    $ownerProcess=Get-Process -Id $PID
+    try {
+        # Start-Process objects can have an unavailable adapted Path property.
+        $parentShape=[pscustomobject]@{Id=$ownerProcess.Id;StartTime=$ownerProcess.StartTime;Path=$null}
+        $boundOwner=Get-SessionProfileOwnerIdentity $parentShape.Id $parentShape.StartTime $shell
+        Test-ObserverAssert ($null -eq $parentShape.Path -and $boundOwner.pid -eq $PID -and $boundOwner.executable -eq $shell) 'owner path comes from bounded live identity despite unavailable parent Path'
+        Test-ObserverReject {Get-SessionProfileOwnerIdentity $parentShape.Id $parentShape.StartTime $env:ComSpec} 'launcher identity mismatch'
+        Test-ObserverReject {Get-SessionProfileOwnerIdentity $parentShape.Id ([DateTime]::UnixEpoch) $shell} 'launcher identity mismatch'
+    } finally {$ownerProcess.Dispose()}
+
     # Exercise the real lane failure/finally path while a harmless Job is active.
     $probe=Join-Path $testRoot 'profile-job-probe.exe'
     Copy-Item -LiteralPath $env:ComSpec -Destination $probe

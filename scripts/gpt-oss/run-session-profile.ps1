@@ -199,6 +199,19 @@ function Stop-SessionProfileController {
     }
 }
 
+function Get-SessionProfileOwnerIdentity {
+    param([Parameter(Mandatory)][ValidateRange(1,2147483647)][int]$OwnerPid,
+        [Parameter(Mandatory)][DateTime]$CreationTime,
+        [Parameter(Mandatory)][string]$Executable)
+    $actual=Get-SessionProfileProcessSnapshot $OwnerPid
+    if($null -eq $actual -or $actual.pid -ne $OwnerPid -or
+        ([DateTimeOffset]$actual.creation_utc).UtcDateTime.Ticks -ne $CreationTime.ToUniversalTime().Ticks -or
+        -not [string]::Equals($actual.executable,$Executable,[StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Owned profile launcher identity mismatch'
+    }
+    $actual
+}
+
 function Invoke-SessionProfileBatch {
     param($Lanes, [string]$Source, [string]$Output, [string]$Helper, [string]$RepoRoot)
     if ($Lanes.Count -ne 2 -or $Lanes[0].backend -ne 'cpu' -or $Lanes[1].backend -ne 'cuda') { throw 'Profile packet requires CPU then CUDA exactly once' }
@@ -233,8 +246,10 @@ function Invoke-SessionProfileLane {
     $failure = $null
     try {
         if ($Lane.backend -eq 'cuda') { $gpuSamples.Add($(if($null -eq $SampleGpu){Get-SessionProfileGpuSample ([int]$inputValue.device_index)}else{& $SampleGpu ([int]$inputValue.device_index)})) }
-        $controller = Start-Process -FilePath (Get-Command pwsh).Source -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $Directory 'controller.stdout.log') -RedirectStandardError (Join-Path $Directory 'controller.stderr.log')
-        $owner = [ordered]@{ owner='Candle GPT-OSS session profile'; source_commit=$Source; pid=$controller.Id; creation_utc=$controller.StartTime.ToUniversalTime().ToString('o'); executable=$controller.Path; intended_lifetime='one 1800-second bounded Job plus cleanup'; endpoints=@(); binary=$Lane.binary; input=$Lane.input; shutdown='Stop only this creation-time/executable-verified controller; closing its native Job kills the owned runner'; output_root=$Directory }
+        $controllerExecutable=(Get-Command pwsh).Source
+        $controller = Start-Process -FilePath $controllerExecutable -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $Directory 'controller.stdout.log') -RedirectStandardError (Join-Path $Directory 'controller.stderr.log')
+        $controllerIdentity=Get-SessionProfileOwnerIdentity $controller.Id $controller.StartTime $controllerExecutable
+        $owner = [ordered]@{ owner='Candle GPT-OSS session profile'; source_commit=$Source; pid=$controllerIdentity.pid; creation_utc=$controllerIdentity.creation_utc; executable=$controllerIdentity.executable; intended_lifetime='one 1800-second bounded Job plus cleanup'; endpoints=@(); binary=$Lane.binary; input=$Lane.input; shutdown='Stop only this creation-time/executable-verified controller; closing its native Job kills the owned runner'; output_root=$Directory }
         Write-SessionProfileJson (Join-Path $Directory 'owner.json') $owner
         $timer = [Diagnostics.Stopwatch]::StartNew()
         while (-not $controller.HasExited) {
