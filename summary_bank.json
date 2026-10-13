@@ -156,6 +156,18 @@
         "tests/fixtures/gpt_oss_task3_short_parity/reference.json"
       ]
     },
+    "feature__gpt_oss_cpu_dot": {
+      "description": "Ordered packed MXFP4 CPU block dots, exact scalar-bit parity across shapes/routes/scales, malformed spans, direct model callers and frozen component measurement; production latency remains separately source-bound.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/gpt_oss/mxfp4.rs",
+        "candle-transformers/src/models/gpt_oss/mxfp4_cpu.rs",
+        "candle-transformers/src/models/gpt_oss/model.rs",
+        "tests/fixtures/gpt_oss_task2/README.md",
+        "tests/fixtures/gpt_oss_task2/oracle.json",
+        "docs/gpt-oss/PROFILING.md"
+      ]
+    },
     "feature__gpt_oss_experimental": {
       "description": "Experimental GPT-OSS checkpoint admission, packed MXFP4 blocks/scales, and hash-pinned source/config records.",
       "status": "active",
@@ -196,11 +208,11 @@
         "candle-transformers/src/models/gpt_oss/mod.rs",
         "candle-transformers/src/models/gpt_oss/model.rs",
         "candle-transformers/src/models/gpt_oss/mxfp4.rs",
+        "candle-transformers/src/models/gpt_oss/mxfp4_cpu.rs",
         "tests/fixtures/gpt_oss_task3_two_layer/README.md",
         "tests/fixtures/gpt_oss_task3_two_layer/oracle.json",
         "docs/gpt-oss/MOD_MANIFEST.md",
-        "docs/gpt-oss/SOURCES.md",
-        "docs/gpt-oss/STATUS.md"
+        "docs/gpt-oss/SOURCES.md"
       ]
     },
     "feature__gpt_oss_task3_short_parity": {

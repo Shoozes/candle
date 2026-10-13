@@ -12,8 +12,8 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   optimization and qualified selectable GPT-OSS-20B consumer integration.
 - Why: Existing short experimental receipts do not establish a maintained
   loader, 32k capacity, performance improvement or coding-provider readiness.
-- When: Implementation is active; the first approved baseline is closed.
-  Any repaired production run needs fresh source/binary binding and allowance.
+- When: Implementation is active; baseline and repair allowances are closed.
+  Each production comparison needs fresh source/binary binding and allowance.
 - Where: GPT-OSS overlay; [current STATUS](../gpt-oss/STATUS.md) and
   [LOADING contract](../gpt-oss/LOADING.md). Edge/Symbio own their integrations.
 - How: Local loading/config/session fixture gate first, then profile before
@@ -30,13 +30,19 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   native/CUDA gates pass. The owner approved scoped local commits without
   push/inference; loading is checkpointed at `06a83835`, records at `eb6abe92`.
   Profiling preparation is checkpointed at `3b16430b`; the approved direct
-  baseline completed CPU (16 forwards/23 token steps), then CUDA failed loading
-  before forwarding. The allowance is closed and release checks pass. The local
-  upload ownership repair releases source layers progressively; CPU 51/CUDA 59
-  fixtures and native/check/strict Clippy gates pass. Next obtain checkpoint authority,
-  bind a new release and prepare fresh CUDA proof per
-  [PROFILING.md](../gpt-oss/PROFILING.md). Profile CPU components before optimizing
-  the measured ~13s decode. No inference retry, consumer pin or push is implied.
+  baseline completed CPU, then CUDA failed loading before forwarding; that
+  allowance remains closed. Upload ownership is checkpointed at `5a7e392a`.
+  Fresh CPU/CUDA repair proof completes two loads/two requests, 32 forwards,
+  46 token steps and 32 outputs under the declared bounds; sixteen greedy IDs
+  agree and Job/registry release passes. Its allowance is closed. Full-logit
+  parity and live CUDA DLL provenance remain incomplete. The active CPU helper
+  preserves scalar F32 bits while computing each block scale/lookup once;
+  frozen synthetic means improve 8.7–8.8x. CPU 53/CUDA 61 fixtures, checks and
+  strict CUDA Clippy and the complete native locked/offline gate pass. Next
+  obtain scoped nine-file checkpoint authority and prepare fresh CPU-first production
+  latency/parity proof per [PROFILING.md](../gpt-oss/PROFILING.md). Production
+  CPU speedup, BF16, larger context and consumer routes remain unqualified.
+  No inference retry, consumer pin or push is implied.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -464,4 +470,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-upload-ownership | change=prioritized CUDA load qualification and CPU component profiling after the closed baseline
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cpu-dot | change=closed the completed repair allowance and selected fresh CPU optimization qualification after local proof

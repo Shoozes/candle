@@ -11,14 +11,20 @@ CPU/CUDA fixture, strict Clippy and example checks pass. The owner approved
 two scoped local commits without push/inference; loading code/API/routes are
 checkpointed at `06a83835`, records at `eb6abe92`; the clean checkpoint's native
 gate passes. Profiling preparation is locally checkpointed at `3b16430b`.
-Its approved direct packet completed CPU but CUDA loading failed with an
-allocation error before forwarding; both Job processes and registries released.
-The allowance is closed. A scoped local CUDA upload repair consumes CPU weights
-and releases source layers after upload; native/CUDA fixture, check and strict
-Clippy gates pass.
-See [the measured contract](../gpt-oss/PROFILING.md) for counts and limitations.
-Next is a separately authorized repair checkpoint and fresh
-source/binary-bound CUDA proof. No production retry or publication is implied.
+Its first direct packet completed CPU but CUDA loading failed before forwarding;
+that allowance remains closed. The separately authorized upload repair is
+checkpointed at `5a7e392a`. Fresh CPU/CUDA qualification completes both lanes
+under the declared bounds, with sixteen matching greedy IDs and verified Job/
+registry release. Its two-load/two-request/32-forward allowance is now closed.
+Full-logit parity and observed live CUDA DLL paths remain incomplete.
+Active local CPU work adds an ordered block-dot helper and exact-bit fixtures;
+frozen synthetic primitive means improve 8.7–8.8x. CPU 53/CUDA 61 tests, checks
+and strict CUDA Clippy pass, as does the complete native locked/offline gate.
+This does not yet prove production model speedup. See
+[the measured contract](../gpt-oss/PROFILING.md) for source identities and limits.
+Next is a separately authorized nine-file CPU optimization checkpoint, then
+fresh source/binary-bound CPU-first production proof. No prior allowance
+reuse or publication is implied.
 Prior two-file LFM review edits below
 remain intact; their original d1 qualification and closed allowance do not
 qualify GPT-OSS. Consumer activation stays separate. GenEye stays at `3fa7075e`.
@@ -981,4 +987,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-upload-ownership | change=recorded closed GPT-OSS baseline and local upload repair while preserving d1
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cpu-dot | change=recorded completed GPT-OSS repair qualification and local CPU optimization while preserving d1

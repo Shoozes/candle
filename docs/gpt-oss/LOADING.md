@@ -74,8 +74,17 @@ uploads and synchronization, then drop individually. The source head drops
 after its upload. The model retains the registry lease. This reduces source
 retention overlap without changing F32 values, packed expert bytes or public
 construction signatures. The first maintained CUDA load at `3b16430b` failed
-near the host Job ceiling; this local repair still needs fresh production
-memory qualification and does not establish the cause of that allocation error.
+near the host Job ceiling. Fresh CPU/CUDA qualification at `5a7e392a` completes
+under the declared bounds; it does not establish the cause of the earlier
+allocation error. Counts, sampled memory and the incomplete live CUDA DLL
+provenance are recorded in [PROFILING.md](PROFILING.md).
+
+CPU expert dot products decode each 32-value block's scale/lookup once. They
+retain the packed blocks/scales, F32 activations and increasing-column scalar
+accumulation order. There is no dense expert repack, new reduction or additional
+retained weight storage. Exact-bit synthetic tests include exponent extremes,
+multiple widths, routes and batches. The frozen component benchmark measures
+this primitive; it does not qualify end-to-end model latency.
 
 Configuration accepts original and Transformers aliases, reconciles equal
 duplicate aliases, and rejects conflicting expert/YaRN fields. Explicit layer
@@ -93,8 +102,8 @@ with 32 GiB host and 20,000,000,000 GPU bytes, and 32,768 total tokens split int
 30,720 prompt/history plus 2,048 generated tokens including private reasoning.
 120B configuration compatibility is distinct from production qualification.
 
-Next: clean source/binary-bound baseline profiling, then measured CPU/CUDA
-prefill/decode optimizations, separately qualified optional BF16, and staged
+Next: clean source/binary-bound CPU optimization qualification, then measured
+CUDA prefill/decode optimizations, separately qualified optional BF16, and staged
 8k/16k/32k qualification. No old model allowance may be reused. Full native
 production qualification also requires retained official packed artifacts;
 metadata inspection does not establish their local presence or permission to
@@ -121,4 +130,4 @@ Candle publication, followed by Edge qualification and Symbio consumption.
 GenEye remains pinned to `3fa7075e`.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-upload-ownership | change=documented progressive CPU-source release during CUDA construction
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cpu-dot | change=recorded bounded CUDA load completion and ordered packed CPU block-dot contract

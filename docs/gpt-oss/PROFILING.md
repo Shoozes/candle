@@ -90,15 +90,97 @@ remains closed: an added host observer failed during CPU loading, with one load
 attempt and zero requests/forwards; its forced-stop Job/unload receipts are
 incomplete. The corrected direct launcher does not reuse that allowance.
 
-The local upload repair consumes CPU weights and releases each source layer
-after a completed upload. Fixture proof can establish numerical/ownership
-behavior, but cannot prove it resolves the retained-model allocation failure.
-The native, fixture, check and strict Clippy repair gates pass locally.
-Next: obtain a scoped checkpoint authorization,
-bind its release binary and request fresh finite CUDA proof. CPU component
-profiling precedes CPU optimization. Later BF16, staged 8k/16k/32k and
-Edge/Symbio route qualification retain their own gates. Responses remains
-90 seconds and WorkerRuntime remains 600 seconds.
+## Upload-repair qualification at `5a7e392a`
+
+The separately approved packet at clean
+`5a7e392a7192978733e5844d7f7b25667a7e963b`, tree
+`1dea5c734e94d838409143d850d00102d639ff76`, is 15,411 bytes with SHA-256
+`a3a66d6e6cd223af9f239cf8a5926b22f503f5aabd0605a135b25ebb95a270a4`.
+It uses the same retained model and frozen raw IDs, with CPU completion/release
+before CUDA. Both lanes complete under the 32 GiB/1,800-second Job bounds.
+Its retained root is
+`artifacts/gpt-oss/session-profile-5a7e392a-fb2ea0b94ac44c7cb4f9d5a8b5629ffd/`;
+`closed-batch.json` binds the source/tree, per-lane receipts and release.
+
+| Measurement | CPU | CUDA |
+| --- | ---: | ---: |
+| Load | 25.408s | 30.778s |
+| Eight-token prefill | 103.463s | 675.021ms |
+| Mean of fifteen decode forwards | 17.479s | 67.382ms |
+| Total including unload | 391.647s | 32.567s |
+| Peak Job memory, bytes | 17,682,251,776 | 20,567,097,344 |
+| Sampled whole-GPU peak, bytes | Not applicable | 18,903,728,128 |
+
+CUDA's 35 one-second samples remain below 20,000,000,000 bytes, but may miss
+peaks. Its mean final-validation interval is 28.022ms including pending device
+work; mean caller readback is 0.111ms. These are distinct measurements.
+All sixteen greedy IDs agree across CPU/CUDA and with the previous CPU run;
+no full-logit comparison or general accuracy proof was collected. Single-run
+CPU timing variability does not prove a performance regression. Successful
+completion after progressive source release does not identify the cause of
+the earlier allocation failure.
+
+Live CUDA DLL paths were not captured during the short run. Installed candidate
+DLL hashes are retained, but are not observed loaded-runtime provenance.
+This remains a qualification limitation. Both Jobs exit zero, owned process
+trees are absent and registry counts return to zero. The allowance is closed:
+two loads/two requests, 32 public forwards, 46 token steps, 32 generated tokens,
+zero warmups/retries. Earlier failed allowances remain closed.
+
+## Ordered CPU packed-dot optimization
+
+The measured whole-forward CPU cost does not identify its layer fractions.
+A frozen synthetic primitive comparison isolates `PackedMxfp4::matmul_expert`
+without production weights, model construction or token forwards. The candidate
+computes one E8M0 multiplier and sixteen-value lookup per 32-value block,
+then multiplies/accumulates low and high nibbles in the original column order.
+It preserves F32 arithmetic, packed resident weights and scalar reduction order.
+
+The retained recipe and source are in `artifacts/gpt-oss/cpu-dot-20261013/`.
+`bench.rs` SHA-256 is
+`5cfb549506118e319d8f88253ae04503d8347623414c8414537e8a5913f1e1e3`.
+Both variants use release optimization/native CPU targeting, two experts,
+expert 1 and one input row. Bytes are `(index*73+41) mod 256`, scales
+`116+index%9`, and inputs `(index%31-15)*0.01F32`. Sampling was frozen before
+measurement: one process per variant, small/medium/wide order, two warmups and
+five measured calls per case, in separate 8 GiB/90-second native Jobs.
+Warmups here are model-free primitive calls; no production allowance is used.
+
+| Output rows × input width | Baseline mean | Candidate mean | Ratio |
+| --- | ---: | ---: | ---: |
+| 64 × 256 | 0.08686ms | 0.00996ms | 8.72x |
+| 1,024 × 2,880 | 15.69418ms | 1.79990ms | 8.72x |
+| 5,760 × 2,880 | 89.27012ms | 10.09476ms | 8.84x |
+
+Every sample is finite and repeats its F32-bit checksum; baseline and candidate
+checksums agree for all three cases. Baseline uses clean `5a7e392a` CPU library
+`84e12fece74851c6`; the candidate uses the dirty source-bound CPU library
+`8abd1c39d6c73ef6`. Recipe/binding records retain their full hashes, native flags,
+default-only features, source file hashes and executable identities. The
+candidate is not a clean-checkpoint or production latency qualification.
+This one controlled result has no confidence estimate or general speed threshold.
+
+The first attempted candidate link incorrectly reused the baseline library.
+Its artifacts are retained and explicitly excluded in
+`invalid-first-candidate-binding.json`. Only `candidate-bound-*` records bind
+the measured implementation; the frozen harness and sampling did not change.
+Both qualified synthetic Jobs exit zero and release their process owners.
+CPU 53/CUDA 61 fixtures (one production ignore each) include independent model
+oracles, cache/cancellation recovery, exact scalar-bit comparisons across widths,
+routes/batches/scale extremes and controlled malformed-span errors.
+
+The complete native `.tools/verify-before-push.ps1` gate passes, including
+formatting, locked/offline maintained crate/example checks and tests, strict
+CPU Clippy, layout, typed receipt, Summary Bank, overlay and whitespace checks.
+Separate focused CUDA fixtures/check/strict Clippy and the GPT-OSS manifest
+pass. Commands and exit codes remain in the same proof root. WSL was not
+repeated because its previously observed offline dependency is still missing.
+
+Next: obtain scoped checkpoint authority, bind/review a fresh release packet
+and request CPU-first production latency/parity proof. Repair-run receipts
+retain `5a7e392a`; no prior allowance may be reused.
+Later BF16, staged 8k/16k/32k and Edge/Symbio route qualification retain their
+own gates. Responses remains 90 seconds and WorkerRuntime remains 600 seconds.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-upload-ownership | change=recorded CPU baseline and closed CUDA load failure without a speedup claim
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cpu-dot | change=bound successful repair qualification and exact-bit synthetic CPU timing to their original source identities

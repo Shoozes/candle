@@ -12,9 +12,14 @@ promote GPT-OSS to the product default.
   GGUF identities, bounded full original/indexed safetensors assembly and
   normalized official configuration. Fixture proof does not enable a provider
   or broaden the retained performance envelope. See `docs/gpt-oss/LOADING.md`.
-- Maintained baseline preparation adds optional forward/validation timing,
+- Maintained baseline profiling adds optional forward/validation timing,
   a CPU/CUDA common-session example and an identity-bound native Job launcher.
-  Its frozen eight/16 workload needs a fresh allowance; see `PROFILING.md`.
+  Its fresh eight/16 repair proof completes at `5a7e392a`; the allowance is
+  closed and remains separate from full numerical/consumer qualification.
+  See `PROFILING.md` for the incomplete live CUDA DLL provenance.
+- The CPU packed-dot helper computes each block scale/lookup once while
+  preserving ordered F32 arithmetic and packed ownership. Exact-bit fixtures
+  and frozen synthetic primitive timings do not establish model latency.
 
 - C0 is delivered: local checkpoint admission rejects missing/model-free
   directories and never downloads weights.
@@ -88,6 +93,7 @@ SHA-256 `616b188eadb04b27f7834a952d45a7cfd8ec9ff8a0b68413ce8a5aa468a71431`.
 - `candle-transformers/src/models/gpt_oss/config.rs`
 - `candle-transformers/src/models/gpt_oss/gguf.rs`
 - `candle-transformers/src/models/gpt_oss/mxfp4.rs`
+- `candle-transformers/src/models/gpt_oss/mxfp4_cpu.rs`
 - `candle-transformers/src/models/gpt_oss/model.rs`
 - `candle-transformers/src/models/gpt_oss/runtime.rs`
 - `candle-transformers/src/models/gpt_oss/safetensors.rs`
@@ -184,4 +190,4 @@ remain outside this opt-in receipt.
 
 ---
 
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-profile-preparation | change=registered optional common-session measurement and bounded native launch without production execution
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cpu-dot | change=registered ordered packed CPU helper and bounded primitive evidence

@@ -3,32 +3,41 @@
 ## Current maintained support, 2026-10-13
 
 Local checkpoints: loading/API `06a83835`, records `eb6abe92`, profiling
-preparation `3b16430b`. The complete native gate and separate release builds
-pass at clean `3b16430b`. Earlier LFM edits and historical receipts remain intact.
+preparation `3b16430b`, CUDA upload ownership `5a7e392a`. Earlier LFM edits
+and historical receipts remain intact. These checkpoints are not published.
 
 Explicit GGUF and original/indexed packed safetensors load into CPU/CUDA F32.
 Experts stay packed; other supported types normalize to dense F32. Config,
 conversion, identity, bounds and ownership contracts are in [LOADING.md](LOADING.md).
 
-The freshly approved direct packet completed CPU, then CUDA failed loading
-with `CUDA_ERROR_OUT_OF_MEMORY`. CPU completed 16 forwards/23 token steps;
-prefill was 103.885s and decode 12.79–13.32s. Both processes and registries are
-released. This allowance is closed; no CUDA forward ran. An earlier observer
-failure is independently closed with zero forwards and incomplete unload proof.
-Exact counts, limits and retained paths are in [PROFILING.md](PROFILING.md).
+Fresh qualification at clean `5a7e392a` completed CPU, then CUDA: two loads,
+two requests, 32 public forwards, 46 token steps and 32 generated tokens.
+Both Jobs and registries released; the allowance is closed. CPU load/prefill
+were 25.408/103.463s, with mean decode 17.479s. CUDA load/prefill were
+30.778s/675.021ms, with mean decode 67.382ms, peak Job 20,567,097,344 bytes
+and sampled GPU peak 18,903,728,128 bytes. All sixteen greedy IDs match CPU
+and the prior CPU baseline; this is not full-logit parity. Live CUDA DLL paths
+were not captured, so runtime provenance remains incomplete. The earlier
+observer failure and `3b16430b` CUDA allocation failure remain separate closed
+receipts. Exact identities, counts and limits are in [PROFILING.md](PROFILING.md).
 
 Optional timing preserves validation/cancellation/cache commit. Its CUDA
 validation interval includes pending device work; caller readback is separate.
 
-Active local repair: `cuda.rs`, `model.rs` and `safetensors_tests.rs`, plus
-LOADING/PROFILING/STATUS and the LFM STATUS/TODO handoff. CPU source layers drop
-after synchronized CUDA upload. Native/check/strict Clippy and
-CPU 51/CUDA 59 tests pass (one production ignore each), including lease retention,
-failed-device release and independent numerical oracles. Proof:
-`artifacts/gpt-oss/upload-ownership-20261013/`.
-Next: request a scoped checkpoint, then bind/review a
-fresh CUDA packet. Production memory repair and CPU component optimization
-remain unproven. No push, BF16/32k or consumer-ready claim. Preserve 32 GiB
+Active local CPU optimization: `mxfp4.rs` and new `mxfp4_cpu.rs`, plus
+LOADING/PROFILING/STATUS, manifest, Summary Bank and the LFM STATUS/TODO handoff.
+Each 32-value block now computes its scale/lookup once, preserving packed
+storage and ordered F32 multiplication/accumulation. Frozen synthetic means
+improve 8.7–8.8x with identical F32-bit checksums; whole-model improvement
+remains unproven. CPU 53/CUDA 61 fixtures pass (one production ignore each),
+along with focused checks, strict CUDA Clippy and the complete native
+locked/offline `.tools/verify-before-push.ps1` gate. Proof:
+`artifacts/gpt-oss/cpu-dot-20261013/`. Current inventories are 44 GPT-OSS paths
+and 299 overlay paths, with 27 shared paths; Summary Bank routes pass.
+Next: request a scoped local checkpoint for the nine reviewed CPU code/record
+files, then bind/review a fresh CPU-first production comparison packet.
+The completed `5a7e392a` proof must not be rebound to this candidate or reused
+as an allowance. No push, BF16/32k or consumer-ready claim. Preserve 32 GiB
 host, 20e9 GPU and Responses90s/WorkerRuntime600s. Existing nonfatal LNK4098
 remains visible; WSL still lacks offline dependencies.
 
@@ -404,4 +413,4 @@ infer Q8/default or broad maintained production support from this packet.
 
 ---
 
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-upload-ownership | change=recorded closed baseline and local CUDA ownership repair
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-cpu-dot | change=recorded completed upload qualification and exact-bit synthetic CPU block-dot improvement

@@ -3,11 +3,14 @@
 //! The official checkpoint stores each MXFP4 tensor as a `*.blocks` U8 tensor
 //! and a matching `*.scales` U8 tensor.  A block contains 32 FP4 values in 16
 //! bytes; the scale is an E8M0 exponent with bias 127.  This module keeps
-//! those bytes packed and decodes individual values while doing the reference
+//! those bytes packed and decodes blocks while doing the ordered F32
 //! expert operation.  It deliberately has no dense-weight escape hatch.
 
 use candle::{bail, DType, Device, Result, Tensor};
 use std::path::Path;
+
+#[path = "mxfp4_cpu.rs"]
+mod cpu;
 
 pub const VALUES_PER_BLOCK: usize = 32;
 pub const BYTES_PER_BLOCK: usize = 16;
@@ -347,40 +350,10 @@ impl PackedMxfp4 {
         input: &[f32],
         result: &mut [f32],
     ) -> Result<()> {
-        if expert >= self.shape[0] {
-            bail!("MXFP4 expert index {expert} is out of range");
-        }
-        if input.len() != input_width || result.len() != output {
-            bail!(
-                "MXFP4 row dimensions do not match packed shape {:?}",
-                self.shape
-            );
-        }
-        let blocks_per_row = input_width / VALUES_PER_BLOCK;
-        let rows_before_expert = checked_product(expert, output, "MXFP4 expert offset")?;
-        for output_row in 0..output {
-            let mut sum = 0.0f32;
-            for input_index in 0..input_width {
-                let block = rows_before_expert
-                    .checked_add(output_row)
-                    .and_then(|row| row.checked_mul(blocks_per_row))
-                    .and_then(|row| row.checked_add(input_index / VALUES_PER_BLOCK))
-                    .ok_or_else(|| {
-                        candle::Error::Msg("MXFP4 block index overflowed".to_string())
-                    })?;
-                let value = self.value_at(block, input_index % VALUES_PER_BLOCK)?;
-                let input_value = *input.get(input_index).ok_or_else(|| {
-                    candle::Error::Msg("MXFP4 input value is out of bounds".to_string())
-                })?;
-                sum += input_value * value;
-            }
-            *result.get_mut(output_row).ok_or_else(|| {
-                candle::Error::Msg("MXFP4 output value is out of bounds".to_string())
-            })? = sum;
-        }
-        Ok(())
+        cpu::matmul_expert_row(self, expert, output, input_width, input, result)
     }
 
+    #[cfg(test)]
     pub(crate) fn value_at(&self, block: usize, offset: usize) -> Result<f32> {
         if offset >= VALUES_PER_BLOCK {
             bail!("MXFP4 value offset {offset} exceeds block size");
@@ -778,6 +751,62 @@ mod tests {
         for (actual, expected) in selected.iter().zip(expected.iter()) {
             assert!((actual - expected).abs() <= 1e-6, "{actual} != {expected}");
         }
+        Ok(())
+    }
+
+    #[test]
+    fn block_dots_preserve_scalar_bits_across_widths_routes_and_scales() -> Result<()> {
+        for width in [32, 64, 96, 2880] {
+            let mut packed = synthetic(&[3, 7, width]);
+            for (index, scale) in packed.scales.iter_mut().enumerate() {
+                *scale = [0, 1, 116, 127, 138, 254][index % 6];
+            }
+            let input: Vec<f32> = (0..3 * width)
+                .map(|index| ((index % 19) as f32 - 9.0) * 0.125)
+                .collect();
+            let experts = [2usize, 0, 1];
+            let actual = packed.matmul_selected(&input, 3, &experts)?;
+            for (token, &expert) in experts.iter().enumerate() {
+                for row in 0..7 {
+                    let mut expected = 0.0f32;
+                    for column in 0..width {
+                        let block = (expert * 7 + row) * (width / 32) + column / 32;
+                        expected += input[token * width + column]
+                            * reference_value(packed.blocks(), packed.scales(), block, column % 32);
+                    }
+                    assert_eq!(actual[token * 7 + row].to_bits(), expected.to_bits());
+                }
+            }
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn block_dot_rejects_invalid_spans_without_panics() -> Result<()> {
+        let packed = synthetic(&[2, 7, 64]);
+        let input = vec![1.0; 64];
+        let mut output = vec![0.0; 7];
+        assert!(packed
+            .matmul_expert_row(2, 7, 64, &input, &mut output)
+            .is_err());
+        assert!(packed
+            .matmul_expert_row(0, 7, 63, &input[..63], &mut output)
+            .is_err());
+        assert!(packed
+            .matmul_expert_row(0, 7, 64, &input[..63], &mut output)
+            .is_err());
+        assert!(packed
+            .matmul_expert_row(0, 6, 64, &input, &mut output)
+            .is_err());
+        assert!(packed
+            .matmul_expert_row(1, usize::MAX, 64, &input, &mut [])
+            .is_err());
+        let mut truncated = packed.clone();
+        truncated.blocks.pop();
+        assert!(truncated.matmul_expert(1, &input, 1).is_err());
+        let mut truncated = packed;
+        truncated.scales.pop();
+        assert!(truncated.matmul_expert(1, &input, 1).is_err());
         Ok(())
     }
 
