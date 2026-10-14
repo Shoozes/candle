@@ -67,8 +67,9 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   absent and allowance closed. CUDA static storage is 15.05 GB; sampled whole-GPU
   peak is 16.72 GB. The outer empty-console-log lookup fails after completion;
   original lane receipts independently qualify the work. See CHARACTERIZATION.
-  Physical staged 8k/16k/32k and consumer qualification remain incomplete; the
-  16.99 GB 32k payload bound proves neither a physical ceiling nor route latency.
+  This short proof alone establishes no physical staged capacity. The 8k result
+  is recorded below; physical 16k/32k and consumer qualification remain incomplete.
+  The 16.99 GB 32k payload bound proves neither a physical ceiling nor route latency.
 - Local proof complete: CPU57/CUDA69 synthetic tests (one production test ignored
   per lane), strict CPU/CUDA library Clippy, CUDA example checks and the full
   native locked/offline gate pass. Summary Bank and 61-path GPT/315-path union
@@ -84,8 +85,8 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   Exact counts pass; sampled GPU 17.284 GB/Job 21.663 GB stay within frozen limits,
   registry is zero and all four owners are absent. Original receipts stay bound;
   allowance closed. Forward work of 637.218s exceeds both 90s/600s for this input.
-  Next bounded task: prepare model-free CUDA bottleneck attribution and consumer
-  workload admission, before a new reviewed finite model packet. Physical 16k/32k,
+  The local model-free attribution/repair is recorded below; consumer workload
+  admission precedes a new reviewed finite model packet. Physical 16k/32k,
   independent long-context numerics, generated/Harmony/coding and routes stay open.
   Current inventory is 71 GPT/325 union/28 shared paths. The current
   characterization helper remains fixed at eight prompt tokens. Every capacity
@@ -93,11 +94,29 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 - Delivery order remains Candle qualification, Edge native Responses qualification,
   then Symbio Add-SymbioNumber. Preserve Q8, GenEye `3fa7075e`, engine `0.154.0`
   and GPT-OSS disabled until qualified. Responses keeps90s; longer jobs use
-  WorkerRuntime600s. The owner selected guarded publication of memory/capacity
-  progress and these records. All model allowances are closed; no further inference
-  or consumer activation is authorized by publication. Validation timing
+  WorkerRuntime600s. Memory/capacity progress and these records are published at
+  `0994bfe4`; the guarded native gate and remote equality pass. All model allowances
+  are closed; no further inference or consumer activation is authorized by
+  publication. Validation timing
   attribution remains open after memory repair;
   its 32.105ms includes pending GPU work and identifies no isolated bottleneck.
+- Review/recheck disposition (2026-10-14, `0994bfe4`): prior absolute/consumed-path,
+  executable-admission and owner-identity fixes remain closed; original short/8k
+  proof bytes and released-owner checks match. No new runtime defect is found.
+  Scoped cleanup adds relative-path admission regression coverage and reconciles
+  published versus pending state. The verified coordinated Work request then
+  selects final-token-only output-head execution on CPU/CUDA, with frozen authored
+  measurements and exact chunk/single replay. See [PROFILING](../gpt-oss/PROFILING.md#model-free-attribution-at-0994bfe4-2026-10-14).
+  CPU synthetic 128-token median improves; whole-prefill CUDA timings are mixed.
+  A separately frozen full-vocabulary head component reduces 128 calls to one
+  with exact full-row bits and lower component time. Neither establishes a
+  production performance or route claim.
+  Nested validation time is included in forward time; its internal split remains
+  unmeasured. Next: obtain an explicitly authorized clean checkpoint, then bind
+  CPU/CUDA short numerical/replay binaries and a separately approved finite
+  packet using the existing six-segment contract before further performance work.
+  Decode latency, 16k/32k, generated semantics and actual route proof remain open.
+  No current allowance permits model work, checkpoint commits/push or activation.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -507,4 +526,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-capacity-closeout | change=closed source-bound8k progress and retained later capacity and route holds
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-prefill-review | change=rechecked published fixes and scoped model-free prefill attribution

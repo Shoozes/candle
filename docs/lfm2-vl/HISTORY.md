@@ -2,6 +2,12 @@
 
 Dated entries are historical. Current state: `STATUS.md`; active work: `TODO.md`. New maintained-model work: [2026-10-12](MAINTAINED_MODELS.md).
 
+## 2026-10-14 - GPT-OSS review and prefill
+
+Prior admission/owner fixes rechecked at `0994bfe4`; relative-path coverage and
+published-state wording repaired. Model-free output-head work and remaining
+production gates: [PROFILING](../gpt-oss/PROFILING.md#model-free-attribution-at-0994bfe4-2026-10-14).
+
 ## 2026-10-14 - GPT-OSS 8k
 
 [Bounded proof](../gpt-oss/CAPACITY.md); 32k/routes held.
@@ -3215,4 +3221,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models | change=implemented and verified scoped model improvements
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-prefill-review | change=rechecked published fixes and scoped model-free prefill attribution

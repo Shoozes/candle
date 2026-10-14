@@ -129,6 +129,35 @@ fn input_admission_is_model_free_and_rejects_changed_work_and_wire_bytes() -> Re
 }
 
 #[test]
+fn relative_paths_are_rejected_before_token_or_model_io() -> Result<()> {
+    let fixture = OwnedFixture::new()?;
+    let path = fixture.input()?;
+    let (mut input, _, _) = read_input(&path)?;
+    let model_path = input.model.path.clone();
+    for relative_model in [true, false] {
+        input.model.path = if relative_model {
+            PathBuf::from("relative-model.gguf")
+        } else {
+            model_path.clone()
+        };
+        input.token_file.path = if relative_model {
+            fixture.0.join("absent-tokens.u32")
+        } else {
+            PathBuf::from("relative-tokens.u32")
+        };
+        fs::write(
+            &path,
+            serde_json::to_vec(&input).map_err(candle::Error::wrap)?,
+        )?;
+        let error = read_input(&path).expect_err("relative paths must fail admission");
+        assert!(error
+            .to_string()
+            .contains("explicit absolute model and token paths"));
+    }
+    Ok(())
+}
+
+#[test]
 fn frozen_trace_has_exact_prefill_decode_positions_and_no_sampling() -> Result<()> {
     let tokens: Vec<u32> = (0..TOTAL as u32).collect();
     let mut p = Progress::default();
@@ -173,11 +202,19 @@ fn tiny_model() -> Result<GptOssModel> {
 }
 
 fn tiny_weights(window: usize) -> Result<(GptOssConfig, GptOssWeights)> {
+    tiny_weights_with_vocab(window, 8)
+}
+
+fn tiny_weights_with_vocab(
+    window: usize,
+    vocab_size: usize,
+) -> Result<(GptOssConfig, GptOssWeights)> {
     let mut config = GptOssConfig::from_json_str(
         r#"{"hidden_size":32,"intermediate_size":32,"num_hidden_layers":2,
         "num_attention_heads":4,"num_key_value_heads":2,"head_dim":8,"num_experts":2,"experts_per_token":2,"vocab_size":8,"sliding_window":3}"#,
     )?;
     config.sliding_window = window;
+    config.vocab_size = vocab_size;
     let linear = |rows, cols| {
         DenseLinear::new(
             rows,
@@ -207,14 +244,87 @@ fn tiny_weights(window: usize) -> Result<(GptOssConfig, GptOssWeights)> {
     }
     let weights = GptOssWeights::new(
         &config,
-        (0..8 * 32)
+        (0..vocab_size * 32)
             .map(|i| ((i % 7) as f32 - 3.) * 0.03125)
             .collect(),
         layers,
         vec![1.; 32],
-        linear(8, 32)?,
+        linear(vocab_size, 32)?,
     )?;
     Ok((config, weights))
+}
+
+// Frozen authored workload: no files, tokenizer, retained weights or sampling.
+fn profile_synthetic_prefill(
+    backend: &str,
+    mut run: impl FnMut(&[u32]) -> Result<Vec<f32>>,
+) -> Result<()> {
+    let tokens: Vec<u32> = (0..128).map(|i| i % 8).collect();
+    for length in [1, 8, 128] {
+        let mut expected = None;
+        let mut samples = Vec::new();
+        for iteration in 0..9 {
+            let started = std::time::Instant::now();
+            let logits = run(&tokens[..length])?;
+            let elapsed_ms = started.elapsed().as_secs_f64() * 1000.;
+            let bits: Vec<_> = logits.iter().map(|value| value.to_bits()).collect();
+            if let Some(expected) = &expected {
+                assert_eq!(&bits, expected);
+            } else {
+                expected = Some(bits);
+            }
+            std::hint::black_box(logits);
+            if iteration >= 2 {
+                samples.push(elapsed_ms);
+            }
+        }
+        println!(
+            "synthetic-prefill {}",
+            serde_json::json!({"backend": backend, "tokens": length,
+                "vocab": 8192, "hidden": 32, "layers": 2,
+                "warmups": 2, "samples_ms": samples})
+        );
+    }
+    Ok(())
+}
+
+#[test]
+#[ignore = "explicit synthetic release profiling; never loads retained model files"]
+fn profile_cpu_prefill_head_work() -> Result<()> {
+    let (config, weights) = tiny_weights_with_vocab(128, 8192)?;
+    let mut model = GptOssModel::new(config, weights)?;
+    let cancel = GptOssCancellationToken::new();
+    profile_synthetic_prefill("cpu", |tokens| {
+        model.reset_cache();
+        model.prefill(tokens, &cancel)
+    })
+}
+
+#[cfg(feature = "cuda")]
+#[test]
+#[ignore = "explicit synthetic release profiling; never loads retained model files"]
+fn profile_cuda_prefill_head_work() -> Result<()> {
+    use candle_transformers::models::gpt_oss::{
+        GptOssCudaConfig, GptOssCudaModel, GptOssResourceLimits,
+    };
+    let (config, weights) = tiny_weights_with_vocab(128, 8192)?;
+    let limits = GptOssResourceLimits {
+        max_sequence_tokens: 256,
+        max_cache_bytes: 8 * 1024 * 1024,
+        max_total_device_bytes: 8 * 1024 * 1024,
+    };
+    let cuda = GptOssCudaConfig::new(0, candle::DType::F32, 8 * 1024 * 1024, limits)
+        .map_err(candle::Error::wrap)?;
+    let mut model = GptOssCudaModel::new(config, weights, cuda).map_err(candle::Error::wrap)?;
+    let cancel = GptOssCancellationToken::new();
+    profile_synthetic_prefill("cuda", |tokens| {
+        model.reset_cache().map_err(candle::Error::wrap)?;
+        model
+            .prefill(tokens, &cancel)
+            .map_err(candle::Error::wrap)?
+            .flatten_all()?
+            .to_vec1::<f32>()
+    })
 }
 
 #[test]
@@ -230,7 +340,17 @@ fn cpu_chunk128_and_single_tokens_agree_across_page_and_window_boundaries() -> R
         for &token in chunk {
             expected = singles.decode(token, &cancel)?;
         }
-        assert_eq!(actual, expected);
+        assert_eq!(actual.len(), chunked.config().vocab_size);
+        assert_eq!(
+            actual
+                .iter()
+                .map(|value| value.to_bits())
+                .collect::<Vec<_>>(),
+            expected
+                .iter()
+                .map(|value| value.to_bits())
+                .collect::<Vec<_>>()
+        );
         assert_eq!(chunked.resource_usage()?, singles.resource_usage()?);
     }
     for &token in &tokens[256..] {
@@ -276,7 +396,17 @@ fn cuda_chunk128_preserves_causal_window_and_cancelled_snapshot() -> Result<()> 
                 .flatten_all()?
                 .to_vec1::<f32>()?;
         }
-        assert_eq!(actual, expected);
+        assert_eq!(actual.len(), chunked.config().vocab_size);
+        assert_eq!(
+            actual
+                .iter()
+                .map(|value| value.to_bits())
+                .collect::<Vec<_>>(),
+            expected
+                .iter()
+                .map(|value| value.to_bits())
+                .collect::<Vec<_>>()
+        );
         let reference = cpu.prefill(chunk, &cancel)?;
         assert!(actual
             .iter()

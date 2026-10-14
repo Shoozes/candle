@@ -64,6 +64,99 @@ need not equal the sum because registry work and progress I/O are also timed.
 These tolerances address reported-number rounding, not performance acceptance.
 Failed/forced-stop records may remain partial; they cannot pass completion.
 
+## Model-free attribution at `0994bfe4`, 2026-10-14
+
+The immutable [8k observation](CAPACITY.md#observed-8k-result-2026-10-14)
+contains 637.218s of inclusive forward time: 462.014s prefill and 175.204s
+decode. Its 0.970s/27.475s prefill/decode validation intervals are nested
+inside those totals, not another 28.445s of wall time. Load, forward and unload
+account for 671.442s of the 672.257s model total; the remaining 0.815s includes
+other runner/registry/progress work. Subtracting validation from forward does
+not isolate kernel time, because other synchronous operations remain.
+
+`GptOssSession::prefill_profiled` starts after initial session admission and
+wraps the complete backend call. CUDA starts its validation clock before
+`synchronize`, then flattens/downloads the full final vocabulary and scans every
+value for finiteness. The clock stops before final cancellation and cache commit.
+Thus the 28.445s cannot be attributed separately to waiting, transfer or host scan
+from these receipts. No validation or full-vocabulary check is removed.
+
+Source inspection identifies discarded work: both backends normalize/project
+every input token, then expose only the final row. The local repair projects only
+the last token of each call. Every layer still runs for every token; KV updates,
+F32/MXFP4 arithmetic, cancellation checkpoints, admission and atomic cache commit
+retain their ordering. Single-token decode is unchanged. For the frozen 8k call
+layout this would reduce head evaluations from 8,192 to 2,096, avoiding 6,096
+discarded projections; this count is derived from source, not a new model run.
+Unused intermediate output rows are no longer evaluated or checked. The complete
+returned row retains the original finiteness check and final-logit contract.
+
+An explicit ignored test in the capacity example supplies authored tensors only:
+two 32-wide layers, 8,192 vocabulary rows, losslessly representable dense tables,
+packed zero MXFP4 experts, a 128-token sliding window and `i mod 8` tokens.
+Before the repair, sampling was frozen at lengths 1/8/128, two warmups and seven
+samples per length/device, CPU first, release builds, 8 GiB/900-second native Jobs.
+Timings include reset, prefill and CUDA caller readback; construction is excluded.
+The same benchmark is used afterward. It is an output-head-sensitive synthetic
+workload, not a representative production profile or a retained-model allowance.
+The source/sample bindings and raw measurements are retained once under
+`artifacts/gpt-oss/memory-32k-20261013/prefill-attribution-0994bfe4/`.
+
+| Authored workload | CPU before / after median | CUDA before / after median |
+| --- | ---: | ---: |
+| 1 token | 0.0909 / 0.0905 ms | 1.1029 / 1.1522 ms |
+| 8 tokens | 0.6919 / 0.1581 ms | 9.0617 / 8.8564 ms |
+| 128 tokens | 11.9929 / 1.8149 ms | 147.4967 / 151.3265 ms |
+
+The CPU synthetic 128-token median decreases by 84.87%. CUDA results are mixed;
+the 128-token median is 2.60% higher, so no CUDA latency improvement is established.
+These are seven samples from one process per device/revision in fixed order,
+without randomized interleaving or a statistical speed guarantee. No measurements
+were repeated to select a favorable result. Both paths eliminate unused head
+evaluations; the CPU timing benefit does not prove CUDA or production benefit.
+
+The mixed CUDA result prompted a different, frozen component diagnostic rather
+than another run of the same toy case. It uses the native lossless BF16-storage /
+F32 head with 201,088 authored vocabulary rows and hidden width 32. Initial F32
+weights are 25,739,264 bytes; selected BF16 storage is 12,869,632 bytes, with
+component tensor payload below 32 MiB on device and 128 MiB on host, excluding
+driver/context and build memory. The native Job remains 8 GiB/900 seconds.
+Two warmup pairs precede eight measured pairs, alternating baseline/candidate
+order. All twenty evaluations return the same complete finite row bit-for-bit
+(`d71c06ed…2ede5fc`); actual norm/head calls are 128 versus one per evaluation.
+
+| Full-vocabulary head stage, median ms | All-token heads | Final-token head |
+| --- | ---: | ---: |
+| Before final synchronization | 2.20400 | 0.04155 |
+| Explicit synchronization | 1.58565 | 0.02650 |
+| Full-row readback | 0.40075 | 0.33510 |
+| Finite scan | 0.07410 | 0.08470 |
+| Inclusive component total | 4.23115 | 0.48635 |
+
+This isolates a computational benefit in the head component while preserving
+full-row validation. The first interval includes host dispatch/allocation and
+any implicit backend waits; it is not isolated CPU or kernel time. Stage medians
+must not be summed as a total median. After the repair, readback/finite scanning
+dominate this component. The earlier two-layer toy still executes 256 layer
+passes and unchanged KV/router/expert operations. This different component
+cannot be subtracted from that toy or the retained production run to attribute
+their remainder or explain the observed 2.60% change causally. Full CUDA prefill
+improvement remains unproven. The plans, test binary/source identities, full-row
+digest, raw stages and Job/release proof share the same retained attribution root.
+
+Production improvement, validation's internal split and further prefill/decode
+bottlenecks remain unmeasured at the candidate. The original decode phase alone
+exceeds Responses 90s, so this prefill repair cannot qualify that route. A fresh
+clean source/binary-bound packet and finite approval are required before model
+measurements. Responses 90s, WorkerRuntime 600s, Q8/Codex pins and disabled GPT-OSS
+remain fixed; Edge owns actual workload admission and route qualification.
+The concrete next native prerequisite is a separately authorized clean checkpoint
+and fresh CPU/CUDA release packet using the existing six-segment short numerical/
+replay characterization contract (at most two loads, 44 forwards, 74 processed
+steps and 32 sampled outputs, CPU first). That packet still needs its own reviewed
+finite execution approval. It cannot qualify 32k/2k, deadlines or consumer routes;
+the old short and 8k packets remain closed and will not be retried.
+
 ## Native launch and release
 
 `scripts/gpt-oss/run-session-profile.ps1` requires a reviewed packet binding
@@ -323,4 +416,4 @@ requesting its finite allowance. No consumer edits, model runs or release tags
 belong to this publication.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-short-qualification | change=linked current common-session measurements while preserving historical scope
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-prefill-review | change=rechecked published fixes and scoped model-free prefill attribution

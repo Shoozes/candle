@@ -2,8 +2,11 @@
 
 ## Independent GPT-OSS memory/capacity closeout, 2026-10-14
 
-Incoming published baseline is `48d814859205abdc6640088815ee99a78d531f35`; the approved
-19-file checkpoint is local `3db05cd8`, tree `e60ff6b7…6c54fa`. The selected
+Current published baseline is `0994bfe4a09a0f8e2a964fdf033997b5268b7c98`,
+tree `49ea3192f7b7a4ef564fb40c8956f88cfe8e1588`; guarded publication and the
+native gate completed with matching local/remote `main`. The incoming baseline
+was `48d814859205abdc6640088815ee99a78d531f35`; the approved
+19-file checkpoint is `3db05cd8`, tree `e60ff6b7…6c54fa`. The selected
 32k repair uses lossless CUDA BF16 embedding/head storage with F32
 activations, immutable KV pages and physical sliding-window eviction, batched
 GQA and truthful backend-specific admission. CPU 57 and CUDA-enabled 69
@@ -11,8 +14,8 @@ model-free fixtures pass; one production test stays ignored in each lane.
 Strict CPU/CUDA library Clippy, example checks and the complete native gate pass.
 Summary Bank and manifest/overlay checks pass (315 union, 28 shared paths). Expanded
 test Clippy retains nine pre-existing GGUF/MXFP4 style lints; CUDA linking retains
-nonfatal `LNK4098`. Active work adds the distinct fixed-token capacity CLI/helpers,
-synthetic and packet controls, docs and routes to the short-proof records.
+nonfatal `LNK4098`. The published batch includes the distinct fixed-token capacity
+CLI/helpers, synthetic and packet controls, docs/routes and short-proof records.
 [GPT STATUS](../gpt-oss/STATUS.md) and [MEMORY](../gpt-oss/MEMORY.md) own details.
 Separately approved packet `c5c1fe4e…f8face4f` completes CPU then CUDA: two loads,
 44 forwards/74 steps/32 outputs, no warmup/retry. Oracle, exact replay, cold IDs,
@@ -20,7 +23,7 @@ actual DLLs, Jobs and registry release pass; all six owners are absent. CUDA sta
 storage is 15,053,650,176 bytes and sampled GPU peak is 16,724,787,200, below 20e9.
 The outer empty-log reporting lookup fails after model completion; original
 structured receipts independently qualify the short work and retain that limit.
-No publication or consumer change occurred; the allowance is closed.
+That short proof made no consumer change; its allowance is closed.
 
 The 8k CLI and isolated preparation/launch/watcher helpers are implemented;
 CPU6/CUDA7 synthetic controls include chunk128/window/page and cancellation
@@ -31,13 +34,31 @@ Checkpoints `3b7868b3`/`e3ef7034` are saved. Separately approved final packet
 Sampled GPU peak is 17,283,678,208 bytes; Job peak is 21,662,621,696. Native entry/Job,
 host verification, DLLs, registry zero and all four owner releases pass; allowance
 closed. [CAPACITY](../gpt-oss/CAPACITY.md) binds original proof and limitations.
-Forward work is 637.218s, exceeding both 90s/600s for this input. Exact next task:
-model-free attribution and workload admission preparation, then separately
-approved further proof. The owner selected guarded publication of verified
-memory/capacity progress and these records; canonical `last-push.json` binds delivery.
+Forward work is 637.218s, exceeding both 90s/600s for this input. The local
+model-free attribution/repair is described below; further model proof remains
+separately approved. Verified memory/capacity progress and these records are
+published; canonical `last-push.json` binds delivery at `0994bfe4`.
 Physical 16k/32k, long-context numerics, Harmony/coding and consumer routes remain open;
 WSL replay is unrun. LFM/d1,
 Q8 defaults, GenEye pin and all consumer holds remain unchanged.
+
+The current review rechecks original receipt bytes and prior admission/owner
+repairs without model work; no new runtime defect is found. Scoped cleanup adds
+relative-path admission regression coverage and corrects stale pending-publication
+and 8k wording. Verified Edge/Symbio human Work then selects model-free attribution
+and a narrow repair: compute only the returned prefill token's output head on
+CPU/CUDA. All tokens still update KV; final full-vocabulary validation and
+transaction/cancellation ordering are preserved. Validation time is nested in
+forward time and cannot be counted as extra removable wall time. Frozen authored
+measurements, scope and limitations live in [PROFILING](../gpt-oss/PROFILING.md#model-free-attribution-at-0994bfe4-2026-10-14).
+Active files are CPU/CUDA forwards, timing API docs, capacity tests, GPT contracts/
+manifest/STATUS, this STATUS/TODO/history and the bank description. The complete
+native gate passes, with CPU57/CUDA69 fixtures, capacity CPU7/CUDA8 and strict
+CPU/CUDA library/example Clippy; source hashes and limitations are in the
+attribution root's `closeout.json`. Exact next task is an authorized clean
+checkpoint and fresh CPU/CUDA short numerical/replay packet, then separately
+approved model work and consumer workload admission. No new
+retained-model work, commit, push or consumer activation is authorized here.
 
 ## Independent GPT-OSS work, 2026-10-13
 
@@ -1104,4 +1125,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-capacity-closeout | change=closed source-bound8k progress and retained later capacity and route holds
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-prefill-review | change=rechecked published fixes and scoped model-free prefill attribution

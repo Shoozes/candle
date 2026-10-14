@@ -47,9 +47,10 @@ pub enum GptOssLogits {
     Cuda(candle::Tensor),
 }
 
-/// Successful forward wall time, excluding caller readback. CUDA validation
-/// includes waiting for outstanding device work, transfer and finite checking;
-/// it is not an isolated DMA or kernel timing.
+/// Successful whole-forward wall time, excluding initial session admission and
+/// caller readback. CUDA final validation is nested within `forward_ms`, never
+/// additive: it includes outstanding device work, transfer and finite checking,
+/// not isolated DMA or kernel time. Neither field includes failed calls.
 #[derive(Debug, Clone, Copy)]
 pub struct GptOssForwardTimings {
     pub forward_ms: f64,

@@ -8,6 +8,11 @@ promote GPT-OSS to the product default.
 
 ## Current state
 
+- The local model-free prefill repair computes the full output vocabulary only
+  for the last token, preserving per-token KV work and final validation. Frozen
+  synthetic profiling and exact chunk/single replay do not qualify production
+  latency; [PROFILING.md](PROFILING.md) owns timing boundaries and measurements.
+
 - Common-session characterization now captures fixed-prefix numerical rows,
   independent comparisons and reset/replay, with bounded observer Jobs, actual
   loaded-DLL proof and clean source/build admission. Short F32 qualification
@@ -237,4 +242,4 @@ remain outside this opt-in receipt.
 
 ---
 
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-capacity-closeout | change=closed source-bound8k progress and retained later capacity and route holds
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-prefill-review | change=rechecked published fixes and scoped model-free prefill attribution

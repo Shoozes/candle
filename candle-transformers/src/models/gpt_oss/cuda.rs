@@ -621,7 +621,7 @@ impl GptOssCudaModel {
         self.admit(input_ids.len())?;
         let mut working = self.cache.clone();
         let mut logits = None;
-        for &input_id in input_ids {
+        for (token_index, &input_id) in input_ids.iter().enumerate() {
             cancellation_checkpoint(cancellation)?;
             let token = Tensor::from_slice(&[input_id], (1,), &self.device)?;
             let mut hidden = self
@@ -643,9 +643,12 @@ impl GptOssCudaModel {
                 )?;
                 cancellation_checkpoint(cancellation)?;
             }
-            let hidden =
-                ops::rms_norm(&hidden, &self.weights.final_norm, self.config.rms_norm_eps)?;
-            logits = Some(self.weights.lm_head.forward(&hidden)?);
+            // Intermediate output projections cannot affect the retained KV state.
+            if token_index + 1 == input_ids.len() {
+                let hidden =
+                    ops::rms_norm(&hidden, &self.weights.final_norm, self.config.rms_norm_eps)?;
+                logits = Some(self.weights.lm_head.forward(&hidden)?);
+            }
             working.tokens = working
                 .tokens
                 .checked_add(1)
@@ -1297,6 +1300,115 @@ mod tests {
         include_bytes!("../../../../tests/fixtures/gpt_oss_task3_two_layer/oracle.json");
     const TWO_LAYER_ORACLE_SHA256: &str =
         "0530081353cc7268d796ae070c4168ec4e6bb036f62d54670b975a43556bc173";
+
+    #[test]
+    #[ignore = "explicit authored full-vocabulary projection diagnostic, no model loading"]
+    fn profile_full_vocabulary_prefill_projection() -> TestResult {
+        const VOCAB: usize = 201_088;
+        const WIDTH: usize = 32;
+        const TOKENS: usize = 128;
+        let elements = VOCAB
+            .checked_mul(WIDTH)
+            .expect("fixed diagnostic dimensions");
+        assert!(elements * F32_BYTES <= 32 * 1024 * 1024);
+        let source = DenseLinear::new(
+            VOCAB,
+            WIDTH,
+            (0..elements)
+                .map(|i| ((i % 17) as f32 - 8.) * 0.015625)
+                .collect(),
+            None,
+        )?;
+        let device = Device::new_cuda(0)?;
+        let head = CudaLinear::from_cpu_table(&source, &device)?;
+        assert_eq!(head.weight.dtype(), DType::BF16);
+        drop(source);
+        let norm = Tensor::ones(WIDTH, DType::F32, &device)?;
+        let inputs = (0..TOKENS)
+            .map(|token| {
+                Tensor::from_vec(
+                    (0..WIDTH)
+                        .map(|i| (((i + token) % 13) as f32 - 6.) * 0.03125)
+                        .collect::<Vec<_>>(),
+                    (1, WIDTH),
+                    &device,
+                )
+            })
+            .collect::<candle::Result<Vec<_>>>()?;
+        device.synchronize()?;
+        let measure = |all_tokens: bool| -> GptOssCudaResult<(Vec<u32>, [f64; 5], usize)> {
+            let total = Instant::now();
+            let mut logits = None;
+            let mut head_calls = 0;
+            for (index, hidden) in inputs.iter().enumerate() {
+                if all_tokens || index + 1 == inputs.len() {
+                    let normalized = ops::rms_norm(hidden, &norm, 1e-5)?;
+                    logits = Some(head.forward(&normalized)?);
+                    head_calls += 1;
+                }
+            }
+            let before_sync = total.elapsed();
+            let stage = Instant::now();
+            device.synchronize()?;
+            let synchronize = stage.elapsed();
+            let stage = Instant::now();
+            let values = logits
+                .expect("fixed nonempty diagnostic span")
+                .flatten_all()?
+                .to_vec1::<f32>()?;
+            let readback = stage.elapsed();
+            let stage = Instant::now();
+            let nonfinite = values.iter().any(|value| !value.is_finite());
+            let finite_scan = stage.elapsed();
+            let total = total.elapsed();
+            assert!(!nonfinite);
+            assert_eq!(values.len(), VOCAB);
+            let bits = values.iter().map(|value| value.to_bits()).collect();
+            Ok((
+                bits,
+                [before_sync, synchronize, readback, finite_scan, total]
+                    .map(|duration| duration.as_secs_f64() * 1000.),
+                head_calls,
+            ))
+        };
+        let mut expected = None;
+        let mut baseline = Vec::new();
+        let mut candidate = Vec::new();
+        for iteration in 0..10 {
+            for all_tokens in if iteration % 2 == 0 {
+                [true, false]
+            } else {
+                [false, true]
+            } {
+                let (bits, stages, calls) = measure(all_tokens)?;
+                assert_eq!(calls, if all_tokens { TOKENS } else { 1 });
+                if let Some(expected) = &expected {
+                    assert_eq!(&bits, expected);
+                } else {
+                    expected = Some(bits);
+                }
+                if iteration >= 2 {
+                    if all_tokens {
+                        &mut baseline
+                    } else {
+                        &mut candidate
+                    }
+                    .push(stages);
+                }
+            }
+        }
+        println!(
+            "synthetic-projection {}",
+            serde_json::json!({"vocab": VOCAB, "hidden": WIDTH, "tokens": TOKENS,
+                "warmup_pairs": 2, "measured_pairs": 8,
+                "stages": ["before_final_sync", "synchronize", "full_readback", "finite_scan", "total"],
+                "baseline_head_calls": TOKENS, "candidate_head_calls": 1,
+                "baseline_ms": baseline, "candidate_ms": candidate,
+                "final_row_sha256": format!("{:x}", Sha256::digest(expected.expect("measured row")
+                    .iter().flat_map(|bits| bits.to_le_bytes()).collect::<Vec<_>>()))})
+        );
+        Ok(())
+    }
 
     #[derive(Debug, Deserialize)]
     struct Oracle {

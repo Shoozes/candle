@@ -564,7 +564,7 @@ impl GptOssModel {
             cancellation.checkpoint()?;
         }
         let mut logits = Vec::new();
-        for &token in input_ids {
+        for (token_index, &token) in input_ids.iter().enumerate() {
             if let Some(cancellation) = cancellation {
                 cancellation.checkpoint()?;
             }
@@ -588,8 +588,11 @@ impl GptOssModel {
             for (layer_index, layer) in weights.layers.iter().enumerate() {
                 hidden = Self::forward_layer(config, layer, layer_index, hidden, cache, position)?;
             }
-            let hidden = rms_norm(&hidden, &weights.final_norm, config.rms_norm_eps)?;
-            logits = weights.lm_head.forward(&hidden)?;
+            // Only the last token's logits are exposed; all tokens still update KV.
+            if token_index + 1 == input_ids.len() {
+                let hidden = rms_norm(&hidden, &weights.final_norm, config.rms_norm_eps)?;
+                logits = weights.lm_head.forward(&hidden)?;
+            }
             cache.tokens = cache
                 .tokens
                 .checked_add(1)
@@ -1782,8 +1785,8 @@ mod tests {
         candidate.weights.final_norm[0] = f32::MAX;
         candidate.weights.lm_head.weights[0] = f32::MAX;
         let error = candidate
-            .forward(&[2])
-            .expect_err("finite extreme norm must fail after cache append");
+            .forward(&[2, 3])
+            .expect_err("final projection must fail after all prefill cache appends");
         assert!(error.to_string().contains("not finite"), "{error}");
         assert_eq!(candidate.cache, before);
         for (layer, (keys_capacity, values_capacity)) in
@@ -1795,11 +1798,18 @@ mod tests {
 
         candidate.weights.final_norm[0] = original_norm;
         candidate.weights.lm_head.weights[0] = original_lm_head;
-        let actual = candidate.forward(&[2])?;
-        let expected = reference.forward(&[2])?;
-        for (actual, expected) in actual.iter().zip(expected.iter()) {
-            assert!((actual - expected).abs() <= 1e-5, "{actual} != {expected}");
-        }
+        let actual = candidate.forward(&[2, 3])?;
+        let expected = reference.forward(&[2, 3])?;
+        assert_eq!(
+            actual
+                .iter()
+                .map(|value| value.to_bits())
+                .collect::<Vec<_>>(),
+            expected
+                .iter()
+                .map(|value| value.to_bits())
+                .collect::<Vec<_>>()
+        );
         Ok(())
     }
 }

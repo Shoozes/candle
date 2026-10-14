@@ -46,8 +46,12 @@ CPU/CUDA tests compare 128-token chunks with single-token execution across
 64-row pages and the 128-token sliding window, subsequent decode and cancelled
 snapshot recovery. CUDA chunk/single results are bit-exact; CPU/CUDA component
 comparison retains absolute `1e-4`. These fixtures are not retained-model stress.
-The current local fixtures pass six CPU and seven CUDA tests; 24 PowerShell
-controls pass. Both release drafts and model-free input startup Jobs pass and
+The original preparation fixtures pass six CPU and seven CUDA tests; 24 PowerShell
+controls pass. The subsequent review adds explicit relative-path refusal before
+token/model I/O. Local prefill projection work and synthetic profiling live in
+[PROFILING.md](PROFILING.md#model-free-attribution-at-0994bfe4-2026-10-14);
+they do not requalify this source-bound result.
+Both release drafts and model-free input startup Jobs pass and
 release their owners. The draft packet remains non-executable; clean-source
 binding is checkpointed at `3b7868b3`/`e3ef7034`. The final source-bound packet
 and its distinct execution allowance are complete; draft packets remain blocked.
@@ -124,4 +128,4 @@ short allowance is allowed. Original incomplete receipts remain unchanged.
 Q8 defaults, GenEye `3fa7075e`, Codex `0.154.0` and disabled GPT-OSS remain fixed.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-capacity-closeout | change=closed exact fixed-token stress and retained memory release and route limits
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-prefill-review | change=rechecked published fixes and scoped model-free prefill attribution

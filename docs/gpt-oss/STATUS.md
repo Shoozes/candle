@@ -2,21 +2,48 @@
 
 ## Memory and capacity closeout, 2026-10-14
 
-The incoming published baseline is `48d814859205abdc6640088815ee99a78d531f35`.
-The approved 19-file memory repair is checkpointed locally at
+The current published baseline is `0994bfe4a09a0f8e2a964fdf033997b5268b7c98`,
+tree `49ea3192f7b7a4ef564fb40c8956f88cfe8e1588`. Guarded publication completed
+with a green native gate and matching local/remote `main`. The incoming baseline
+was `48d814859205abdc6640088815ee99a78d531f35`.
+The approved 19-file memory repair is saved at
 `3db05cd8eedb51d6b7777d2eed705ec481e0420b`, tree
 `e60ff6b7e184ab47f79bbaa81395fb2dec6c54fa`. Its separately approved short
 CPU/CUDA proof is complete. Capacity checkpoints are `3b7868b3`/`e3ef7034`.
-The owner selected guarded publication of this three-commit progress and its
-current records/routes closeout. The canonical `artifacts/publication/last-push.json`
+The three progress commits and their records/routes closeout are published.
+The canonical `artifacts/publication/last-push.json`
 binds actual delivered commit/tree, native gate and remote equality; executed
 proof remains bound to its original source. No release or activation is included.
 [MEMORY.md](MEMORY.md) owns the API, architecture and unqualified capacity bound.
 
+The review at `0994bfe4` rechecks cache rollback/admission, lossless storage,
+capacity dispatch and original receipt identities without model work. Prior
+path, executable and owner fixes remain closed; no new runtime defect is found.
+Scoped cleanup adds explicit relative-model/token-path rejection controls before
+file I/O and reconciles current STATUS/TODO wording. The subsequently verified
+Edge/Symbio human Work request selects model-free prefill/validation attribution.
+The local candidate skips discarded intermediate final-norm/head work on CPU/CUDA,
+preserving final full-vocabulary F32 logits, per-token KV work and cancellation.
+[PROFILING](PROFILING.md#model-free-attribution-at-0994bfe4-2026-10-14) owns the
+frozen synthetic measurements and inclusive/nested timing analysis. Production
+speed, validation's internal split and route readiness are not established.
+The authored 128-token CPU median falls 11.9929 to 1.8149ms; CUDA rises 147.4967
+to 151.3265ms, so there is no whole-prefill CUDA improvement. A separately frozen
+201,088-row head-only diagnostic measures 4.23115 to 0.48635ms with exact full-row
+bits and 128-to-one call counts; it does not resolve whole-model latency.
+Active files are CPU/CUDA forwards, timing API docs, capacity tests, profiling and
+capacity contracts, manifest, GPT/LFM STATUS/TODO/history and the bank description.
+Candidate CPU57/CUDA69 fixtures and capacity CPU7/CUDA8 controls pass; production
+tests and the opt-in synthetic benchmarks stay ignored in ordinary gates. Strict
+CPU/CUDA library/example Clippy and CUDA example checks pass. The complete native
+gate passes; its result and source hashes are retained
+in the same attribution root's `closeout.json`.
+No commit, push, retained-model inference or consumer activation is authorized.
+
 Lossless BF16 embedding/head storage keeps F32 activations and MXFP4 experts.
 Immutable pages preserve committed cache state while physically evicting old
 sliding rows. Batched GQA removes expanded query-head K/V products. CPU reference
-behavior and its legacy accounting helpers remain unchanged. CUDA admission
+arithmetic and its legacy accounting helpers remain unchanged. CUDA admission
 counts actual selected static storage and bounds candidate/snapshot/tail work.
 
 CPU model-free fixtures pass 57 tests, with one production test ignored. The
@@ -68,8 +95,9 @@ numerics, Harmony/generated/coding and consumer routes remain unqualified.
 Current inventory is 71 GPT/325 union/28 shared paths.
 CPU/CUDA release drafts and both model-free input startup Jobs pass; draft
 packets remain non-executable. The final stress allowance is closed, and original
-receipts are unchanged. Exact next task: model-free bottleneck attribution and
-consumer workload admission preparation; further model work needs a new packet.
+receipts are unchanged. The selected model-free prefill-head repair is local;
+exact next task is its clean source/binary-bound parity/performance packet and
+consumer workload admission preparation. Further model work needs new approval.
 The eight-token characterization helper cannot be relabeled as a capacity runner.
 This short allowance is closed; no prior allowance is reused. Q8, GenEye `3fa7075e`, Codex
 `0.154.0`, Responses 90s and WorkerRuntime 600s remain fixed.
@@ -607,4 +635,4 @@ Task 4 text-plus-MMProj/adapter work keeps its own prerequisites and priority.
 
 ---
 
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-capacity-closeout | change=closed source-bound8k progress and retained later capacity and route holds
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-prefill-review | change=rechecked published fixes and scoped model-free prefill attribution
