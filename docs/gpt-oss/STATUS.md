@@ -31,14 +31,27 @@ The authored 128-token CPU median falls 11.9929 to 1.8149ms; CUDA rises 147.4967
 to 151.3265ms, so there is no whole-prefill CUDA improvement. A separately frozen
 201,088-row head-only diagnostic measures 4.23115 to 0.48635ms with exact full-row
 bits and 128-to-one call counts; it does not resolve whole-model latency.
-Active files are CPU/CUDA forwards, timing API docs, capacity tests, profiling and
-capacity contracts, manifest, GPT/LFM STATUS/TODO/history and the bank description.
+The twelve reviewed files are locally checkpointed at `70a24856`, tree
+`87e3a45c4e39eaa8725ff514fcf4c312fa80ef40`; publication remains at `0994bfe4`.
 Candidate CPU57/CUDA69 fixtures and capacity CPU7/CUDA8 controls pass; production
 tests and the opt-in synthetic benchmarks stay ignored in ordinary gates. Strict
 CPU/CUDA library/example Clippy and CUDA example checks pass. The complete native
 gate passes; its result and source hashes are retained
-in the same attribution root's `closeout.json`.
-No commit, push, retained-model inference or consumer activation is authorized.
+in the same attribution root's `closeout.json`; the clean checkpoint gate also
+passes. Separately approved exact packet `bd61cf11…f91ad279` then completes CPU
+one load/three segments/22 forwards/37 steps/sixteen outputs, with zero warmup/retry.
+Oracle/replay pass; cold IDs and all numerical rows exactly match prior CPU proof.
+The model Job exits zero naturally (peak 17,685,286,912 bytes), registry is zero,
+and all four original owner identities are released. Runtime observation fails
+on missing `ModuleName` during target exit; entry exits one and CUDA never starts.
+The allowance, including unused CUDA work, is closed failed. Original receipts
+remain incomplete in the source-bound [attempt record](CHARACTERIZATION.md#closed-short-attempt-at-70a24856-2026-10-14).
+Active repair files are `observer.ps1`, `observer-worker.ps1`, their controls and
+these current records. A model-free fixture reproduces the error; the correction
+accepts absence only after confirmed exit and preserves live-error/identity/DLL
+refusals. Observer27/watcher12/characterization145 controls pass. No model retry,
+new commit, push or activation is authorized; the next packet needs clean repaired
+source/helper binding and separate finite approval.
 
 Lossless BF16 embedding/head storage keeps F32 activations and MXFP4 experts.
 Immutable pages preserve committed cache state while physically evicting old
@@ -625,14 +638,14 @@ or run for this note. Preserve upstream license notices if code is later adapted
 
 ## Exact next task
 
-After guarded publication, prepare model-free CUDA bottleneck attribution and
-consumer workload admission from the measured 8k result. Forward work of 637.218s
-exceeds both route deadlines for this input. Keep physical 16k/32k, generated
-semantics and consumer qualification separately gated; any new model work needs
-a fresh source/binary-bound packet and finite allowance. Preserve original
-short/8k evidence, Q8/Codex defaults and disabled GPT-OSS. The independent LFM
+Finish the model-free observer exit-boundary closeout, then obtain scoped
+checkpoint authority and prepare a new source/helper-bound short packet. The
+failed `bd61cf11` attempt is closed; do not reuse its remaining CUDA allowance.
+The measured 8k forward work of 637.218s still exceeds both route deadlines.
+Keep physical 16k/32k, generated semantics and consumer qualification separately
+gated. Preserve original short/8k evidence, Q8/Codex defaults and disabled GPT-OSS. The independent LFM
 Task 4 text-plus-MMProj/adapter work keeps its own prerequisites and priority.
 
 ---
 
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-prefill-review | change=rechecked published fixes and scoped model-free prefill attribution
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-observer-exit | change=recorded closed failed qualification and scoped model-free observer repair

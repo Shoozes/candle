@@ -51,14 +51,22 @@ CPU/CUDA. All tokens still update KV; final full-vocabulary validation and
 transaction/cancellation ordering are preserved. Validation time is nested in
 forward time and cannot be counted as extra removable wall time. Frozen authored
 measurements, scope and limitations live in [PROFILING](../gpt-oss/PROFILING.md#model-free-attribution-at-0994bfe4-2026-10-14).
-Active files are CPU/CUDA forwards, timing API docs, capacity tests, GPT contracts/
-manifest/STATUS, this STATUS/TODO/history and the bank description. The complete
+The twelve reviewed files are locally checkpointed at `70a24856`, tree
+`87e3a45c4e39eaa8725ff514fcf4c312fa80ef40`; publication stays at `0994bfe4`. The complete
 native gate passes, with CPU57/CUDA69 fixtures, capacity CPU7/CUDA8 and strict
 CPU/CUDA library/example Clippy; source hashes and limitations are in the
-attribution root's `closeout.json`. Exact next task is an authorized clean
-checkpoint and fresh CPU/CUDA short numerical/replay packet, then separately
-approved model work and consumer workload admission. No new
-retained-model work, commit, push or consumer activation is authorized here.
+attribution root's `closeout.json`, followed by a green clean-checkpoint gate.
+The separately approved `bd61cf11` short packet completes CPU only: one load,
+three segments/22 forwards/37 steps/sixteen outputs, zero warmup/retry. Oracle
+and exact replay pass, but module observation fails on missing `ModuleName`;
+entry exits one and CUDA never starts. All four original owners and registry
+are released. The allowance is closed failed, with original incomplete receipts
+preserved. Active files are the observer/worker, observer controls and current
+GPT/LFM records. A disposable-process regression reproduces the exit race;
+the local correction preserves live-error and DLL admission. Focused model-free
+observer/watcher/characterization controls pass 27/12/145. Exact next task is a
+verified model-free repair closeout, separately authorized checkpoint and newly
+bound packet; further inference, commits, push and activation remain unauthorized.
 
 ## Independent GPT-OSS work, 2026-10-13
 
@@ -1125,4 +1133,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-prefill-review | change=rechecked published fixes and scoped model-free prefill attribution
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-observer-exit | change=closed failed short qualification and recorded model-free observer repair

@@ -112,11 +112,18 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   with exact full-row bits and lower component time. Neither establishes a
   production performance or route claim.
   Nested validation time is included in forward time; its internal split remains
-  unmeasured. Next: obtain an explicitly authorized clean checkpoint, then bind
-  CPU/CUDA short numerical/replay binaries and a separately approved finite
-  packet using the existing six-segment contract before further performance work.
-  Decode latency, 16k/32k, generated semantics and actual route proof remain open.
-  No current allowance permits model work, checkpoint commits/push or activation.
+  unmeasured. The twelve-file checkpoint is saved at `70a24856`; its clean native
+  gate passes. Exact approved `bd61cf11` short qualification stops after CPU:
+  one load/three segments/22 forwards/37 steps/sixteen outputs, no warmup/retry.
+  Oracle/exact replay and release pass, but module observation fails at target
+  exit; entry exits one, CUDA never starts and the whole allowance is closed.
+  Original incomplete receipts stay unchanged. The model-free observer repair
+  reproduces the race and preserves live-error/identity/DLL refusal; focused
+  controls pass 27 observer/12 watcher/145 characterization. Next: finish the
+  repair closeout, obtain scoped checkpoint authority, and bind a fresh packet
+  before separately approved six-segment qualification. Decode latency, 16k/32k,
+  generated semantics and route proof remain open. No model retry, new checkpoint
+  commit, push or activation is authorized.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -526,4 +533,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-prefill-review | change=rechecked published fixes and scoped model-free prefill attribution
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-observer-exit | change=closed failed allowance and queued verified repair checkpoint and fresh qualification

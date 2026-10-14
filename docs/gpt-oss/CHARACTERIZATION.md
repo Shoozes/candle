@@ -78,6 +78,36 @@ requires `nvcuda.dll`, `cublas64_13.dll`, `cublasLt64_13.dll` and
 launch and against actual observations. OS modules outside this selected
 closure remain inventory rather than a claim that every DLL was packaged.
 
+## Closed short attempt at `70a24856`, 2026-10-14
+
+The owner approved exact packet `bd61cf11bf77af951349f29d07a4f1de2d9add0bba6c042247523e79f91ad279`
+at local checkpoint `70a24856b87b840591fac0d6ecf0bcf6864c9abb`. CPU completed
+one load, three segments, 22 forwards, 37 steps and sixteen outputs; no warmups
+or retries. Independent oracle/replay verification passes all six raw rows.
+Cold IDs and numerical row hashes exactly match the prior `3db05cd8` CPU proof.
+The native model Job exits zero naturally, peaks at 17,685,286,912 bytes below
+32 GiB, and releases its registry. These numerical facts do not qualify the lane.
+
+Runtime observation fails at `observer-worker.ps1` module enumeration with a
+missing `ModuleName` property. The entry exits one; the coordinator's generic
+watcher-completion error does not distinguish timeout from nonzero exit, and an
+exact watcher exit code was not retained. CUDA never starts. All four original
+model/controller/watcher/invoker identities are absent in the fresh release
+snapshot; PID reuse by unrelated Chrome was left untouched. The allowance is
+closed failed, including its unused CUDA portion. No speedup or runtime claim
+follows. Original partial/failed receipts and raw rows remain unchanged under
+`artifacts/gpt-oss/characterization-70a24856-f45d0482370c45da89b9d686e76f5ba6/`;
+`attempt-closeout.json` binds them and the separate authorization/entry terminal.
+
+A deterministic disposable-process fixture reproduces the original failure
+when module discovery races target exit. The local repair treats discovery
+failure as absence only after `HasExited` confirms departure; live failures and
+changed identities still fail. Required loaded-model provenance is unchanged.
+Model-free observer/watcher/characterization controls pass 27/12/145. This
+repair does not alter the failed qualification or reopen inference. A new clean
+source/helper-bound packet and separate finite approval must precede any model
+execution; publication and activation remain unauthorized.
+
 ## Short outcome at `e3e1afcb`, 2026-10-13
 
 Fresh packet SHA-256
@@ -235,4 +265,4 @@ and WorkerRuntime 600s remain unqualified; next prepare the bounded 8k runner
 with model-free controls and a separate finite source-bound allowance.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-memory-short-proof | change=recorded source-bound numerical memory and release proof with wrapper reporting limitation
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-observer-exit | change=closed failed CPU-first qualification and recorded model-free exit-boundary repair

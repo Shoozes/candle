@@ -20,6 +20,39 @@ function Test-ObserverAbsent($Identity) {
 }
 try {
     $shell=(Get-Command pwsh).Source
+    # Deterministically reproduce exit during module discovery in a bounded child.
+    $moduleFixture=Join-Path $testRoot 'module-exit-fixture.ps1'
+    [IO.File]::WriteAllText($moduleFixture,@'
+param([string]$Worker,[string]$Case)
+Set-StrictMode -Version Latest
+$ErrorActionPreference='Stop'
+$global:observedFixture=[pscustomobject]@{Id=12345;StartTime=[DateTime]::UnixEpoch;
+    Path='C:\fixture\worker.exe';HasExited=$Case.StartsWith('exited');ChangeIdentity=$Case -eq 'live-changed';UnknownRefresh=$Case -eq 'unknown-refresh'}
+if($Case -eq 'unknown-exit'){$global:observedFixture|Add-Member -Force ScriptProperty HasExited {throw 'fixture exit-state error'}}
+if($Case.EndsWith('error')) {
+    $global:observedFixture|Add-Member ScriptProperty Modules {throw 'fixture module access error'}
+} else {
+    $moduleValue=if($Case.EndsWith('empty') -or $Case.StartsWith('unknown')){$null}else{[pscustomobject]@{ModuleName='fixture.dll';FileName='C:\fixture\fixture.dll'}}
+    $global:observedFixture|Add-Member NoteProperty Modules $moduleValue
+}
+$global:observedFixture|Add-Member ScriptMethod Refresh {if($this.UnknownRefresh){throw 'fixture refresh error'};if($this.ChangeIdentity){$this.StartTime=$this.StartTime.AddSeconds(1)}}
+$global:observedFixture|Add-Member ScriptMethod Dispose {}
+function Get-Process {param($Id,$ErrorAction) $global:observedFixture}
+& $Worker -TargetPid 12345 -Mode modules
+'@,[Text.UTF8Encoding]::new($false))
+    $moduleWorker=Join-Path $PSScriptRoot 'observer-worker.ps1'
+    foreach($moduleCase in @('exited-empty','exited-error','live-empty','live-error','live-changed','live-valid','unknown-refresh','unknown-exit')) {
+        $moduleResult=Invoke-SessionProfileProbe $shell @('-NoProfile','-File',$moduleFixture,'-Worker',$moduleWorker,'-Case',$moduleCase) 5000 4096
+        if($moduleCase.StartsWith('exited')) {
+            Test-ObserverAssert ($moduleResult.ExitCode -eq 0 -and $moduleResult.Stdout.Trim() -eq 'null') "departed module snapshot returns null: $moduleCase"
+        } elseif($moduleCase -eq 'live-valid') {
+            $moduleSnapshot=$moduleResult.Stdout|ConvertFrom-Json
+            Test-ObserverAssert ($moduleResult.ExitCode -eq 0 -and $moduleSnapshot.pid -eq 12345 -and $moduleSnapshot.modules.Count -eq 1 -and $moduleSnapshot.modules[0].name -eq 'fixture.dll') 'live module snapshot retains identity and modules'
+        } else {
+            $modulePattern=if($moduleCase -eq 'live-changed'){'identity changed'}else{'ModuleName|fixture module access error'}
+            Test-ObserverAssert ($moduleResult.ExitCode -ne 0 -and $moduleResult.Stderr -match $modulePattern) "live observation remains fail-closed: $moduleCase ($($moduleResult.Stderr))"
+        }
+    }
     $valid=Get-SessionProfileGpuSample 0 $shell @('-NoProfile','-Command','[Console]::Out.WriteLine(42)') 3000
     Test-ObserverAssert ($valid.used_bytes -eq 42*1048576 -and $valid.observer_ms -ge 0) 'bounded unique GPU sample'
     foreach($code in @('exit 1','[Console]::Out.WriteLine("bad")','[Console]::Out.WriteLine("1`n2")','[Console]::Out.WriteLine("18446744073709551615")')) {

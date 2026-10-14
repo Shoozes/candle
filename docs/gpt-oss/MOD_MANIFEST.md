@@ -20,7 +20,10 @@ promote GPT-OSS to the product default.
   limits. The live owner-identity repair was initially model-free;
   consumers and broader production profiles remain held.
   The fresh memory/owner short proof completes at `3db05cd8`; original metadata
-  limits remain immutable. See `CHARACTERIZATION.md`. This manifest now owns
+  limits remain immutable. The `70a24856` CPU-only attempt stays incomplete after
+  module observation fails; its allowance is closed. The local observer repair
+  accepts absence only on confirmed exit, preserving live-error and DLL refusal.
+  See `CHARACTERIZATION.md`. This manifest now owns
   71 paths; the live union is 325 paths with 28 shared paths.
 
 - Distinct 8k fixed-token capacity CLI, packet/input controls, release
@@ -242,4 +245,4 @@ remain outside this opt-in receipt.
 
 ---
 
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-prefill-review | change=rechecked published fixes and scoped model-free prefill attribution
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-observer-exit | change=recorded incomplete short attempt and fail-closed observer repair ownership
