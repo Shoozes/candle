@@ -181,8 +181,14 @@ function Get-SessionProfileGpuSample {
         $mib -gt ([UInt64]::MaxValue / 1048576)) { throw 'GPU monitor returned invalid memory' }
     [UInt64]$bytes = $mib * [UInt64]1048576
     $plan = Get-SessionProfilePlan
-    if ($bytes -gt $plan.max_gpu_bytes) { throw "GPU usage $bytes exceeded $($plan.max_gpu_bytes) bytes" }
-    [pscustomobject]@{ observed_utc=[DateTimeOffset]::UtcNow.ToString('o'); used_bytes=$bytes; observer_ms=$probe.ElapsedMs }
+    $sample=[pscustomobject]@{observed_utc=[DateTimeOffset]::UtcNow.ToString('o');device_index=$DeviceIndex;
+        used_mib=$mib;used_bytes=$bytes;max_gpu_bytes=$plan.max_gpu_bytes;accepted=($bytes -le $plan.max_gpu_bytes);observer_ms=$probe.ElapsedMs}
+    if (-not $sample.accepted) {
+        $failure=[InvalidOperationException]::new("GPU usage $bytes exceeded $($plan.max_gpu_bytes) bytes")
+        $failure.Data['candle_gpu_sample']=$sample
+        throw $failure
+    }
+    $sample
 }
 
 function Quote-SessionProfileLiteral {
@@ -191,12 +197,35 @@ function Quote-SessionProfileLiteral {
 }
 
 function Stop-SessionProfileController {
-    param([Parameter(Mandatory)][Diagnostics.Process]$Controller)
-    $Controller.Refresh()
-    if (-not $Controller.HasExited) {
-        $Controller.Kill()
-        if (-not $Controller.WaitForExit(30000)) { throw 'Profile controller remained after termination' }
+    param([Parameter(Mandatory)][Diagnostics.Process]$Controller,
+        [Threading.EventWaitHandle]$StopEvent,
+        [ValidateRange(0,5000)][int]$GraceMilliseconds=0,
+        $Identity, [switch]$PassThru)
+    $record=[ordered]@{pid=$Controller.Id;identity=$Identity;started_utc=[DateTimeOffset]::UtcNow.ToString('o');
+        stop_mode='already-exited';signal_sent=$false;fallback_kill=$false;exit_code=$null;exited=$false;error=$null}
+    try {
+        if($null -ne $Identity -and ($Identity.pid -ne $Controller.Id -or
+            ([DateTimeOffset]$Identity.creation_utc).UtcDateTime.Ticks -ne $Controller.StartTime.ToUniversalTime().Ticks)) {
+            throw 'Profile controller stop identity mismatch'
+        }
+        $Controller.Refresh()
+        if (-not $Controller.HasExited) {
+            if($null -ne $StopEvent){[void]$StopEvent.Set();$record.signal_sent=$true;$record.stop_mode='job-stop-signal'}
+            elseif($GraceMilliseconds -gt 0){$record.stop_mode='natural-exit-grace'}
+            if(-not $Controller.WaitForExit($GraceMilliseconds)) {
+                $record.fallback_kill=$true;$record.stop_mode='forced-controller-stop'
+                $Controller.Kill()
+                if (-not $Controller.WaitForExit(30000)) { throw 'Profile controller remained after termination' }
+            }
+        }
+        $record.exited=$Controller.HasExited
+        if($record.exited){$record.exit_code=$Controller.ExitCode}
+    } catch {
+        $record.error=$_.Exception.Message
+        if(-not $PassThru){throw}
     }
+    $record.ended_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    if($PassThru){[pscustomobject]$record}
 }
 
 function Get-SessionProfileOwnerIdentity {
@@ -233,18 +262,29 @@ function Invoke-SessionProfileLane {
     New-Item -ItemType Directory -Path $Directory -ErrorAction Stop | Out-Null
     $jobPath = Join-Path $Directory 'job.json'
     $progressPath = Join-Path $Directory 'progress.json'
+    $stopEventName='Local\CandleLfm2VlOracleStop-'+[guid]::NewGuid().ToString('N')
     $command = '& ' + (Quote-SessionProfileLiteral $Helper) + ' -FilePath ' + (Quote-SessionProfileLiteral $binaryPath) +
         ' -ArgumentList @(' + ((@('--input', $inputPath, '--output', $progressPath) | ForEach-Object { Quote-SessionProfileLiteral $_ }) -join ',') + ')' +
         ' -TimeoutSeconds 1800 -MaxJobMemoryBytes 34359738368 -PollMilliseconds 250 -ConcurrencyScope Executable' +
         ' -WorkingDirectory ' + (Quote-SessionProfileLiteral $RepoRoot) +
         ' -EvidencePath ' + (Quote-SessionProfileLiteral $jobPath) +
+        ' -StopEventName ' + (Quote-SessionProfileLiteral $stopEventName) +
         ' -LogPath ' + (Quote-SessionProfileLiteral (Join-Path $Directory 'runner.log'))
     $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
     $controller = $null
+    $controllerIdentity = $null
+    $controllerStop = $null
+    $stopEvent = $null
+    $cleanupErrors = [Collections.Generic.List[string]]::new()
+    $jobReceipt = $null
+    $jobReceiptStatus = 'missing'
     $runnerIdentity = $null
     $status = 'failed'
     $failure = $null
     try {
+        $created=$false
+        $stopEvent=[Threading.EventWaitHandle]::new($false,[Threading.EventResetMode]::ManualReset,$stopEventName,[ref]$created)
+        if(-not $created){throw 'Profile stop event was not fresh'}
         if ($Lane.backend -eq 'cuda') { $gpuSamples.Add($(if($null -eq $SampleGpu){Get-SessionProfileGpuSample ([int]$inputValue.device_index)}else{& $SampleGpu ([int]$inputValue.device_index)})) }
         $controllerExecutable=(Get-Command pwsh).Source
         $controller = Start-Process -FilePath $controllerExecutable -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $Directory 'controller.stdout.log') -RedirectStandardError (Join-Path $Directory 'controller.stderr.log')
@@ -280,24 +320,37 @@ function Invoke-SessionProfileLane {
         else {& $CompletionValidator $progress $job $Lane $inputValue $Directory}
         if ($Lane.backend -eq 'cuda') { $gpuSamples.Add($(if($null -eq $SampleGpu){Get-SessionProfileGpuSample ([int]$inputValue.device_index)}else{& $SampleGpu ([int]$inputValue.device_index)})) }
         $status = 'completed'
-    } catch { $failure = $_.Exception.Message } finally {
+    } catch {
+        $failure = $_.Exception.Message
+        if($_.Exception.Data.Contains('candle_gpu_sample')){$gpuSamples.Add($_.Exception.Data['candle_gpu_sample'])}
+    } finally {
         if ($null -ne $controller) {
             try {
                 # This handle identifies our controller, whose kill-on-close Job
                 # contains the runner. Never terminate by name or a guessed PID.
-                Stop-SessionProfileController $controller
-            } catch { $failure=$_.Exception.Message; $status='failed' }
+                $controllerStop=Stop-SessionProfileController $controller -StopEvent $stopEvent -GraceMilliseconds 5000 -Identity $controllerIdentity -PassThru
+                if($null -ne $controllerStop.error){throw $controllerStop.error}
+            } catch { $cleanupErrors.Add($_.Exception.Message); $status='failed' }
             $controller.Dispose()
         }
+        if($null -ne $stopEvent){$stopEvent.Dispose()}
         if ($null -ne $runnerIdentity) {
             try {
                 $live = Get-SessionProfileProcessSnapshot ([int]$runnerIdentity.pid)
                 if ($null -ne $live -and $live.creation_utc -eq $runnerIdentity.creation_utc -and $live.executable -eq $runnerIdentity.executable) {
                     throw 'Owned profile runner remains after controller cleanup'
                 }
-            } catch { $failure=$_.Exception.Message; $status='failed' }
+            } catch { $cleanupErrors.Add($_.Exception.Message); $status='failed' }
         }
-        Write-SessionProfileJson (Join-Path $Directory 'terminal.json') ([ordered]@{status=$status;error=$failure;backend=$Lane.backend;source_commit=$Source;job=$jobPath;progress=$progressPath;gpu_samples=@($gpuSamples);runner_identity=$runnerIdentity;qualification=$Qualification})
+        if(Test-Path -LiteralPath $jobPath -PathType Leaf) {
+            try {
+                if((Get-Item -LiteralPath $jobPath).Length -gt 65536){throw 'Native Job receipt exceeded 64 KiB'}
+                $jobReceipt=Get-Content -LiteralPath $jobPath -Raw|ConvertFrom-Json
+                $jobReceiptStatus='retained'
+            } catch {$jobReceiptStatus='unreadable';$cleanupErrors.Add($_.Exception.Message);$status='failed'}
+        }
+        if($null -eq $failure -and $cleanupErrors.Count -gt 0){$failure=$cleanupErrors[0]}
+        Write-SessionProfileJson (Join-Path $Directory 'terminal.json') ([ordered]@{status=$status;error=$failure;cleanup_errors=@($cleanupErrors);backend=$Lane.backend;source_commit=$Source;job=$jobPath;job_receipt_status=$jobReceiptStatus;native_job=$jobReceipt;controller_stop=$controllerStop;progress=$progressPath;gpu_samples=@($gpuSamples);runner_identity=$runnerIdentity;qualification=$Qualification})
     }
     if ($status -ne 'completed') { throw "Profile lane failed: $failure" }
 }

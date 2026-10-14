@@ -108,6 +108,109 @@ repair does not alter the failed qualification or reopen inference. A new clean
 source/helper-bound packet and separate finite approval must precede any model
 execution; publication and activation remain unauthorized.
 
+## CPU qualification and CUDA memory stop at `98a14eff`, 2026-10-14
+
+The approved 8,729-byte packet SHA-256 is
+`fd47a8b5ff7590a5a95c4003c7ca043457b91a1e51c38af7cd3fa4298b4a1899`,
+at clean `98a14eff26238466e3366c6930145eea04eb7816`, tree
+`106c32384f17c3e55ab681d959d3ab1b9af5fd54`. CPU qualifies short: one load,
+three segments, 22 forwards, 37 steps and sixteen outputs. Independent oracle,
+six-row exact replay, actual required DLL, native Job and registry-zero checks
+pass. All CPU row hashes and cold IDs match prior CPU receipts. Its watcher
+finishes normally, providing CPU production proof of the exit-boundary repair.
+Load/prefill/mean decode are 29.546s/15.803s/2.214s; peak Job memory is
+17,685,409,792 bytes. These single-run timings do not establish causal speedup.
+
+After complete CPU release, CUDA loads in 30.816s and attempts its first cold
+eight-token prefill. The whole-GPU monitor reports 20,008,927,232 bytes, exceeding
+the unchanged 20,000,000,000-byte ceiling, and stops the owned controller/Job.
+CUDA completes no request, forward, token step or output. Total attempted work
+is two loads, four segments, 23 forwards and at most 45 token steps; completed
+work is three segments, 22 forwards, 37 steps and sixteen outputs. There are
+zero warmups/retries. The whole allowance is closed failed, with no unused balance.
+
+Thirty retained GPU samples start at 4,242,538,496 bytes and end at
+16,317,939,712. The rejecting measurement is retained only in the error text:
+the sampler throws before appending that sample. No per-process GPU attribution
+or cause follows. Forced shutdown also prevents CUDA `job.json`, native/controller/
+watcher exit codes and the normal registry counter from being retained; its
+progress stays `running/cold`, registry null and runtime watcher `armed`.
+Do not replace these originals or label CUDA qualified. The registry is process
+local; all seven recorded model/controller/watcher/invoker identities are absent.
+A separate bounded post-release observation reads 4,236,247,040 whole-GPU bytes.
+This verifies process containment, not graceful CUDA teardown or model-only memory.
+
+Original proof is retained under
+`artifacts/gpt-oss/characterization-98a14eff-d701f70b144547e2b4f34cb517ac1686/`.
+Its attempt closeout binds raw receipts, rows, authorization and cleanup. Next
+review GPU ownership/headroom and harden forced-stop sample/Job reporting with
+model-free controls before selecting any new clean packet and finite allowance.
+No unrelated GPU owner was stopped; ceilings, consumers and activation stay fixed.
+
+## Model-free failure provenance repair, 2026-10-14
+
+The local follow-up preserves the failed `fd47a8b5` originals. A rejected GPU
+sample now retains UTC, device, raw MiB, bytes, the frozen ceiling and explicit
+rejection before the same error propagates. Cleanup errors have a separate list
+and cannot replace the triggering error. No model or arithmetic change follows.
+
+The shared bounded helper accepts an optional unique named stop event. It checks
+before launch and inside its existing poll loop, then uses its existing native
+Job termination and evidence path. The receipt distinguishes an observed request,
+an applied stop and a natural exit, and retains the actual native exit code.
+Unspecified events leave existing scheduling, Job limits and timeout behavior
+unchanged. The GPT parent signals this event and allows five seconds to flush;
+it then uses the existing held-handle termination and 30-second bound if needed.
+Actual Job JSON is retained when available; missing or unreadable evidence stays
+explicit. Controller and watcher records carry observed exit codes and stop
+modes. A failed lane gives its watcher five seconds to write `incomplete` before
+forced fallback. Neither forced termination nor process absence invents a normal
+registry release or successful runtime observation.
+
+Disposable native-process controls cover live and pre-signaled events, missing
+events, default execution, descendant release, exact native exits, GPU rejection
+retention, primary-error preservation during cleanup failure, owner mismatch,
+forced fallback and failed-terminal watcher completion. CPU/CUDA production
+qualification of these changed helpers is unrun. The frozen 20e9 GPU, 32 GiB Job
+and 1,800-second model deadline are unchanged; the closed allowance is not reused.
+The native gate passes with 461 GPT-OSS controls. Review found the initial
+PowerShell 5.1 smoke run launched its active-event controller under PowerShell7;
+only its default/pre-signaled compatibility ran in5.1. The corrected fixture
+selects the current executable, checks the child's self-reported host/version,
+and binds native exit130 and tree release in its output. Sequential native
+PowerShell7/5.1 active-event proofs pass. An initial parallel replay correctly
+refused the other fixture's shared process name; that refusal is retained.
+The first failed watcher fixture created the lane before
+arming; the corrected fixture proves actual failed-terminal completion. The
+initial over-budget context route was split rather than increasing the ceiling.
+
+The source review finds progressive synchronized source-layer release and retained
+BF16 embedding/head storage; selected embedding rows alone convert to F32. The
+first-call payload formula at eight tokens is 15,058,196,736 bytes (static
+15,053,650,176; cache 786,432; append tail 32,768; workspace 3,727,360). This is
+authored arithmetic, excluding CUDA context/allocator overhead. The original
+baseline plus static payload leaves 703,811,328 bytes below the frozen ceiling;
+that subtraction cannot attribute the failure. First-use KV/GQA/routed/head
+allocations are identified in source but were not measured independently.
+A fresh bounded read-only query observes 4,237,295,616 whole-GPU bytes and multiple
+desktop/application owners with WDDM process-memory values unavailable. It does
+not reconstruct failed-time ownership. No unrelated owner was stopped and no
+tensor-allocation defect is established. Any further production work needs a
+quiet admissible window, clean checkpoint, rebuilt/reviewed packet and new finite
+allowance; route, capacity and activation holds remain.
+
+New proof lives in `artifacts/gpt-oss/failure-provenance-98a14eff-20261014/`.
+`historical-recovery.json` maps exact helpers from both closed attempts and the
+four pre-repair outcome documents to single digest-keyed retained copies. The
+original `attempt-closeout.json` bytes stay immutable; all 31 original records
+and both closed-attempt reports pass the preservation check. Changed active paths no
+longer satisfy historical hashes; use the recovery mapping rather than claiming
+that they do. Old `70a24856` helper bytes are recovered from exact Git objects
+and accepted only after size/hash equality including checkout line endings.
+The original local `closeout.json` remains unchanged. Its mixed-host coverage
+claim is corrected by `host-coverage/closeout.json`, which retains the prior
+test/doc bytes and binds explicit active-event proof in both native hosts.
+
 ## Short outcome at `e3e1afcb`, 2026-10-13
 
 Fresh packet SHA-256
@@ -265,4 +368,4 @@ and WorkerRuntime 600s remain unqualified; next prepare the bounded 8k runner
 with model-free controls and a separate finite source-bound allowance.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-observer-exit | change=closed failed CPU-first qualification and recorded model-free exit-boundary repair
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-failure-provenance | change=preserved failed proof and documented model-free sample and stop receipt repair

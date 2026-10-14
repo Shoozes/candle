@@ -61,12 +61,22 @@ three segments/22 forwards/37 steps/sixteen outputs, zero warmup/retry. Oracle
 and exact replay pass, but module observation fails on missing `ModuleName`;
 entry exits one and CUDA never starts. All four original owners and registry
 are released. The allowance is closed failed, with original incomplete receipts
-preserved. Active files are the observer/worker, observer controls and current
-GPT/LFM records. A disposable-process regression reproduces the exit race;
-the local correction preserves live-error and DLL admission. Focused model-free
-observer/watcher/characterization controls pass 27/12/145. Exact next task is a
-verified model-free repair closeout, separately authorized checkpoint and newly
-bound packet; further inference, commits, push and activation remain unauthorized.
+preserved. The repair is saved at `98a14eff`, tree `106c3238…9af5fd54`; its clean
+native gate passes with 449 controls. Fresh approved `fd47a8b5` qualifies CPU
+short, including oracle/exact replay, runtime, Job and registry zero. CUDA then
+loads and attempts one eight-token prefill before whole-GPU usage 20,008,927,232
+exceeds the unchanged 20e9-byte ceiling. Actual attempted work is two loads/four
+segments/23 forwards/at most 45 steps; completed work is three segments/22 forwards/
+37 steps/sixteen outputs, zero warmups/retries. Allowance closed failed. All seven
+owner identities are absent; CUDA Job/exit/normal registry fields are unavailable
+after forced termination. Original partial evidence remains unchanged.
+Local model-free repair retains rejected samples, actual stop exits/Job evidence
+and separate cleanup errors, using the existing helper with bounded fallback.
+Source review establishes no allocation defect; WDDM owner memory is unavailable.
+Native gate/461 GPT controls and PS7/5.1 helper proof pass; inventory is
+73 GPT/325 union/30 shared paths. Thirteen files remain active at `98a14eff`;
+changed-helper production proof is unrun. Next separately authorize a clean
+checkpoint and finite packet. No retry, commit, push or activation. [GPT details](../gpt-oss/CHARACTERIZATION.md#model-free-failure-provenance-repair-2026-10-14).
 
 ## Independent GPT-OSS work, 2026-10-13
 
@@ -1133,4 +1143,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-observer-exit | change=closed failed short qualification and recorded model-free observer repair
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-failure-provenance | change=recorded verified model-free failure receipt repair and held next production gate

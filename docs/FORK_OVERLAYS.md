@@ -111,7 +111,9 @@ The GPT-OSS overlay owns the characterization and capacity example/control addit
 `.tools/verify-before-push.ps1`; existing LFM2-VL verification steps retain their
 ownership. Its Summary Bank edits route the new harness and move current GPT
 status out of the bounded synthetic-oracle group. The native live inventory is
-325 union paths across five overlays, with 28 shared paths. Frozen inventories
+325 union paths across five overlays, with 30 shared paths. GPT-OSS owns the
+optional stop-event and regression hunks in the shared bounded Job helper/tests;
+LFM2-VL retains existing execution/limits. Frozen inventories
 and release identities are unchanged.
 
 An overlapping path must be listed here before two overlay manifests may claim
@@ -146,6 +148,8 @@ must pass both affected focused gates plus the repository-wide overlay gate.
 - `scripts/release/test-write-candle-overlays-receipt.ps1`
 - `scripts/release/write-candle-overlays-receipt.ps1`
 - `scripts/verify-fork-overlays.sh`
+- `scripts/lfm2-vl/run-bounded-oracle.ps1`
+- `scripts/lfm2-vl/test-bounded-oracle.ps1`
 - `summary_bank.json`
 <!-- shared-paths:end -->
 
@@ -192,4 +196,4 @@ the one-row kernel and Qwen's separate MMVQ/MMQ branch retain their behavior.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-capacity-closeout | change=closed source-bound8k progress and retained later capacity and route holds
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-failure-provenance | change=assigned optional Job stop hunks and recomputed shared ownership

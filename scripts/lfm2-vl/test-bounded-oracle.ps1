@@ -78,6 +78,8 @@ $existing = $null
 $alternate = $null
 $owner = $null
 $ownerChildId = $null
+$eventOwner = $null
+$stopEvent = $null
 try {
     [void](New-Item -ItemType Directory -Path $testRoot -ErrorAction Stop)
     $childPath = Join-Path -Path $testRoot -ChildPath "bounded-oracle-child.exe"
@@ -120,6 +122,53 @@ try {
     $normalLog = Get-Content -LiteralPath $normalLogPath -Raw
     Assert-Condition ($normalLog -like "*bounded-stdout*") "normal log omitted stdout"
     Assert-Condition ($normalLog -like "*bounded-stderr*") "normal log omitted stderr"
+    Assert-Condition (-not $normal.stop_event_enabled -and -not $normal.stop_requested -and -not $normal.stop_applied) "default run changed stop behavior"
+
+    $stopName = 'Local\CandleLfm2VlOracleStop-'+[guid]::NewGuid().ToString('N')
+    $stopEvent = [Threading.EventWaitHandle]::new($false,[Threading.EventResetMode]::ManualReset,$stopName)
+    $eventEvidence = Join-Path $testRoot 'event-stop.json'
+    $eventReady = Join-Path $testRoot 'event-ready.txt'
+    $eventCommand = "& '$($wrapper.Replace("'","''"))' -FilePath '$($childPath.Replace("'","''"))' "+
+        "-ArgumentList @('/d','/c','echo ready>event-ready.txt & start `"`" /b `"$childPath`" /d /c `"ping 127.0.0.1 -n 30 > nul`" & ping 127.0.0.1 -n 30 > nul') "+
+        "-TimeoutSeconds 15 -MaxJobMemoryBytes 268435456 -PollMilliseconds 50 -WorkingDirectory '$($testRoot.Replace("'","''"))' "+
+        "-EvidencePath '$($eventEvidence.Replace("'","''"))' -StopEventName '$stopName'"
+    $testHostProcess=[Diagnostics.Process]::GetCurrentProcess()
+    try {$eventHost=$testHostProcess.MainModule.FileName} finally {$testHostProcess.Dispose()}
+    $eventCommand='[Console]::Out.WriteLine(([ordered]@{event_helper_host=[Diagnostics.Process]::GetCurrentProcess().MainModule.FileName;event_helper_version=$PSVersionTable.PSVersion.ToString()}|ConvertTo-Json -Compress)); '+$eventCommand
+    $eventEncoded=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($eventCommand))
+    $eventOwner=Start-Process $eventHost -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$eventEncoded) -PassThru -WindowStyle Hidden `
+        -RedirectStandardOutput (Join-Path $testRoot 'event.stdout.log') -RedirectStandardError (Join-Path $testRoot 'event.stderr.log')
+    $eventDeadline=[DateTimeOffset]::UtcNow.AddSeconds(10)
+    while(-not (Test-Path -LiteralPath $eventReady) -and [DateTimeOffset]::UtcNow -lt $eventDeadline){Start-Sleep -Milliseconds 50}
+    Assert-Condition (Test-Path -LiteralPath $eventReady) 'event child did not reach resumed handshake'
+    [void]$stopEvent.Set()
+    Assert-Condition ($eventOwner.WaitForExit(5000) -and $eventOwner.ExitCode -ne 0) 'event stop did not finish with failed controller exit'
+    $eventRuntime=@(Get-Content -LiteralPath (Join-Path $testRoot 'event.stdout.log'))[0]|ConvertFrom-Json
+    Assert-Condition ([string]::Equals($eventRuntime.event_helper_host,$eventHost,[StringComparison]::OrdinalIgnoreCase) -and
+        $eventRuntime.event_helper_version -eq $PSVersionTable.PSVersion.ToString()) 'event helper did not use the actual current test host'
+    $eventReceipt=Get-Content -LiteralPath $eventEvidence -Raw|ConvertFrom-Json
+    Assert-Condition ($eventReceipt.termination_reason -eq 'stop_requested' -and $eventReceipt.stop_requested -and $eventReceipt.stop_applied) 'event stop was not distinguished from natural exit'
+    Assert-Condition ($eventReceipt.child_exit_code -eq 130 -and $eventReceipt.pid_absent_after_cleanup) 'event stop omitted actual native exit or release'
+    $eventOwner.Dispose();$eventOwner=$null
+    $remaining=@(Get-Process -Name 'bounded-oracle-child' -ErrorAction SilentlyContinue)
+    Assert-Condition ($remaining.Count -eq 0) 'event stop left a descendant'
+    'bounded-oracle-active-event: '+([ordered]@{helper_host=$eventRuntime.event_helper_host;helper_version=$eventRuntime.event_helper_version;
+        child_exit_code=$eventReceipt.child_exit_code;termination_reason=$eventReceipt.termination_reason;
+        stop_requested=$eventReceipt.stop_requested;stop_applied=$eventReceipt.stop_applied;
+        parent_absent=$eventReceipt.pid_absent_after_cleanup;descendants_absent=($remaining.Count -eq 0)}|ConvertTo-Json -Compress)
+    $preEvidence=Join-Path $testRoot 'pre-stop.json'
+    $preRejected=$false
+    try {& $wrapper @common -ArgumentList @('/d','/c','exit /b 0') -EvidencePath $preEvidence -StopEventName $stopName|Out-Null}
+    catch {$preRejected=$_.Exception.Message -like '*stop requested before launch*'}
+    $preReceipt=Get-Content -LiteralPath $preEvidence -Raw|ConvertFrom-Json
+    Assert-Condition ($preRejected -and $preReceipt.stop_requested -and -not $preReceipt.stop_applied -and
+        $null -eq $preReceipt.pid -and -not $preReceipt.resumed -and $preReceipt.pid_absent_after_cleanup) 'pre-signaled stop launched a child or invented an exit'
+    $stopEvent.Dispose();$stopEvent=$null
+    $missingRejected=$false
+    try {& $wrapper @common -ArgumentList @('/d','/c','exit /b 0') -EvidencePath (Join-Path $testRoot 'missing-event.json') -StopEventName $stopName|Out-Null}
+    catch {$missingRejected=$true}
+    $missingReceipt=Get-Content -LiteralPath (Join-Path $testRoot 'missing-event.json') -Raw|ConvertFrom-Json
+    Assert-Condition ($missingRejected -and $null -eq $missingReceipt.pid -and -not $missingReceipt.stop_requested) 'missing stop event did not reject before launch'
 
     $treeCommand = 'start "" /b "{0}" /d /c "ping 127.0.0.1 -n 30 > nul" & ping 127.0.0.1 -n 30 > nul' -f $childPath
     $timeoutObserved = $false
@@ -270,6 +319,8 @@ try {
     "bounded-oracle-smoke: passed"
 }
 finally {
+    if($null -ne $eventOwner){try{Stop-TestProcessTree $eventOwner}finally{$eventOwner.Dispose()}}
+    if($null -ne $stopEvent){$stopEvent.Dispose()}
     if ($null -ne $ownerChildId) {
         $remainingOwnerChild = Get-Process -Id $ownerChildId -ErrorAction SilentlyContinue
         if ($null -ne $remainingOwnerChild) {

@@ -46,12 +46,38 @@ and all four original owner identities are released. Runtime observation fails
 on missing `ModuleName` during target exit; entry exits one and CUDA never starts.
 The allowance, including unused CUDA work, is closed failed. Original receipts
 remain incomplete in the source-bound [attempt record](CHARACTERIZATION.md#closed-short-attempt-at-70a24856-2026-10-14).
-Active repair files are `observer.ps1`, `observer-worker.ps1`, their controls and
-these current records. A model-free fixture reproduces the error; the correction
-accepts absence only after confirmed exit and preserves live-error/identity/DLL
-refusals. Observer27/watcher12/characterization145 controls pass. No model retry,
-new commit, push or activation is authorized; the next packet needs clean repaired
-source/helper binding and separate finite approval.
+The observer repair is checkpointed at `98a14eff`, tree
+`106c32384f17c3e55ab681d959d3ab1b9af5fd54`; its clean native gate passes, including
+449 model-free controls. Exact fresh `fd47a8b5` packet then qualifies CPU short:
+oracle/exact replay, six observed modules, native Job and registry zero pass.
+CPU completes one load/three segments/22 forwards/37 steps/sixteen outputs and
+its watcher exits normally. After CPU release, CUDA loads and attempts one
+eight-token prefill before whole-GPU usage 20,008,927,232 exceeds the frozen
+20e9-byte ceiling. CUDA completes zero forwards/steps/outputs; entry exits one.
+The batch is incomplete and allowance closed failed, without retries or balance
+reuse. All seven owned process identities are absent. CUDA's normal registry,
+Job and exact forced-exit fields are unavailable; original partial receipts stay
+unchanged. See [the source-bound result](CHARACTERIZATION.md#cpu-qualification-and-cuda-memory-stop-at-98a14eff-2026-10-14).
+Baseline/post-release whole-GPU observations are 4.243/4.236 GB; these supply no
+per-process cause or model-only peak. Local model-free implementation now retains
+the structured rejecting sample, primary error and separate cleanup errors. An
+opt-in stop event uses the shared native Job's existing termination/evidence path;
+controller and watcher exits are recorded when observable, with bounded fallback
+and truthful missing receipts. Disposable controls pass; changed-helper production
+qualification is unrun. Source review finds no demonstrated allocation defect;
+the eight-token payload formula excludes context/allocator costs. Current WDDM
+owners have unavailable per-process memory. No unrelated process was stopped.
+The complete native gate passes, including 461 GPT-OSS model-free controls,
+locked/offline checks/tests and strict Clippy. Shared-helper smoke tests pass on
+PowerShell 7 and 5.1; original 31 records and both attempt reports retain exact
+bytes. Overlay inventory is 73 GPT/325 union/30 shared paths. Summary Bank keeps
+the focused failure route separate within its existing 256 KiB ceiling.
+Active files are six helpers/tests, four outcome docs, GPT manifest, registry
+and bank. The source baseline remains `98a14eff`;
+publication remains `0994bfe4`. [The repair and historical byte recovery](CHARACTERIZATION.md#model-free-failure-provenance-repair-2026-10-14)
+retain both failed attempts. Local implementation and source review are complete;
+next obtain a separately authorized checkpoint and finite rebuilt packet before
+production work. No commit, push, inference or activation is currently authorized.
 
 Lossless BF16 embedding/head storage keeps F32 activations and MXFP4 experts.
 Immutable pages preserve committed cache state while physically evicting old
@@ -638,9 +664,11 @@ or run for this note. Preserve upstream license notices if code is later adapted
 
 ## Exact next task
 
-Finish the model-free observer exit-boundary closeout, then obtain scoped
-checkpoint authority and prepare a new source/helper-bound short packet. The
-failed `bd61cf11` attempt is closed; do not reuse its remaining CUDA allowance.
+Review the verified thirteen-file model-free failure-provenance return, then
+obtain scoped checkpoint authority and prepare a fresh source/helper-bound packet.
+The `fd47a8b5` attempt is closed failed with CPU qualified; do not retry it or
+reuse remaining work. New model work needs separate finite approval and adequate
+GPU headroom. `bd61cf11` stays closed.
 The measured 8k forward work of 637.218s still exceeds both route deadlines.
 Keep physical 16k/32k, generated semantics and consumer qualification separately
 gated. Preserve original short/8k evidence, Q8/Codex defaults and disabled GPT-OSS. The independent LFM
@@ -648,4 +676,4 @@ Task 4 text-plus-MMProj/adapter work keeps its own prerequisites and priority.
 
 ---
 
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-observer-exit | change=recorded closed failed qualification and scoped model-free observer repair
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-failure-provenance | change=recorded model-free failure receipt repair and held production gates

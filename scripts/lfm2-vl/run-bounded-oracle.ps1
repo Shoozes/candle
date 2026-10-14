@@ -46,6 +46,10 @@ param(
     [switch]$RedactArguments,
 
     [Parameter()]
+    [ValidatePattern('^Local\\CandleLfm2VlOracleStop-[0-9a-f]{32}$')]
+    [string]$StopEventName,
+
+    [Parameter()]
     [switch]$AllowCudaGraphs
 )
 
@@ -790,10 +794,21 @@ try {
     $terminationReason = "setup_failure"
     $failure = $null
     $cleanupFailure = $null
+    $stopEvent = $null
+    $stopRequested = $false
+    $stopApplied = $false
     $startedAtUtc = [DateTimeOffset]::UtcNow
     $timer = [Diagnostics.Stopwatch]::StartNew()
 
     try {
+        if (-not [string]::IsNullOrEmpty($StopEventName)) {
+            $stopEvent = [Threading.EventWaitHandle]::OpenExisting($StopEventName)
+            if ($stopEvent.WaitOne(0)) {
+                $stopRequested = $true
+                $terminationReason = "stop_requested"
+                throw "bounded oracle stop requested before launch"
+            }
+        }
         $job = New-BoundedJob -MemoryBytes $MaxJobMemoryBytes -Name $jobName
         $nativeProcess = New-SuspendedProcess `
             -Executable $resolvedExecutable `
@@ -835,6 +850,20 @@ try {
         $terminationReason = "running"
 
         while (-not $process.WaitForExit($PollMilliseconds)) {
+            if ($null -ne $stopEvent -and $stopEvent.WaitOne(0)) {
+                $stopRequested = $true
+                # Preserve a natural exit that raced with the stop signal.
+                if (-not $process.WaitForExit(0)) {
+                    if (-not [CandleLfm2VlOracleJobNative]::TerminateJobObject($job, 130)) {
+                        throw [ComponentModel.Win32Exception]::new(
+                            [Runtime.InteropServices.Marshal]::GetLastWin32Error()
+                        )
+                    }
+                    $stopApplied = $true
+                    $terminationReason = "stop_requested"
+                }
+                break
+            }
             $process.Refresh()
             $privateBytes = ConvertTo-ProcessCounterBytes -Value $process.PrivateMemorySize64
             $workingSetBytes = ConvertTo-ProcessCounterBytes -Value $process.WorkingSet64
@@ -877,6 +906,10 @@ try {
     }
     finally {
         $timer.Stop()
+        if ($null -ne $stopEvent) {
+            $stopRequested = $stopRequested -or $stopEvent.WaitOne(0)
+            $stopEvent.Dispose()
+        }
         try {
             if ($null -ne $process -and -not $process.HasExited) {
                 if ($jobAssigned) {
@@ -982,6 +1015,9 @@ try {
             peak_job_memory_bytes = $peakJobMemoryBytes
             child_exit_code = $childExitCode
             termination_reason = $terminationReason
+            stop_event_enabled = -not [string]::IsNullOrEmpty($StopEventName)
+            stop_requested = $stopRequested
+            stop_applied = $stopApplied
             pid_absent_after_cleanup = $pidAbsentAfterCleanup
             error = if ($null -ne $failure) {
                 $failure.Exception.Message
@@ -1017,6 +1053,9 @@ try {
     }
     if ($terminationReason -eq "memory_limit") {
         throw "bounded oracle reached the $MaxJobMemoryBytes-byte memory ceiling; PID $processId is absent"
+    }
+    if ($terminationReason -eq "stop_requested") {
+        throw "bounded oracle stopped on owner request; PID $processId is absent"
     }
     if ($childExitCode -ne 0) {
         throw "bounded oracle exited with code $childExitCode"

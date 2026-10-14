@@ -837,7 +837,7 @@
       ]
     },
     "feature__gpt_oss_characterization": {
-      "description": "Common-session cold timing, independently pinned numerical rows, reset/replay, bounded observer/loaded-DLL ownership and source/build binding; short F32 qualification only, expand session profiling for historical receipts.",
+      "description": "Common-session numerics/replay, bounded observer/DLL ownership and source/build binding; expand workflow__gpt_oss_failure_provenance for shared Job stop and failure exits. Production qualification stays source-bound.",
       "status": "active",
       "paths": [
         "docs/gpt-oss/CHARACTERIZATION.md",
@@ -856,6 +856,19 @@
         "scripts/gpt-oss/test-watch-runtime.ps1",
         "tests/fixtures/gpt_oss_task3_short_parity/reference.json",
         "docs/gpt-oss/STATUS.md"
+      ]
+    },
+    "workflow__gpt_oss_failure_provenance": {
+      "description": "Rejected GPU observations, primary/cleanup errors, held-owner stop receipts and optional native Job cancellation. Disposable process proof; expand feature__gpt_oss_characterization for packet/numerical admission.",
+      "status": "active",
+      "paths": [
+        "scripts/gpt-oss/run-session-profile.ps1",
+        "scripts/gpt-oss/run-characterization.ps1",
+        "scripts/gpt-oss/test-observer.ps1",
+        "scripts/gpt-oss/test-watch-runtime.ps1",
+        "scripts/lfm2-vl/run-bounded-oracle.ps1",
+        "scripts/lfm2-vl/test-bounded-oracle.ps1",
+        "docs/gpt-oss/CHARACTERIZATION.md"
       ]
     }
   },

@@ -62,6 +62,26 @@ Start-Sleep -Seconds 4
     $timed=Invoke-SessionProfileProbe $shell @('-NoProfile','-File',$watchScript,'-PacketPath',$timeoutPacket,'-ObservationPath',$timeoutObservation,'-Backend','cpu','-DeadlineSeconds','1') 5000 4096
     $failure=Get-Content $timeoutObservation -Raw|ConvertFrom-Json
     Assert-WatcherTest ($timed.ExitCode -ne 0 -and $failure.status -eq 'incomplete' -and $failure.error -match 'deadline') 'deadline preserves incomplete evidence'
+    $failedOutput=Join-Path $root 'failed-output';$testPacket.proposed_output_root=$failedOutput
+    $failedPacket=Join-Path $root 'failed-packet.json';Write-SessionProfileJson $failedPacket $testPacket
+    $failedObservation=Join-Path $root 'failed-observation.json'
+    $failedCommand='& '+(Quote-SessionProfileLiteral $watchScript)+' -PacketPath '+(Quote-SessionProfileLiteral $failedPacket)+
+        ' -ObservationPath '+(Quote-SessionProfileLiteral $failedObservation)+' -Backend cpu -DeadlineSeconds 10'
+    $failedEncoded=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($failedCommand))
+    $watcher.Dispose()
+    $watcher=Start-Process $shell -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$failedEncoded) -PassThru -WindowStyle Hidden `
+        -RedirectStandardOutput (Join-Path $root 'failed.stdout.log') -RedirectStandardError (Join-Path $root 'failed.stderr.log')
+    $failedIdentity=Get-SessionProfileOwnerIdentity $watcher.Id $watcher.StartTime $shell
+    $armWait=[Diagnostics.Stopwatch]::StartNew()
+    while(-not (Test-Path -LiteralPath $failedObservation) -and $armWait.Elapsed.TotalSeconds -lt 5){Start-Sleep -Milliseconds 50}
+    Assert-WatcherTest (Test-Path -LiteralPath $failedObservation) 'failure watcher arms before lane exists'
+    New-Item -ItemType Directory -Path (Join-Path $failedOutput 'cpu')|Out-Null
+    Write-SessionProfileJson (Join-Path $failedOutput 'cpu/terminal.json') ([ordered]@{status='failed';error='authored GPU rejection'})
+    $failedStop=Stop-SessionProfileController $watcher -Identity $failedIdentity -GraceMilliseconds 5000 -PassThru
+    $failedRuntime=Get-Content $failedObservation -Raw|ConvertFrom-Json
+    Assert-WatcherTest ($failedStop.exited -and $failedStop.exit_code -eq 1 -and -not $failedStop.fallback_kill -and
+        $null -eq $failedStop.error -and $failedRuntime.status -eq 'incomplete' -and
+        $null -ne $failedRuntime.error -and $null -ne $failedRuntime.ended_utc) 'failed lane lets watcher retain incomplete terminal and exit'
     $success=$true
     "runtime-watcher model-free controls: $script:passed passed"
 } finally {

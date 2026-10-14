@@ -119,11 +119,21 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   exit; entry exits one, CUDA never starts and the whole allowance is closed.
   Original incomplete receipts stay unchanged. The model-free observer repair
   reproduces the race and preserves live-error/identity/DLL refusal; focused
-  controls pass 27 observer/12 watcher/145 characterization. Next: finish the
-  repair closeout, obtain scoped checkpoint authority, and bind a fresh packet
-  before separately approved six-segment qualification. Decode latency, 16k/32k,
-  generated semantics and route proof remain open. No model retry, new checkpoint
-  commit, push or activation is authorized.
+  controls pass 27 observer/12 watcher/145 characterization. The repair is saved
+  at `98a14eff` with a green clean gate/449 controls. Fresh approved `fd47a8b5`
+  qualifies CPU short; CUDA loads and attempts one eight-token prefill before
+  whole-GPU 20,008,927,232 exceeds the frozen 20e9-byte ceiling. Actual attempted
+  totals are two loads/four segments/23 forwards/at most 45 steps; completions are
+  three segments/22 forwards/37 steps/sixteen outputs, no warmup/retry. All seven
+  owners are absent; forced CUDA shutdown leaves Job/exit/normal registry fields
+  unavailable. Original receipts remain partial and allowance closed failed.
+  Local model-free repair retains rejected samples, stop/Job exits and separate
+  cleanup failures, with bounded native-Job signaling and forced fallback.
+  No allocation defect is established; WDDM process memory is unavailable.
+  Native gate/461 GPT controls and PS7/5.1 helper proof pass. Next separately
+  authorize a clean checkpoint and finite packet. Keep ceilings/owners fixed.
+  Decode latency, 16k/32k, semantics and routes stay open; no retry, commit/push
+  or activation.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -533,4 +543,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-observer-exit | change=closed failed allowance and queued verified repair checkpoint and fresh qualification
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-failure-provenance | change=closed model-free failure receipt repair and kept fresh checkpoint and inference gates

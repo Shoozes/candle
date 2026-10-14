@@ -24,7 +24,10 @@ promote GPT-OSS to the product default.
   module observation fails; its allowance is closed. The local observer repair
   accepts absence only on confirmed exit, preserving live-error and DLL refusal.
   See `CHARACTERIZATION.md`. This manifest now owns
-  71 paths; the live union is 325 paths with 28 shared paths.
+  73 paths; the live union is 325 paths with 30 shared paths. Local failure
+  provenance retains rejecting GPU observations and actual stop exits; an opt-in
+  event uses the shared native Job's existing termination/evidence path. Its
+  disposable controls do not qualify changed helpers against production weights.
 
 - Distinct 8k fixed-token capacity CLI, packet/input controls, release
   preparation and passive watcher are implemented with model-free proof.
@@ -187,6 +190,8 @@ repository-wide shared-path registry:
 - `scripts/verify-fork-overlays.sh`
 - `summary_bank.json`
 - `.tools/verify-before-push.ps1`
+- `scripts/lfm2-vl/run-bounded-oracle.ps1`
+- `scripts/lfm2-vl/test-bounded-oracle.ps1`
 
 ## Public Candle interfaces
 
@@ -245,4 +250,4 @@ remain outside this opt-in receipt.
 
 ---
 
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-observer-exit | change=recorded incomplete short attempt and fail-closed observer repair ownership
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-failure-provenance | change=assigned shared optional Job stop and failure receipt ownership

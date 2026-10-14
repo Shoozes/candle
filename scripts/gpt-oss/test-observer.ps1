@@ -55,6 +55,14 @@ function Get-Process {param($Id,$ErrorAction) $global:observedFixture}
     }
     $valid=Get-SessionProfileGpuSample 0 $shell @('-NoProfile','-Command','[Console]::Out.WriteLine(42)') 3000
     Test-ObserverAssert ($valid.used_bytes -eq 42*1048576 -and $valid.observer_ms -ge 0) 'bounded unique GPU sample'
+    $rejected=$null
+    try {Get-SessionProfileGpuSample 0 $shell @('-NoProfile','-Command','[Console]::Out.WriteLine(19082)') 3000|Out-Null}
+    catch {$rejected=$_}
+    Test-ObserverAssert ($null -ne $rejected -and $rejected.Exception.Message -match 'GPU usage .* exceeded') 'GPU ceiling still rejects'
+    $rejectSample=$rejected.Exception.Data['candle_gpu_sample']
+    Test-ObserverAssert ($rejectSample.used_mib -eq 19082 -and $rejectSample.used_bytes -eq 20008927232 -and
+        $rejectSample.max_gpu_bytes -eq 20000000000 -and -not $rejectSample.accepted -and $rejectSample.device_index -eq 0 -and
+        -not [string]::IsNullOrEmpty($rejectSample.observed_utc)) 'reject retains exact observation and frozen bound'
     foreach($code in @('exit 1','[Console]::Out.WriteLine("bad")','[Console]::Out.WriteLine("1`n2")','[Console]::Out.WriteLine("18446744073709551615")')) {
         Test-ObserverReject {Get-SessionProfileGpuSample 0 $shell @('-NoProfile','-Command',$code) 3000} 'GPU monitor'
     }
@@ -100,6 +108,7 @@ Start-Sleep -Seconds 30
     $activeRoot=Join-Path $testRoot 'active'
     $originalSample=(Get-Command Get-SessionProfileGpuSample).ScriptBlock
     $script:samples=0
+    $script:rejectGpu=$false
     function Get-SessionProfileGpuSample {
         param($DeviceIndex)
         $script:samples++
@@ -110,26 +119,70 @@ Start-Sleep -Seconds 30
             if($script:ownedJobProcesses.Count -eq 0){Start-Sleep -Milliseconds 50}
         } while($script:ownedJobProcesses.Count -eq 0 -and $wait.Elapsed.TotalSeconds -lt 5)
         if($script:ownedJobProcesses.Count -eq 0){throw 'Harmless Job did not start'}
+        if($script:rejectGpu) {
+            $exception=[InvalidOperationException]::new('GPU usage 20008927232 exceeded 20000000000 bytes')
+            $exception.Data['candle_gpu_sample']=$rejectSample
+            throw $exception
+        }
         Invoke-SessionProfileProbe $shell @('-NoProfile','-File',$hangingScript,'-Owner',$hangingOwner) 1500 4096 | Out-Null
     }
     function Start-Process {
         param($FilePath,$ArgumentList,[switch]$PassThru,$WindowStyle,$RedirectStandardOutput,$RedirectStandardError)
+        $originalCommand=[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($ArgumentList[-1]))
+        $eventMatch=[regex]::Match($originalCommand,"-StopEventName '(Local\\CandleLfm2VlOracleStop-[0-9a-f]{32})'")
+        if(-not $eventMatch.Success){throw 'Fixture omitted actual parent stop event'}
         $command='& '+(Quote-SessionProfileLiteral $helper)+' -FilePath '+(Quote-SessionProfileLiteral $probe)+
             " -ArgumentList @('/d','/c','ping 127.0.0.1 -n 31 > nul') -TimeoutSeconds 15 -MaxJobMemoryBytes 268435456 -PollMilliseconds 50 -ConcurrencyScope Executable -WorkingDirectory "+(Quote-SessionProfileLiteral $testRoot)+
-            ' -EvidencePath '+(Quote-SessionProfileLiteral (Join-Path $testRoot 'active-job.json'))
+            ' -EvidencePath '+(Quote-SessionProfileLiteral (Join-Path $activeRoot 'job.json'))+
+            ' -StopEventName '+(Quote-SessionProfileLiteral $eventMatch.Groups[1].Value)
         $encoded=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
         Microsoft.PowerShell.Management\Start-Process -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -PassThru -WindowStyle Hidden -RedirectStandardOutput $RedirectStandardOutput -RedirectStandardError $RedirectStandardError
     }
     Test-ObserverReject {Invoke-SessionProfileLane $lane $testSource $activeRoot $helper (Split-Path $PSScriptRoot -Parent)} 'deadline|cancel'
     $terminal=Get-Content (Join-Path $activeRoot 'terminal.json') -Raw|ConvertFrom-Json
     Test-ObserverAssert ($terminal.status -eq 'failed' -and $null -ne $terminal.error) 'observer failure retains incomplete terminal'
+    Test-ObserverAssert ($terminal.job_receipt_status -eq 'retained' -and $terminal.native_job.termination_reason -eq 'stop_requested' -and
+        $terminal.native_job.stop_requested -and $terminal.native_job.stop_applied -and $terminal.native_job.child_exit_code -eq 130 -and
+        $terminal.native_job.pid_absent_after_cleanup) 'cooperative failure stop retains actual native Job receipt'
+    Test-ObserverAssert ($terminal.controller_stop.signal_sent -and -not $terminal.controller_stop.fallback_kill -and
+        $terminal.controller_stop.exited -and $terminal.controller_stop.exit_code -ne 0 -and $terminal.cleanup_errors.Count -eq 0) 'controller stop and observed exit retained'
     $owner=Get-Content (Join-Path $activeRoot 'owner.json') -Raw|ConvertFrom-Json
     Test-ObserverAssert (Test-ObserverAbsent $owner) 'active controller released after probe failure'
     Test-ObserverAssert (@($script:ownedJobProcesses|Where-Object{-not (Test-ObserverAbsent $_)}).Count -eq 0) 'active harmless Job released after probe failure'
     $hangingIds=@(Get-Content -LiteralPath $hangingOwner -Raw|ConvertFrom-Json)
     Test-ObserverAssert (@($hangingIds|Where-Object{-not (Test-ObserverAbsent $_)}).Count -eq 0) 'active failing observer tree released'
+    $originalStop=(Get-Command Stop-SessionProfileController).ScriptBlock
+    function Stop-SessionProfileController {
+        param($Controller,$StopEvent,$GraceMilliseconds,$Identity,[switch]$PassThru)
+        $actualStop=& $originalStop @PSBoundParameters
+        $actualStop.error='authored cleanup reporting failure'
+        $actualStop
+    }
+    $activeRoot=Join-Path $testRoot 'rejected-gpu';$script:samples=0;$script:rejectGpu=$true
+    Test-ObserverReject {Invoke-SessionProfileLane $lane $testSource $activeRoot $helper (Split-Path $PSScriptRoot -Parent)} 'GPU usage 20008927232 exceeded 20000000000 bytes'
+    $terminal=Get-Content (Join-Path $activeRoot 'terminal.json') -Raw|ConvertFrom-Json
+    Test-ObserverAssert ($terminal.status -eq 'failed' -and $terminal.error -eq 'GPU usage 20008927232 exceeded 20000000000 bytes' -and
+        $terminal.gpu_samples.Count -eq 2 -and -not $terminal.gpu_samples[1].accepted -and
+        $terminal.gpu_samples[1].used_bytes -eq 20008927232) 'lane retains rejecting sample once and original error'
+    Test-ObserverAssert ($terminal.native_job.child_exit_code -eq 130 -and $terminal.controller_stop.exit_code -ne 0 -and
+        $terminal.cleanup_errors.Count -eq 1 -and $terminal.cleanup_errors[0] -eq 'authored cleanup reporting failure' -and
+        @($script:ownedJobProcesses|Where-Object{-not (Test-ObserverAbsent $_)}).Count -eq 0) 'GPU rejection preserves primary error despite cleanup reporting failure'
+    Set-Item Function:\Stop-SessionProfileController -Value $originalStop
     Set-Item Function:\Get-SessionProfileGpuSample -Value $originalSample
     Remove-Item Function:\Start-Process
+    $fallback=Start-Process $shell -ArgumentList @('-NoProfile','-Command','Start-Sleep -Seconds 30') -PassThru -WindowStyle Hidden
+    try {
+        $fallbackIdentity=Get-SessionProfileOwnerIdentity $fallback.Id $fallback.StartTime $shell
+        $wrongIdentity=[pscustomobject]@{pid=$fallback.Id;creation_utc=[DateTime]::UnixEpoch.ToString('o')}
+        $refusal=Stop-SessionProfileController $fallback -Identity $wrongIdentity -PassThru
+        Test-ObserverAssert ($refusal.error -match 'identity mismatch' -and -not $fallback.HasExited) 'stop rejects mismatched owner before mutation'
+        $forced=Stop-SessionProfileController $fallback -Identity $fallbackIdentity -GraceMilliseconds 50 -PassThru
+        Test-ObserverAssert ($forced.exited -and $forced.fallback_kill -and $forced.stop_mode -eq 'forced-controller-stop' -and
+            $null -ne $forced.exit_code -and $null -eq $forced.error) 'unresponsive controller uses observed bounded fallback'
+        $departed=Stop-SessionProfileController $fallback -Identity $fallbackIdentity -PassThru
+        Test-ObserverAssert ($departed.exited -and -not $departed.fallback_kill -and $departed.stop_mode -eq 'already-exited' -and
+            $departed.exit_code -eq $forced.exit_code) 'already departed owner preserves actual exit without another stop'
+    } finally {Stop-SessionProfileController $fallback;$fallback.Dispose()}
     $success=$true
     "session-profile observer controls: $script:passed passed"
 } finally {

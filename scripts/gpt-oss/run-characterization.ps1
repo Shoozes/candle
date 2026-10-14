@@ -217,7 +217,8 @@ function Assert-CharacterizationObservedModules($Modules,$RequiredModules) {
 }
 function Invoke-CharacterizationLane($Lane,$Packet,[string]$PacketFile,[string]$Output,[string]$Helper,[string]$RepoRoot) {
     $directory=Join-Path $Output $Lane.backend;$observation=Join-Path $Output ($Lane.backend+'-runtime.json')
-    $watcher=$null;$success=$false;$errorText=$null
+    $watcher=$null;$watcherIdentity=$null;$watcherStop=$null;$success=$false;$errorText=$null
+    $cleanupErrors=[Collections.Generic.List[string]]::new()
     try {
         $watchCommand='& '+(Quote-SessionProfileLiteral $Packet.watcher.path)+' -PacketPath '+(Quote-SessionProfileLiteral $PacketFile)+
             ' -ObservationPath '+(Quote-SessionProfileLiteral $observation)+' -Backend '+(Quote-SessionProfileLiteral $Lane.backend)
@@ -256,8 +257,17 @@ function Invoke-CharacterizationLane($Lane,$Packet,[string]$PacketFile,[string]$
         $success=$true
     } catch {$errorText=$_.Exception.Message}
     finally {
-        if($null -ne $watcher){try{Stop-SessionProfileController $watcher}catch{$errorText=$_.Exception.Message;$success=$false};$watcher.Dispose()}
-        Write-SessionProfileJson (Join-Path $Output ($Lane.backend+'-qualification.json')) ([ordered]@{schema='candle.gpt-oss.characterization-qualification.v1';status=$(if($success){'qualified-short'}else{'incomplete'});error=$errorText;source_commit=$Packet.source_commit;
+        if($null -ne $watcher){
+            try {
+                # A failed lane terminal lets the watcher write its own incomplete
+                # record and exit. Forced fallback remains bounded and explicit.
+                $watcherStop=Stop-SessionProfileController $watcher -GraceMilliseconds 5000 -Identity $watcherIdentity -PassThru
+                if($null -ne $watcherStop.error){throw $watcherStop.error}
+            }catch{$cleanupErrors.Add($_.Exception.Message);$success=$false}
+            $watcher.Dispose()
+        }
+        if($null -eq $errorText -and $cleanupErrors.Count -gt 0){$errorText=$cleanupErrors[0]}
+        Write-SessionProfileJson (Join-Path $Output ($Lane.backend+'-qualification.json')) ([ordered]@{schema='candle.gpt-oss.characterization-qualification.v1';status=$(if($success){'qualified-short'}else{'incomplete'});error=$errorText;cleanup_errors=@($cleanupErrors);watcher_stop=$watcherStop;source_commit=$Packet.source_commit;
             original_reference_identity='independent pinned oracle; not CPU/CUDA agreement';scope='Diagnostic short F32 only; native consumer/profile/capacity/causal speedup remain unqualified'})
     }
     if(-not $success){throw "Characterization failed: $errorText"}
