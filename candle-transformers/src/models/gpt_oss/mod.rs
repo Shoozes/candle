@@ -8,11 +8,16 @@
 //! have separate evidence boundaries recorded in `docs/gpt-oss/STATUS.md`.
 //! The maintained product default and broader qualification remain separate.
 
+#[cfg(any(feature = "cuda", test))]
+mod cache;
 mod checkpoint;
 mod config;
 #[cfg(feature = "cuda")]
 mod cuda;
+#[cfg(any(feature = "cuda", test))]
+mod cuda_storage;
 mod gguf;
+mod memory;
 mod model;
 pub mod mxfp4;
 mod runtime;
@@ -26,6 +31,10 @@ pub use cuda::{GptOssCudaConfig, GptOssCudaError, GptOssCudaModel, GptOssCudaRes
 pub use gguf::{
     load_gpt_oss_weights, load_gpt_oss_weights_with_cancellation, GptOssGgufArtifact,
     GptOssGgufDType, GptOssGgufTensor, GptOssTensorRole, SELECTED_GPT_OSS_GGUF_SHA256,
+};
+pub use memory::{
+    cuda_cache_bytes_for_tokens, cuda_cache_capacity_bytes_for_tokens,
+    cuda_peak_device_bytes_for_forward, cuda_workspace_bytes_for_tokens,
 };
 pub use model::{DenseLinear, GptOssLayerWeights, GptOssModel, GptOssWeights};
 pub use runtime::{

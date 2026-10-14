@@ -1,5 +1,23 @@
 # LFM2.5-VL Decisions
 
+## D-0079: Lossless CUDA tables and transactional paged GPT-OSS cache
+
+The coordinated human-selected 32k Work keeps F32 activations and packed MXFP4.
+Embedding/head tables use BF16 storage only after exact finite F32 bit-roundtrip
+admission; nonrepresentable tables retain F32. A mixed-storage kernel computes
+F32 output, with independently qualified reduction order. No FastBf16 mode or
+CPU precision change is implied. CPU source assembly keeps its explicit budget;
+exact CUDA table residency and transaction admission precede device creation.
+
+Immutable pages share complete committed prefixes and replace only partial tails.
+Physically evict sliding rows while preserving absolute positions and rollback.
+GQA uses batched matmul without query-head K/V expansion; one-layer page gathering
+remains. New CUDA-specific public bounds count old snapshots, append overlap and
+workspace; legacy CPU helpers retain their contract. Payload accounting never
+substitutes for physical GPU/Job observation. Fresh numerical and staged-capacity
+allowances, actual route proof and separately authorized publication remain open.
+Detailed formulas and frozen model-free bounds belong to GPT-OSS MEMORY.
+
 ## D-0078: Keep characterization and historical profiling separate
 
 The 2026-10-13 drop-in selects common-session cold timing, independent 5/6/7

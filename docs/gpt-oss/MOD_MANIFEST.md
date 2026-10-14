@@ -14,8 +14,13 @@ promote GPT-OSS to the product default.
   completes at `e3e1afcb`; closed receipts preserve secondary owner-metadata
   limits. The subsequent live owner-identity repair is model-free only;
   consumers and broader production profiles remain held.
-  See `CHARACTERIZATION.md`. This manifest now owns 57 paths; the live union
-  is 311 paths with 28 shared paths, recomputed from the actual candidate.
+  See `CHARACTERIZATION.md`. This manifest now owns 61 paths; the live union
+  is 315 paths with 28 shared paths, recomputed from the actual candidate.
+
+- Local 32k memory Work adds lossless BF16 embedding/head storage with F32
+  activations, immutable paged KV with physical sliding eviction, grouped GQA
+  and backend-specific transaction bounds. Model-free proof precedes fresh
+  production qualification; see `MEMORY.md`. No physical 32k claim follows.
 
 - Maintained loading preparation adds a common F32 CPU/CUDA session, explicit
   GGUF identities, bounded full original/indexed safetensors assembly and
@@ -97,9 +102,13 @@ SHA-256 `616b188eadb04b27f7834a952d45a7cfd8ec9ff8a0b68413ce8a5aa468a71431`.
 - `docs/gpt-oss/LOADING.md`
 - `docs/gpt-oss/PROFILING.md`
 - `docs/gpt-oss/CHARACTERIZATION.md`
+- `docs/gpt-oss/MEMORY.md`
 - `candle-transformers/src/models/gpt_oss/mod.rs`
 - `candle-transformers/src/models/gpt_oss/checkpoint.rs`
 - `candle-transformers/src/models/gpt_oss/cuda.rs`
+- `candle-transformers/src/models/gpt_oss/cache.rs`
+- `candle-transformers/src/models/gpt_oss/memory.rs`
+- `candle-transformers/src/models/gpt_oss/cuda_storage.rs`
 - `candle-transformers/src/models/gpt_oss/config.rs`
 - `candle-transformers/src/models/gpt_oss/gguf.rs`
 - `candle-transformers/src/models/gpt_oss/mxfp4.rs`

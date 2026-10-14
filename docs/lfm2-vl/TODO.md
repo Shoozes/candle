@@ -54,20 +54,29 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   backing report and route proof; Symbio owns coding consumption afterward.
   Symbio's published twelve-file `e43eeeac` preparation is byte-verified;
   Edge's local twelve-file return and proof journal are also byte-verified.
-- Selected next batch after guarded publication: prepare model-free attribution
-  of the CUDA final-validation boundary
-  (mean decode 32.105ms, including pending GPU work): separate synchronize,
-  host materialization and finite scan with opt-in timing, preserving normal
-  arithmetic/reduction/cache/cancellation behavior. Do not optimize or label
-  a kernel bottleneck from that aggregate. Why: caller readback 0.114ms and
-  argmax 0.526ms are small while validation is a large nested part of 71.655ms.
-- Attribution Done when: model-free fixtures prove identical results and
-  timing nesting/default behavior, then a clean reviewed packet freezes the
-  minimal additional measurement work and obtains its own finite allowance.
-  Existing CPU traces remain bound to `e3e1afcb`; no closed packet is reused.
-  Keep diagnostic 32GiB/1,800s Jobs and 20e9 GPU ceiling. Current publication
-  grants no new inference or consumer activation; BF16/32k/native provider/
-  release gates remain open.
+- Selected coordinated Work: repair the 32k CUDA memory boundary first. Local
+  code implements lossless BF16 table storage with F32 activations, immutable
+  paged KV/physical sliding eviction, batched GQA and backend-specific admission.
+  CPU reference behavior, packed MXFP4 and closed production receipts stay fixed.
+  [MEMORY](../gpt-oss/MEMORY.md) owns formulas, APIs and the proof boundary.
+- Memory candidate Done when: exact storage selection/fallback, CPU/CUDA component
+  parity, page/window crossings, failure/cancellation replay and checked peak
+  admission pass focused and native gates; obtain explicit scoped checkpoint
+  authorization, then prepare a new source/binary/helper/input-bound packet.
+  Fresh finite CPU-first numerical/physical qualification remains separately
+  required before staged 8k/16k/32k or any consumer capacity claim. The current
+  16.99 GB payload bound does not prove a physical ceiling or Responses latency.
+- Local proof complete: CPU57/CUDA69 synthetic tests (one production test ignored
+  per lane), strict CPU/CUDA library Clippy, CUDA example checks and the full
+  native locked/offline gate pass. Summary Bank and 61-path GPT/315-path union
+  inventories pass. WSL replay is unrun; expanded test Clippy retains nine
+  pre-existing style lints. Commit and fresh retained-model proof remain held.
+- Delivery order remains Candle qualification, Edge native Responses qualification,
+  then Symbio Add-SymbioNumber. Preserve Q8, GenEye `3fa7075e`, engine `0.154.0`
+  and GPT-OSS disabled until qualified. Responses keeps90s; longer jobs use
+  WorkerRuntime600s. No commit/push or production model work is authorized by
+  the local Work. Validation timing attribution remains open after memory repair;
+  its 32.105ms includes pending GPU work and identifies no isolated bottleneck.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 

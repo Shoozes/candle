@@ -1,14 +1,16 @@
 //! Opt-in CUDA execution for the packed GPT-OSS CPU proof model.
 //!
-//! The dense transformer parameters are uploaded as F32 tensors.  MXFP4
+//! Activations and dense transformer arithmetic remain F32. Losslessly
+//! representable embedding/head tables use BF16 storage. MXFP4
 //! expert weights remain U8 blocks plus U8 E8M0 scales on the device and are
 //! consumed by the dedicated packed kernel; no dense expert fallback exists.
 
+use super::cache::PagedKvCache;
+use super::memory::{cuda_cache_capacity_bytes_for_tokens, cuda_peak_device_bytes_for_forward};
 use super::model::{rope_parameters, DenseLinear, GptOssLayerWeights, GptOssWeights};
 use super::mxfp4::{Mxfp4ExpertOperation, PackedMxfp4, BYTES_PER_BLOCK, VALUES_PER_BLOCK};
 use super::runtime::{
-    cache_bytes_for_tokens, total_device_bytes_for_tokens, GptOssCancellationToken,
-    GptOssLoadedHandle, GptOssResourceLimits, GptOssResourceUsage,
+    GptOssCancellationToken, GptOssLoadedHandle, GptOssResourceLimits, GptOssResourceUsage,
 };
 use super::GptOssConfig;
 use candle::cuda_backend::cudarc::driver::{DevicePtr, DevicePtrMut};
@@ -170,8 +172,25 @@ impl CudaLinear {
         Ok(Self { weight, bias })
     }
 
+    fn from_cpu_table(linear: &DenseLinear, device: &Device) -> GptOssCudaResult<Self> {
+        let weight = super::cuda_storage::upload_table(
+            linear.weights(),
+            (linear.rows(), linear.cols()),
+            device,
+        )?;
+        let bias = linear
+            .bias()
+            .map(|bias| Tensor::from_slice(bias, (bias.len(),), device))
+            .transpose()?;
+        Ok(Self { weight, bias })
+    }
+
     fn forward(&self, input: &Tensor) -> GptOssCudaResult<Tensor> {
-        let mut output = input.matmul(&self.weight.t()?)?;
+        let mut output = if self.weight.dtype() == DType::BF16 {
+            super::cuda_storage::matmul(input, &self.weight)?
+        } else {
+            input.matmul(&self.weight.t()?)?
+        };
         if let Some(bias) = &self.bias {
             output = output.broadcast_add(bias)?;
         }
@@ -308,11 +327,22 @@ impl CudaWeights {
             lm_head: source_head,
             ..
         } = weights;
-        let token_embedding = Tensor::from_vec(
-            source_embedding,
-            (config.vocab_size, config.hidden_size),
-            device,
-        )?;
+        let token_embedding = if super::cuda_storage::lossless_bf16(&source_embedding) {
+            let tensor = super::cuda_storage::upload_table(
+                &source_embedding,
+                (config.vocab_size, config.hidden_size),
+                device,
+            )?;
+            device.synchronize()?;
+            drop(source_embedding);
+            tensor
+        } else {
+            Tensor::from_vec(
+                source_embedding,
+                (config.vocab_size, config.hidden_size),
+                device,
+            )?
+        };
         let mut layers = Vec::new();
         layers
             .try_reserve_exact(source_layers.len())
@@ -336,7 +366,7 @@ impl CudaWeights {
         }
         let norm_len = source_norm.len();
         let final_norm = Tensor::from_vec(source_norm, (norm_len,), device)?;
-        let upload = CudaLinear::from_cpu(&source_head, device);
+        let upload = CudaLinear::from_cpu_table(&source_head, device);
         let synchronized = device.synchronize();
         let lm_head = upload?;
         synchronized?;
@@ -352,11 +382,7 @@ impl CudaWeights {
     }
 }
 
-#[derive(Debug, Clone, Default)]
-struct CudaCacheLayer {
-    keys: Option<Tensor>,
-    values: Option<Tensor>,
-}
+type CudaCacheLayer = PagedKvCache;
 
 #[derive(Debug, Clone)]
 struct CudaCache {
@@ -403,7 +429,7 @@ impl GptOssCudaModel {
                 message: "weight layer count does not match configuration".to_string(),
             });
         }
-        let static_resident_bytes = cpu_weight_resident_bytes(&weights)?;
+        let static_resident_bytes = cuda_weight_resident_bytes(&weights)?;
         if static_resident_bytes > cuda_config.max_weight_bytes {
             return Err(GptOssCudaError::ResourceLimit {
                 resource: "static weight bytes",
@@ -411,10 +437,12 @@ impl GptOssCudaModel {
                 limit: cuda_config.max_weight_bytes,
             });
         }
-        if static_resident_bytes > cuda_config.limits.max_total_device_bytes {
+        let initial_bytes =
+            cuda_peak_device_bytes_for_forward(&config, static_resident_bytes, 0, 1)?;
+        if initial_bytes > cuda_config.limits.max_total_device_bytes {
             return Err(GptOssCudaError::ResourceLimit {
                 resource: "total device bytes",
-                requested: static_resident_bytes,
+                requested: initial_bytes,
                 limit: cuda_config.limits.max_total_device_bytes,
             });
         }
@@ -459,11 +487,37 @@ impl GptOssCudaModel {
     }
 
     pub fn resource_usage(&self) -> GptOssCudaResult<GptOssResourceUsage> {
-        let cache_bytes = cache_bytes_for_tokens(&self.config, self.cache.tokens)?;
+        let row_bytes = self
+            .config
+            .num_key_value_heads
+            .checked_mul(self.config.head_dim)
+            .and_then(|n| n.checked_mul(8))
+            .ok_or(GptOssCudaError::Overflow {
+                operation: "CUDA cache row bytes",
+            })?;
+        let (cache_bytes, capacity_bytes) =
+            self.cache
+                .layers
+                .iter()
+                .try_fold((0usize, 0usize), |(logical, capacity), layer| {
+                    let logical = layer
+                        .rows()
+                        .checked_mul(row_bytes)
+                        .and_then(|n| logical.checked_add(n))
+                        .ok_or(GptOssCudaError::Overflow {
+                            operation: "CUDA logical cache bytes",
+                        })?;
+                    let capacity = capacity.checked_add(layer.storage_bytes()?).ok_or(
+                        GptOssCudaError::Overflow {
+                            operation: "CUDA cache capacity bytes",
+                        },
+                    )?;
+                    Ok::<_, GptOssCudaError>((logical, capacity))
+                })?;
         Ok(GptOssResourceUsage {
             sequence_tokens: self.cache.tokens,
             cache_bytes,
-            cache_capacity_bytes: cache_bytes,
+            cache_capacity_bytes: capacity_bytes,
         })
     }
 
@@ -518,6 +572,29 @@ impl GptOssCudaModel {
         input_ids: &[u32],
         cancellation: &GptOssCancellationToken,
     ) -> GptOssCudaResult<Tensor> {
+        validate_input_ids(&self.config, input_ids)?;
+        if cancellation.is_cancelled() {
+            return Err(GptOssCudaError::Cancelled);
+        }
+        let fresh_peak = cuda_peak_device_bytes_for_forward(
+            &self.config,
+            self.static_resident_bytes(),
+            0,
+            input_ids.len(),
+        )?;
+        // The original root stays alive while the temporary model evaluates.
+        let peak = fresh_peak
+            .checked_add(self.resource_usage()?.cache_capacity_bytes)
+            .ok_or(GptOssCudaError::Overflow {
+                operation: "CUDA uncached owner peak",
+            })?;
+        if peak > self.limits.max_total_device_bytes {
+            return Err(GptOssCudaError::ResourceLimit {
+                resource: "total device bytes",
+                requested: peak,
+                limit: self.limits.max_total_device_bytes,
+            });
+        }
         let mut model = self.clone();
         model.reset_cache()?;
         model.forward_transaction(input_ids, cancellation, None)
@@ -547,7 +624,11 @@ impl GptOssCudaModel {
         for &input_id in input_ids {
             cancellation_checkpoint(cancellation)?;
             let token = Tensor::from_slice(&[input_id], (1,), &self.device)?;
-            let mut hidden = self.weights.token_embedding.index_select(&token, 0)?;
+            let mut hidden = self
+                .weights
+                .token_embedding
+                .index_select(&token, 0)?
+                .to_dtype(DType::F32)?;
             for (layer_index, layer) in self.weights.layers.iter().enumerate() {
                 hidden = self.forward_layer(
                     layer,
@@ -592,7 +673,7 @@ impl GptOssCudaModel {
         Ok(logits)
     }
 
-    fn admit(&self, incoming_tokens: usize) -> GptOssCudaResult<()> {
+    pub(crate) fn admit(&self, incoming_tokens: usize) -> GptOssCudaResult<()> {
         let requested_tokens =
             self.cache
                 .tokens
@@ -600,10 +681,6 @@ impl GptOssCudaModel {
                 .ok_or(GptOssCudaError::Overflow {
                     operation: "CUDA sequence length",
                 })?;
-        self.admit_to(requested_tokens)
-    }
-
-    fn admit_to(&self, requested_tokens: usize) -> GptOssCudaResult<()> {
         if requested_tokens > self.limits.max_sequence_tokens {
             return Err(GptOssCudaError::ResourceLimit {
                 resource: "sequence tokens",
@@ -611,7 +688,7 @@ impl GptOssCudaModel {
                 limit: self.limits.max_sequence_tokens,
             });
         }
-        let requested_bytes = cache_bytes_for_tokens(&self.config, requested_tokens)?;
+        let requested_bytes = cuda_cache_capacity_bytes_for_tokens(&self.config, requested_tokens)?;
         if requested_bytes > self.limits.max_cache_bytes {
             return Err(GptOssCudaError::ResourceLimit {
                 resource: "KV-cache bytes",
@@ -619,10 +696,11 @@ impl GptOssCudaModel {
                 limit: self.limits.max_cache_bytes,
             });
         }
-        let total_bytes = total_device_bytes_for_tokens(
+        let total_bytes = cuda_peak_device_bytes_for_forward(
             &self.config,
             self.weights.static_resident_bytes,
-            requested_tokens,
+            self.cache.tokens,
+            incoming_tokens,
         )?;
         if total_bytes > self.limits.max_total_device_bytes {
             return Err(GptOssCudaError::ResourceLimit {
@@ -706,25 +784,18 @@ impl GptOssCudaModel {
         ))?;
         let key = key.reshape((1, kv_width))?;
         let value = value.reshape((1, kv_width))?;
-        let next_keys = match &cache.keys {
-            Some(keys) => Tensor::cat(&[keys, &key], 0)?,
-            None => key,
-        };
-        let next_values = match &cache.values {
-            Some(values) => Tensor::cat(&[values, &value], 0)?,
-            None => value,
-        };
+        let sliding = self.config.attention_type(layer_index)?
+            == super::GptOssAttentionType::SlidingAttention;
+        cache.append(&key, &value, sliding.then_some(self.config.sliding_window))?;
+        let (next_keys, next_values) = cache.materialize()?;
         let attended = cuda_attention(
             &query,
             &next_keys,
             &next_values,
             &layer.sinks,
             &self.config,
-            self.config.attention_type(layer_index)?
-                == super::GptOssAttentionType::SlidingAttention,
+            sliding,
         )?;
-        cache.keys = Some(next_keys);
-        cache.values = Some(next_values);
         let attention_update = layer.attention_out.forward(&attended)?;
         let post_attention_hidden = hidden.broadcast_add(&attention_update)?;
 
@@ -892,30 +963,21 @@ fn cuda_attention(
     let kv_heads = config.num_key_value_heads;
     let head_dim = config.head_dim;
     let q_per_kv = heads / kv_heads;
+    // Batched GQA never expands K/V to one copy per query head.
     let key = keys
-        .reshape((1, key_tokens, kv_heads, head_dim))?
-        .transpose(1, 2)?
-        .unsqueeze(2)?
-        .broadcast_as(Shape::from_dims(&[
-            1, kv_heads, q_per_kv, key_tokens, head_dim,
-        ]))?
-        .reshape((1, heads, key_tokens, head_dim))?;
+        .reshape((key_tokens, kv_heads, head_dim))?
+        .permute((1, 2, 0))?
+        .contiguous()?;
     let value = values
-        .reshape((1, key_tokens, kv_heads, head_dim))?
-        .transpose(1, 2)?
-        .unsqueeze(2)?
-        .broadcast_as(Shape::from_dims(&[
-            1, kv_heads, q_per_kv, key_tokens, head_dim,
-        ]))?
-        .reshape((1, heads, key_tokens, head_dim))?;
-    let scores = (query.broadcast_mul(&key)?.sum(D::Minus1)? * (head_dim as f64).sqrt().recip())?;
-    let sink = sinks.reshape((1, heads, 1))?;
+        .reshape((key_tokens, kv_heads, head_dim))?
+        .permute((1, 0, 2))?
+        .contiguous()?;
+    let query = query.reshape((kv_heads, q_per_kv, head_dim))?;
+    let scores = (query.matmul(&key)? * (head_dim as f64).sqrt().recip())?;
+    let sink = sinks.reshape((kv_heads, q_per_kv, 1))?;
     let scores = Tensor::cat(&[&scores, &sink], D::Minus1)?;
     let weights = ops::softmax(&scores, D::Minus1)?.narrow(D::Minus1, 0, key_tokens)?;
-    let attended = weights
-        .unsqueeze(D::Minus1)?
-        .broadcast_mul(&value)?
-        .sum(2)?;
+    let attended = weights.contiguous()?.matmul(&value)?;
     let width = heads
         .checked_mul(head_dim)
         .ok_or(GptOssCudaError::Overflow {
@@ -1115,12 +1177,12 @@ fn checked_i32(value: usize, operation: &'static str) -> GptOssCudaResult<i32> {
     i32::try_from(value).map_err(|_| GptOssCudaError::Overflow { operation })
 }
 
-fn cpu_weight_resident_bytes(weights: &GptOssWeights) -> GptOssCudaResult<usize> {
+fn cuda_weight_resident_bytes(weights: &GptOssWeights) -> GptOssCudaResult<usize> {
     let mut total = 0usize;
     add_elements(
         &mut total,
         weights.token_embedding().len(),
-        F32_BYTES,
+        table_element_bytes(weights.token_embedding()),
         "token embedding",
     )?;
     for layer in weights.layers() {
@@ -1171,8 +1233,24 @@ fn cpu_weight_resident_bytes(weights: &GptOssWeights) -> GptOssCudaResult<usize>
         F32_BYTES,
         "final norm",
     )?;
-    add_linear_bytes(&mut total, weights.lm_head(), "LM head")?;
+    add_elements(
+        &mut total,
+        weights.lm_head().weights().len(),
+        table_element_bytes(weights.lm_head().weights()),
+        "LM head",
+    )?;
+    if let Some(bias) = weights.lm_head().bias() {
+        add_elements(&mut total, bias.len(), F32_BYTES, "LM head bias")?;
+    }
     Ok(total)
+}
+
+fn table_element_bytes(values: &[f32]) -> usize {
+    if super::cuda_storage::lossless_bf16(values) {
+        2
+    } else {
+        F32_BYTES
+    }
 }
 
 fn add_linear_bytes(
@@ -1204,6 +1282,7 @@ fn add_elements(
 
 #[cfg(test)]
 mod tests {
+    use super::super::{cache_bytes_for_tokens, GptOssModel};
     use super::*;
     use crate::models::gpt_oss::mxfp4::{
         Mxfp4ExpertOperation, BYTES_PER_BLOCK, SCALE_BIAS, VALUES_PER_BLOCK,
@@ -1516,7 +1595,7 @@ mod tests {
             max_cache_bytes: cache_bytes_for_tokens(&config, max_sequence_tokens)?,
             max_total_device_bytes: usize::MAX,
         };
-        let max_weight_bytes = cpu_weight_resident_bytes(&weights)?;
+        let max_weight_bytes = cuda_weight_resident_bytes(&weights)?;
         let cuda_config = GptOssCudaConfig::new(0, DType::F32, max_weight_bytes, limits)?;
         Ok(GptOssCudaModel::new(config, weights, cuda_config)?)
     }
@@ -1846,6 +1925,208 @@ mod tests {
     }
 
     #[test]
+    fn lossless_tables_preserve_full_model_cpu_parity_and_selected_bytes() -> TestResult {
+        let (config, mut weights) = model_parts_with_options(2, false, true);
+        // Author a synthetic BF16-valued source; runtime never rounds F32 weights.
+        for value in &mut weights.token_embedding {
+            *value = f32::from_bits(value.to_bits() & 0xffff0000);
+        }
+        let table: Vec<f32> = weights
+            .lm_head
+            .weights()
+            .iter()
+            .map(|v| f32::from_bits(v.to_bits() & 0xffff0000))
+            .collect();
+        weights.lm_head = DenseLinear::new(
+            weights.lm_head.rows(),
+            weights.lm_head.cols(),
+            table,
+            weights.lm_head.bias().map(|b| b.to_vec()),
+        )?;
+        let table_elements = weights.token_embedding.len() + weights.lm_head.weights().len();
+        let static_bytes = cuda_weight_resident_bytes(&weights)?;
+        let mut cpu = GptOssModel::new(config.clone(), weights.clone())?;
+        let mut cuda = cuda_model_from_parts(config, weights, 8)?;
+        assert_eq!(cuda.weights.token_embedding.dtype(), DType::BF16);
+        assert_eq!(cuda.weights.lm_head.weight.dtype(), DType::BF16);
+        assert_eq!(cuda.static_resident_bytes(), static_bytes);
+        assert_eq!(
+            cuda.weights.token_embedding.elem_count()
+                * cuda.weights.token_embedding.dtype().size_in_bytes()
+                + cuda.weights.lm_head.weight.elem_count()
+                    * cuda.weights.lm_head.weight.dtype().size_in_bytes(),
+            table_elements * 2
+        );
+        let cancel = GptOssCancellationToken::new();
+        let expected = cpu.prefill(&[1, 2, 3, 4], &cancel)?;
+        let actual = cuda
+            .prefill(&[1, 2, 3, 4], &cancel)?
+            .flatten_all()?
+            .to_vec1::<f32>()?;
+        assert_close(&actual, &expected, 1e-4);
+        cuda.reset_cache()?;
+        assert_eq!(
+            actual,
+            cuda.prefill(&[1, 2, 3, 4], &cancel)?
+                .flatten_all()?
+                .to_vec1::<f32>()?
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn bf16_table_storage_keeps_f32_inputs_and_component_parity() -> TestResult {
+        let device = Device::new_cuda(0)?;
+        for width in [1, 31, 32, 33, 2880] {
+            let rows = 9;
+            let weights: Vec<f32> = (0..rows * width)
+                .map(|i| ((i % 17) as f32 - 8.) * 0.03125)
+                .collect();
+            let table = super::super::cuda_storage::upload_table(&weights, (rows, width), &device)?;
+            assert_eq!(table.dtype(), DType::BF16);
+            assert_eq!(
+                table
+                    .to_dtype(DType::F32)?
+                    .flatten_all()?
+                    .to_vec1::<f32>()?,
+                weights
+            );
+            let inputs: Vec<f32> = (0..2 * width)
+                .map(|i| f32::from_bits(0x3f80_0001) * ((i % 11) as f32 - 5.) * 0.015625)
+                .collect();
+            let input = Tensor::from_slice(&inputs, (2, width), &device)?;
+            let actual = super::super::cuda_storage::matmul(&input, &table)?
+                .flatten_all()?
+                .to_vec1::<f32>()?;
+            let dense = Tensor::from_slice(&weights, (rows, width), &device)?;
+            let expected = input.matmul(&dense.t()?)?.flatten_all()?.to_vec1::<f32>()?;
+            assert_close(&actual, &expected, 1e-4);
+            // Exercise both nonzero offsets and non-contiguous input/weight views.
+            let padded_input = Tensor::cat(&[&input, &input], 0)?.narrow(0, 2, 2)?;
+            let padded_weight = Tensor::cat(&[&table, &table], 0)?.narrow(0, rows, rows)?;
+            let viewed = super::super::cuda_storage::matmul(&padded_input, &padded_weight)?
+                .flatten_all()?
+                .to_vec1::<f32>()?;
+            assert_eq!(actual, viewed);
+            let permuted_input = input.t()?.force_contiguous()?.t()?;
+            let permuted_weight = table.t()?.force_contiguous()?.t()?;
+            assert_eq!(
+                actual,
+                super::super::cuda_storage::matmul(&permuted_input, &permuted_weight)?
+                    .flatten_all()?
+                    .to_vec1::<f32>()?
+            );
+        }
+        let input = Tensor::from_slice(&[f32::from_bits(0x3f80_0001)], (1, 1), &device)?;
+        let one = super::super::cuda_storage::upload_table(&[1.], (1, 1), &device)?;
+        assert_eq!(
+            super::super::cuda_storage::matmul(&input, &one)?.to_vec2::<f32>()?[0][0].to_bits(),
+            0x3f80_0001
+        );
+        let f32_table = super::super::cuda_storage::upload_table(
+            &[f32::from_bits(0x3f80_0001)],
+            (1, 1),
+            &device,
+        )?;
+        assert_eq!(f32_table.dtype(), DType::F32);
+        assert!(super::super::cuda_storage::matmul(&input, &f32_table).is_err());
+        let wrong = Tensor::zeros((1, 2), DType::BF16, &device)?;
+        assert!(super::super::cuda_storage::matmul(&input, &wrong).is_err());
+        device.synchronize()?;
+        Ok(())
+    }
+
+    #[test]
+    fn paged_cuda_window_crossing_rollback_and_cpu_replay() -> TestResult {
+        let (config, weights) = model_parts_with_options(2, true, true);
+        let mut cpu = GptOssModel::new_with_limits(
+            config.clone(),
+            weights.clone(),
+            GptOssResourceLimits {
+                max_sequence_tokens: 140,
+                max_cache_bytes: cache_bytes_for_tokens(&config, 140)?,
+                max_total_device_bytes: usize::MAX,
+            },
+        )?;
+        let mut cuda = cuda_model_from_parts(config.clone(), weights, 140)?;
+        let cancel = GptOssCancellationToken::new();
+        let prefix: Vec<u32> = (0..63).map(|i| (i % 8) as u32).collect();
+        let expected = cpu.prefill(&prefix, &cancel)?;
+        let actual = cuda
+            .prefill(&prefix, &cancel)?
+            .flatten_all()?
+            .to_vec1::<f32>()?;
+        assert_close(&actual, &expected, 1e-4);
+        let usage = cuda.resource_usage()?;
+        let before = cuda
+            .cache
+            .layers
+            .iter()
+            .map(|l| l.materialize()?.0.to_vec2::<f32>())
+            .collect::<candle::Result<Vec<_>>>()?;
+        assert!(matches!(
+            cuda.prefill(&[1, 2, 3], &GptOssCancellationToken::cancel_after_checks(8)),
+            Err(GptOssCudaError::Cancelled)
+        ));
+        assert_eq!(cuda.resource_usage()?, usage);
+        let saved_head = cuda.weights.lm_head.weight.clone();
+        cuda.weights.lm_head.weight =
+            Tensor::from_slice(&vec![f32::NAN; 8 * 32], (8, 32), cuda.device())?;
+        assert!(cuda.prefill(&[1, 2, 3], &cancel).is_err());
+        cuda.weights.lm_head.weight = saved_head;
+        assert_eq!(cuda.resource_usage()?, usage);
+        for (layer, old) in cuda.cache.layers.iter().zip(before) {
+            assert_eq!(layer.materialize()?.0.to_vec2::<f32>()?, old);
+        }
+        for i in 63..131 {
+            let token = (i % 8) as u32;
+            let expected = cpu.decode(token, &cancel)?;
+            let actual = cuda
+                .decode(token, &cancel)?
+                .flatten_all()?
+                .to_vec1::<f32>()?;
+            assert_close(&actual, &expected, 1e-4);
+            assert_eq!(cuda.cache.layers[0].rows(), config.sliding_window);
+            assert_eq!(cuda.cache.layers[1].rows(), i + 1);
+            assert_eq!(
+                cuda.resource_usage()?.cache_bytes,
+                super::super::cuda_cache_bytes_for_tokens(&config, i + 1)?
+            );
+            assert!(
+                cuda.resource_usage()?.cache_capacity_bytes
+                    <= cuda_cache_capacity_bytes_for_tokens(&config, i + 1)?
+            );
+        }
+        let total =
+            cuda_peak_device_bytes_for_forward(&config, cuda.static_resident_bytes(), 131, 1)?;
+        cuda.limits.max_total_device_bytes = total - 1;
+        let before = cuda.resource_usage()?;
+        assert!(cuda.decode(0, &cancel).is_err());
+        assert_eq!(cuda.resource_usage()?, before);
+        cuda.limits.max_total_device_bytes = total;
+        cuda.decode(0, &cancel)?;
+        let committed = cuda.resource_usage()?;
+        let fresh_peak =
+            cuda_peak_device_bytes_for_forward(&config, cuda.static_resident_bytes(), 0, 2)?
+                + committed.cache_capacity_bytes;
+        cuda.limits.max_total_device_bytes = fresh_peak - 1;
+        assert!(matches!(
+            cuda.forward_uncached(&[1, 2], &cancel),
+            Err(GptOssCudaError::ResourceLimit {
+                resource: "total device bytes",
+                ..
+            })
+        ));
+        assert_eq!(cuda.resource_usage()?, committed);
+        cuda.limits.max_total_device_bytes = fresh_peak;
+        cuda.forward_uncached(&[1, 2], &cancel)?;
+        assert_eq!(cuda.resource_usage()?, committed);
+        cuda.reset_cache()?;
+        assert_eq!(cuda.resource_usage()?.cache_capacity_bytes, 0);
+        Ok(())
+    }
+
+    #[test]
     fn cuda_admission_cancellation_and_eviction_are_failure_atomic() -> TestResult {
         let mut cuda = cuda_model()?;
         let cancelled = GptOssCancellationToken::new();
@@ -1936,7 +2217,7 @@ mod tests {
             Err(GptOssCudaError::UnsupportedDtype { .. })
         ));
         let (config, weights) = model_parts();
-        let static_bytes = cpu_weight_resident_bytes(&weights)?;
+        let static_bytes = cuda_weight_resident_bytes(&weights)?;
         let limits = GptOssResourceLimits {
             max_sequence_tokens: 1,
             max_cache_bytes: cache_bytes_for_tokens(&config, 1)?,

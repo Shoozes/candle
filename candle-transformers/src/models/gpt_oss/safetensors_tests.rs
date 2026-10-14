@@ -447,6 +447,98 @@ fn common_session_preserves_prefix_and_releases_after_failures() -> Result<()> {
 }
 
 #[test]
+#[cfg(feature = "cuda")]
+fn cuda_session_uses_selected_residency_and_transaction_admission() -> Result<()> {
+    let mut fixture = fixture(GptOssSafetensorsLayout::Original, false)?;
+    // Large, exact BF16-valued synthetic tables make source/device residency
+    // distinct even with the conservative fixed workspace allowance.
+    let mut config: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(&fixture.source.config.path)?)
+            .map_err(candle::Error::wrap)?;
+    config["vocab_size"] = serde_json::json!(1000);
+    std::fs::write(
+        &fixture.source.config.path,
+        serde_json::to_vec(&config).map_err(candle::Error::wrap)?,
+    )?;
+    fixture.source.config = identity(&fixture.source.config.path)?;
+    let path = &fixture.source.weights[0].path;
+    let bytes = std::fs::read(path)?;
+    let header_len =
+        u64::from_le_bytes(bytes[..8].try_into().map_err(candle::Error::wrap)?) as usize;
+    let header: BTreeMap<String, serde_json::Value> =
+        serde_json::from_slice(&bytes[8..8 + header_len]).map_err(candle::Error::wrap)?;
+    let mut payloads = BTreeMap::new();
+    let mut tables = 0;
+    for (name, value) in header {
+        let shape: Vec<usize> =
+            serde_json::from_value(value["shape"].clone()).map_err(candle::Error::wrap)?;
+        if shape == [8, 32] {
+            payloads.insert(
+                name,
+                f32_payload(&[1000, 32], std::iter::repeat_n(0.03125, 1000 * 32)),
+            );
+            tables += 1;
+        } else {
+            let range: [usize; 2] = serde_json::from_value(value["data_offsets"].clone())
+                .map_err(candle::Error::wrap)?;
+            let dtype = match value["dtype"].as_str() {
+                Some("F32") => "F32",
+                Some("U8") => "U8",
+                _ => return Err(candle::Error::Msg("unexpected synthetic dtype".into())),
+            };
+            payloads.insert(
+                name,
+                Payload {
+                    shape,
+                    dtype,
+                    bytes: bytes[8 + header_len + range[0]..8 + header_len + range[1]].to_vec(),
+                },
+            );
+        }
+    }
+    assert_eq!(tables, 2);
+    serialize_shard(path, &payloads)?;
+    fixture.source.weights[0] = identity(path)?;
+    let registry = GptOssLoadRegistry::default();
+    let cancel = GptOssCancellationToken::new();
+    let (artifact, handle) =
+        GptOssSafetensorsArtifact::open_with_registry(&fixture.source, &registry, &cancel)?;
+    let old_one = crate::models::gpt_oss::total_device_bytes_for_tokens(
+        artifact.config(),
+        artifact.weight_resident_bytes()?,
+        1,
+    )?;
+    drop(artifact);
+    drop(handle);
+    let mut options = options(&fixture, GptOssDevice::Cuda { device_index: 0 })?;
+    let probe = GptOssSession::load(&options, &registry, &cancel)?;
+    let one = crate::models::gpt_oss::cuda_peak_device_bytes_for_forward(
+        probe.config(),
+        probe.static_weight_bytes(),
+        0,
+        1,
+    )?;
+    assert!(
+        one < old_one,
+        "fixture must distinguish legacy and CUDA accounting"
+    );
+    drop(probe);
+    options.limits.max_total_device_bytes = one;
+    let mut session = GptOssSession::load(&options, &registry, &cancel)?;
+    session.prefill(&[1], &cancel)?;
+    let prefix = session.resource_usage()?;
+    assert!(session.decode(2, &cancel).is_err());
+    assert_eq!(session.resource_usage()?, prefix);
+    drop(session);
+    options.limits.max_total_device_bytes = one - 1;
+    assert!(GptOssSession::load(&options, &registry, &cancel).is_err());
+    options.limits.max_total_device_bytes = usize::MAX;
+    let recovered = GptOssSession::load(&options, &registry, &cancel)?;
+    drop(recovered);
+    Ok(())
+}
+
+#[test]
 fn session_combined_static_cache_workspace_limit_rejects_before_mutation() -> Result<()> {
     let fixture = fixture(GptOssSafetensorsLayout::Original, false)?;
     let registry = GptOssLoadRegistry::default();

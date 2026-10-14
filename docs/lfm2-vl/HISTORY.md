@@ -2,6 +2,10 @@
 
 Dated entries are historical. Current state: `STATUS.md`; active work: `TODO.md`. New maintained-model work: [2026-10-12](MAINTAINED_MODELS.md).
 
+## 2026-10-13 - GPT-OSS memory
+
+[Local proof](../gpt-oss/MEMORY.md); production held.
+
 ## 2026-10-11 - d1 cancellation
 
 Trace/post-sync vision cancellation stops pending work; CPU/CUDA counts and

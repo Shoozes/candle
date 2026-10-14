@@ -91,9 +91,12 @@ impl GptOssSession {
         if options.max_weight_bytes == 0 || options.limits.max_total_device_bytes == 0 {
             bail!("GPT-OSS loading requires positive weight and execution budgets");
         }
-        let budget = options
-            .max_weight_bytes
-            .min(options.limits.max_total_device_bytes);
+        let budget = match options.device {
+            GptOssDevice::Cpu => options
+                .max_weight_bytes
+                .min(options.limits.max_total_device_bytes),
+            GptOssDevice::Cuda { .. } => options.max_weight_bytes,
+        };
         let (artifact, config, weights, static_weight_bytes) = match &options.source {
             GptOssSource::Gguf(identity) => {
                 let (artifact, handle) = GptOssGgufArtifact::open_identified_with_registry(
@@ -110,7 +113,12 @@ impl GptOssSession {
                     bail!("GPT-OSS sequence limit exceeds the GGUF checkpoint context");
                 }
                 let static_bytes = artifact.weight_resident_bytes()?;
-                Self::admit_one_token(artifact.config(), static_bytes, options.limits)?;
+                Self::admit_one_token(
+                    artifact.config(),
+                    static_bytes,
+                    options.limits,
+                    options.device,
+                )?;
                 let mut weights = artifact.load_weights_with_cancellation(cancel, budget)?;
                 weights.attach_load_handle(handle);
                 let config = artifact.config().clone();
@@ -127,7 +135,7 @@ impl GptOssSession {
                 }
                 let config = artifact.config().clone();
                 let static_bytes = artifact.weight_resident_bytes()?;
-                Self::admit_one_token(&config, static_bytes, options.limits)?;
+                Self::admit_one_token(&config, static_bytes, options.limits, options.device)?;
                 let mut weights = artifact.load_weights_with_cancellation(cancel, budget)?;
                 weights.attach_load_handle(handle);
                 (
@@ -165,6 +173,11 @@ impl GptOssSession {
             GptOssDevice::Cuda { .. } => bail!("GPT-OSS CUDA loading requires the cuda feature"),
         };
         cancel.checkpoint()?;
+        #[cfg(feature = "cuda")]
+        let static_weight_bytes = match &backend {
+            Backend::Cpu(_) => static_weight_bytes,
+            Backend::Cuda(model) => model.static_resident_bytes(),
+        };
         Ok(Self {
             backend,
             artifact,
@@ -198,7 +211,13 @@ impl GptOssSession {
         config: &GptOssConfig,
         static_bytes: usize,
         limits: GptOssResourceLimits,
+        device: GptOssDevice,
     ) -> Result<()> {
+        // CUDA selects its exact lossless table representation after bounded
+        // source assembly, and checks device admission before opening CUDA.
+        if matches!(device, GptOssDevice::Cuda { .. }) {
+            return Ok(());
+        }
         let total = super::total_device_bytes_for_tokens(config, static_bytes, 1)?;
         if total > limits.max_total_device_bytes {
             bail!("GPT-OSS static weights plus one-token cache/workspace require {total} bytes, limit is {}",limits.max_total_device_bytes);
@@ -207,6 +226,10 @@ impl GptOssSession {
     }
 
     fn admit_forward(&self, incoming: usize) -> Result<()> {
+        #[cfg(feature = "cuda")]
+        if let Backend::Cuda(model) = &self.backend {
+            return model.admit(incoming).map_err(candle::Error::wrap);
+        }
         let current = self.resource_usage()?.sequence_tokens;
         self.limits.admit(self.config(), current, incoming)?;
         let tokens = current

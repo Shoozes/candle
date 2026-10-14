@@ -60,6 +60,35 @@ __global__ void gpt_oss_mxfp4_matmul_kernel(
 
 } // namespace
 
+namespace {
+__global__ void gpt_oss_bf16_f32_matmul_kernel(
+    const float *input, const unsigned short *weight, float *output,
+    int batch, int rows, int width) {
+    const unsigned int lane = threadIdx.x % 32;
+    const unsigned long long row = static_cast<unsigned long long>(blockIdx.x) * 4 + threadIdx.x / 32;
+    const unsigned int b = blockIdx.y;
+    if (row >= static_cast<unsigned int>(rows) || b >= static_cast<unsigned int>(batch)) return;
+    float sum = 0.0f;
+    for (unsigned long long col = lane; col < static_cast<unsigned int>(width); col += 32) {
+        const float w = __uint_as_float(static_cast<unsigned int>(weight[row * width + col]) << 16);
+        sum = __fadd_rn(sum, __fmul_rn(input[static_cast<unsigned long long>(b) * width + col], w));
+    }
+    for (int delta = 16; delta > 0; delta /= 2) sum = __fadd_rn(sum, __shfl_down_sync(0xffffffff, sum, delta));
+    if (lane == 0) output[static_cast<unsigned long long>(b) * rows + row] = sum;
+}
+} // namespace
+
+extern "C" int launch_gpt_oss_bf16_f32_matmul(
+    const float *input, const unsigned short *weight, float *output,
+    int batch, int rows, int width, long long stream) {
+    if (batch <= 0 || batch > 65535 || rows <= 0 || width <= 0) return static_cast<int>(cudaErrorInvalidValue);
+    const dim3 block(128, 1, 1);
+    const dim3 grid((static_cast<unsigned int>(rows) + 3) / 4, static_cast<unsigned int>(batch), 1);
+    gpt_oss_bf16_f32_matmul_kernel<<<grid, block, 0, reinterpret_cast<cudaStream_t>(stream)>>>(
+        input, weight, output, batch, rows, width);
+    return static_cast<int>(cudaGetLastError());
+}
+
 extern "C" int launch_gpt_oss_mxfp4_matmul(
     const float *input,
     const unsigned char *blocks,

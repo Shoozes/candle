@@ -142,6 +142,22 @@
         "docs/gpt-oss/SOURCES.md"
       ]
     },
+    "feature__gpt_oss_cuda_memory": {
+      "description": "Lossless BF16 embedding/head storage with F32 activations, immutable paged KV and physical sliding-window retention, grouped GQA workspace and backend-specific transaction admission. Model-free controls precede fresh physical/numerical production qualification; expand to feature__gpt_oss_local_loading for source assembly and feature__gpt_oss_task3_cuda for packed experts/oracles.",
+      "status": "active",
+      "paths": [
+        "docs/gpt-oss/MEMORY.md",
+        "candle-transformers/src/models/gpt_oss/cache.rs",
+        "candle-transformers/src/models/gpt_oss/memory.rs",
+        "candle-transformers/src/models/gpt_oss/cuda_storage.rs",
+        "candle-transformers/src/models/gpt_oss/cuda.rs",
+        "candle-transformers/src/models/gpt_oss/runtime.rs",
+        "candle-transformers/src/models/gpt_oss/session.rs",
+        "candle-transformers/src/models/gpt_oss/safetensors_tests.rs",
+        "candle-kernels/src/gpt_oss_mxfp4.cu",
+        "candle-kernels/src/ffi.rs"
+      ]
+    },
     "feature__gpt_oss_session_profiling": {
       "description": "Bounded CPU-first common-session baseline preparation, optional CUDA final-validation timing, distinct caller readback, finite work counts and identity-bound native Job/physical GPU release proof; no production inference permission.",
       "status": "active",
@@ -197,7 +213,7 @@
       ]
     },
     "feature__gpt_oss_task3_cuda": {
-      "description": "Opt-in packed GPT-OSS MXFP4 CUDA executor with GGML wire normalization, narrowed-view/materialized-copy equivalence, explicit expert-contribution/residual contracts, public-config validation, failure-atomic device/resource/cancellation contracts, two-layer trace parity, and native CUDA proof records.",
+      "description": "Opt-in packed GPT-OSS MXFP4 CUDA executor with GGML wire normalization, narrowed-view/materialized-copy equivalence, explicit expert-contribution/residual contracts, public-config validation, failure-atomic device/resource/cancellation contracts, two-layer trace parity, and native CUDA proof records. Expand to feature__gpt_oss_cuda_memory for paged cache, lossless table storage and grouped GQA admission.",
       "status": "active",
       "paths": [
         "candle-kernels/build.rs",

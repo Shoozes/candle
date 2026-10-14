@@ -1,5 +1,24 @@
 # LFM2.5-VL Current Status
 
+## Active independent GPT-OSS memory Work, 2026-10-13
+
+Baseline is published `48d814859205abdc6640088815ee99a78d531f35`. The selected
+32k repair is local: lossless CUDA BF16 embedding/head storage with F32
+activations, immutable KV pages and physical sliding-window eviction, batched
+GQA and truthful backend-specific admission. CPU 57 and CUDA-enabled 69
+model-free fixtures pass; one production test stays ignored in each lane.
+Strict CPU/CUDA library Clippy, example checks and the complete native gate pass.
+Summary Bank and manifest/overlay checks pass (315 union, 28 shared paths). Expanded
+test Clippy retains nine pre-existing GGUF/MXFP4 style lints. Reviewed files are GPT CUDA/cache/storage/
+memory/session and synthetic controls, its kernel/FFI and docs/routes/records.
+[GPT STATUS](../gpt-oss/STATUS.md) and [MEMORY](../gpt-oss/MEMORY.md) own details.
+No production inference, commit or push belongs to this Work authority.
+
+The next gate is explicit scoped checkpoint authorization, then
+a fresh source/binary-bound finite CPU-first proof. Physical 32k/Responses
+readiness remains unproven; WSL replay is unrun and old receipts/allowances remain closed. LFM/d1,
+Q8 defaults, GenEye pin and all consumer holds remain unchanged.
+
 ## Independent GPT-OSS work, 2026-10-13
 
 The prior published baseline is `0232662335b393da3c8f5b64d08302c5e3a92a47`.

@@ -27,7 +27,9 @@ in this session.
   I/O in CPU builds.
   `static_weight_bytes` reports assembled payload residency. Both backends
   admit combined static/cache/conservative-workspace bytes before forwarding;
-  a budget that cannot admit one token fails before weight assembly.
+  CPU rejects a budget that cannot admit one token before weight assembly.
+  CUDA bounds source assembly separately, selects lossless table storage and
+  checks exact one-token device admission before opening the device.
 - `prefill` and `decode` return device-native `GptOssLogits`. `into_cpu` is a
   separate fallible readback; readback failure is not a rolled-back forward.
   Inference cancellation/errors preserve the previously committed cache prefix.
@@ -47,8 +49,11 @@ GPU work. Caller readback remains separate. See [PROFILING.md](PROFILING.md).
 Both loaders preserve MXFP4 expert blocks/scales. Original safetensors store
 adjacent low/high nibbles and alternating gate/up rows; only GGUF wire bytes
 need their existing layout normalization. Non-expert F32/F16/BF16 weights, and
-GGUF Q8_0 weights, currently normalize to F32 dense execution. There is no
-native-Q8 non-expert storage or FastBf16 readiness claim.
+GGUF Q8_0 weights, normalize to F32 CPU values. CUDA embedding/head tables may
+retain lossless BF16 storage with F32 activations and arithmetic; other dense
+parameters retain F32. See [the memory candidate](MEMORY.md) for exact selection,
+reduction and admission boundaries. There is no native-Q8 non-expert storage or
+FastBf16 readiness claim.
 
 ## Admission and ownership
 

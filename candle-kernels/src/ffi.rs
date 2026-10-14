@@ -2,6 +2,15 @@ use core::ffi::c_void;
 #[allow(dead_code)]
 #[allow(improper_ctypes)]
 extern "C" {
+    pub fn launch_gpt_oss_bf16_f32_matmul(
+        input: *const f32,
+        weight: *const u16,
+        output: *mut f32,
+        batch: i32,
+        rows: i32,
+        width: i32,
+        stream: i64,
+    ) -> i32;
     pub fn launch_gpt_oss_mxfp4_matmul(
         input: *const f32,
         blocks: *const u8,

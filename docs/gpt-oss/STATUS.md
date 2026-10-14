@@ -1,6 +1,45 @@
 # GPT-OSS Experimental Candle Status
 
-## Current maintained support, 2026-10-13
+## Active memory Work, 2026-10-13
+
+Current source baseline is published `48d814859205abdc6640088815ee99a78d531f35`.
+The human-selected coordinated 32k memory Work is implemented locally, without
+commit, publication or retained-model inference. Reviewed files are CUDA/cache/
+storage/memory/session code, synthetic tests, kernel FFI and the affected
+contracts/routes/records. [MEMORY.md](MEMORY.md) owns the API, architecture and
+unqualified capacity calculation.
+
+Lossless BF16 embedding/head storage keeps F32 activations and MXFP4 experts.
+Immutable pages preserve committed cache state while physically evicting old
+sliding rows. Batched GQA removes expanded query-head K/V products. CPU reference
+behavior and its legacy accounting helpers remain unchanged. CUDA admission
+counts actual selected static storage and bounds candidate/snapshot/tail work.
+
+CPU model-free fixtures pass 57 tests, with one production test ignored. The
+native 8 GiB Job passes 69 CUDA-enabled fixtures with that production test ignored;
+its PID is absent after cleanup. This includes full-model BF16-table parity and
+reset replay; strict CUDA library Clippy passes. Concurrent-Cargo preflight refusals opened no
+model/device; the intermediate CUDA Rust compile failure was repaired using
+existing Candle conversion/storage APIs, adding no dependency. Original failed
+and successful logs remain under `artifacts/gpt-oss/memory-32k-20261013/`.
+Expanded `--lib --tests` Clippy reports nine pre-existing style lints in unchanged
+GGUF/MXFP4 test code; it is not reported green. The required strict library lane
+retains its prior scope and passes without suppressions or unrelated edits.
+
+The frozen 32k resumed payload bound is 16,992,041,216 bytes, versus prior
+24,903,656,192-byte accounting. Neither number proves physical capacity or
+Responses latency. A header-only observation confirms both retained tables are
+BF16; it does not replace fresh whole-file admission. Native formatting, focused
+CPU/CUDA tests, strict CPU/CUDA library Clippy, CUDA example checks, Summary Bank,
+manifest/overlay checks and the complete native locked/offline gate pass. The live
+inventory is 61 GPT paths, 315 union paths and 28 shared paths. WSL replay is unrun;
+the registered Codex-Compat distro is stopped and local dependencies were not
+established. Next: obtain a scoped checkpoint and bind a fresh finite CPU-first
+numerical/physical qualification packet. No prior
+allowance is reused; consumers stay disabled. Q8, GenEye `3fa7075e`, Codex
+`0.154.0`, Responses 90s and WorkerRuntime 600s remain fixed.
+
+## Prior maintained closeout, 2026-10-13
 
 The prior published baseline is `0232662335b393da3c8f5b64d08302c5e3a92a47`.
 The qualified production source is `e3e1afcb9732268170d04bdbeb4b0c368bfa28c0`,
