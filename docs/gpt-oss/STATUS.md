@@ -2,8 +2,8 @@
 
 ## Memory and capacity closeout, 2026-10-14
 
-The current published baseline is `0994bfe4a09a0f8e2a964fdf033997b5268b7c98`,
-tree `49ea3192f7b7a4ef564fb40c8956f88cfe8e1588`. Guarded publication completed
+The incoming published baseline is `0994bfe4a09a0f8e2a964fdf033997b5268b7c98`,
+tree `49ea3192f7b7a4ef564fb40c8956f88cfe8e1588`. Its guarded publication completed
 with a green native gate and matching local/remote `main`. The incoming baseline
 was `48d814859205abdc6640088815ee99a78d531f35`.
 The approved 19-file memory repair is saved at
@@ -32,7 +32,7 @@ to 151.3265ms, so there is no whole-prefill CUDA improvement. A separately froze
 201,088-row head-only diagnostic measures 4.23115 to 0.48635ms with exact full-row
 bits and 128-to-one call counts; it does not resolve whole-model latency.
 The twelve reviewed files are locally checkpointed at `70a24856`, tree
-`87e3a45c4e39eaa8725ff514fcf4c312fa80ef40`; publication remains at `0994bfe4`.
+`87e3a45c4e39eaa8725ff514fcf4c312fa80ef40`; publication then remained at `0994bfe4`.
 Candidate CPU57/CUDA69 fixtures and capacity CPU7/CUDA8 controls pass; production
 tests and the opt-in synthetic benchmarks stay ignored in ordinary gates. Strict
 CPU/CUDA library/example Clippy and CUDA example checks pass. The complete native
@@ -63,8 +63,8 @@ per-process cause or model-only peak. Local model-free implementation now retain
 the structured rejecting sample, primary error and separate cleanup errors. An
 opt-in stop event uses the shared native Job's existing termination/evidence path;
 controller and watcher exits are recorded when observable, with bounded fallback
-and truthful missing receipts. Disposable controls pass; changed-helper production
-qualification is unrun. Source review finds no demonstrated allocation defect;
+and truthful missing receipts. Disposable controls pass; production qualification
+followed at the checkpoint below. Source review finds no demonstrated allocation defect;
 the eight-token payload formula excludes context/allocator costs. Current WDDM
 owners have unavailable per-process memory. No unrelated process was stopped.
 The complete native gate passes, including 461 GPT-OSS model-free controls,
@@ -72,12 +72,18 @@ locked/offline checks/tests and strict Clippy. Shared-helper smoke tests pass on
 PowerShell 7 and 5.1; original 31 records and both attempt reports retain exact
 bytes. Overlay inventory is 73 GPT/325 union/30 shared paths. Summary Bank keeps
 the focused failure route separate within its existing 256 KiB ceiling.
-Active files are six helpers/tests, four outcome docs, GPT manifest, registry
-and bank. The source baseline remains `98a14eff`;
-publication remains `0994bfe4`. [The repair and historical byte recovery](CHARACTERIZATION.md#model-free-failure-provenance-repair-2026-10-14)
-retain both failed attempts. Local implementation and source review are complete;
-next obtain a separately authorized checkpoint and finite rebuilt packet before
-production work. No commit, push, inference or activation is currently authorized.
+The thirteen files are checkpointed at `2adfa4a3`, tree `c534f4a6…54115118`;
+its clean gate passes. Separately approved `0a244611` then qualifies CPU and CUDA:
+two loads/six segments/44 forwards/74 steps/32 outputs, zero warmups/retries.
+Oracle/exact replay, actual DLLs, entry/Job/controller/watcher exit 0, registry zero
+and seven-owner release pass. GPU highest retained sample 19,920,846,848 is below
+20e9; sampling can miss peaks and the observed 79,153,152-byte margin is no capacity
+guarantee. Normal receipt paths have production proof; forced-stop/rejection
+branches retain model-free proof. [The complete source-bound result](CHARACTERIZATION.md#complete-short-qualification-at-2adfa4a3-2026-10-14)
+closes this allowance; earlier failures remain unchanged. The owner-authorized
+four-record closeout also delivers the three prerequisite GPT-OSS checkpoints.
+Canonical `last-push.json` binds actual delivery, gate and remote equality;
+model proof stays at `2adfa4a3`. Further model work and activation remain separate.
 
 Lossless BF16 embedding/head storage keeps F32 activations and MXFP4 experts.
 Immutable pages preserve committed cache state while physically evicting old
@@ -664,11 +670,10 @@ or run for this note. Preserve upstream license notices if code is later adapted
 
 ## Exact next task
 
-Review the verified thirteen-file model-free failure-provenance return, then
-obtain scoped checkpoint authority and prepare a fresh source/helper-bound packet.
-The `fd47a8b5` attempt is closed failed with CPU qualified; do not retry it or
-reuse remaining work. New model work needs separate finite approval and adequate
-GPU headroom. `bd61cf11` stays closed.
+After guarded publication, coordinate the source-bound return with Edge/Symbio;
+consumer integration and acceptance remain owner-managed. `0a244611` is complete
+and closed; `fd47a8b5` and `bd61cf11` remain closed failed. Further model work
+needs a selected packet, finite approval and adequate GPU headroom.
 The measured 8k forward work of 637.218s still exceeds both route deadlines.
 Keep physical 16k/32k, generated semantics and consumer qualification separately
 gated. Preserve original short/8k evidence, Q8/Codex defaults and disabled GPT-OSS. The independent LFM
@@ -676,4 +681,4 @@ Task 4 text-plus-MMProj/adapter work keeps its own prerequisites and priority.
 
 ---
 
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-failure-provenance | change=recorded model-free failure receipt repair and held production gates
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-qualification-publication | change=closed qualification records and routed guarded delivery with consumer holds

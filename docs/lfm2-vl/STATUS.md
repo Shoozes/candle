@@ -2,7 +2,7 @@
 
 ## Independent GPT-OSS memory/capacity closeout, 2026-10-14
 
-Current published baseline is `0994bfe4a09a0f8e2a964fdf033997b5268b7c98`,
+Incoming published baseline is `0994bfe4a09a0f8e2a964fdf033997b5268b7c98`,
 tree `49ea3192f7b7a4ef564fb40c8956f88cfe8e1588`; guarded publication and the
 native gate completed with matching local/remote `main`. The incoming baseline
 was `48d814859205abdc6640088815ee99a78d531f35`; the approved
@@ -52,7 +52,7 @@ transaction/cancellation ordering are preserved. Validation time is nested in
 forward time and cannot be counted as extra removable wall time. Frozen authored
 measurements, scope and limitations live in [PROFILING](../gpt-oss/PROFILING.md#model-free-attribution-at-0994bfe4-2026-10-14).
 The twelve reviewed files are locally checkpointed at `70a24856`, tree
-`87e3a45c4e39eaa8725ff514fcf4c312fa80ef40`; publication stays at `0994bfe4`. The complete
+`87e3a45c4e39eaa8725ff514fcf4c312fa80ef40`; publication then stayed at `0994bfe4`. The complete
 native gate passes, with CPU57/CUDA69 fixtures, capacity CPU7/CUDA8 and strict
 CPU/CUDA library/example Clippy; source hashes and limitations are in the
 attribution root's `closeout.json`, followed by a green clean-checkpoint gate.
@@ -70,13 +70,14 @@ segments/23 forwards/at most 45 steps; completed work is three segments/22 forwa
 37 steps/sixteen outputs, zero warmups/retries. Allowance closed failed. All seven
 owner identities are absent; CUDA Job/exit/normal registry fields are unavailable
 after forced termination. Original partial evidence remains unchanged.
-Local model-free repair retains rejected samples, actual stop exits/Job evidence
-and separate cleanup errors, using the existing helper with bounded fallback.
-Source review establishes no allocation defect; WDDM owner memory is unavailable.
-Native gate/461 GPT controls and PS7/5.1 helper proof pass; inventory is
-73 GPT/325 union/30 shared paths. Thirteen files remain active at `98a14eff`;
-changed-helper production proof is unrun. Next separately authorize a clean
-checkpoint and finite packet. No retry, commit, push or activation. [GPT details](../gpt-oss/CHARACTERIZATION.md#model-free-failure-provenance-repair-2026-10-14).
+Failure-provenance repair is checkpointed at `2adfa4a3`; its clean native gate
+passes. Fresh approved `0a244611` qualifies CPU then CUDA: 2 loads/6 segments/
+44 forwards/74 steps/32 outputs, no warmup/retry. Oracle/replay, actual DLLs, all
+entry/Job/controller/watcher exits 0, registries zero and seven-owner release pass.
+GPU highest sample 19,920,846,848 stays below 20e9; sampling can miss peaks. Allowance
+closed; forced-stop branches retain model-free proof. The four-record guarded
+closeout delivers these checkpoints; canonical `last-push.json` binds publication.
+No further inference or activation. [GPT details](../gpt-oss/CHARACTERIZATION.md#complete-short-qualification-at-2adfa4a3-2026-10-14).
 
 ## Independent GPT-OSS work, 2026-10-13
 
@@ -1143,4 +1144,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-failure-provenance | change=recorded verified model-free failure receipt repair and held next production gate
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-qualification-publication | change=closed qualified progress records through guarded publication

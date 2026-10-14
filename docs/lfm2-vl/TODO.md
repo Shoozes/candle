@@ -130,10 +130,13 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   Local model-free repair retains rejected samples, stop/Job exits and separate
   cleanup failures, with bounded native-Job signaling and forced fallback.
   No allocation defect is established; WDDM process memory is unavailable.
-  Native gate/461 GPT controls and PS7/5.1 helper proof pass. Next separately
-  authorize a clean checkpoint and finite packet. Keep ceilings/owners fixed.
-  Decode latency, 16k/32k, semantics and routes stay open; no retry, commit/push
-  or activation.
+  Repair checkpoint `2adfa4a3` passes its clean gate; fresh approved `0a244611`
+  qualifies CPU then CUDA: 2 loads/6 segments/44 forwards/74 steps/32 outputs.
+  Oracle/replay, actual DLLs, exits 0, registry zero and seven-owner release pass.
+  Allowance closed. The four-record guarded closeout preserves this progress;
+  publication is bound by canonical `last-push.json`. Next coordinate Edge/Symbio
+  acceptance. Decode latency, 16k/32k and semantics/routes remain open; no retry
+  or activation. Sampled GPU proof is no capacity guarantee.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -543,4 +546,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-failure-provenance | change=closed model-free failure receipt repair and kept fresh checkpoint and inference gates
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-qualification-publication | change=closed record saving and retained incomplete optimization and consumer criteria

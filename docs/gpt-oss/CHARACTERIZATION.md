@@ -211,6 +211,47 @@ The original local `closeout.json` remains unchanged. Its mixed-host coverage
 claim is corrected by `host-coverage/closeout.json`, which retains the prior
 test/doc bytes and binds explicit active-event proof in both native hosts.
 
+## Complete short qualification at `2adfa4a3`, 2026-10-14
+
+Clean checkpoint `2adfa4a337094d63900e03b0b5ef86130f5174b9`, tree
+`c534f4a66376b7069e3b5ea53b2b001354115118`, runs the separately approved
+8,769-byte packet `0a244611…66baeb6f`. CPU qualifies and releases before CUDA.
+Both lanes qualify: two loads, six segments, 44 forwards, 74 token steps and
+32 outputs total, zero warmups/retries. Entry, both native Jobs, controllers
+and watchers exit 0 naturally; registries reach zero and all seven exact owners
+are absent. Actual required DLL paths are observed in 6/57 runtime modules.
+
+| Measurement | CPU | CUDA |
+| --- | ---: | ---: |
+| Load | 28.835s | 32.653s |
+| Cold eight-token prefill | 15.680s | 735.006ms |
+| Mean fifteen decode forwards | 2.224s | 78.598ms |
+| Peak Job, 32 GiB limit | 17,685,413,888 B | 21,664,714,752 B |
+
+Both six-row host verifications pass. Top-1 at positions 5/6/7 is 1072/290/29082;
+top-eight-union errors 0.131067/0.131042, mean errors 0.00205427/0.00205421 and
+probability TV 0.00485888/0.00485806 satisfy unchanged 0.25/0.01/0.01 bounds.
+All six replay raw-row errors are zero and sixteen cold IDs match devices.
+CUDA records 37 accepted samples: baseline 4,331,667,456 and highest observed
+19,920,846,848 bytes, below 20e9 by 79,153,152. Sampling can miss peaks; this small
+observed margin is no physical-capacity guarantee or per-model allocation trace.
+Single-run timings establish no causal speedup or 90s/600s route readiness.
+
+Normal completion and exit-receipt fields now have source-bound production proof.
+No rejection or forced stop occurred; those branches retain their authored
+model-free proof. Earlier failed receipts stay unchanged. This allowance is
+complete and closed, with no balance or retry. Physical 16k/32k, Harmony/coding,
+consumer activation and publication remain separate.
+
+Raw receipts/rows remain in
+`artifacts/gpt-oss/characterization-2adfa4a3-22fb3f50cd5941f3ae25dddc0b2569de/`.
+The preparation root's `qualification-2adfa4a3/run-report.json` binds original
+records, actual work, seven-owner release and pre-outcome document recovery.
+The owner-authorized guarded closeout saves these four records and their three
+prerequisite checkpoints. Canonical `artifacts/publication/last-push.json` binds
+delivered commit/tree, native gate and remote equality; it does not relabel the
+executed model source. Publication adds no inference, release tag or activation.
+
 ## Short outcome at `e3e1afcb`, 2026-10-13
 
 Fresh packet SHA-256
@@ -368,4 +409,4 @@ and WorkerRuntime 600s remain unqualified; next prepare the bounded 8k runner
 with model-free controls and a separate finite source-bound allowance.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-failure-provenance | change=preserved failed proof and documented model-free sample and stop receipt repair
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-qualification-publication | change=closed qualified records and retained exact executed source and limits
