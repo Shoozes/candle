@@ -75,9 +75,10 @@ passes. Fresh approved `0a244611` qualifies CPU then CUDA: 2 loads/6 segments/
 44 forwards/74 steps/32 outputs, no warmup/retry. Oracle/replay, actual DLLs, all
 entry/Job/controller/watcher exits 0, registries zero and seven-owner release pass.
 GPU highest sample 19,920,846,848 stays below 20e9; sampling can miss peaks. Allowance
-closed; forced-stop branches retain model-free proof. The four-record guarded
-closeout delivers these checkpoints; canonical `last-push.json` binds publication.
-No further inference or activation. [GPT details](../gpt-oss/CHARACTERIZATION.md#complete-short-qualification-at-2adfa4a3-2026-10-14).
+closed; forced-stop branches retain model-free proof. Review at `a656f040`
+finds no new defect; prior findings stay closed. Publication and handoff are complete;
+consumer acceptance remains open. This three-record closeout changes no code.
+[GPT details](../gpt-oss/CHARACTERIZATION.md#complete-short-qualification-at-2adfa4a3-2026-10-14). No further inference or activation.
 
 ## Independent GPT-OSS work, 2026-10-13
 
@@ -1144,4 +1145,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-qualification-publication | change=closed qualified progress records through guarded publication
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-a656-review | change=recorded recheck and active documentation scope

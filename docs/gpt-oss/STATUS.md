@@ -670,15 +670,16 @@ or run for this note. Preserve upstream license notices if code is later adapted
 
 ## Exact next task
 
-After guarded publication, coordinate the source-bound return with Edge/Symbio;
-consumer integration and acceptance remain owner-managed. `0a244611` is complete
-and closed; `fd47a8b5` and `bd61cf11` remain closed failed. Further model work
-needs a selected packet, finite approval and adequate GPU headroom.
-The measured 8k forward work of 637.218s still exceeds both route deadlines.
-Keep physical 16k/32k, generated semantics and consumer qualification separately
-gated. Preserve original short/8k evidence, Q8/Codex defaults and disabled GPT-OSS. The independent LFM
-Task 4 text-plus-MMProj/adapter work keeps its own prerequisites and priority.
+Review/recheck at `a656f040` finds no new runtime or receipt defect; prior observer,
+failure-provenance and host-coverage fixes remain closed. Publication and the
+Edge/Symbio handoff are complete. Next: Edge's source-bound acceptance/workload
+admission, then Symbio coding proof. Bind consumer source/package, inputs and
+memory/deadline limits before separately approved model work. `0a244611` is
+closed complete; earlier attempts stay closed failed. The 637.218s 8k forward
+work exceeds both route deadlines. Physical 16k/32k and semantics/routes remain
+open. Preserve original proof, Q8/Codex defaults and disabled GPT-OSS;
+LFM Task 4 remains independent.
 
 ---
 
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-qualification-publication | change=closed qualification records and routed guarded delivery with consumer holds
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-a656-review | change=rechecked prior findings and corrected completed handoff and next owner gate
