@@ -59,23 +59,38 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   paged KV/physical sliding eviction, batched GQA and backend-specific admission.
   CPU reference behavior, packed MXFP4 and closed production receipts stay fixed.
   [MEMORY](../gpt-oss/MEMORY.md) owns formulas, APIs and the proof boundary.
-- Memory candidate Done when: exact storage selection/fallback, CPU/CUDA component
-  parity, page/window crossings, failure/cancellation replay and checked peak
-  admission pass focused and native gates; obtain explicit scoped checkpoint
-  authorization, then prepare a new source/binary/helper/input-bound packet.
-  Fresh finite CPU-first numerical/physical qualification remains separately
-  required before staged 8k/16k/32k or any consumer capacity claim. The current
-  16.99 GB payload bound does not prove a physical ceiling or Responses latency.
+- Memory candidate gates completed: storage selection/fallback, CPU/CUDA component
+  parity, page/window crossings, failure/cancellation replay and checked admission
+  pass; approved checkpoint `3db05cd8` and fresh short packet `c5c1fe4e…f8face4f`
+  complete CPU then CUDA within original numerical and physical short-run bounds.
+  Two loads/44 forwards/74 steps/32 outputs, no warmup/retry; all six owners are
+  absent and allowance closed. CUDA static storage is 15.05 GB; sampled whole-GPU
+  peak is 16.72 GB. The outer empty-console-log lookup fails after completion;
+  original lane receipts independently qualify the work. See CHARACTERIZATION.
+  Physical staged 8k/16k/32k and consumer qualification remain incomplete; the
+  16.99 GB 32k payload bound proves neither a physical ceiling nor route latency.
 - Local proof complete: CPU57/CUDA69 synthetic tests (one production test ignored
   per lane), strict CPU/CUDA library Clippy, CUDA example checks and the full
   native locked/offline gate pass. Summary Bank and 61-path GPT/315-path union
   inventories pass. WSL replay is unrun; expanded test Clippy retains nine
-  pre-existing style lints. Commit and fresh retained-model proof remain held.
+  pre-existing style lints; CUDA release linking retains nonfatal LNK4098.
+- Current bounded preparation: distinct 8k capacity runner/input/packet/watcher
+  paths are implemented; six CPU/seven CUDA synthetic controls cover chunk128
+  boundaries and cancelled replay, and 24 model-free executable controls pass.
+  Work is 48x128 prefill plus 2,048 fixed decodes: 2,096 forwards/8,192 steps,
+  one load/request and zero sampled outputs. [CAPACITY](../gpt-oss/CAPACITY.md)
+  preserves the non-quality/route boundary. Release drafts/startup Jobs pass.
+  After native closeout, obtain an exact scoped checkpoint before final
+  source/binary/helper/input binding and separate finite execution approval.
+  Current inventory is 71 GPT/325 union/28 shared paths. The current
+  characterization helper remains fixed at eight prompt tokens. Every capacity
+  run needs new finite approval; short timing cannot establish a route deadline.
 - Delivery order remains Candle qualification, Edge native Responses qualification,
   then Symbio Add-SymbioNumber. Preserve Q8, GenEye `3fa7075e`, engine `0.154.0`
   and GPT-OSS disabled until qualified. Responses keeps90s; longer jobs use
-  WorkerRuntime600s. No commit/push or production model work is authorized by
-  the local Work. Validation timing attribution remains open after memory repair;
+  WorkerRuntime600s. Checkpoint and short-proof approvals are consumed; further
+  commits/push or model work require their separate authority. Validation timing
+  attribution remains open after memory repair;
   its 32.105ms includes pending GPU work and identifies no isolated bottleneck.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch

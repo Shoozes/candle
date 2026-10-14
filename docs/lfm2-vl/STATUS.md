@@ -2,21 +2,33 @@
 
 ## Active independent GPT-OSS memory Work, 2026-10-13
 
-Baseline is published `48d814859205abdc6640088815ee99a78d531f35`. The selected
-32k repair is local: lossless CUDA BF16 embedding/head storage with F32
+Published baseline is `48d814859205abdc6640088815ee99a78d531f35`; the approved
+19-file checkpoint is local `3db05cd8`, tree `e60ff6b7…6c54fa`. The selected
+32k repair uses lossless CUDA BF16 embedding/head storage with F32
 activations, immutable KV pages and physical sliding-window eviction, batched
 GQA and truthful backend-specific admission. CPU 57 and CUDA-enabled 69
 model-free fixtures pass; one production test stays ignored in each lane.
 Strict CPU/CUDA library Clippy, example checks and the complete native gate pass.
 Summary Bank and manifest/overlay checks pass (315 union, 28 shared paths). Expanded
-test Clippy retains nine pre-existing GGUF/MXFP4 style lints. Reviewed files are GPT CUDA/cache/storage/
-memory/session and synthetic controls, its kernel/FFI and docs/routes/records.
+test Clippy retains nine pre-existing GGUF/MXFP4 style lints; CUDA linking retains
+nonfatal `LNK4098`. Active work adds the distinct fixed-token capacity CLI/helpers,
+synthetic and packet controls, docs and routes to the short-proof records.
 [GPT STATUS](../gpt-oss/STATUS.md) and [MEMORY](../gpt-oss/MEMORY.md) own details.
-No production inference, commit or push belongs to this Work authority.
+Separately approved packet `c5c1fe4e…f8face4f` completes CPU then CUDA: two loads,
+44 forwards/74 steps/32 outputs, no warmup/retry. Oracle, exact replay, cold IDs,
+actual DLLs, Jobs and registry release pass; all six owners are absent. CUDA static
+storage is 15,053,650,176 bytes and sampled GPU peak is 16,724,787,200, below 20e9.
+The outer empty-log reporting lookup fails after model completion; original
+structured receipts independently qualify the short work and retain that limit.
+No publication or consumer change occurred; the allowance is closed.
 
-The next gate is explicit scoped checkpoint authorization, then
-a fresh source/binary-bound finite CPU-first proof. Physical 32k/Responses
-readiness remains unproven; WSL replay is unrun and old receipts/allowances remain closed. LFM/d1,
+The 8k CLI and isolated preparation/launch/watcher helpers are implemented;
+CPU6/CUDA7 synthetic controls include chunk128/window/page and cancellation
+recovery. Current routes/inventory are 71 GPT/325 union/28 shared paths.
+Release drafts and both model-free startup Jobs pass. Next: exact scoped checkpoint
+after native closeout, then final source-bound packet review with separate execution
+approval. Physical 32k and Responses90s/WorkerRuntime600s remain unproven;
+WSL replay is unrun. LFM/d1,
 Q8 defaults, GenEye pin and all consumer holds remain unchanged.
 
 ## Independent GPT-OSS work, 2026-10-13

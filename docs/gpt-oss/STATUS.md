@@ -2,12 +2,13 @@
 
 ## Active memory Work, 2026-10-13
 
-Current source baseline is published `48d814859205abdc6640088815ee99a78d531f35`.
-The human-selected coordinated 32k memory Work is implemented locally, without
-commit, publication or retained-model inference. Reviewed files are CUDA/cache/
-storage/memory/session code, synthetic tests, kernel FFI and the affected
-contracts/routes/records. [MEMORY.md](MEMORY.md) owns the API, architecture and
-unqualified capacity calculation.
+The published baseline remains `48d814859205abdc6640088815ee99a78d531f35`.
+The approved 19-file memory repair is checkpointed locally at
+`3db05cd8eedb51d6b7777d2eed705ec481e0420b`, tree
+`e60ff6b7e184ab47f79bbaa81395fb2dec6c54fa`. Its separately approved short
+CPU/CUDA proof is complete; nothing was pushed. Active files include its records
+and the distinct capacity CLI/helpers, controls, documentation and routes.
+[MEMORY.md](MEMORY.md) owns the API, architecture and unqualified capacity bound.
 
 Lossless BF16 embedding/head storage keeps F32 activations and MXFP4 experts.
 Immutable pages preserve committed cache state while physically evicting old
@@ -32,11 +33,34 @@ Responses latency. A header-only observation confirms both retained tables are
 BF16; it does not replace fresh whole-file admission. Native formatting, focused
 CPU/CUDA tests, strict CPU/CUDA library Clippy, CUDA example checks, Summary Bank,
 manifest/overlay checks and the complete native locked/offline gate pass. The live
-inventory is 61 GPT paths, 315 union paths and 28 shared paths. WSL replay is unrun;
+memory checkpoint inventory is 61 GPT paths, 315 union paths and 28 shared paths. WSL replay is unrun;
 the registered Codex-Compat distro is stopped and local dependencies were not
-established. Next: obtain a scoped checkpoint and bind a fresh finite CPU-first
-numerical/physical qualification packet. No prior
-allowance is reused; consumers stay disabled. Q8, GenEye `3fa7075e`, Codex
+established. The CUDA release linker also emits nonfatal `LNK4098`.
+
+Fresh packet `c5c1fe4e…f8face4f` completes CPU then CUDA: two loads, six segments,
+44 public forwards, 74 processed steps and 32 sampled outputs; no warmup/retry.
+Independent oracle bounds and raw exact replay pass; all sixteen cold IDs match.
+CPU captured rows match the original `e3e1afcb` row digests. Both Jobs exit zero
+naturally, registries are zero, actual required DLL paths match, and all six
+creation-time/executable-bound owners are absent. CUDA static storage is
+15,053,650,176 bytes, saving 2,316,533,760; sampled whole-GPU peak is
+16,724,787,200 bytes. Job peaks are 17,685,331,968/21,666,590,720 bytes (CPU/CUDA),
+below 32 GiB. This short observation does not prove physical 32k or route latency.
+The outer command's post-run lookup of an uncreated empty console log exits one;
+original lane receipts pass and were independently rechecked, without rerunning
+models. [CHARACTERIZATION.md](CHARACTERIZATION.md) binds the result and limitation.
+
+The first bounded 8k capacity CLI and isolated packet/input/watcher helpers are
+implemented with six CPU and seven CUDA synthetic controls, including bit-exact
+128-token chunk/single agreement and cancelled snapshot recovery. Twenty-four
+model-free PowerShell controls verify input/source/allowance refusal and executable dispatch;
+[CAPACITY.md](CAPACITY.md) owns the fixed-token/non-quality boundary. Native
+capacity execution is unrun. Current inventory is 71 GPT/325 union/28 shared paths.
+CPU/CUDA release drafts and both model-free input startup Jobs pass; draft
+packets remain non-executable. Next obtain an exact scoped checkpoint after
+native closeout, then rebuild the final separately reviewed packet.
+The eight-token characterization helper cannot be relabeled as a capacity runner.
+This short allowance is closed; no prior allowance is reused. Q8, GenEye `3fa7075e`, Codex
 `0.154.0`, Responses 90s and WorkerRuntime 600s remain fixed.
 
 ## Prior maintained closeout, 2026-10-13

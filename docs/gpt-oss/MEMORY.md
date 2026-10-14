@@ -2,7 +2,8 @@
 
 The selected Work repairs the native 32k capacity boundary while preserving
 F32 activations, packed MXFP4 experts, CPU reference behavior and consumer holds.
-The candidate is local and unqualified for production. Existing receipts remain
+The candidate is locally checkpointed with short numerical/runtime proof; long
+capacity and consumer execution remain unqualified. Existing receipts remain
 bound to their original source; no closed inference allowance is reused.
 
 ## Lossless table storage
@@ -93,10 +94,20 @@ replay remains unrun. Compact proof is retained under
 `artifacts/gpt-oss/memory-32k-20261013/` against the `48d81485` source baseline
 and the reviewed candidate file identities.
 
-After focused CPU/CUDA checks and the full native gate pass, request a scoped
-checkpoint, then bind rebuilt binaries, helpers, retained inputs and DLLs in a
-fresh finite packet. Production qualification and publication require separate
-authorization. Preserve Q8 defaults, GenEye `3fa7075e`, Codex `0.154.0` and
+The approved checkpoint is `3db05cd8`; separately approved packet
+`c5c1fe4e…f8face4f` completes the frozen short CPU/CUDA proof: two loads,
+44 forwards/74 steps/32 outputs, zero warmup/retry. CUDA selected static storage
+is 15,053,650,176 bytes; sampled whole-GPU peak is 16,724,787,200 bytes, below 20e9.
+Oracle bounds, exact replay, matching cold IDs, actual DLLs and all six owner
+releases pass. [CHARACTERIZATION](CHARACTERIZATION.md) retains the source-bound
+measurements and the post-run empty-console-log reporting failure separately.
+The allowance is closed; this does not prove physical 32k or consumer deadlines.
+
+The distinct [8k capacity runner](CAPACITY.md) and model-free controls are now
+implemented; no capacity model run has occurred. Release drafts/startup Jobs pass.
+Next obtain its scoped checkpoint after native closeout, then rebuild a clean
+source-bound packet. The current short helper remains eight-token-only. New capacity execution, checkpoint and publication
+need separate authority. Preserve Q8 defaults, GenEye `3fa7075e`, Codex `0.154.0` and
 the disabled GPT-OSS provider until its consumer route is qualified.
 
 ---

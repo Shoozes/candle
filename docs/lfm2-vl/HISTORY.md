@@ -4,7 +4,7 @@ Dated entries are historical. Current state: `STATUS.md`; active work: `TODO.md`
 
 ## 2026-10-13 - GPT-OSS memory
 
-[Local proof](../gpt-oss/MEMORY.md); production held.
+[Proof/prep](../gpt-oss/CAPACITY.md); 32k held.
 
 ## 2026-10-11 - d1 cancellation
 

@@ -179,5 +179,60 @@ No model processes remained; the post-run census reported 48.99 GB available
 physical memory, 28.48 GB commit against a 73.38 GB limit and 1.146 GB GPU use.
 Keep these new producer records separate even though their output digest matches.
 
+## Memory repair short proof at `3db05cd8`, 2026-10-13
+
+The approved 19-file local checkpoint is
+`3db05cd8eedb51d6b7777d2eed705ec481e0420b`, tree
+`e60ff6b7e184ab47f79bbaa81395fb2dec6c54fa`. Its final 8,634-byte packet SHA-256
+is `c5c1fe4ed909f54a65ed7ed51fc67dfc6eb552069d136af804f6cb88f8face4f`.
+The owner separately approved the frozen short work; CPU numerical/runtime and
+complete release passed before CUDA. Actual work is two loads, six segments,
+44 public forwards, 74 processed steps and 32 outputs, zero warmups/retries.
+The allowance is complete and closed; there are no additional model calls.
+
+| Measurement | CPU | CUDA |
+| --- | ---: | ---: |
+| Static payload | 17,370,183,936 B | 15,053,650,176 B |
+| Load / unload | 30.455s / 936.839ms | 33.346s / 87.934ms |
+| Cold eight-token prefill | 17.413s | 736.076ms |
+| Mean fifteen decode forwards | 2.275s | 71.140ms |
+| Total model time | 114.415s | 36.462s |
+| Peak Job, 32 GiB limit | 17,685,331,968 B | 21,666,590,720 B |
+| Sampled whole-GPU peak, 20e9 limit | Not applicable | 16,724,787,200 B |
+
+Lossless table selection saves 2,316,533,760 static bytes with F32 activations.
+Top-1 at positions 5/6/7 is exactly 1072/290/29082. Maximum top-eight-union errors
+are 0.131067/0.131042, full-row mean errors 0.00205427/0.00205421 and probability
+TV 0.00485888/0.00485806 (CPU/CUDA), below the unchanged 0.25/0.01/0.01 bounds.
+All six raw replay errors are zero; sixteen cold output IDs match devices.
+CPU row digests match the original `e3e1afcb` rows. Host verification rechecks
+all twelve captured rows; descriptors and byte/path contracts remain unchanged.
+
+Actual loaded inventories have 6/57 modules and all required DLL paths/digests
+pass. Both native model Jobs exit 0 naturally, registries are zero and all six
+controller/model/watcher owners have nonnull creation/executable identity and
+are absent. This qualifies the future-owner repair at this source; original
+`e3e1afcb` metadata limitations stay unchanged. One-second GPU sampling may miss
+peaks. One run per source gives descriptive timing, not a causal speed estimate.
+
+The outer tool command exits 1 only during its post-run `Get-Item` lookup of an
+optional console log: `Tee-Object` created no file because the native runner
+emitted no console output. Its native entry exit code was not separately retained.
+Original per-lane qualification/terminal/Job/runtime/row-verification receipts
+pass and were independently validated afterward; models were not rerun. This
+reporting limitation remains explicit and does not erase the measured work.
+
+Proof root is
+`artifacts/gpt-oss/characterization-3db05cd8-df81ea5873b0407c8c0e040b3a5d8690/`.
+Its `report.json` is 11,482 bytes, SHA-256
+`76d36caae5765811696e5ee59de8da0064ca87a59318edbba074a5b8aa1d1a9e`,
+binding the sixteen original structured receipts and six owner releases.
+Release/packet/recovered metadata proof remains under
+`artifacts/gpt-oss/memory-32k-20261013/`. CUDA release retains nonfatal LNK4098;
+expanded test Clippy and WSL limitations remain as documented in MEMORY.
+No push, consumer pin change or activation occurred. Physical 32k, Responses 90s
+and WorkerRuntime 600s remain unqualified; next prepare the bounded 8k runner
+with model-free controls and a separate finite source-bound allowance.
+
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-short-qualification | change=recorded measured numerical runtime release proof and its precise limits
+AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-memory-short-proof | change=recorded source-bound numerical memory and release proof with wrapper reporting limitation
