@@ -117,8 +117,10 @@ upstream ancestry, toolchain, all frozen input hashes/counts, owning verifiers
 and the immutable local historical tag. Alternate replay checkouts require an
 explicit reviewed `-ExpectedRepositoryRoot`; defaults stay canonical.
 
-The writer calls native `git archive --format=zip` at that exact commit with
-prefix `candle-overlays-mvp-0.2.0/`. Only tracked source is packaged; `.git`,
+The writer calls native `git -c core.autocrlf=false archive --format=zip` at that
+exact commit with prefix `candle-overlays-mvp-0.2.0/`. The explicit setting
+prevents host checkout CRLF conversion from changing archived source bytes.
+Only tracked source is packaged; `.git`,
 ignored artifacts, caches and production weights are absent. Receipt v2 binds
 archive bytes/hash, source/tree, expectations digest, inputs and all inventories.
 It omits local paths, refuses existing outputs, uses fresh temporary siblings

@@ -221,7 +221,7 @@ $temporaryReceipt = "$receiptFullPath.tmp.$([guid]::NewGuid().ToString('N'))"
 try {
     Assert-Exact 'final candidate commit' (Get-GitLine @('rev-parse', 'HEAD')) $head
     if (@(Invoke-Git @('status', '--porcelain=v1', '--untracked-files=all')).Count -ne 0) { throw 'The worktree changed during verification.' }
-    $null = Invoke-Git @('archive', '--format=zip', "--prefix=$releaseTag/", "--output=$temporaryPackage", $head)
+    $null = Invoke-Git @('-c', 'core.autocrlf=false', 'archive', '--format=zip', "--prefix=$releaseTag/", "--output=$temporaryPackage", $head)
     $package = [ordered]@{ name=[IO.Path]::GetFileName($packageFullPath); bytes=(Get-Item -LiteralPath $temporaryPackage).Length; sha256=(Get-Hash $temporaryPackage); format='git-archive-zip'; source_commit=$head }
     $receipt = [ordered]@{
         schema='candle_overlays_release_identity_receipt_v2'

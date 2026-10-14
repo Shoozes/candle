@@ -52,7 +52,7 @@ $fakeGit = {
     $global:LASTEXITCODE = 0
     if ($global:ReleaseTestOverrides.ContainsKey($key)) { return $global:ReleaseTestOverrides[$key] }
     if ($key -eq 'rev-parse --show-toplevel') { return $global:ReleaseTestRoot }
-    if ($key -like 'archive --format=zip --prefix=candle-overlays-mvp-0.2.0/*') {
+    if ($key -like '-c core.autocrlf=false archive --format=zip --prefix=candle-overlays-mvp-0.2.0/*') {
         if ($commandArgs[-1] -ne '1111111111111111111111111111111111111111') { throw 'receipt-test: archive source drift' }
         $output = @($commandArgs | Where-Object { $_.StartsWith('--output=') })
         [IO.File]::WriteAllText($output[0].Substring(9), 'frozen fixture archive')
@@ -140,6 +140,7 @@ try {
     Assert-Test ($receipt.immutable_historical_tag.object -eq $oldObject -and $receipt.immutable_historical_tag.commit -eq $oldCommit) 'old tag drift'
     Assert-Test ($receipt.overlays.PSObject.Properties.Name.Count -eq 5 -and $receipt.union.paths -eq 6) 'five-overlay fixture drift'
     Assert-Test ($receipt.source_package.sha256 -eq (Get-TestHash $packagePath)) 'package not bound'
+    Assert-Test ([bool]($global:ReleaseTestCalls -match '^-c core\.autocrlf=false archive --format=zip')) 'archive inherits checkout line-ending conversion'
     Assert-Test (-not $raw.Contains($testRoot)) 'receipt leaked a local path'
     Assert-SafeCalls
     $savedHash = Get-TestHash $receiptPath

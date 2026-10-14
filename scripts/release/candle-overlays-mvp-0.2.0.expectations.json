@@ -12,7 +12,7 @@
     "Cargo.lock": "f2351b79227eda4bbbaaf9982ac410279c00cda2c627db9bf5b7539ea96e88f2",
     "rust-toolchain.toml": "8e390d6a0838315f972690f46ef8bae8b7ecc9ee6c1ed70140ef852869c2482e",
     ".github/workflows/rust-ci.yml": "7cfd11932a6cba0aeae364fe23dda6ea2baa99cf023a597dead5b7e939a6a6ca",
-    "docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md": "6e7d4ce0cbf764a1c5e7802412daf003d81c2ca3a225f01e9fd84b777a8f91a1",
+    "docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md": "d63f9b579c152275a57b82bb0b359ca312851fccab6f2f64b67f9c170efa856d",
     "docs/FORK_OVERLAYS.md": "6906bb3ceebff8adafc33c7b194f2e21615d875959e76f752646e01064fd5b85",
     "docs/lfm2-vl/MOD_MANIFEST.md": "d2fc17153458a2799da7b9f10b55079fd945b7fa6c05b097ee8a62608d2763d9",
     "docs/snapflash/MOD_MANIFEST.md": "2122f490568470a31d2ad06ee43de7a79f499feea7d28ea498e2d560705f5d74",
