@@ -1,0 +1,56 @@
+{
+  "schema": "candle_overlays_mvp_expectations_v1",
+  "release_tag": "candle-overlays-mvp-0.2.0",
+  "upstream_base": "c68b24997319b8d76e5a4e775dab197c7f26322a",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+  "historical_tag": {
+    "object": "7de0b4dc5f914e9b1d317da7f76f677d9f32b844",
+    "commit": "ff885586f6d44a3d9b9ac1724032cdf5f0155384"
+  },
+  "inputs": {
+    "Cargo.lock": "f2351b79227eda4bbbaaf9982ac410279c00cda2c627db9bf5b7539ea96e88f2",
+    "rust-toolchain.toml": "8e390d6a0838315f972690f46ef8bae8b7ecc9ee6c1ed70140ef852869c2482e",
+    ".github/workflows/rust-ci.yml": "7cfd11932a6cba0aeae364fe23dda6ea2baa99cf023a597dead5b7e939a6a6ca",
+    "docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md": "6e7d4ce0cbf764a1c5e7802412daf003d81c2ca3a225f01e9fd84b777a8f91a1",
+    "docs/FORK_OVERLAYS.md": "6906bb3ceebff8adafc33c7b194f2e21615d875959e76f752646e01064fd5b85",
+    "docs/lfm2-vl/MOD_MANIFEST.md": "d2fc17153458a2799da7b9f10b55079fd945b7fa6c05b097ee8a62608d2763d9",
+    "docs/snapflash/MOD_MANIFEST.md": "2122f490568470a31d2ad06ee43de7a79f499feea7d28ea498e2d560705f5d74",
+    "docs/gpt-oss/MOD_MANIFEST.md": "9ff533fd951a287b6c99e4f0ff43852a6729cd8f656e605451fef4cd204e1794",
+    "docs/fork-compat/MOD_MANIFEST.md": "d587568d745a63f8ddf531a7f4681c34ab62753015f7a28847419d2eb91e842b",
+    "docs/qwen35/MOD_MANIFEST.md": "5cd3f5fecbd42f322e995d16a80111daa7909054183f030dbc362494a1f02225"
+  },
+  "overlays": {
+    "lfm2_vl": {
+      "paths": 215,
+      "fork_modified": 20,
+      "added": 195
+    },
+    "snapflash_derived": {
+      "paths": 22,
+      "fork_modified": 9,
+      "added": 13
+    },
+    "gpt_oss": {
+      "paths": 73,
+      "fork_modified": 3,
+      "added": 70
+    },
+    "fork_compat": {
+      "paths": 18,
+      "fork_modified": 13,
+      "added": 5
+    },
+    "qwen35": {
+      "paths": 35,
+      "fork_modified": 8,
+      "added": 27
+    }
+  },
+  "union": {
+    "paths": 326,
+    "overlays": 5,
+    "shared_paths": 31,
+    "overlapping_paths": 30
+  }
+}

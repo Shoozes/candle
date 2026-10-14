@@ -2,6 +2,48 @@
 
 Dated entries are historical. Current state: `STATUS.md`; active work: `TODO.md`. New maintained-model work: [2026-10-12](MAINTAINED_MODELS.md).
 
+## 2026-10-14 - Independent MVP scope freeze
+
+The owner selected three independently finishable MVPs: Candle overlay source
+0.2.0, Edge Windows core-runtime 0.2.1 at its existing Candle pin, and Symbio
+engine-manager 0.1.1 on Codex 0.154.0. Experimental GPT-OSS work no longer gates
+any release. Original acceptance and sealed receipts are unchanged.
+
+Completed status narratives and the prior backlog remain recoverable at
+[`63f0d2cd` LFM status](https://github.com/Shoozes/candle/blob/63f0d2cd275e4653b268939b429cbb9af25aba1a/docs/lfm2-vl/STATUS.md),
+[GPT status](https://github.com/Shoozes/candle/blob/63f0d2cd275e4653b268939b429cbb9af25aba1a/docs/gpt-oss/STATUS.md),
+and [prior TODO](https://github.com/Shoozes/candle/blob/63f0d2cd275e4653b268939b429cbb9af25aba1a/docs/lfm2-vl/TODO.md).
+The final short GPT qualification is execution source `2adfa4a3`, delivered by
+`a656f040` and reviewed at `63f0d2cd`; the native publication gate passed with
+process-local `RUST_TEST_THREADS=2` after a parallel doctest linker OOM.
+
+The unshipped August two-overlay release candidate is superseded explicitly by
+the current five-overlay contract. Its old 156/20/167/13 expectations and
+`6f74e7c` base are historical, not current release inputs. The historical
+`lfm2-vl-mvp-0.1.0` annotated object and target remain immutable.
+
+The old GPT-OSS Task 4 split-MMProj entry was a multimodal carryover, not an
+accepted GPT text-model requirement. It is withdrawn from the execution queue;
+the prior TODO above preserves its exact wording. No MMProj implementation is
+requested for GPT-OSS.
+
+Unpublished model-free practical Short preparation was parked byte-for-byte
+under `artifacts/gpt-oss/practical-short-63f0d2cd-20261014/parked-source/` with
+`parking.json`. Its draft packet `34ce68aa…dccc186` is unexecutable and fresh GPU
+admission refuses 23,101,873,408 bytes against 20e9. Preparation Jobs released;
+zero model payloads read, loads, forwards or outputs. It is not release source,
+model qualification or a future execution allowance.
+
+Current release-tooling proof: the native maintained gate passes, including
+188 release-contract assertions on each PowerShell host and 461 GPT model-free
+controls. Diffusion rollback integration and the LFM/diffusion/GPT manifests
+also pass. WSL overlay replay passes; offline Rust replay cannot resolve cached
+`accelerate-src`. The compact local source-bound closeout is retained in
+`artifacts/releases/mvp-0.2.0-20261014/`. Source checkpoint/package/publication
+remain separately authorized; no model work or consumer activation occurred.
+
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-release | change=recorded scope freeze and native release-tooling proof
+
 ## 2026-10-14 - GPT-OSS review and prefill
 
 Prior admission/owner fixes rechecked at `0994bfe4`; relative-path coverage and

@@ -70,6 +70,12 @@ try {
     $env:PYO3_NO_PYTHON = "1"
 
     Invoke-Step "format" { & cargo fmt --all -- --check }
+    Invoke-Step "release receipt contract (PowerShell 7)" {
+        & pwsh -NoProfile -File (Join-Path $repoRoot "scripts\release\test-write-candle-overlays-receipt.ps1")
+    }
+    Invoke-Step "release receipt contract (Windows PowerShell 5.1)" {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repoRoot "scripts\release\test-write-candle-overlays-receipt.ps1")
+    }
     Invoke-Step "maintained library check" {
         & cargo check --locked --offline -j 2 -p candle-core -p candle-nn -p candle-transformers -p candle-vlm
     }

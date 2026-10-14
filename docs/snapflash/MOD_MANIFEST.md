@@ -65,6 +65,7 @@ move SnapFlash's separately proven Candle pin.
 - `candle-transformers/src/models/stable_diffusion/lora.rs`
 - `candle-transformers/src/models/stable_diffusion/mutable.rs`
 - `candle-transformers/tests/stable_diffusion_mutable_tests.rs`
+- `scripts/release/candle-overlays-mvp-0.2.0.expectations.json`
 - `scripts/release/test-write-candle-overlays-receipt.ps1`
 - `scripts/release/write-candle-overlays-receipt.ps1`
 - `scripts/snapflash/verify-mod-manifest.sh`
@@ -181,4 +182,4 @@ Models, adapters, generated images, local caches, `.tools/`, secrets, runtime
 logs, and application artifacts are not part of this overlay.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=maintained-models | change=implemented and verified scoped model improvements
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-release | change=registered reviewed five-overlay release expectations

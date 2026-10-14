@@ -1,185 +1,229 @@
 #Requires -Version 5.1
-
 [CmdletBinding()]
 param()
-
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
-
-$script:Assertions = 0
-function Assert-Condition {
-    param(
-        [Parameter(Mandatory = $true)][bool]$Condition,
-        [Parameter(Mandatory = $true)][string]$Message
-    )
-    $script:Assertions++
+$script:assertions = 0
+function Assert-Test([bool]$Condition, [string]$Message) {
+    $script:assertions++
     if (-not $Condition) { throw "receipt-test: $Message" }
 }
-
-function Assert-ThrowsLike {
-    param(
-        [Parameter(Mandatory = $true)][scriptblock]$Action,
-        [Parameter(Mandatory = $true)][string]$Pattern,
-        [Parameter(Mandatory = $true)][string]$Message
-    )
-    $caught = $false
-    try { & $Action }
-    catch {
-        if ($_.Exception.Message -notmatch $Pattern) { throw }
-        $caught = $true
-    }
-    Assert-Condition -Condition $caught -Message $Message
+function Write-TestText([string]$Path, [string]$Text) {
+    [IO.Directory]::CreateDirectory((Split-Path -Parent $Path)) | Out-Null
+    [IO.File]::WriteAllText($Path, $Text.Replace("`r`n", "`n"), [Text.UTF8Encoding]::new($false))
 }
-
-$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
-$receiptScript = Join-Path $PSScriptRoot 'write-candle-overlays-receipt.ps1'
-$testRoot = Join-Path ([IO.Path]::GetTempPath()) ('candle-receipt-test-' + [guid]::NewGuid().ToString('N'))
+function Get-TestHash([string]$Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
+$testRoot = Join-Path ([IO.Path]::GetTempPath()) ('candle-receipt-' + [guid]::NewGuid().ToString('N'))
+$fixtureRoot = Join-Path $testRoot 'checkout with spaces'
+$writer = Join-Path $fixtureRoot 'scripts/release/write-candle-overlays-receipt.ps1'
 $head = '1111111111111111111111111111111111111111'
 $tree = '2222222222222222222222222222222222222222'
-$releaseTagObject = '3333333333333333333333333333333333333333'
-$historicalTagObject = '4444444444444444444444444444444444444444'
-$historicalCommit = 'ff885586f6d44a3d9b9ac1724032cdf5f0155384'
-$wrongHead = '5555555555555555555555555555555555555555'
-$receiptPath = Join-Path $testRoot 'candle-overlays-mvp-0.2.0-receipt.json'
-$mismatchReceiptPath = Join-Path $testRoot 'mismatch-receipt.json'
-
-$global:ReceiptTestCalls = [Collections.Generic.List[string]]::new()
-$global:ReceiptTestRemoteHead = $head
-
-$fakeWsl = {
+$base = 'c68b24997319b8d76e5a4e775dab197c7f26322a'
+$oldCommit = 'ff885586f6d44a3d9b9ac1724032cdf5f0155384'
+$oldObject = '7de0b4dc5f914e9b1d317da7f76f677d9f32b844'
+$tagObject = '3333333333333333333333333333333333333333'
+$wrong = '5555555555555555555555555555555555555555'
+$global:ReleaseTestRoot = $fixtureRoot
+$global:ReleaseTestCalls = [Collections.Generic.List[string]]::new()
+$global:ReleaseTestOverrides = @{}
+$global:ReleaseTestDefaults = @{
+    'branch --show-current' = 'main'
+    'status --porcelain=v1 --untracked-files=all' = @()
+    'rev-parse HEAD' = $head
+    'rev-parse HEAD^{tree}' = $tree
+    'remote get-url origin' = 'https://github.com/Shoozes/candle.git'
+    "merge-base --is-ancestor $base $head" = @()
+    "ls-tree -r --name-only $base" = 'Cargo.lock'
+    'cat-file -t refs/tags/candle-overlays-mvp-0.2.0' = 'tag'
+    'rev-parse refs/tags/candle-overlays-mvp-0.2.0' = $tagObject
+    'rev-parse refs/tags/candle-overlays-mvp-0.2.0^{}' = $head
+    'cat-file -t refs/tags/lfm2-vl-mvp-0.1.0' = 'tag'
+    'rev-parse refs/tags/lfm2-vl-mvp-0.1.0' = $oldObject
+    'rev-parse refs/tags/lfm2-vl-mvp-0.1.0^{}' = $oldCommit
+    'ls-remote origin refs/heads/main' = "$head`trefs/heads/main"
+    'ls-remote --tags origin refs/tags/candle-overlays-mvp-0.2.0 refs/tags/candle-overlays-mvp-0.2.0^{}' = @("$tagObject`trefs/tags/candle-overlays-mvp-0.2.0", "$head`trefs/tags/candle-overlays-mvp-0.2.0^{}")
+    'ls-remote --tags origin refs/tags/lfm2-vl-mvp-0.1.0 refs/tags/lfm2-vl-mvp-0.1.0^{}' = @("$oldObject`trefs/tags/lfm2-vl-mvp-0.1.0", "$oldCommit`trefs/tags/lfm2-vl-mvp-0.1.0^{}")
+}
+$fakeGit = {
     $commandArgs = @($args | ForEach-Object { [string]$_ })
-    [void]$global:ReceiptTestCalls.Add(($commandArgs -join ' '))
+    if ($commandArgs[0] -ne '-C' -or $commandArgs[1] -ne $global:ReleaseTestRoot) { throw 'receipt-test: Git used a second checkout' }
+    $key = $commandArgs[2..($commandArgs.Count - 1)] -join ' '
+    [void]$global:ReleaseTestCalls.Add($key)
     $global:LASTEXITCODE = 0
-
-    if ($commandArgs.Count -ge 6 -and $commandArgs[2] -eq 'git' -and $commandArgs[3] -eq '-C') {
-        $gitArgs = @($commandArgs[5..($commandArgs.Count - 1)])
-        $key = $gitArgs -join ' '
-        switch ($key) {
-            'branch --show-current' { return 'main' }
-            'status --porcelain=v1 --untracked-files=all' { return }
-            'rev-parse HEAD' { return '1111111111111111111111111111111111111111' }
-            'rev-parse HEAD^{tree}' { return '2222222222222222222222222222222222222222' }
-            'remote get-url origin' { return 'https://github.com/Shoozes/candle.git' }
-            'cat-file -t refs/tags/candle-overlays-mvp-0.2.0' { return 'tag' }
-            'rev-parse refs/tags/candle-overlays-mvp-0.2.0' { return '3333333333333333333333333333333333333333' }
-            'rev-parse refs/tags/candle-overlays-mvp-0.2.0^{}' { return '1111111111111111111111111111111111111111' }
-            'cat-file -t refs/tags/lfm2-vl-mvp-0.1.0' { return 'tag' }
-            'rev-parse refs/tags/lfm2-vl-mvp-0.1.0' { return '4444444444444444444444444444444444444444' }
-            'rev-parse refs/tags/lfm2-vl-mvp-0.1.0^{}' { return 'ff885586f6d44a3d9b9ac1724032cdf5f0155384' }
-            'ls-remote origin refs/heads/main' {
-                return "$global:ReceiptTestRemoteHead`trefs/heads/main"
-            }
-            'ls-remote --tags origin refs/tags/candle-overlays-mvp-0.2.0 refs/tags/candle-overlays-mvp-0.2.0^{}' {
-                return @(
-                    ('3333333333333333333333333333333333333333' + "`trefs/tags/candle-overlays-mvp-0.2.0")
-                    ('1111111111111111111111111111111111111111' + "`trefs/tags/candle-overlays-mvp-0.2.0^{}")
-                )
-            }
-            'ls-remote --tags origin refs/tags/lfm2-vl-mvp-0.1.0 refs/tags/lfm2-vl-mvp-0.1.0^{}' {
-                return @(
-                    ('4444444444444444444444444444444444444444' + "`trefs/tags/lfm2-vl-mvp-0.1.0")
-                    ('ff885586f6d44a3d9b9ac1724032cdf5f0155384' + "`trefs/tags/lfm2-vl-mvp-0.1.0^{}")
-                )
-            }
-            default { throw "receipt-test: unexpected fake Git command: $key" }
-        }
+    if ($global:ReleaseTestOverrides.ContainsKey($key)) { return $global:ReleaseTestOverrides[$key] }
+    if ($key -eq 'rev-parse --show-toplevel') { return $global:ReleaseTestRoot }
+    if ($key -like 'archive --format=zip --prefix=candle-overlays-mvp-0.2.0/*') {
+        if ($commandArgs[-1] -ne '1111111111111111111111111111111111111111') { throw 'receipt-test: archive source drift' }
+        $output = @($commandArgs | Where-Object { $_.StartsWith('--output=') })
+        [IO.File]::WriteAllText($output[0].Substring(9), 'frozen fixture archive')
+        return
     }
-
-    if ($commandArgs.Count -ge 5 -and $commandArgs[2] -eq 'bash' -and $commandArgs[3] -eq '-lc') {
-        $command = $commandArgs[4]
-        if ($command -match 'scripts/lfm2-vl/verify-mod-manifest\.sh') {
-            return @(
-                'lfm2-vl-mod-manifest baseline=6f74e7c390c717f8fd34f23ce02aceb058173370 total=156 fork_modified=16 mod_added=140',
-                'mod-manifest: passed'
-            )
-        }
-        if ($command -match 'scripts/snapflash/verify-mod-manifest\.sh') {
-            return @(
-                'snapflash-mod-manifest baseline=6f74e7c390c717f8fd34f23ce02aceb058173370 total=20 fork_modified=8 mod_added=12',
-                'snapflash-mod-manifest: passed'
-            )
-        }
-        if ($command -match 'scripts/verify-fork-overlays\.sh') {
-            return @(
-                'fork-overlays baseline=6f74e7c390c717f8fd34f23ce02aceb058173370 paths=167 overlays=2 shared=13',
-                'fork-overlays: passed'
-            )
-        }
-        throw "receipt-test: unexpected fake Bash command: $command"
+    if (-not $global:ReleaseTestDefaults.ContainsKey($key)) { throw "receipt-test: unexpected Git command: $key" }
+    return $global:ReleaseTestDefaults[$key]
+}
+$fakeRustc = { $global:LASTEXITCODE = 0; 'rustc 1.97.1 (8bab26f4f 2026-07-14)' }
+$fakeCargo = { $global:LASTEXITCODE = 0; 'cargo 1.97.1 (c980f4866 2026-06-30)' }
+$manifestPaths = [ordered]@{
+    lfm2_vl='docs/lfm2-vl/MOD_MANIFEST.md'
+    snapflash_derived='docs/snapflash/MOD_MANIFEST.md'
+    gpt_oss='docs/gpt-oss/MOD_MANIFEST.md'
+    fork_compat='docs/fork-compat/MOD_MANIFEST.md'
+    qwen35='docs/qwen35/MOD_MANIFEST.md'
+}
+$inputPaths = @('Cargo.lock','rust-toolchain.toml','.github/workflows/rust-ci.yml',
+    'docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md','docs/FORK_OVERLAYS.md') + @($manifestPaths.Values)
+$freezePath = Join-Path $fixtureRoot 'freeze.json'
+function Reset-Fixture {
+    $global:ReleaseTestOverrides.Clear()
+    $global:ReleaseTestCalls.Clear()
+    foreach ($path in $inputPaths) { Write-TestText (Join-Path $fixtureRoot $path) "fixed $path`n" }
+    Write-TestText (Join-Path $fixtureRoot 'docs/FORK_OVERLAYS.md') ('<!-- shared-paths:start -->' + "`n" + '- `Cargo.lock`' + "`n" + '<!-- shared-paths:end -->' + "`n")
+    $overlays = [ordered]@{}
+    foreach ($entry in $manifestPaths.GetEnumerator()) {
+        Write-TestText (Join-Path $fixtureRoot $entry.Value) ('- `Cargo.lock`' + "`n" + '- `' + $entry.Key + '.rs`' + "`n")
+        $overlays[$entry.Key] = @{ paths=2; fork_modified=1; added=1 }
     }
-
-    throw "receipt-test: unexpected fake WSL invocation: $($commandArgs -join ' ')"
+    $inputs = [ordered]@{}
+    foreach ($path in $inputPaths) { $inputs[$path] = Get-TestHash (Join-Path $fixtureRoot $path) }
+    $script:freeze = [ordered]@{
+        schema='candle_overlays_mvp_expectations_v1'; release_tag='candle-overlays-mvp-0.2.0'
+        upstream_base=$base; rustc='rustc 1.97.1 (8bab26f4f 2026-07-14)'; cargo='cargo 1.97.1 (c980f4866 2026-06-30)'
+        historical_tag=@{ object=$oldObject; commit=$oldCommit }; inputs=$inputs; overlays=$overlays
+        union=@{ paths=6; overlays=5; shared_paths=1; overlapping_paths=1 }
+    }
+    $verifiers = @{
+        'scripts/lfm2-vl/verify-mod-manifest.sh'="lfm2-vl-mod-manifest baseline=$base total=2 fork_modified=1 mod_added=1"
+        'scripts/snapflash/verify-mod-manifest.sh'="snapflash-mod-manifest baseline=$base total=2 fork_modified=1 mod_added=1"
+        'scripts/gpt-oss/verify-mod-manifest.sh'="gpt-oss-mod-manifest baseline=$base paths=2"
+        'scripts/verify-fork-overlays.sh'="fork-overlays baseline=$base paths=6 overlays=5 shared=1"
+    }
+    foreach ($entry in $verifiers.GetEnumerator()) {
+        $pass = if ($entry.Key -eq 'scripts/verify-fork-overlays.sh') { 'fork-overlays: passed' } else { 'mod-manifest: passed' }
+        Write-TestText (Join-Path $fixtureRoot $entry.Key) ("#!/bin/bash`nprintf '%s\n' '" + $entry.Value + "' '" + $pass + "'`n")
+    }
 }
-
-$fakeRustc = {
-    if (($args -join ' ') -ne '--version') { throw 'receipt-test: unexpected rustc arguments' }
-    $global:LASTEXITCODE = 0
-    return 'rustc 1.97.1 (8bab26f4f 2026-07-14)'
+function Save-Freeze { Write-TestText $freezePath ($script:freeze | ConvertTo-Json -Depth 8) }
+function Assert-SafeCalls {
+    Assert-Test (-not ($global:ReleaseTestCalls -match '^(fetch|push|tag|commit|checkout|reset|update-ref|clean)\b')) 'mutating Git was invoked'
+    Assert-Test (@(Get-ChildItem -LiteralPath $testRoot -Filter '*.tmp.*' -File -Recurse).Count -eq 0) 'temporary output leaked'
 }
-$fakeCargo = {
-    if (($args -join ' ') -ne '--version') { throw 'receipt-test: unexpected Cargo arguments' }
-    $global:LASTEXITCODE = 0
-    return 'cargo 1.97.1 (c980f4866 2026-06-30)'
+function Test-Rejection([string]$Name, [string]$Pattern, [scriptblock]$Setup) {
+    Reset-Fixture
+    $script:options = @{ ExpectedHead=$head; ExpectedTree=$tree; ExpectedRepositoryRoot=$fixtureRoot; ExpectationsPath=$freezePath; ReceiptPath=(Join-Path $testRoot "$Name.json"); SourcePackagePath=(Join-Path $testRoot "$Name.zip"); Stage='Published' }
+    & $Setup
+    Save-Freeze
+    if (-not $script:options.ContainsKey('ExpectedExpectationsSha256')) { $script:options.ExpectedExpectationsSha256=Get-TestHash $freezePath }
+    $caught = $false
+    try { & $writer @script:options }
+    catch { if ($_.Exception.Message -notmatch $Pattern) { throw }; $caught=$true }
+    Assert-Test $caught "$Name was accepted"
+    Assert-Test (-not (Test-Path -LiteralPath $script:options.ReceiptPath)) "$Name wrote a receipt"
+    Assert-Test (-not (Test-Path -LiteralPath $script:options.SourcePackagePath)) "$Name wrote a package"
+    Assert-SafeCalls
 }
-
-New-Item -ItemType Directory -Path $testRoot | Out-Null
-Set-Item -Path Function:global:wsl.exe -Value $fakeWsl
-Set-Item -Path Function:global:rustc -Value $fakeRustc
-Set-Item -Path Function:global:cargo -Value $fakeCargo
-
+[IO.Directory]::CreateDirectory((Split-Path -Parent $writer)) | Out-Null
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'write-candle-overlays-receipt.ps1') -Destination $writer
+Set-Item Function:global:git.exe $fakeGit
+Set-Item Function:global:rustc $fakeRustc
+Set-Item Function:global:cargo $fakeCargo
 try {
-    Assert-Condition -Condition (Test-Path -LiteralPath $receiptScript -PathType Leaf) -Message 'receipt generator is missing'
-
-    & $receiptScript -ExpectedHead $head -ExpectedTree $tree -ReceiptPath $receiptPath
-    Assert-Condition -Condition (Test-Path -LiteralPath $receiptPath -PathType Leaf) -Message 'success path did not write a receipt'
-    $rawReceipt = [IO.File]::ReadAllText($receiptPath)
-    $receipt = $rawReceipt | ConvertFrom-Json
-    Assert-Condition -Condition ([string]$receipt.schema -eq 'candle_overlays_release_identity_receipt_v1') -Message 'receipt schema drifted'
-    Assert-Condition -Condition ([string]$receipt.result -eq 'pass') -Message 'receipt result is not pass'
-    Assert-Condition -Condition ([string]$receipt.source.commit -eq $head) -Message 'receipt commit drifted'
-    Assert-Condition -Condition ([string]$receipt.source.tree -eq $tree) -Message 'receipt tree drifted'
-    Assert-Condition -Condition ([string]$receipt.release_tag.annotated_object -eq $releaseTagObject) -Message 'release tag object drifted'
-    Assert-Condition -Condition ([string]$receipt.immutable_historical_tag.annotated_object -eq $historicalTagObject) -Message 'historical tag object drifted'
-    Assert-Condition -Condition ([string]$receipt.immutable_historical_tag.commit -eq $historicalCommit) -Message 'historical tag commit drifted'
-    Assert-Condition -Condition ([int]$receipt.overlays.lfm2_vl.paths -eq 156) -Message 'LFM2-VL inventory drifted'
-    Assert-Condition -Condition ([int]$receipt.overlays.snapflash_derived.paths -eq 20) -Message 'SnapFlash inventory drifted'
-    Assert-Condition -Condition ([int]$receipt.overlays.union.paths -eq 167 -and [int]$receipt.overlays.union.shared_paths -eq 13) -Message 'overlay union drifted'
-    Assert-Condition -Condition ($receipt.assertions.hosted_ci_used -eq $false -and $receipt.assertions.model_artifacts_used -eq $false) -Message 'receipt claimed forbidden evidence'
-    Assert-Condition -Condition (-not $rawReceipt.Contains($repositoryRoot) -and -not $rawReceipt.Contains($testRoot)) -Message 'receipt leaked a local filesystem path'
-    Assert-Condition -Condition (@(Get-ChildItem -LiteralPath $testRoot -Filter '*.tmp.*' -File).Count -eq 0) -Message 'success left a temporary receipt file'
-    Assert-Condition -Condition (-not ($global:ReceiptTestCalls -match '(?i)\b(fetch|push)\b')) -Message 'identity test attempted a mutating Git command'
-
-    $receiptHash = (Get-FileHash -LiteralPath $receiptPath -Algorithm SHA256).Hash
-    $callsBeforeOverwrite = $global:ReceiptTestCalls.Count
-    Assert-ThrowsLike -Pattern 'already exists; refusing overwrite' -Message 'existing receipt was not rejected' -Action {
-        & $receiptScript -ExpectedHead $head -ExpectedTree $tree -ReceiptPath $receiptPath
+    Reset-Fixture
+    Save-Freeze
+    $receiptPath = Join-Path $testRoot 'success.json'
+    $packagePath = Join-Path $testRoot 'success.zip'
+    $success = @{ ExpectedHead=$head; ExpectedTree=$tree; ExpectedRepositoryRoot=$fixtureRoot; ExpectationsPath=$freezePath; ExpectedExpectationsSha256=(Get-TestHash $freezePath); ReceiptPath=$receiptPath; SourcePackagePath=$packagePath; Stage='Published' }
+    & $writer @success
+    $raw = [IO.File]::ReadAllText($receiptPath)
+    $receipt = $raw | ConvertFrom-Json
+    Assert-Test ($receipt.schema -eq 'candle_overlays_release_identity_receipt_v2' -and $receipt.publication_verified) 'published receipt boundary drift'
+    Assert-Test ($receipt.source.commit -eq $head -and $receipt.source.tree -eq $tree) 'source identity drift'
+    Assert-Test ($receipt.immutable_historical_tag.object -eq $oldObject -and $receipt.immutable_historical_tag.commit -eq $oldCommit) 'old tag drift'
+    Assert-Test ($receipt.overlays.PSObject.Properties.Name.Count -eq 5 -and $receipt.union.paths -eq 6) 'five-overlay fixture drift'
+    Assert-Test ($receipt.source_package.sha256 -eq (Get-TestHash $packagePath)) 'package not bound'
+    Assert-Test (-not $raw.Contains($testRoot)) 'receipt leaked a local path'
+    Assert-SafeCalls
+    $savedHash = Get-TestHash $receiptPath
+    $calls = $global:ReleaseTestCalls.Count
+    try { & $writer @success; throw 'receipt-test: overwrite accepted' }
+    catch { if ($_.Exception.Message -notmatch 'already exists; refusing overwrite') { throw } }
+    Assert-Test ((Get-TestHash $receiptPath) -eq $savedHash -and $global:ReleaseTestCalls.Count -eq $calls) 'overwrite changed receipt or reached Git'
+    $success.ReceiptPath = Join-Path $testRoot 'existing-package.json'
+    try { & $writer @success; throw 'receipt-test: existing package accepted' }
+    catch { if ($_.Exception.Message -notmatch 'already exists; refusing overwrite') { throw } }
+    Assert-Test (-not (Test-Path -LiteralPath $success.ReceiptPath)) 'existing package wrote receipt'
+    Reset-Fixture
+    Save-Freeze
+    $success.ExpectedExpectationsSha256=Get-TestHash $freezePath
+    $success.ReceiptPath=Join-Path $testRoot 'candidate.json'; $success.SourcePackagePath=Join-Path $testRoot 'candidate.zip'
+    $success.Stage='Candidate'
+    & $writer @success
+    $candidate=Get-Content -LiteralPath $success.ReceiptPath -Raw | ConvertFrom-Json
+    Assert-Test (-not $candidate.publication_verified -and $null -eq $candidate.release_tag) 'candidate masqueraded as published'
+    Assert-Test (-not ($global:ReleaseTestCalls -match '^ls-remote|refs/tags/candle-overlays')) 'candidate touched public refs or required new tag'
+    Test-Rejection 'canonical-root' 'Canonical checkout mismatch' { $script:options.ExpectedRepositoryRoot=Join-Path $testRoot 'other' }
+    Test-Rejection 'second-checkout' 'Git checkout mismatch' { $global:ReleaseTestOverrides['rev-parse --show-toplevel']=Join-Path $testRoot 'other' }
+    Test-Rejection 'dirty' 'not clean' { $global:ReleaseTestOverrides['status --porcelain=v1 --untracked-files=all']=' M owner.rs' }
+    Test-Rejection 'head' 'candidate commit mismatch' { $script:options.ExpectedHead=$wrong }
+    Test-Rejection 'tree' 'candidate tree mismatch' { $script:options.ExpectedTree=$wrong }
+    Test-Rejection 'remote-main' 'remote main mismatch' { $global:ReleaseTestOverrides['ls-remote origin refs/heads/main']="$wrong`trefs/heads/main" }
+    Test-Rejection 'unreviewed-freeze' 'reviewed expectations SHA-256 mismatch' {
+        Save-Freeze
+        $script:options.ExpectedExpectationsSha256=Get-TestHash $freezePath
+        $script:freeze.overlays.gpt_oss.paths=3
     }
-    Assert-Condition -Condition ((Get-FileHash -LiteralPath $receiptPath -Algorithm SHA256).Hash -eq $receiptHash) -Message 'overwrite rejection changed the existing receipt'
-    Assert-Condition -Condition ($global:ReceiptTestCalls.Count -eq $callsBeforeOverwrite) -Message 'overwrite rejection reached Git inspection'
-
-    $global:ReceiptTestRemoteHead = $wrongHead
-    Assert-ThrowsLike -Pattern 'remote main mismatch' -Message 'remote-main mismatch was not rejected' -Action {
-        & $receiptScript -ExpectedHead $head -ExpectedTree $tree -ReceiptPath $mismatchReceiptPath
+    foreach ($path in $inputPaths) {
+        Test-Rejection ('input-' + ($path -replace '\W','-')) 'SHA-256 mismatch' { Add-Content -LiteralPath (Join-Path $fixtureRoot $path) 'changed' }
     }
-    Assert-Condition -Condition (-not (Test-Path -LiteralPath $mismatchReceiptPath)) -Message 'remote mismatch wrote a receipt'
-    Assert-Condition -Condition (@(Get-ChildItem -LiteralPath $testRoot -Filter '*.tmp.*' -File).Count -eq 0) -Message 'failure left a temporary receipt file'
-
-    Write-Host "Candle release receipt tests: pass ($($script:Assertions) assertions)" -ForegroundColor Green
-}
-finally {
-    Remove-Item -Path Function:global:wsl.exe -ErrorAction SilentlyContinue
-    Remove-Item -Path Function:global:rustc -ErrorAction SilentlyContinue
-    Remove-Item -Path Function:global:cargo -ErrorAction SilentlyContinue
-    Remove-Variable -Name ReceiptTestCalls -Scope Global -ErrorAction SilentlyContinue
-    Remove-Variable -Name ReceiptTestRemoteHead -Scope Global -ErrorAction SilentlyContinue
-
-    $fullTestRoot = [IO.Path]::GetFullPath($testRoot)
-    $fullTempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\', '/')
-    $tempPrefix = $fullTempRoot + [IO.Path]::DirectorySeparatorChar
-    if (-not $fullTestRoot.StartsWith($tempPrefix, [StringComparison]::OrdinalIgnoreCase)) {
-        throw "receipt-test: refusing cleanup outside the temporary root: $fullTestRoot"
+    foreach ($overlay in $manifestPaths.Keys) {
+        Test-Rejection "inventory-$overlay" 'inventory mismatch' { $script:freeze.overlays[$overlay].paths=3 }
     }
-    if (Test-Path -LiteralPath $fullTestRoot) {
-        Remove-Item -LiteralPath $fullTestRoot -Recurse -Force
+    Test-Rejection 'union' 'union inventory mismatch' { $script:freeze.union.paths=7 }
+    Test-Rejection 'shared' 'shared inventory mismatch' { $script:freeze.union.shared_paths=2 }
+    Test-Rejection 'overlap' 'overlap inventory mismatch' { $script:freeze.union.overlapping_paths=2 }
+    Test-Rejection 'verifier-drift' 'Frozen inventory mismatch' { Write-TestText (Join-Path $fixtureRoot 'scripts/verify-fork-overlays.sh') "printf '%s\n' 'wrong' 'fork-overlays: passed'`n" }
+    Test-Rejection 'release-lightweight' 'object type mismatch' { $global:ReleaseTestOverrides['cat-file -t refs/tags/candle-overlays-mvp-0.2.0']='commit' }
+    Test-Rejection 'release-missing' 'Expected one Git result' { $global:ReleaseTestOverrides['cat-file -t refs/tags/candle-overlays-mvp-0.2.0']=@() }
+    Test-Rejection 'release-target' 'release tag target mismatch' { $global:ReleaseTestOverrides['rev-parse refs/tags/candle-overlays-mvp-0.2.0^{}']=$wrong }
+    Test-Rejection 'historical-object' 'historical tag object mismatch' { $global:ReleaseTestOverrides['rev-parse refs/tags/lfm2-vl-mvp-0.1.0']=$wrong }
+    Test-Rejection 'historical-target' 'historical tag target mismatch' { $global:ReleaseTestOverrides['rev-parse refs/tags/lfm2-vl-mvp-0.1.0^{}']=$wrong }
+    foreach ($tag in @('candle-overlays-mvp-0.2.0', 'lfm2-vl-mvp-0.1.0')) {
+        foreach ($field in @('object','target')) {
+            Test-Rejection "$tag-remote-$field" "remote $tag $field mismatch" {
+                $obj = if ($tag -eq 'lfm2-vl-mvp-0.1.0') { $oldObject } else { $tagObject }
+                $commit = if ($tag -eq 'lfm2-vl-mvp-0.1.0') { $oldCommit } else { $head }
+                if ($field -eq 'object') { $obj=$wrong } else { $commit=$wrong }
+                $global:ReleaseTestOverrides["ls-remote --tags origin refs/tags/$tag refs/tags/$tag^{}"]=@("$obj`trefs/tags/$tag", "$commit`trefs/tags/$tag^{}")
+            }
+        }
     }
+    # Exercise the actual pair-publication helper with a deterministic second-move failure.
+    $tokens=$null; $parseErrors=$null
+    $ast=[Management.Automation.Language.Parser]::ParseFile($writer, [ref]$tokens, [ref]$parseErrors)
+    foreach ($name in @('Get-Hash','Move-ReleaseOutputs')) {
+        $functionAst=$ast.Find({ param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name }, $true)
+        . ([scriptblock]::Create($functionAst.Extent.Text))
+    }
+    $partialTemporary=Join-Path $testRoot 'partial.tmp'
+    $partialFinal=Join-Path $testRoot 'partial.zip'
+    $partialReceipt=Join-Path $testRoot 'partial.json'
+    Write-TestText $partialTemporary 'owned package'
+    $script:moveCount=0
+    $caught=$false
+    try {
+        Move-ReleaseOutputs $partialTemporary $partialFinal 'unused-receipt.tmp' $partialReceipt (Get-TestHash $partialTemporary) {
+            param($Source,$Destination)
+            $script:moveCount++
+            if ($script:moveCount -eq 2) { throw 'injected completion failure' }
+            [IO.File]::Move($Source,$Destination)
+        }
+    } catch { if ($_.Exception.Message -notmatch 'injected completion failure') { throw }; $caught=$true }
+    Assert-Test ($caught -and -not (Test-Path -LiteralPath $partialFinal) -and -not (Test-Path -LiteralPath $partialReceipt)) 'completion failure leaked an owned final package or receipt'
+    Write-Host "Candle release receipt tests: pass ($script:assertions assertions)"
+} finally {
+    foreach ($name in @('git.exe','rustc','cargo')) { Remove-Item -LiteralPath "Function:global:$name" -ErrorAction SilentlyContinue }
+    foreach ($name in @('ReleaseTestRoot','ReleaseTestCalls','ReleaseTestOverrides','ReleaseTestDefaults')) { Remove-Variable -Name $name -Scope Global -ErrorAction SilentlyContinue }
+    $fullRoot=[IO.Path]::GetFullPath($testRoot)
+    $prefix=[IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+    if (-not $fullRoot.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) { throw 'Unsafe fixture cleanup target' }
+    if (Test-Path -LiteralPath $fullRoot) { Remove-Item -LiteralPath $fullRoot -Recurse -Force }
 }

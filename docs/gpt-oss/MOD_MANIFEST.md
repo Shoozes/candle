@@ -24,7 +24,7 @@ promote GPT-OSS to the product default.
   module observation fails; its allowance is closed. The local observer repair
   accepts absence only on confirmed exit, preserving live-error and DLL refusal.
   See `CHARACTERIZATION.md`. This manifest now owns
-  73 paths; the live union is 325 paths with 30 shared paths. Local failure
+  73 paths; the live union is 326 paths with 31 shared paths. Local failure
   provenance retains rejecting GPU observations and actual stop exits; an opt-in
   event uses the shared native Job's existing termination/evidence path. Its
   disposable controls do not qualify changed helpers against production weights.
@@ -250,4 +250,4 @@ remain outside this opt-in receipt.
 
 ---
 
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-failure-provenance | change=assigned shared optional Job stop and failure receipt ownership
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-release | change=updated aggregate release inventory without adding research source

@@ -111,10 +111,13 @@ The GPT-OSS overlay owns the characterization and capacity example/control addit
 `.tools/verify-before-push.ps1`; existing LFM2-VL verification steps retain their
 ownership. Its Summary Bank edits route the new harness and move current GPT
 status out of the bounded synthetic-oracle group. The native live inventory is
-325 union paths across five overlays, with 30 shared paths. GPT-OSS owns the
+326 union paths across five overlays, with 31 shared paths. GPT-OSS owns the
 optional stop-event and regression hunks in the shared bounded Job helper/tests;
 LFM2-VL retains existing execution/limits. Frozen inventories
-and release identities are unchanged.
+and historical release identities are unchanged. LFM2-VL and diffusion jointly
+own the current release writer/tests/expectations; LFM2-VL owns their native
+gate invocation and current source-release records. GPT experiment arithmetic
+and consumer pins are unchanged.
 
 An overlapping path must be listed here before two overlay manifests may claim
 it. Every change to such a path must state which overlay owns each hunk and
@@ -145,6 +148,7 @@ must pass both affected focused gates plus the repository-wide overlay gate.
 - `docs/lfm2-vl/TODO.md`
 - `docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md`
 - `rust-toolchain.toml`
+- `scripts/release/candle-overlays-mvp-0.2.0.expectations.json`
 - `scripts/release/test-write-candle-overlays-receipt.ps1`
 - `scripts/release/write-candle-overlays-receipt.ps1`
 - `scripts/verify-fork-overlays.sh`
@@ -196,4 +200,4 @@ the one-row kernel and Qwen's separate MMVQ/MMQ branch retain their behavior.
    the same exact Candle revision and pass their local acceptance gates.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-failure-provenance | change=assigned optional Job stop hunks and recomputed shared ownership
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-release | change=froze five-overlay MVP ownership and superseded research sequencing

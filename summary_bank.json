@@ -208,7 +208,6 @@
         "candle-transformers/src/models/gpt_oss/runtime.rs",
         "tests/fixtures/gpt_oss_task2/README.md",
         "tests/fixtures/gpt_oss_task2/oracle.json",
-        "docs/gpt-oss/MOD_MANIFEST.md",
         "docs/gpt-oss/SOURCES.md"
       ]
     },
@@ -647,7 +646,7 @@
       ]
     },
     "workflow__publication_provenance": {
-      "description": "Pinned compiler and dependency graph, direct-main policy, upstream integration base, fork-versus-mod ownership, release scope, publication exclusions, and local/remote verification contract.",
+      "description": "Five-overlay MVP source release: reviewed native checkout/toolchain/lock/inventory expectations, source package, support matrix, immutable historical tag and candidate versus published receipts. Experimental research and consumer repins remain separate.",
       "status": "active",
       "paths": [
         ".github/workflows/rust-ci.yml",
@@ -668,7 +667,16 @@
         "scripts/release/test-write-candle-overlays-receipt.ps1",
         "scripts/release/write-candle-overlays-receipt.ps1",
         "scripts/lfm2-vl/verify-mod-manifest.sh",
-        "scripts/tests/test-gitpush.ps1"
+        "scripts/tests/test-gitpush.ps1",
+        "scripts/release/candle-overlays-mvp-0.2.0.expectations.json",
+        "docs/FORK_OVERLAYS.md",
+        "docs/snapflash/MOD_MANIFEST.md",
+        "docs/gpt-oss/MOD_MANIFEST.md",
+        "docs/fork-compat/MOD_MANIFEST.md",
+        "docs/qwen35/MOD_MANIFEST.md",
+        "scripts/snapflash/verify-mod-manifest.sh",
+        "scripts/gpt-oss/verify-mod-manifest.sh",
+        "scripts/verify-fork-overlays.sh"
       ]
     },
     "workflow__fork_overlays": {

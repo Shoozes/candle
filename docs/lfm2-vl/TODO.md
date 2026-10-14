@@ -1,10 +1,46 @@
-# LFM2.5-VL Active Backlog
+# Candle Fork Active Backlog
 
-Only incomplete work belongs here. Completed implementation and proof belong
-in `HISTORY.md`; recurring hazards belong in `FAILURE_LOG.md`. All required
-verification is local. Do not invoke, inspect, or depend on hosted CI.
+Only incomplete work belongs here. Completed narrative and superseded source
+states are in [HISTORY](HISTORY.md#2026-10-14---independent-mvp-scope-freeze).
+Local-only proof and original numerical/resource contracts remain mandatory.
 
-## Active Candle backlog
+## Release blockers
+
+### [ ] Finish the five-overlay source release 0.2.0
+
+- What: Repair native identity/receipt tooling, freeze the supported source
+  scope, and produce a reproducible source archive and evidence index.
+- Why: The unshipped August writer uses a retired WSL checkout and two-overlay
+  inventory; a green ordinary source push does not prove a usable release.
+- When: Current bounded work, before any new model, optimization or consumer
+  activation. Each repository can finish independently.
+- Where: `docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md`, release writer/test/frozen
+  expectations, native gate, five manifests and existing status/routes.
+- How / finite remaining blockers:
+  - [x] Native single-checkout identity, fixed five-overlay expectations,
+    package creation and failure-contract tests pass on PS7 and PS5.1.
+  - [ ] Maintained native source and diffusion gates pass; reviewed clean
+    checkpoint, externally frozen commit/tree, candidate source archive and
+    compact evidence index agree. No production study is repeated.
+  - [ ] Under separate explicit authority, guarded main publication,
+    annotated `candle-overlays-mvp-0.2.0`, hosted source/receipt assets and remote
+    identities/hashes agree; historical `lfm2-vl-mvp-0.1.0` remains unchanged.
+- Done when: The source release has immutable identity, usable archive, honest
+  support matrix, replay/recovery instructions and no scoped release blocker.
+- Verification: The release contract's native commands, no-overwrite/identity/
+  inventory/tag tests, maintained gate, source-package inspection and final
+  remote/tag/asset comparison. Publication is not authorized by this Work.
+- Stop: Maintenance after release. No new model, kernel, context length,
+  benchmark, repin or LTS commitment enters this batch.
+
+## Deferred outside the MVP release
+
+These tasks retain their acceptance criteria and closed allowances. Their
+historical sequencing does not gate the source MVP; later execution needs
+separate selection. Edge owns Windows core-runtime 0.2.1 at `a0c70e1d`, and
+Symbio owns manager 0.1.1 on Codex 0.154.0. Neither depends on GPT activation or
+the newest Candle graph. Broader GenAce/VL, new engines/providers, fast precision,
+voice/image promotion, broad portability, signing and LTS remain separate.
 
 ### [ ] Maintained GPT-OSS support through EdgeSymbio and symbio-code
 
@@ -12,7 +48,7 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   optimization and qualified selectable GPT-OSS-20B consumer integration.
 - Why: Existing short experimental receipts do not establish a maintained
   loader, 32k capacity, performance improvement or coding-provider readiness.
-- When: Implementation is active; baseline and repair allowances are closed.
+- When: Deferred outside MVP; baseline and repair allowances are closed.
   Each production comparison needs fresh source/binary binding and allowance.
 - Where: GPT-OSS overlay; [current STATUS](../gpt-oss/STATUS.md) and
   [LOADING contract](../gpt-oss/LOADING.md). Edge/Symbio own their integrations.
@@ -26,118 +62,6 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   Target: 32 GiB host, 20e9 GPU bytes, 30,720 history/prompt + 2,048 generated
   tokens including reasoning. Responses remains90s; WorkerRuntime remains600s;
   one route's capacity never qualifies the other. No current BF16/32k claim.
-- Review disposition (2026-10-13): the published receipt repair at `02326623`
-  stays closed. The accepted next drop-in selects actual common-session
-  characterization and observer liveness work, not another records-only batch.
-- Current implementation: bounded GPU/process probes with kill-on-close Jobs,
-  independent 5/6/7-token row capture and replay, actual loaded-module paths,
-  typed source/build/DLL admission and release-package preparation. Preserve
-  the frozen historical eight/16 contract and all original receipts.
-- Completed short proof: source `e3e1afcb` completes the fresh `521d4295…` F32
-  common-session proof: oracle/replay, actual DLLs, Jobs and registry release
-  pass; two loads/44 forwards/74 steps/32 outputs and allowance are closed.
-  CPU prefill/mean decode 17.460s/2.187s are historically lower; no controlled
-  speed estimate or native consumer qualification follows. The earlier zero-work
-  CLI attempt remains separately closed. Null secondary owner executable fields
-  are retained honestly; bounded future-owner identity repair passes 19 controls,
-  the complete native gate and source review. Owner repair `892108cf` and
-  records `a0c70e1d` are checkpointed; the owner selected guarded publication
-  plus the three-file current handoff closeout. The canonical publication receipt
-  binds delivered source/gate/remote equality without relabeling model proof.
-  No model arithmetic changes or repeat inference belong to this closeout.
-  Exact oracle bytes were recovered by one
-  separately owned b11379 load/chunk, zero output tokens or model retries;
-  offload execution remains unclaimed. See
-  [CHARACTERIZATION.md](../gpt-oss/CHARACTERIZATION.md) for paths and bounds.
-- Owner order: Candle clean source/current characterization, then one measured
-  CUDA bottleneck and staged capacity; Edge owns native slot/broker, trusted
-  backing report and route proof; Symbio owns coding consumption afterward.
-  Symbio's published twelve-file `e43eeeac` preparation is byte-verified;
-  Edge's local twelve-file return and proof journal are also byte-verified.
-- Selected coordinated Work: repair the 32k CUDA memory boundary first. Local
-  code implements lossless BF16 table storage with F32 activations, immutable
-  paged KV/physical sliding eviction, batched GQA and backend-specific admission.
-  CPU reference behavior, packed MXFP4 and closed production receipts stay fixed.
-  [MEMORY](../gpt-oss/MEMORY.md) owns formulas, APIs and the proof boundary.
-- Memory candidate gates completed: storage selection/fallback, CPU/CUDA component
-  parity, page/window crossings, failure/cancellation replay and checked admission
-  pass; approved checkpoint `3db05cd8` and fresh short packet `c5c1fe4e…f8face4f`
-  complete CPU then CUDA within original numerical and physical short-run bounds.
-  Two loads/44 forwards/74 steps/32 outputs, no warmup/retry; all six owners are
-  absent and allowance closed. CUDA static storage is 15.05 GB; sampled whole-GPU
-  peak is 16.72 GB. The outer empty-console-log lookup fails after completion;
-  original lane receipts independently qualify the work. See CHARACTERIZATION.
-  This short proof alone establishes no physical staged capacity. The 8k result
-  is recorded below; physical 16k/32k and consumer qualification remain incomplete.
-  The 16.99 GB 32k payload bound proves neither a physical ceiling nor route latency.
-- Local proof complete: CPU57/CUDA69 synthetic tests (one production test ignored
-  per lane), strict CPU/CUDA library Clippy, CUDA example checks and the full
-  native locked/offline gate pass. Summary Bank and 61-path GPT/315-path union
-  inventories pass. WSL replay is unrun; expanded test Clippy retains nine
-  pre-existing style lints; CUDA release linking retains nonfatal LNK4098.
-- Current capacity proof: distinct 8k capacity runner/input/packet/watcher
-  paths are implemented; six CPU/seven CUDA synthetic controls cover chunk128
-  boundaries and cancelled replay, and 24 model-free executable controls pass.
-  Work is 48x128 prefill plus 2,048 fixed decodes: 2,096 forwards/8,192 steps,
-  one load/request and zero sampled outputs. [CAPACITY](../gpt-oss/CAPACITY.md)
-  preserves the non-quality/route boundary. Saved checkpoints `3b7868b3`/`e3ef7034`
-  and final separately approved `e18779a4…c1641` packet complete one CUDA 8k stress.
-  Exact counts pass; sampled GPU 17.284 GB/Job 21.663 GB stay within frozen limits,
-  registry is zero and all four owners are absent. Original receipts stay bound;
-  allowance closed. Forward work of 637.218s exceeds both 90s/600s for this input.
-  The local model-free attribution/repair is recorded below; consumer workload
-  admission precedes a new reviewed finite model packet. Physical 16k/32k,
-  independent long-context numerics, generated/Harmony/coding and routes stay open.
-  Current inventory is 71 GPT/325 union/28 shared paths. The current
-  characterization helper remains fixed at eight prompt tokens. Every capacity
-  run needs new finite approval; short timing cannot establish a route deadline.
-- Delivery order remains Candle qualification, Edge native Responses qualification,
-  then Symbio Add-SymbioNumber. Preserve Q8, GenEye `3fa7075e`, engine `0.154.0`
-  and GPT-OSS disabled until qualified. Responses keeps90s; longer jobs use
-  WorkerRuntime600s. Memory/capacity progress and these records are published at
-  `0994bfe4`; the guarded native gate and remote equality pass. All model allowances
-  are closed; no further inference or consumer activation is authorized by
-  publication. Validation timing
-  attribution remains open after memory repair;
-  its 32.105ms includes pending GPU work and identifies no isolated bottleneck.
-- Review/recheck disposition (2026-10-14, `0994bfe4`): prior absolute/consumed-path,
-  executable-admission and owner-identity fixes remain closed; original short/8k
-  proof bytes and released-owner checks match. No new runtime defect is found.
-  Scoped cleanup adds relative-path admission regression coverage and reconciles
-  published versus pending state. The verified coordinated Work request then
-  selects final-token-only output-head execution on CPU/CUDA, with frozen authored
-  measurements and exact chunk/single replay. See [PROFILING](../gpt-oss/PROFILING.md#model-free-attribution-at-0994bfe4-2026-10-14).
-  CPU synthetic 128-token median improves; whole-prefill CUDA timings are mixed.
-  A separately frozen full-vocabulary head component reduces 128 calls to one
-  with exact full-row bits and lower component time. Neither establishes a
-  production performance or route claim.
-  Nested validation time is included in forward time; its internal split remains
-  unmeasured. The twelve-file checkpoint is saved at `70a24856`; its clean native
-  gate passes. Exact approved `bd61cf11` short qualification stops after CPU:
-  one load/three segments/22 forwards/37 steps/sixteen outputs, no warmup/retry.
-  Oracle/exact replay and release pass, but module observation fails at target
-  exit; entry exits one, CUDA never starts and the whole allowance is closed.
-  Original incomplete receipts stay unchanged. The model-free observer repair
-  reproduces the race and preserves live-error/identity/DLL refusal; focused
-  controls pass 27 observer/12 watcher/145 characterization. The repair is saved
-  at `98a14eff` with a green clean gate/449 controls. Fresh approved `fd47a8b5`
-  qualifies CPU short; CUDA loads and attempts one eight-token prefill before
-  whole-GPU 20,008,927,232 exceeds the frozen 20e9-byte ceiling. Actual attempted
-  totals are two loads/four segments/23 forwards/at most 45 steps; completions are
-  three segments/22 forwards/37 steps/sixteen outputs, no warmup/retry. All seven
-  owners are absent; forced CUDA shutdown leaves Job/exit/normal registry fields
-  unavailable. Original receipts remain partial and allowance closed failed.
-  Local model-free repair retains rejected samples, stop/Job exits and separate
-  cleanup failures, with bounded native-Job signaling and forced fallback.
-  No allocation defect is established; WDDM process memory is unavailable.
-  Repair checkpoint `2adfa4a3` passes its clean gate; fresh approved `0a244611`
-  qualifies CPU then CUDA: 2 loads/6 segments/44 forwards/74 steps/32 outputs.
-  Oracle/replay, actual DLLs, exits 0, registry zero and seven-owner release pass.
-  Allowance closed; publication `a656f040` and Edge/Symbio handoff are complete.
-  Review/recheck finds no new runtime/receipt defect; prior findings stay closed.
-  Next: Edge workload-admission packet, then Symbio coding proof. Further model
-  work needs separate approval; decode latency, 16k/32k and semantics/routes
-  remain open. GPU samples do not prove capacity.
 
 ### [ ] Qualify a real LFM2.5-2.6B text adapter and Edge switch
 
@@ -165,156 +89,17 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
 - Verification: Exact-byte artifact hashes, model-generated target inventory,
   focused Candle admission tests, Edge job/API replay, and independent held-out
   comparison. No CUDA LoRA or 2.6B quality claim follows from synthetic tests.
-- Candle proof-record disposition (2026-10-12 review baseline `f1278f94`):
-  Both published STATUS/TODO identities, canonical/helper proof and prior
-  `8b5ad42b` receipt recovery pass. Prior findings remain closed; the original
-  t01 qualification at `7568791a` and approved packet are unchanged. No new
-  model forwards, runtime repair or repeated qualification are queued, and
-  its consumed allowance remains closed. This evidence supplies no trained
-  2.6B adapter or held-out quality result; producer/Edge prerequisites and
-  this task's Done When remain unchanged.
-- Current disposition (2026-10-07): Candle's F32 coefficient prerequisite now
-  rejects conversion overflow/underflow before adapter or cache mutation; its
-  five local LoRA tests, 46 neighboring LFM tests, and native maintained CPU
-  closeout pass. The operator-supplied `D:\huggingface-cache` contains base snapshots,
-  including the 2.6B GGUF revision `84022ce711b28455e8c4fc364ce68c00cf995875`,
-  but snapshot metadata inspection found no retained adapter, training manifest,
-  or held-out receipt. GenUni must supply those inputs before the unchanged
-  real-adapter/Edge Done When gate can be executed.
-- Producer prerequisite (2026-10-08): No real trained 2.6B adapter, selected
-  training/held-out plan or quality thresholds were found in the inspected
-  GenUni roots. Its verified Q8/native HF bases and setup-only jobs do not
-  supply those artifacts. Complete the stock diagnostic prerequisite before
-  selecting any adapter investment; exposed development results cannot qualify
-  unseen competence. Completed preparation identities and original proof are
-  [in HISTORY](HISTORY.md#2026-10-08---genuni-and-edge-diagnostic-preparation).
-- Earlier Dropin/Work recheck (2026-10-11): The supplied cache has no adapter-config,
-  adapter-model or adapter-manifest candidate. GenUni's current `D:\GenUni`
-  source is `86d246f6b8a243fc4c3214ec0804259bfb5d80f8`; all 56 adapter-named
-  runtime/proof files found are under verification or temporary-test paths.
-  No real trained 2.6B artifact, target/training manifest and held-out receipt
-  are admitted. Five fresh Candle admission/switch tests pass; qualification
-  remains blocked on those producer inputs and the existing Edge prerequisites.
-  No production allowance is reopened and the Done When contract is unchanged.
-- Prior Work handoff (2026-10-11, Candle `56231159`): A fresh read-only GenUni
-  reply at `D:\GenUni`, source `86d246f`, confirms no real trained adapter,
-  canonical target/training manifest or held-out receipt. Its 189 recorded jobs
-  are completed setup jobs. GenUni's plan-only turn
-  `01a12c80-8b18-7481-a91c-2fd13f53fec6` is complete. It proposes frozen
-  base/target lineage, independent data/scoring and runner/resource readiness
-  before a fresh training/evaluation allowance; that turn changed no files,
-  queues or approvals and ran no training or inference. The retained
-  10,361-byte input manifest still matches SHA-256
-  `e6db64f730de70675fa6136dda0a257594d4539364f15e2deb0176b911e38bbe`;
-  stock scoring has zero supported views and unverified execution. Five current
-  Candle synthetic admission/switch tests pass. Supply the real immutable
-  artifact and receipts, then satisfy the existing Edge predecessors before
-  qualifying serving or held-out quality. Acceptance and closed allowances are
-  preserved; this is an external-input boundary, not another d1 runtime repair.
-- Current Dropin/Work disposition (2026-10-11): GenUni now retains a real native
-  d1 pilot at
-  `D:\GenUni\runtime-data\models\local-models\d1-pilot-69b113c110c5`. Its
-  `adapter_model.safetensors` is 36,890,600 bytes, SHA-256
-  `579fac6bc9324d1b14ae2f24cb45e17c638284f11a2726f2df40b38130bc0fbf`; the bounded
-  header contains 180 F32 PEFT tensors, rank 8/alpha 16. Its config and training/
-  comparison identities bind `LiquidAI/d1-3B` revision `051bcc46`, not this
-  exact 2.6B GGUF base. Its held-out comparison is synthetic and explicitly
-  non-promoting; GenUni's new reader reports both unchanged records as
-  `legacy_unsealed`. This supersedes a general claim that GenUni has no trained
-  adapter, but does not supply the selected exact-base canonical target/training
-  and qualifying held-out handoff. The producer was asked read-only for any
-  existing matching 2.6B inputs. Five fresh Candle synthetic admission/switch
-  tests pass; serving/quality/Edge Done When and all closed allowances remain
-  unchanged. Preserve the 3B pilot as separate evidence; do not relabel its base,
-  convert its weights or reuse its model allowance to force this gate closed.
-- Actual Work attempt (2026-10-08): One authenticated API owner session stopped
-  at support refusal before request creation/submission. Seven views remained
-  unattempted, no model call or retry occurred. All eight slots stay in the
-  denominator; import/scorer replay retain them unbound with no semantic grades.
-  Evidence: `artifacts/adapter-coordination/20261008-stock-diagnostic-w1/`.
-- Exact next boundary: Edge must reconcile its regular-file admission with the
-  supplied HF snapshot symlink and required GGUF filename, and make the
-  cleanup-copy hook idempotent across repeated client retirement. Preserve
-  hashes, original failed receipts and storage/resource bounds; do not silently
-  stage 2.8 GiB outside the 64 MiB budget.
-  Prove readiness and refusal/cancellation cleanup, then prepare a new reviewed
-  packet and fresh admission. The consumed first approval/run root cannot be
-  reused. The frozen 384/2048 views, sampler policy and no-retry rule stay binding.
-- Remaining Done When: Collect actual bound responses and review explanations/
-  citations after the Edge gates pass. The real trained adapter and held-out
-  quality criteria above are unchanged and incomplete.
-- Cleanup proof: `artifacts/adapter-coordination/20261008-cleanup-c1/` records
-  the reproduced frozen-input gap, stricter importer and 13 native protocol
-  tests over all eight retained-file views. These are authored controls, no
-  model, training or adapter qualification. Keep the six-Python catalog intact.
-  The subsequent `20261008-config-bound-c2/` proof closes the first configuration
-  read before its allocation guard: one regression plus the thirteen neighbors
-  pass. Use the refreshed importer contract for any future exact approval.
-
-The old S3/S4 `4c1feb82`/tokenizers adoption item is superseded by Edge's
-current `0c0bc3ec` graph and tokenizers declared 0.23.1, locked 0.23.2/onig.
-Its historical receipts remain intact; the next single graph adoption is owned
-by the maintained GPT-OSS item above. Upstream integration proof remains in
-`UPSTREAM_SYNC.md`.
-
-### [ ] Publish the immutable combined-overlay 0.2.0 snapshot
-
-- What: Create annotated tag `candle-overlays-mvp-0.2.0`, attach the source
-  contract and external receipt, and apply owner-selected branch/tag
-  protection to the already-published source checkpoint.
-- Why: Local and remote `main` now agree, but a moving branch alone does not
-  identify or protect an immutable release.
-- When: Only after separate explicit authorization for the tag, hosted
-  release, and repository-rule changes.
-- Where: Root lock/toolchain/workflow, both overlay manifests and verifiers,
-  `docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md`, local `main`, `origin/main`, and
-  the hosted `candle-overlays-mvp-0.2.0` release.
-- How:
-  - Completed source, lock/toolchain, acceptance, verifier, and receipt work is
-    recorded in `HISTORY.md`; do not duplicate that evidence here.
-  - [ ] Create and publish the annotated tag, emit the external identity
-    receipt, create and verify the release assets, and apply the separately
-    owner-managed immutability rules without moving the old tag.
-- Done when: Commit, tree, remote `main`, annotated tag, release receipt,
-  compiler/Cargo versions, lock hash, overlay inventories, and release assets
-  all agree; `lfm2-vl-mvp-0.1.0` remains unchanged.
-- Verification: The exact commands in
-  `docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md`, focused LFM2-VL/LoRA gates,
-  summary/layout/overlay verifiers, `git diff --check`, clean status, guarded
-  remote equality, and annotated-tag peel/asset comparison.
-
-Completed GPT-OSS Tasks 2 and 3 are
-[archived in HISTORY](HISTORY.md#2026-10-07---gpt-oss-evidence-and-handoff-cleanup).
-Their current source-bound acceptance limits remain in
-[GPT-OSS status](../gpt-oss/STATUS.md#accepted-capability-rows).
-Task 4 and maintained product qualification remain separately gated.
-
-### [ ] GPT-OSS Task 4: quantized text plus split dense MMProj
-
-- What: Add the next ordered GPT-OSS execution boundary for quantized GGUF
-  text with split dense MMProj while preserving the accepted packed CUDA path.
-- Why: The ordered implementation sequence keeps quantized text/MMProj
-  integration after native packed execution and prevents Q8/default changes
-  from being inferred from the bounded synthetic CUDA proof.
-- When: Only after the published Task 3 receipt and a separately scoped owner
-  acceptance; the exact assembly proof does not substitute for quantized-text
-  or split-MMProj numerical evidence.
-- Where: GPT-OSS GGUF/runtime modules, CUDA-gated or quantized tests, and
-  `docs/gpt-oss/` proof records. Do not touch Edge/Harmony integration.
-- How: Retain packed ownership, admit split tensor identities before
-  allocation, add an independent fixture, and keep numerical product claims
-  closed until tokenizer and inference evidence is manifested.
-- Done when: Quantized text and split dense MMProj component behavior,
-  resource ownership, and cleanup are independently verified without changing
-  maintained Q8/LFM2 defaults.
-- Verification: Targeted quantized tests, locked native checks, formatting,
-  diff, summary-bank/mod-manifest/overlay verifiers, and the guarded local
-  publication gate.
+- Retained serving predecessor: Edge must admit the same base as a regular file
+  with the required GGUF filename and make repeated retirement/cleanup-copy
+  idempotent. Then collect bound responses for all eight exposed public views
+  and review explanations/citations; these are not unseen-competence proof.
+  Preserve the frozen 384/2048 views, sampler and no-retry policy, all slots in
+  the denominator and the consumed first allowance. GenUni's distinct 3B pilot
+  is not the exact-base 2.6B handoff. The complete retained prerequisite and
+  partial-result contract is the
+  [prior TODO](https://github.com/Shoozes/candle/blob/63f0d2cd275e4653b268939b429cbb9af25aba1a/docs/lfm2-vl/TODO.md#qualify-a-real-lfm25-26b-text-adapter-and-edge-switch).
 
 ### [ ] Close the native 3B and official 400M Q8 MMProj production proof gap
-
-- Sequencing: outside the S3/S4 → C0 worker chain. Do not start this instead
-  of S3.
 
 - What: Acquire and verify the immutable `LiquidAI/LFM2.5-VL-3B` native
   snapshot and the official `LiquidAI/LFM2.5-VL-3B-GGUF` text/F16/Q8_0 MMProj
@@ -362,7 +147,6 @@ Task 4 and maintained product qualification remain separately gated.
   summary-bank/mod-manifest/overlay verifiers, `cargo fmt --all -- --check`,
   `git diff --check`, and the bounded external oracle/Candle receipt audit.
 
-## Sequencing holds
 
 ### GenEye-owned Q8Rows portable handoff
 
@@ -395,26 +179,6 @@ unstarted. That allowance is consumed and closed. See
 - Verification: The freshly admitted package proof and identity/process-release
   recheck. Original numerical and model-free records remain explicitly separate.
 
-Deferred GPT-OSS-focused optional acceleration research is maintained in
-[GPT-OSS status](../gpt-oss/STATUS.md#deferred-optional-acceleration-research).
-Profile existing safe cases before selecting one optimization; exact support
-detection, explicit opt-in and version-bound parity/memory/performance proof
-must precede admission. GenAce MVP/LTS and GenUni's current foundation retain
-priority; this note does not reorder Task 4 or current product gates.
-
-- Optional LFM2-VL captioning in SnapFlash waits for the diffusion runtime and
-  numerical ControlNet boundary; it must use Candle's public hybrid loader and
-  an application-owned retained/resource/proof contract.
-- CUDA optimization waits for CPU/deterministic parity and a fresh quiet-host
-  memory preflight.
-
-## Deferred outside this product backlog
-
-Gknome adoption, lower-bit vision quantization, generic VLM traits, video,
-true text batching, converters, WebGPU, broad WSL replay, public signing, and
-LTS remain separate repository or future-product work. They are not hidden
-INT-5 requirements and must not be introduced without a scoped proposal and
-acceptance contract.
 
 ### Conditional maintained-model qualification — Qwen recovery/projections
 
@@ -546,5 +310,6 @@ acceptance contract.
   check/test, warnings-denied Clippy, formatting, and the locked/offline
   workspace gate.
 
+
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-a656-review | change=recorded recheck and next consumer gate
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-release | change=separated finite release blockers from unchanged deferred acceptance

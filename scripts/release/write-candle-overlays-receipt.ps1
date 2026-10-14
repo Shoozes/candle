@@ -1,362 +1,253 @@
 #Requires -Version 5.1
-
 <##
 .SYNOPSIS
-    Writes the external identity receipt for Candle overlays MVP 0.2.0.
-
+    Packages and verifies one reviewed Candle overlay source identity.
 .DESCRIPTION
-    This command is the final publication identity gate. It does not stage,
-    commit, push, tag, create a release, or change repository rules. It
-    requires a clean named main worktree at the operator-supplied commit,
-    verifies the pinned Windows Rust toolchain and lock hash, runs all overlay
-    inventory gates, and requires local and remote main/tag identity to match.
-    The historical LFM2-VL MVP tag must still peel to its immutable commit.
-
-    Run it only after the owner-authorized main and annotated tag publication.
-    The receipt is written atomically outside the repository and contains no
-    local filesystem paths.
+    Candidate mode is local-only. Published mode also checks public remote
+    branch/tag identities. Neither mode commits, tags, pushes or creates a
+    hosted release. Both outputs must be fresh and outside this checkout.
 ##>
-
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
-    [ValidatePattern('^[0-9a-fA-F]{40}$')]
-    [string]$ExpectedHead,
-
-    [Parameter(Mandatory = $true)]
-    [ValidatePattern('^[0-9a-fA-F]{40}$')]
-    [string]$ExpectedTree,
-
-    [Parameter(Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string]$ReceiptPath,
-
-    [ValidatePattern('^[A-Za-z0-9._-]+$')]
-    [string]$Distro = 'NVIDIA-Workbench',
-
-    [ValidatePattern('^/[A-Za-z0-9._/-]+$')]
-    [string]$WslRepositoryRoot = '/mnt/c/DevStuff/candle-mods'
+    [Parameter(Mandatory = $true)][ValidatePattern('^[0-9a-fA-F]{40}$')][string]$ExpectedHead,
+    [Parameter(Mandatory = $true)][ValidatePattern('^[0-9a-fA-F]{40}$')][string]$ExpectedTree,
+    [Parameter(Mandatory = $true)][string]$ExpectationsPath,
+    [Parameter(Mandatory = $true)][ValidatePattern('^[0-9a-fA-F]{64}$')][string]$ExpectedExpectationsSha256,
+    [Parameter(Mandatory = $true)][string]$ReceiptPath,
+    [Parameter(Mandatory = $true)][string]$SourcePackagePath,
+    [Parameter(Mandatory = $true)][ValidateSet('Candidate', 'Published')][string]$Stage,
+    [string]$ExpectedRepositoryRoot = 'C:\DevStuff\candle'
 )
-
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
-
-$releaseVersion = '0.2.0'
+$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..')).TrimEnd('\', '/')
 $releaseTag = 'candle-overlays-mvp-0.2.0'
 $historicalTag = 'lfm2-vl-mvp-0.1.0'
-$historicalCommit = 'ff885586f6d44a3d9b9ac1724032cdf5f0155384'
-$upstreamBase = '6f74e7c390c717f8fd34f23ce02aceb058173370'
-$expectedRustc = 'rustc 1.97.1 (8bab26f4f 2026-07-14)'
-$expectedCargo = 'cargo 1.97.1 (c980f4866 2026-06-30)'
-$expectedLockHash = '9b7aa15899ae8acf7b1a09b951ddba2f16462137eee2fed0db863a9d84707175'
 $expectedRemote = 'https://github.com/Shoozes/candle.git'
-$branch = 'main'
-
-function Test-IsWithinRoot {
-    param(
-        [Parameter(Mandatory = $true)][string]$Path,
-        [Parameter(Mandatory = $true)][string]$Root,
-        [switch]$AllowRoot
-    )
-
-    $fullPath = [IO.Path]::GetFullPath($Path)
-    $fullRoot = [IO.Path]::GetFullPath($Root).TrimEnd('\', '/')
-    if ($AllowRoot -and $fullPath.Equals($fullRoot, [StringComparison]::OrdinalIgnoreCase)) {
-        return $true
-    }
-    return $fullPath.StartsWith(
-        $fullRoot + [IO.Path]::DirectorySeparatorChar,
-        [StringComparison]::OrdinalIgnoreCase
-    )
+$manifests = [ordered]@{
+    lfm2_vl = 'docs/lfm2-vl/MOD_MANIFEST.md'
+    snapflash_derived = 'docs/snapflash/MOD_MANIFEST.md'
+    gpt_oss = 'docs/gpt-oss/MOD_MANIFEST.md'
+    fork_compat = 'docs/fork-compat/MOD_MANIFEST.md'
+    qwen35 = 'docs/qwen35/MOD_MANIFEST.md'
 }
+$inputPaths = @('Cargo.lock', 'rust-toolchain.toml', '.github/workflows/rust-ci.yml',
+    'docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md', 'docs/FORK_OVERLAYS.md') + @($manifests.Values)
 
-function Get-Sha256 {
-    param([Parameter(Mandatory = $true)][string]$Path)
-    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+function Assert-Exact([string]$Name, [string]$Actual, [string]$Expected) {
+    if ($Actual -cne $Expected) { throw "$Name mismatch: expected '$Expected', found '$Actual'." }
 }
-
-function Invoke-WslGit {
-    param([Parameter(Mandatory = $true)][string[]]$Arguments)
-
+function Invoke-Native([string]$Command, [string[]]$Arguments) {
     $savedPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    $output = @(& wsl.exe -d $Distro git -C $WslRepositoryRoot @Arguments 2>&1)
-    $exitCode = $LASTEXITCODE
-    $ErrorActionPreference = $savedPreference
-    if ($null -eq $exitCode) { $exitCode = 0 }
-    if ($exitCode -ne 0) {
-        $detail = ($output | ForEach-Object { "$_" }) -join [Environment]::NewLine
-        throw "WSL Git failed (exit $exitCode): git $($Arguments -join ' ')`n$detail"
-    }
+    try {
+        $ErrorActionPreference = 'Continue'
+        $output = @(& $Command @Arguments 2>&1)
+        $code = $LASTEXITCODE
+    } finally { $ErrorActionPreference = $savedPreference }
+    if ($code -ne 0) { throw "Native command failed ($code): $Command $($Arguments -join ' ')`n$($output -join "`n")" }
     return @($output | ForEach-Object { "$_" })
 }
-
-function Get-SingleGitLine {
-    param([Parameter(Mandatory = $true)][string[]]$Arguments)
-    $lines = @(Invoke-WslGit -Arguments $Arguments | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-    if ($lines.Count -ne 1) {
-        throw "Expected one Git result for '$($Arguments -join ' ')'; found $($lines.Count)."
-    }
+function Invoke-Git([string[]]$Arguments) {
+    Invoke-Native 'git.exe' (@('-C', $repositoryRoot) + $Arguments)
+}
+function Get-GitLine([string[]]$Arguments) {
+    $lines = @(Invoke-Git $Arguments | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    if ($lines.Count -ne 1) { throw "Expected one Git result: $($Arguments -join ' ')" }
     return $lines[0].Trim()
 }
-
-function Invoke-WslVerifier {
-    param([Parameter(Mandatory = $true)][string]$ScriptPath)
-
-    $command = "cd -- '$WslRepositoryRoot' && bash '$ScriptPath'"
-    $savedPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    $output = @(& wsl.exe -d $Distro bash -lc $command 2>&1)
-    $exitCode = $LASTEXITCODE
-    $ErrorActionPreference = $savedPreference
-    if ($null -eq $exitCode) { $exitCode = 0 }
-    $text = ($output | ForEach-Object { "$_" }) -join [Environment]::NewLine
-    if ($exitCode -ne 0) {
-        throw "Overlay verifier failed (exit $exitCode): $ScriptPath`n$text"
-    }
-    return $text
+function Get-Hash([string]$Path, [switch]$CanonicalText) {
+    if (-not $CanonicalText) { return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
+    # Match source-archive LF bytes on Windows CRLF checkouts.
+    $bytes = [Text.UTF8Encoding]::new($false, $true).GetBytes([IO.File]::ReadAllText($Path).Replace("`r`n", "`n"))
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '').ToLowerInvariant() }
+    finally { $sha.Dispose() }
 }
-
-function Invoke-VersionCommand {
-    param([Parameter(Mandatory = $true)][string]$FilePath)
-
-    $savedPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    $output = @(& $FilePath '--version' 2>&1)
-    $exitCode = $LASTEXITCODE
-    $ErrorActionPreference = $savedPreference
-    if ($null -eq $exitCode) { $exitCode = 0 }
-    if ($exitCode -ne 0) {
-        throw "$FilePath --version failed with exit code $exitCode."
+function Assert-ExternalFresh([string]$Path) {
+    $full = [IO.Path]::GetFullPath($Path)
+    if ($full.Equals($repositoryRoot, [StringComparison]::OrdinalIgnoreCase) -or
+        $full.StartsWith($repositoryRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Release outputs must be outside the repository.'
     }
-    return (($output | Select-Object -First 1) -as [string]).Trim()
+    if (Test-Path -LiteralPath $full) { throw "Output already exists; refusing overwrite: $full" }
+    if (-not (Test-Path -LiteralPath (Split-Path -Parent $full) -PathType Container)) { throw 'Output parent is missing.' }
+    return $full
 }
-
-function Get-RemoteRefHash {
-    param([Parameter(Mandatory = $true)][string]$Ref)
-
-    $line = Get-SingleGitLine -Arguments @('ls-remote', 'origin', $Ref)
-    $parts = @($line -split '\s+' | Where-Object { $_ })
-    if ($parts.Count -ne 2 -or $parts[0] -notmatch '^[0-9a-f]{40}$' -or $parts[1] -ne $Ref) {
-        throw "Could not parse remote ref '$Ref'."
-    }
-    return $parts[0].ToLowerInvariant()
+function Get-Tag([string]$Name) {
+    $ref = "refs/tags/$Name"
+    Assert-Exact "$Name object type" (Get-GitLine @('cat-file', '-t', $ref)) 'tag'
+    return [ordered]@{ name=$Name; object=(Get-GitLine @('rev-parse', $ref)); commit=(Get-GitLine @('rev-parse', "$ref^{}")) }
 }
-
-function Get-RemoteTagState {
-    param([Parameter(Mandatory = $true)][string]$Tag)
-
-    $tagRef = "refs/tags/$Tag"
-    $lines = @(Invoke-WslGit -Arguments @('ls-remote', '--tags', 'origin', $tagRef, "$tagRef^{}"))
-    $object = ''
-    $peeled = ''
-    foreach ($line in $lines) {
-        $parts = @($line -split '\s+' | Where-Object { $_ })
-        if ($parts.Count -ne 2) { continue }
-        if ($parts[1] -eq $tagRef) { $object = $parts[0].ToLowerInvariant() }
-        if ($parts[1] -eq "$tagRef^{}") { $peeled = $parts[0].ToLowerInvariant() }
+function Get-RemoteTag([string]$Name) {
+    $ref = "refs/tags/$Name"
+    $rows = @(Invoke-Git @('ls-remote', '--tags', 'origin', $ref, "$ref^{}"))
+    $state = @{}
+    foreach ($row in $rows) {
+        $parts = @($row -split '\s+')
+        if ($parts.Count -ne 2 -or $parts[0] -notmatch '^[0-9a-f]{40}$' -or $state.ContainsKey($parts[1])) { throw 'Malformed remote tag result.' }
+        $state[$parts[1]] = $parts[0]
     }
-    if ($object -notmatch '^[0-9a-f]{40}$' -or $peeled -notmatch '^[0-9a-f]{40}$') {
-        throw "Remote tag '$Tag' is missing or is not annotated."
-    }
-    return [pscustomobject][ordered]@{ object = $object; commit = $peeled }
+    if ($state.Count -ne 2 -or -not $state.ContainsKey($ref) -or -not $state.ContainsKey("$ref^{}")) { throw "Remote annotated tag missing: $Name" }
+    return @{ object=$state[$ref]; commit=$state["$ref^{}"] }
 }
-
-function Assert-Exact {
-    param(
-        [Parameter(Mandatory = $true)][string]$Name,
-        [Parameter(Mandatory = $true)][string]$Actual,
-        [Parameter(Mandatory = $true)][string]$Expected
-    )
-    if ($Actual -cne $Expected) {
-        throw "$Name mismatch: expected '$Expected', found '$Actual'."
+function Resolve-GitBash {
+    foreach ($root in @($env:ProgramFiles, ${env:ProgramFiles(x86)})) {
+        if ($root) {
+            $candidate = Join-Path $root 'Git\bin\bash.exe'
+            if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
+        }
+    }
+    throw 'Git for Windows bash.exe is required; WSL is not the native release lane.'
+}
+function Invoke-Verifier([string]$Script, [string]$ExpectedSummary, [string[]]$Extra = @()) {
+    $savedLocation = Get-Location
+    try {
+        Set-Location -LiteralPath $repositoryRoot
+        $output = @(Invoke-Native $bash (@('--noprofile', '--norc', $Script) + $Extra))
+    } finally { Set-Location -LiteralPath $savedLocation }
+    if ($output -cnotcontains $ExpectedSummary -or -not ($output -match '^(?:[a-z0-9-]+-)?mod-manifest: passed$|^fork-overlays: passed$')) {
+        throw "Frozen inventory mismatch: $Script"
     }
 }
-
-$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
-$receiptFullPath = [IO.Path]::GetFullPath($ReceiptPath)
-$receiptParent = Split-Path -Parent $receiptFullPath
-if (Test-IsWithinRoot -Path $receiptFullPath -Root $repositoryRoot -AllowRoot) {
-    throw 'The release identity receipt must be written outside the repository.'
-}
-if ([IO.Path]::GetExtension($receiptFullPath) -ine '.json') {
-    throw 'The release identity receipt must use a .json filename.'
-}
-if (-not (Test-Path -LiteralPath $receiptParent -PathType Container)) {
-    throw "The receipt parent directory does not exist: $receiptParent"
-}
-if (Test-Path -LiteralPath $receiptFullPath) {
-    throw "The release identity receipt already exists; refusing overwrite: $receiptFullPath"
-}
-
-$currentBranch = Get-SingleGitLine -Arguments @('branch', '--show-current')
-Assert-Exact -Name 'named publication branch' -Actual $currentBranch -Expected $branch
-$status = @(Invoke-WslGit -Arguments @('status', '--porcelain=v1', '--untracked-files=all'))
-if (@($status | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }).Count -ne 0) {
-    throw 'The worktree is not clean; commit the reviewed candidate and replay local proof before writing a release receipt.'
+function Move-ReleaseOutputs([string]$PackageTemporary, [string]$PackageFinal,
+    [string]$ReceiptTemporary, [string]$ReceiptFinal, [string]$PackageHash,
+    [scriptblock]$MoveFile = { param($Source, $Destination) [IO.File]::Move($Source, $Destination) }) {
+    $packageMoved = $false
+    try {
+        & $MoveFile $PackageTemporary $PackageFinal
+        $packageMoved = $true
+        # Completion receipt is last; a failed final move never claims success.
+        & $MoveFile $ReceiptTemporary $ReceiptFinal
+    } catch {
+        $failure = $_
+        if ($packageMoved -and (Test-Path -LiteralPath $PackageFinal)) {
+            if ((Get-Hash $PackageFinal) -cne $PackageHash) { throw "Completion failed; package changed after creation and was retained: $PackageFinal. Primary error: $failure" }
+            Remove-Item -LiteralPath $PackageFinal -Force
+        }
+        throw $failure
+    }
 }
 
-$localHead = (Get-SingleGitLine -Arguments @('rev-parse', 'HEAD')).ToLowerInvariant()
-Assert-Exact -Name 'candidate commit' -Actual $localHead -Expected $ExpectedHead.ToLowerInvariant()
-$localTree = (Get-SingleGitLine -Arguments @('rev-parse', 'HEAD^{tree}')).ToLowerInvariant()
-Assert-Exact -Name 'candidate tree' -Actual $localTree -Expected $ExpectedTree.ToLowerInvariant()
-
-$origin = Get-SingleGitLine -Arguments @('remote', 'get-url', 'origin')
-$expectedUri = [Uri]$expectedRemote
-$actualUri = $null
-$expectedPath = $expectedUri.AbsolutePath.TrimEnd('/') -replace '\.git$', ''
-if (-not [Uri]::TryCreate($origin, [UriKind]::Absolute, [ref]$actualUri) -or
-    $actualUri.Scheme -ne 'https' -or
-    $actualUri.Host -ine $expectedUri.Host -or
-    ($actualUri.AbsolutePath.TrimEnd('/') -replace '\.git$', '') -ine $expectedPath) {
-    throw 'Configured origin is not the reviewed Shoozes/candle HTTPS remote.'
-}
+# Refuse existing outputs before any Git or native command.
+$receiptFullPath = Assert-ExternalFresh $ReceiptPath
+$packageFullPath = Assert-ExternalFresh $SourcePackagePath
+if ($receiptFullPath.Equals($packageFullPath, [StringComparison]::OrdinalIgnoreCase)) { throw 'Outputs must be distinct.' }
+$canonicalRoot = [IO.Path]::GetFullPath($ExpectedRepositoryRoot).TrimEnd('\', '/')
+if (-not $repositoryRoot.Equals($canonicalRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Canonical checkout mismatch.' }
+Assert-Exact 'reviewed expectations SHA-256' (Get-Hash $ExpectationsPath -CanonicalText) $ExpectedExpectationsSha256.ToLowerInvariant()
+$gitRoot = [IO.Path]::GetFullPath((Get-GitLine @('rev-parse', '--show-toplevel'))).TrimEnd('\', '/')
+if (-not $gitRoot.Equals($repositoryRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Git checkout mismatch.' }
+if ($env:FORK_OVERLAYS_REPO_ROOT) { throw 'Clear FORK_OVERLAYS_REPO_ROOT before release verification; inventory must use this checkout.' }
+$freeze = Get-Content -LiteralPath $ExpectationsPath -Raw | ConvertFrom-Json
+Assert-Exact 'expectations schema' $freeze.schema 'candle_overlays_mvp_expectations_v1'
+Assert-Exact 'release tag' $freeze.release_tag $releaseTag
+Assert-Exact 'named branch' (Get-GitLine @('branch', '--show-current')) 'main'
+if (@(Invoke-Git @('status', '--porcelain=v1', '--untracked-files=all')).Count -ne 0) { throw 'The worktree is not clean.' }
+$head = Get-GitLine @('rev-parse', 'HEAD')
+$tree = Get-GitLine @('rev-parse', 'HEAD^{tree}')
+Assert-Exact 'candidate commit' $head $ExpectedHead.ToLowerInvariant()
+Assert-Exact 'candidate tree' $tree $ExpectedTree.ToLowerInvariant()
+$origin = Get-GitLine @('remote', 'get-url', 'origin')
+Assert-Exact 'origin' ($origin -replace '\.git$', '') ($expectedRemote -replace '\.git$', '')
+if ($freeze.upstream_base -notmatch '^[0-9a-f]{40}$') { throw 'Invalid frozen upstream base.' }
+$null = Invoke-Git @('merge-base', '--is-ancestor', $freeze.upstream_base, $head)
 
 $savedLocation = Get-Location
 try {
     Set-Location -LiteralPath $repositoryRoot
-    $rustcVersion = Invoke-VersionCommand -FilePath 'rustc'
-    $cargoVersion = Invoke-VersionCommand -FilePath 'cargo'
-}
-finally {
-    Set-Location -LiteralPath $savedLocation
-}
-Assert-Exact -Name 'rustc version' -Actual $rustcVersion -Expected $expectedRustc
-Assert-Exact -Name 'Cargo version' -Actual $cargoVersion -Expected $expectedCargo
-
-$inputPaths = [ordered]@{
-    cargo_lock = 'Cargo.lock'
-    rust_toolchain = 'rust-toolchain.toml'
-    portability_workflow = '.github/workflows/rust-ci.yml'
-    release_contract = 'docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md'
-    overlay_registry = 'docs/FORK_OVERLAYS.md'
-    lfm2_vl_manifest = 'docs/lfm2-vl/MOD_MANIFEST.md'
-    snapflash_manifest = 'docs/snapflash/MOD_MANIFEST.md'
-}
-$inputHashes = [ordered]@{}
-foreach ($entry in $inputPaths.GetEnumerator()) {
-    $path = Join-Path $repositoryRoot $entry.Value
-    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
-        throw "Release input is missing: $($entry.Value)"
-    }
-    $inputHashes[$entry.Key] = [ordered]@{ path = $entry.Value; sha256 = Get-Sha256 -Path $path }
-}
-Assert-Exact -Name 'Cargo.lock SHA-256' -Actual $inputHashes.cargo_lock.sha256 -Expected $expectedLockHash
-
-$contract = Get-Content -LiteralPath (Join-Path $repositoryRoot $inputPaths.release_contract) -Raw
-foreach ($required in @($releaseTag, $historicalTag, $upstreamBase, $expectedRustc, $expectedCargo, $expectedLockHash)) {
-    if (-not $contract.Contains($required)) {
-        throw "Release contract omits required identity: $required"
-    }
+    $rustc = (Invoke-Native 'rustc' @('--version')) -join "`n"
+    $cargo = (Invoke-Native 'cargo' @('--version')) -join "`n"
+} finally { Set-Location -LiteralPath $savedLocation }
+Assert-Exact 'rustc' $rustc $freeze.rustc
+Assert-Exact 'Cargo' $cargo $freeze.cargo
+if (@(Compare-Object ($inputPaths | Sort-Object) @($freeze.inputs.PSObject.Properties.Name | Sort-Object)).Count -ne 0) { throw 'Frozen input set mismatch.' }
+$inputs = [ordered]@{}
+foreach ($path in $inputPaths) {
+    $actual = Get-Hash (Join-Path $repositoryRoot $path) -CanonicalText
+    Assert-Exact "input $path SHA-256" $actual $freeze.inputs.$path
+    $inputs[$path] = $actual
 }
 
-$localTagRef = "refs/tags/$releaseTag"
-$localTagType = Get-SingleGitLine -Arguments @('cat-file', '-t', $localTagRef)
-Assert-Exact -Name 'release tag object type' -Actual $localTagType -Expected 'tag'
-$localTagObject = (Get-SingleGitLine -Arguments @('rev-parse', $localTagRef)).ToLowerInvariant()
-$localTagCommit = (Get-SingleGitLine -Arguments @('rev-parse', "$localTagRef^{}" )).ToLowerInvariant()
-Assert-Exact -Name 'release tag target' -Actual $localTagCommit -Expected $localHead
-
-$historicalTagRef = "refs/tags/$historicalTag"
-$historicalTagType = Get-SingleGitLine -Arguments @('cat-file', '-t', $historicalTagRef)
-Assert-Exact -Name 'historical tag object type' -Actual $historicalTagType -Expected 'tag'
-$historicalTagObject = (Get-SingleGitLine -Arguments @('rev-parse', $historicalTagRef)).ToLowerInvariant()
-$historicalTagCommit = (Get-SingleGitLine -Arguments @('rev-parse', "$historicalTagRef^{}" )).ToLowerInvariant()
-Assert-Exact -Name 'historical tag target' -Actual $historicalTagCommit -Expected $historicalCommit
-
-$remoteHead = Get-RemoteRefHash -Ref 'refs/heads/main'
-Assert-Exact -Name 'remote main' -Actual $remoteHead -Expected $localHead
-$remoteTag = Get-RemoteTagState -Tag $releaseTag
-Assert-Exact -Name 'remote release tag object' -Actual $remoteTag.object -Expected $localTagObject
-Assert-Exact -Name 'remote release tag target' -Actual $remoteTag.commit -Expected $localHead
-$remoteHistoricalTag = Get-RemoteTagState -Tag $historicalTag
-Assert-Exact -Name 'remote historical tag object' -Actual $remoteHistoricalTag.object -Expected $historicalTagObject
-Assert-Exact -Name 'remote historical tag target' -Actual $remoteHistoricalTag.commit -Expected $historicalCommit
-
-$lfmVerifier = Invoke-WslVerifier -ScriptPath 'scripts/lfm2-vl/verify-mod-manifest.sh'
-$snapVerifier = Invoke-WslVerifier -ScriptPath 'scripts/snapflash/verify-mod-manifest.sh'
-$unionVerifier = Invoke-WslVerifier -ScriptPath 'scripts/verify-fork-overlays.sh'
-if ($lfmVerifier -notmatch 'lfm2-vl-mod-manifest baseline=6f74e7c390c717f8fd34f23ce02aceb058173370 total=156 fork_modified=16 mod_added=140' -or
-    $lfmVerifier -notmatch 'mod-manifest: passed') {
-    throw 'LFM2-VL overlay verifier did not report the frozen 156/16/140 inventory.'
+$basePaths = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+foreach ($path in (Invoke-Git @('ls-tree', '-r', '--name-only', $freeze.upstream_base))) { [void]$basePaths.Add($path) }
+$allPaths = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$duplicates = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$inventories = [ordered]@{}
+if (@(Compare-Object @($manifests.Keys | Sort-Object) @($freeze.overlays.PSObject.Properties.Name | Sort-Object)).Count -ne 0) { throw 'Frozen overlay set mismatch.' }
+foreach ($entry in $manifests.GetEnumerator()) {
+    $paths = @(Get-Content -LiteralPath (Join-Path $repositoryRoot $entry.Value) | ForEach-Object {
+        if ($_ -match '^\| `([^`]+)` \|' -or $_ -match '^- `([^`]+)`$') { $Matches[1] }
+    } | Sort-Object -Unique)
+    $modified = @($paths | Where-Object { $basePaths.Contains($_) }).Count
+    $actual = [ordered]@{ paths=$paths.Count; fork_modified=$modified; added=($paths.Count - $modified) }
+    foreach ($key in @('paths', 'fork_modified', 'added')) { Assert-Exact "$($entry.Key) $key inventory" $actual[$key] $freeze.overlays.($entry.Key).$key }
+    $inventories[$entry.Key] = $actual
+    foreach ($path in $paths) { if (-not $allPaths.Add($path)) { [void]$duplicates.Add($path) } }
 }
-if ($snapVerifier -notmatch 'snapflash-mod-manifest baseline=6f74e7c390c717f8fd34f23ce02aceb058173370 total=20 fork_modified=8 mod_added=12' -or
-    $snapVerifier -notmatch 'snapflash-mod-manifest: passed') {
-    throw 'SnapFlash-derived overlay verifier did not report the frozen 20/8/12 inventory.'
-}
-if ($unionVerifier -notmatch 'fork-overlays baseline=6f74e7c390c717f8fd34f23ce02aceb058173370 paths=167 overlays=2 shared=13' -or
-    $unionVerifier -notmatch 'fork-overlays: passed') {
-    throw 'Repository overlay verifier did not report the frozen 167/2/13 inventory.'
-}
-
-$receipt = [ordered]@{
-    schema = 'candle_overlays_release_identity_receipt_v1'
-    product = 'Candle combined overlays'
-    version = $releaseVersion
-    generated_at_utc = [DateTime]::UtcNow.ToString('o')
-    source = [ordered]@{
-        repository = $expectedRemote
-        branch = $branch
-        commit = $localHead
-        tree = $localTree
-        upstream_base = $upstreamBase
-        remote_main = $remoteHead
+Assert-Exact 'union inventory' $allPaths.Count $freeze.union.paths
+$registry = [IO.File]::ReadAllText((Join-Path $repositoryRoot 'docs/FORK_OVERLAYS.md'))
+$sharedBlock = [regex]::Match($registry, '(?s)<!-- shared-paths:start -->(.*?)<!-- shared-paths:end -->')
+if (-not $sharedBlock.Success) { throw 'Shared-path registry markers missing.' }
+$sharedPaths = @([regex]::Matches($sharedBlock.Groups[1].Value, '(?m)^- `([^`]+)`\r?$') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+Assert-Exact 'shared inventory' $sharedPaths.Count $freeze.union.shared_paths
+Assert-Exact 'overlap inventory' $duplicates.Count $freeze.union.overlapping_paths
+foreach ($path in $duplicates) { if ($sharedPaths -cnotcontains $path) { throw "Undeclared overlap: $path" } }
+Assert-Exact 'overlay count' $manifests.Count $freeze.union.overlays
+$bash = Resolve-GitBash
+$base = $freeze.upstream_base
+$lfm = $inventories.lfm2_vl
+$snap = $inventories.snapflash_derived
+Invoke-Verifier 'scripts/lfm2-vl/verify-mod-manifest.sh' "lfm2-vl-mod-manifest baseline=$base total=$($lfm.paths) fork_modified=$($lfm.fork_modified) mod_added=$($lfm.added)" @($base)
+Invoke-Verifier 'scripts/snapflash/verify-mod-manifest.sh' "snapflash-mod-manifest baseline=$base total=$($snap.paths) fork_modified=$($snap.fork_modified) mod_added=$($snap.added)" @($base)
+Invoke-Verifier 'scripts/gpt-oss/verify-mod-manifest.sh' "gpt-oss-mod-manifest baseline=$base paths=$($inventories.gpt_oss.paths)" @($base)
+Invoke-Verifier 'scripts/verify-fork-overlays.sh' "fork-overlays baseline=$base paths=$($allPaths.Count) overlays=5 shared=$($sharedPaths.Count)" @('--upstream-baseline', $base)
+$historical = Get-Tag $historicalTag
+Assert-Exact 'historical tag object' $historical.object $freeze.historical_tag.object
+Assert-Exact 'historical tag target' $historical.commit $freeze.historical_tag.commit
+$release = $null
+if ($Stage -eq 'Published') {
+    $release = Get-Tag $releaseTag
+    Assert-Exact 'release tag target' $release.commit $head
+    Assert-Exact 'remote main' (Get-GitLine @('ls-remote', 'origin', 'refs/heads/main')) "$head`trefs/heads/main"
+    foreach ($tag in @($historical, $release)) {
+        $remote = Get-RemoteTag $tag.name
+        Assert-Exact "remote $($tag.name) object" $remote.object $tag.object
+        Assert-Exact "remote $($tag.name) target" $remote.commit $tag.commit
     }
-    release_tag = [ordered]@{
-        name = $releaseTag
-        annotated_object = $localTagObject
-        commit = $localTagCommit
-        remote_object = $remoteTag.object
-        remote_commit = $remoteTag.commit
-    }
-    immutable_historical_tag = [ordered]@{
-        name = $historicalTag
-        annotated_object = $historicalTagObject
-        commit = $historicalTagCommit
-        remote_object = $remoteHistoricalTag.object
-        remote_commit = $remoteHistoricalTag.commit
-    }
-    toolchain = [ordered]@{
-        platform = 'windows-msvc'
-        rustc = $rustcVersion
-        cargo = $cargoVersion
-    }
-    inputs = $inputHashes
-    overlays = [ordered]@{
-        lfm2_vl = [ordered]@{ paths = 156; fork_modified = 16; added = 140 }
-        snapflash_derived = [ordered]@{ paths = 20; fork_modified = 8; added = 12 }
-        union = [ordered]@{ paths = 167; overlays = 2; shared_paths = 13 }
-    }
-    assertions = [ordered]@{
-        clean_named_main = $true
-        expected_head = $true
-        expected_tree = $true
-        remote_main_equal = $true
-        annotated_tag_equal = $true
-        historical_tag_unchanged = $true
-        pinned_toolchain_equal = $true
-        lock_hash_equal = $true
-        overlay_inventories_equal = $true
-        hosted_ci_used = $false
-        model_artifacts_used = $false
-    }
-    result = 'pass'
 }
 
-$temporaryPath = "$receiptFullPath.tmp.$([guid]::NewGuid().ToString('N'))"
+$temporaryPackage = "$packageFullPath.tmp.$([guid]::NewGuid().ToString('N'))"
+$temporaryReceipt = "$receiptFullPath.tmp.$([guid]::NewGuid().ToString('N'))"
 try {
-    $json = $receipt | ConvertTo-Json -Depth 12
-    [IO.File]::WriteAllText($temporaryPath, $json + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
-    if (Test-Path -LiteralPath $receiptFullPath) {
-        throw 'The receipt target appeared during generation; refusing overwrite.'
+    Assert-Exact 'final candidate commit' (Get-GitLine @('rev-parse', 'HEAD')) $head
+    if (@(Invoke-Git @('status', '--porcelain=v1', '--untracked-files=all')).Count -ne 0) { throw 'The worktree changed during verification.' }
+    $null = Invoke-Git @('archive', '--format=zip', "--prefix=$releaseTag/", "--output=$temporaryPackage", $head)
+    $package = [ordered]@{ name=[IO.Path]::GetFileName($packageFullPath); bytes=(Get-Item -LiteralPath $temporaryPackage).Length; sha256=(Get-Hash $temporaryPackage); format='git-archive-zip'; source_commit=$head }
+    $receipt = [ordered]@{
+        schema='candle_overlays_release_identity_receipt_v2'
+        stage=$Stage.ToLowerInvariant()
+        generated_at_utc=[DateTime]::UtcNow.ToString('o')
+        source=[ordered]@{ repository=$expectedRemote; branch='main'; commit=$head; tree=$tree; upstream_base=$base }
+        release_tag=$release
+        immutable_historical_tag=$historical
+        toolchain=[ordered]@{ platform='windows-msvc'; rustc=$rustc; cargo=$cargo }
+        expectations_sha256=(Get-Hash $ExpectationsPath -CanonicalText)
+        input_hash_convention='UTF-8 without BOM, CRLF normalized to LF'
+        inputs=$inputs
+        overlays=$inventories
+        union=$freeze.union
+        source_package=$package
+        publication_verified=($Stage -eq 'Published')
+        model_artifacts_used=$false
+        hosted_ci_used=$false
+        result='pass'
     }
-    [IO.File]::Move($temporaryPath, $receiptFullPath)
-}
-finally {
-    if (Test-Path -LiteralPath $temporaryPath) {
-        Remove-Item -LiteralPath $temporaryPath -Force -ErrorAction SilentlyContinue
+    [IO.File]::WriteAllText($temporaryReceipt, ($receipt | ConvertTo-Json -Depth 12) + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+    if ((Test-Path -LiteralPath $packageFullPath) -or (Test-Path -LiteralPath $receiptFullPath)) { throw 'An output appeared during generation; refusing overwrite.' }
+    Move-ReleaseOutputs $temporaryPackage $packageFullPath $temporaryReceipt $receiptFullPath $package.sha256
+} finally {
+    foreach ($temporary in @($temporaryPackage, $temporaryReceipt)) {
+        if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force }
     }
 }
-
-Write-Host 'Candle overlays release identity receipt: pass' -ForegroundColor Green
-Write-Host "Receipt: $receiptFullPath" -ForegroundColor Green
+Write-Host "Candle overlays $Stage identity/source package: pass"
