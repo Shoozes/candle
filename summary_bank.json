@@ -820,7 +820,7 @@
       ]
     },
     "feature__gpt_oss_capacity_stress": {
-      "description": "Distinct model-free 8k fixed-token capacity preparation, bounded input/counter/cache controls and source-bound native Job/runtime ownership; no capacity execution or route signoff. Expand characterization for the immutable CPU-first short predecessor and pinned reference fixture.",
+      "description": "Bounded 8k fixed-token capacity CLI, input/counter/cache controls and source-bound native Job/runtime ownership; independent execution and route gates. Expand characterization for the immutable CPU-first short predecessor and pinned reference fixture.",
       "status": "active",
       "paths": [
         "docs/gpt-oss/CAPACITY.md",

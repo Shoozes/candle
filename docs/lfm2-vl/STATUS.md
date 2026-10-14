@@ -1,8 +1,8 @@
 # LFM2.5-VL Current Status
 
-## Active independent GPT-OSS memory Work, 2026-10-13
+## Independent GPT-OSS memory/capacity closeout, 2026-10-14
 
-Published baseline is `48d814859205abdc6640088815ee99a78d531f35`; the approved
+Incoming published baseline is `48d814859205abdc6640088815ee99a78d531f35`; the approved
 19-file checkpoint is local `3db05cd8`, tree `e60ff6b7…6c54fa`. The selected
 32k repair uses lossless CUDA BF16 embedding/head storage with F32
 activations, immutable KV pages and physical sliding-window eviction, batched
@@ -25,9 +25,17 @@ No publication or consumer change occurred; the allowance is closed.
 The 8k CLI and isolated preparation/launch/watcher helpers are implemented;
 CPU6/CUDA7 synthetic controls include chunk128/window/page and cancellation
 recovery. Current routes/inventory are 71 GPT/325 union/28 shared paths.
-Release drafts and both model-free startup Jobs pass. Next: exact scoped checkpoint
-after native closeout, then final source-bound packet review with separate execution
-approval. Physical 32k and Responses90s/WorkerRuntime600s remain unproven;
+Checkpoints `3b7868b3`/`e3ef7034` are saved. Separately approved final packet
+`e18779a4…c1641` completes its physical CUDA 8k fixed-token stress: one load/request,
+2,096 forwards/8,192 committed tokens, zero sampled outputs/warmups/retries.
+Sampled GPU peak is 17,283,678,208 bytes; Job peak is 21,662,621,696. Native entry/Job,
+host verification, DLLs, registry zero and all four owner releases pass; allowance
+closed. [CAPACITY](../gpt-oss/CAPACITY.md) binds original proof and limitations.
+Forward work is 637.218s, exceeding both 90s/600s for this input. Exact next task:
+model-free attribution and workload admission preparation, then separately
+approved further proof. The owner selected guarded publication of verified
+memory/capacity progress and these records; canonical `last-push.json` binds delivery.
+Physical 16k/32k, long-context numerics, Harmony/coding and consumer routes remain open;
 WSL replay is unrun. LFM/d1,
 Q8 defaults, GenEye pin and all consumer holds remain unchanged.
 
@@ -1079,7 +1087,7 @@ owner and recheck the resulting consumer candidate without reusing the consumed
 model allowance. The four Candle review records' saved publication identity
 is owned by the closeout receipt above.
 
-The first remaining Candle implementation item is the real 2.6B adapter/Edge
+For LFM2-VL, the first remaining implementation item is the real 2.6B adapter/Edge
 gate in `TODO.md`, with these unchanged external prerequisites.
 
 Edge owns the next bounded repair: provide a consumer-compatible regular
@@ -1096,4 +1104,4 @@ unseen competence. If training is selected, GenUni must still provide the real
 immutable adapter, provenance and held-out evidence required by TODO.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-qualification-publication | change=closed checkpoint handoff while preserving source-bound short proof and consumer holds
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-capacity-closeout | change=closed source-bound8k progress and retained later capacity and route holds

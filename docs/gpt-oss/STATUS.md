@@ -1,13 +1,16 @@
 # GPT-OSS Experimental Candle Status
 
-## Active memory Work, 2026-10-13
+## Memory and capacity closeout, 2026-10-14
 
-The published baseline remains `48d814859205abdc6640088815ee99a78d531f35`.
+The incoming published baseline is `48d814859205abdc6640088815ee99a78d531f35`.
 The approved 19-file memory repair is checkpointed locally at
 `3db05cd8eedb51d6b7777d2eed705ec481e0420b`, tree
 `e60ff6b7e184ab47f79bbaa81395fb2dec6c54fa`. Its separately approved short
-CPU/CUDA proof is complete; nothing was pushed. Active files include its records
-and the distinct capacity CLI/helpers, controls, documentation and routes.
+CPU/CUDA proof is complete. Capacity checkpoints are `3b7868b3`/`e3ef7034`.
+The owner selected guarded publication of this three-commit progress and its
+current records/routes closeout. The canonical `artifacts/publication/last-push.json`
+binds actual delivered commit/tree, native gate and remote equality; executed
+proof remains bound to its original source. No release or activation is included.
 [MEMORY.md](MEMORY.md) owns the API, architecture and unqualified capacity bound.
 
 Lossless BF16 embedding/head storage keeps F32 activations and MXFP4 experts.
@@ -55,10 +58,18 @@ implemented with six CPU and seven CUDA synthetic controls, including bit-exact
 128-token chunk/single agreement and cancelled snapshot recovery. Twenty-four
 model-free PowerShell controls verify input/source/allowance refusal and executable dispatch;
 [CAPACITY.md](CAPACITY.md) owns the fixed-token/non-quality boundary. Native
-capacity execution is unrun. Current inventory is 71 GPT/325 union/28 shared paths.
+capacity execution completes at clean `e3ef7034` with final packet `e18779a4…c1641`.
+One load/request, 2,096 forwards/8,192 committed tokens, zero sampling/warmup/retry;
+native entry/Job, host verification, actual DLLs and all four owner releases pass.
+Registry is zero; sampled GPU peak is 17,283,678,208 bytes and Job peak
+21,662,621,696, within frozen bounds. Forward work is 637.218s, exceeding both
+90s/600s for this input even without load. Physical 16k/32k, independent long-context
+numerics, Harmony/generated/coding and consumer routes remain unqualified.
+Current inventory is 71 GPT/325 union/28 shared paths.
 CPU/CUDA release drafts and both model-free input startup Jobs pass; draft
-packets remain non-executable. Next obtain an exact scoped checkpoint after
-native closeout, then rebuild the final separately reviewed packet.
+packets remain non-executable. The final stress allowance is closed, and original
+receipts are unchanged. Exact next task: model-free bottleneck attribution and
+consumer workload admission preparation; further model work needs a new packet.
 The eight-token characterization helper cannot be relabeled as a capacity runner.
 This short allowance is closed; no prior allowance is reused. Q8, GenEye `3fa7075e`, Codex
 `0.154.0`, Responses 90s and WorkerRuntime 600s remain fixed.
@@ -586,11 +597,14 @@ or run for this note. Preserve upstream license notices if code is later adapted
 
 ## Exact next task
 
-No further 32k performance work is in this bounded slice. Preserve the
-observed-safe optimized-release 2080 packet as optional Candle evidence, and
-keep Task 4 quantized text plus split dense MMProj separately scoped. Do not
-infer Q8/default or broad maintained production support from this packet.
+After guarded publication, prepare model-free CUDA bottleneck attribution and
+consumer workload admission from the measured 8k result. Forward work of 637.218s
+exceeds both route deadlines for this input. Keep physical 16k/32k, generated
+semantics and consumer qualification separately gated; any new model work needs
+a fresh source/binary-bound packet and finite allowance. Preserve original
+short/8k evidence, Q8/Codex defaults and disabled GPT-OSS. The independent LFM
+Task 4 text-plus-MMProj/adapter work keeps its own prerequisites and priority.
 
 ---
 
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-qualification-publication | change=closed checkpoint handoff and bound guarded publication without relabeling model proof
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-capacity-closeout | change=closed source-bound8k progress and retained later capacity and route holds

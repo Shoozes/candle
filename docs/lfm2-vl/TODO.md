@@ -74,22 +74,28 @@ verification is local. Do not invoke, inspect, or depend on hosted CI.
   native locked/offline gate pass. Summary Bank and 61-path GPT/315-path union
   inventories pass. WSL replay is unrun; expanded test Clippy retains nine
   pre-existing style lints; CUDA release linking retains nonfatal LNK4098.
-- Current bounded preparation: distinct 8k capacity runner/input/packet/watcher
+- Current capacity proof: distinct 8k capacity runner/input/packet/watcher
   paths are implemented; six CPU/seven CUDA synthetic controls cover chunk128
   boundaries and cancelled replay, and 24 model-free executable controls pass.
   Work is 48x128 prefill plus 2,048 fixed decodes: 2,096 forwards/8,192 steps,
   one load/request and zero sampled outputs. [CAPACITY](../gpt-oss/CAPACITY.md)
-  preserves the non-quality/route boundary. Release drafts/startup Jobs pass.
-  After native closeout, obtain an exact scoped checkpoint before final
-  source/binary/helper/input binding and separate finite execution approval.
+  preserves the non-quality/route boundary. Saved checkpoints `3b7868b3`/`e3ef7034`
+  and final separately approved `e18779a4…c1641` packet complete one CUDA 8k stress.
+  Exact counts pass; sampled GPU 17.284 GB/Job 21.663 GB stay within frozen limits,
+  registry is zero and all four owners are absent. Original receipts stay bound;
+  allowance closed. Forward work of 637.218s exceeds both 90s/600s for this input.
+  Next bounded task: prepare model-free CUDA bottleneck attribution and consumer
+  workload admission, before a new reviewed finite model packet. Physical 16k/32k,
+  independent long-context numerics, generated/Harmony/coding and routes stay open.
   Current inventory is 71 GPT/325 union/28 shared paths. The current
   characterization helper remains fixed at eight prompt tokens. Every capacity
   run needs new finite approval; short timing cannot establish a route deadline.
 - Delivery order remains Candle qualification, Edge native Responses qualification,
   then Symbio Add-SymbioNumber. Preserve Q8, GenEye `3fa7075e`, engine `0.154.0`
   and GPT-OSS disabled until qualified. Responses keeps90s; longer jobs use
-  WorkerRuntime600s. Checkpoint and short-proof approvals are consumed; further
-  commits/push or model work require their separate authority. Validation timing
+  WorkerRuntime600s. The owner selected guarded publication of memory/capacity
+  progress and these records. All model allowances are closed; no further inference
+  or consumer activation is authorized by publication. Validation timing
   attribution remains open after memory repair;
   its 32.105ms includes pending GPU work and identifies no isolated bottleneck.
 
@@ -501,4 +507,4 @@ acceptance contract.
   workspace gate.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-qualification-publication | change=removed completed checkpoint authority step and retained the next bounded attribution criteria
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-capacity-closeout | change=closed source-bound8k progress and retained later capacity and route holds

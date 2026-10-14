@@ -20,7 +20,8 @@ promote GPT-OSS to the product default.
 
 - Distinct 8k fixed-token capacity CLI, packet/input controls, release
   preparation and passive watcher are implemented with model-free proof.
-  No retained-model capacity run or route qualification follows; see `CAPACITY.md`.
+  The separately approved CUDA 8k fixed-token stress completes at `e3ef7034`;
+  route/quality and 16k/32k qualification remain held; see `CAPACITY.md`.
 
 - Local 32k memory Work adds lossless BF16 embedding/head storage with F32
   activations, immutable paged KV with physical sliding eviction, grouped GQA
@@ -236,4 +237,4 @@ remain outside this opt-in receipt.
 
 ---
 
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-short-qualification | change=recorded scoped short F32 proof and future-owner metadata boundary
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-capacity-closeout | change=closed source-bound8k progress and retained later capacity and route holds

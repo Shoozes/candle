@@ -2,6 +2,10 @@
 
 Dated entries are historical. Current state: `STATUS.md`; active work: `TODO.md`. New maintained-model work: [2026-10-12](MAINTAINED_MODELS.md).
 
+## 2026-10-14 - GPT-OSS 8k
+
+[Bounded proof](../gpt-oss/CAPACITY.md); 32k/routes held.
+
 ## 2026-10-13 - GPT-OSS memory
 
 [Proof/prep](../gpt-oss/CAPACITY.md); 32k held.

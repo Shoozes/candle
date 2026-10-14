@@ -104,11 +104,17 @@ measurements and the post-run empty-console-log reporting failure separately.
 The allowance is closed; this does not prove physical 32k or consumer deadlines.
 
 The distinct [8k capacity runner](CAPACITY.md) and model-free controls are now
-implemented; no capacity model run has occurred. Release drafts/startup Jobs pass.
-Next obtain its scoped checkpoint after native closeout, then rebuild a clean
-source-bound packet. The current short helper remains eight-token-only. New capacity execution, checkpoint and publication
-need separate authority. Preserve Q8 defaults, GenEye `3fa7075e`, Codex `0.154.0` and
+implemented and checkpointed at `3b7868b3`/`e3ef7034`. Separately approved final
+packet `e18779a4…c1641` completes one CUDA 8k fixed-token stress: 2,096 forwards,
+8,192 committed tokens, zero sampled outputs/warmups/retries. Peak Job is
+21,662,621,696 bytes; sampled whole-GPU peak is 17,283,678,208, below 20e9.
+All four owners are absent and registry is zero; the allowance is closed.
+CAPACITY owns the source-bound original receipts. Forward work is 637.218s,
+exceeding 90s/600s for this input; physical 16k/32k and consumer readiness remain
+unproven. Next prepare model-free attribution and workload admission. The short
+helper remains eight-token-only; further model work needs a fresh finite packet.
+The owner selected guarded publication of this verified progress. Preserve Q8 defaults, GenEye `3fa7075e`, Codex `0.154.0` and
 the disabled GPT-OSS provider until its consumer route is qualified.
 
 ---
-AI-created: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-memory | change=recorded lossless table and paged GQA candidate boundary
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-capacity-closeout | change=recorded bounded physical8k proof and retained later capacity and route gates
