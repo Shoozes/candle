@@ -12,10 +12,15 @@ promote GPT-OSS to the product default.
   independent comparisons and reset/replay, with bounded observer Jobs, actual
   loaded-DLL proof and clean source/build admission. Short F32 qualification
   completes at `e3e1afcb`; closed receipts preserve secondary owner-metadata
-  limits. The subsequent live owner-identity repair is model-free only;
+  limits. The live owner-identity repair was initially model-free;
   consumers and broader production profiles remain held.
-  See `CHARACTERIZATION.md`. This manifest now owns 61 paths; the live union
-  is 315 paths with 28 shared paths, recomputed from the actual candidate.
+  The fresh memory/owner short proof completes at `3db05cd8`; original metadata
+  limits remain immutable. See `CHARACTERIZATION.md`. This manifest now owns
+  71 paths; the live union is 325 paths with 28 shared paths.
+
+- Distinct 8k fixed-token capacity CLI, packet/input controls, release
+  preparation and passive watcher are implemented with model-free proof.
+  No retained-model capacity run or route qualification follows; see `CAPACITY.md`.
 
 - Local 32k memory Work adds lossless BF16 embedding/head storage with F32
   activations, immutable paged KV with physical sliding eviction, grouped GQA
@@ -131,6 +136,16 @@ SHA-256 `616b188eadb04b27f7834a952d45a7cfd8ec9ff8a0b68413ce8a5aa468a71431`.
 - `candle-examples/examples/gpt-oss-performance.rs`
 - `candle-examples/examples/gpt-oss-session-profile.rs`
 - `candle-examples/examples/gpt-oss-characterize.rs`
+- `candle-examples/examples/gpt-oss-capacity-stress.rs`
+- `candle-examples/examples/gpt_oss_capacity/mod.rs`
+- `candle-examples/examples/gpt_oss_capacity/input.rs`
+- `candle-examples/examples/gpt_oss_capacity/runner.rs`
+- `candle-examples/examples/gpt_oss_capacity/tests.rs`
+- `scripts/gpt-oss/run-capacity.ps1`
+- `scripts/gpt-oss/prepare-capacity.ps1`
+- `scripts/gpt-oss/watch-capacity.ps1`
+- `scripts/gpt-oss/test-capacity.ps1`
+- `docs/gpt-oss/CAPACITY.md`
 - `candle-examples/examples/gpt_oss_reference/mod.rs`
 - `scripts/gpt-oss/observer.cs`
 - `scripts/gpt-oss/observer.ps1`

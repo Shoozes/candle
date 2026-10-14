@@ -102,7 +102,16 @@ try {
     Invoke-Step "GPT-OSS characterization example clippy" {
         & cargo clippy --locked --offline -j 2 -p candle-examples --example gpt-oss-characterize --example gpt-oss-short-parity -- -D warnings
     }
-    foreach ($control in @('test-session-profile','test-observer','test-characterization','test-watch-runtime')) {
+    Invoke-Step "GPT-OSS capacity example tests" {
+        & cargo test --locked --offline -j 2 -p candle-examples --example gpt-oss-capacity-stress
+    }
+    Invoke-Step "GPT-OSS capacity example check" {
+        & cargo check --locked --offline -j 2 -p candle-examples --example gpt-oss-capacity-stress
+    }
+    Invoke-Step "GPT-OSS capacity example clippy" {
+        & cargo clippy --locked --offline -j 2 -p candle-examples --example gpt-oss-capacity-stress -- -D warnings
+    }
+    foreach ($control in @('test-session-profile','test-observer','test-characterization','test-watch-runtime','test-capacity')) {
         Invoke-Step "GPT-OSS model-free controls: $control" {
             & pwsh -NoProfile -File (Join-Path $repoRoot "scripts\gpt-oss\$control.ps1")
         }

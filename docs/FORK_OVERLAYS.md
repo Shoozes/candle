@@ -111,7 +111,7 @@ The GPT-OSS overlay owns the characterization example/control additions to
 `.tools/verify-before-push.ps1`; existing LFM2-VL verification steps retain their
 ownership. Its Summary Bank edits route the new harness and move current GPT
 status out of the bounded synthetic-oracle group. The native live inventory is
-315 union paths across five overlays, with 28 shared paths. Frozen inventories
+325 union paths across five overlays, with 28 shared paths. Frozen inventories
 and release identities are unchanged.
 
 An overlapping path must be listed here before two overlay manifests may claim
