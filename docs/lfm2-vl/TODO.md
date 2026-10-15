@@ -14,12 +14,17 @@ were verified. Completed release proof is in
 
 ## Current maintenance
 
-No further implementation task is selected. The locally verified nine-file
-snapshot-race/record/context repair is the owner-authorized closing save batch;
+No further implementation task is selected. The nine-file
+snapshot-race/record/context repair is published on main at `475b9045`;
 [HISTORY](HISTORY.md#2026-10-14---mvp-maintenance-closeout) retains its acceptance
-and proof. Its matching external publication receipt establishes delivery.
-Keep existing release tags/assets unchanged and stop in maintenance. No new
-release, model qualification, consumer repin or deferred research is selected.
+and proof. The published-delta review found no new material code issues;
+prior findings remain closed. Remote main and unchanged release identities
+were rechecked against the matching external publication receipt. This
+STATUS/TODO closeout saves the result through the guarded main helper, with
+exact delivery and fresh gate results bound to the receipt named in STATUS.
+Keep existing release tags/assets
+unchanged and stop in maintenance. No new release, model qualification,
+consumer repin or deferred research is selected.
 
 ## Deferred outside the MVP release
 
@@ -300,4 +305,4 @@ unstarted. That allowance is consumed and closed. See
 
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-maintenance-publish | change=closed local maintenance and retained deferred acceptance
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-record-closeout | change=closed review records and retained deferred acceptance
