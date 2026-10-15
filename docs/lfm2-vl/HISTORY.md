@@ -2,6 +2,75 @@
 
 Dated entries are historical. Current state: `STATUS.md`; active work: `TODO.md`. New maintained-model work: [2026-10-12](MAINTAINED_MODELS.md).
 
+## 2026-10-14 - MVP maintenance closeout
+
+The owner selected Closeout + Publish for the reviewed nine-file maintenance
+repair, retaining the existing 0.2.0 tag and all hosted assets. The writer now
+hashes, parses and reports one admitted expectations snapshot; deterministic
+before-parse/during-archive mutation and canonical CRLF controls pass 197
+assertions per PowerShell host. Registry/current records and the bounded
+archived Summary Bank lookup agree with the independent source-release boundary.
+
+Review proof and the preserved context-budget failure/recovery remain under
+`artifacts/releases/mvp-0.2.0-review-9a7c65c2-20261014/`. The local nine-file
+closeout is 8,717 bytes, SHA-256
+`857ec47640377e02ca0a812ab2c9742324cae16160650b0b63f70f22a7c2360c`.
+Code/test/freeze/registry/routes match that proof; only current STATUS/TODO and
+this closeout record are polished before the checkpoint. The clean committed
+candidate must pass the guarded helper's native gate. Its exact source/tree,
+observed remote main and unchanged release identities are retained externally
+in `publish-20261014/receipt.json`; this source entry does not assert a future
+publication result. No tag, asset, model or consumer operation is selected.
+
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-maintenance-publish | change=closed nine-file maintenance and bound guarded delivery evidence
+
+## 2026-10-14 - Overlay MVP publication and review
+
+The independent five-overlay source MVP is published as
+[`candle-overlays-mvp-0.2.0`](https://github.com/Shoozes/candle/releases/tag/candle-overlays-mvp-0.2.0)
+at `9a7c65c2ebca67e7997ae1a73b652e38d0a3781f`, tree
+`dc253834a70de59802401a498544c4618024e386`, annotated tag object
+`fea29695c6bde8f1cf7b0654c5136c68bc103370`. Main/remote agree at publication;
+the pinned upstream is zero behind/130 fork commits ahead. Historical
+`lfm2-vl-mvp-0.1.0` object `7de0b4dc5f914e9b1d317da7f76f677d9f32b844`
+and target remain unchanged.
+
+The guarded native gate passed with 189 release assertions on each PowerShell
+host. The source ZIP has 1,449 tracked files matching their committed bytes;
+its 8,364,171 bytes hash to
+`e49666846ff4817754e497b4aac4eac822a081bec46c4435fd3a40d25284de73`.
+All four uploaded assets were read back and hashed before and after publication;
+all 16 recorded owner PIDs were absent. A draft lookup through the published-tag
+REST endpoint returned 404; the same draft was found by ID and verified before
+publication, without recreating tags/releases or reuploading assets. Original
+failure and raw task-return metadata remain retained; the compact index uses
+the four explicit verified asset records.
+
+The final external `publication-9a7c65c2/publication-closeout.json` under
+`C:\DevStuff\candle-release-evidence\candle-overlays-mvp-0.2.0-20261014\` is
+7,769 bytes, SHA-256
+`f3b0f6a8f87fe9a08daf5da6d281bbc84c307b464e2dae071f8c5e6fc1810b82`.
+It links original required receipts; it does not create new numerical claims.
+The optional WSL Rust replay lacks cached `accelerate-src`; no fetch occurred.
+
+Post-release Review/Recheck confirms remote source/tag/asset digests and the
+prior checkout, inventory, archive and cleanup fixes. A new expectation-file
+race was reproduced against the old writer, then repaired by hashing, parsing
+and reporting one text snapshot. Both PowerShell hosts pass 197 assertions,
+including edits before parse and during archive creation plus canonical CRLF
+handling. Live routing/status/TODO and the superseded registry note are corrected.
+The current freeze changes only the registry input hash; immutable `9a7c65c2`
+and its reviewed digest remain the 0.2.0 release authority. Current local
+verification is retained under `artifacts/releases/mvp-0.2.0-review-9a7c65c2-20261014/`.
+The first native pass reached a 259 KiB archived HISTORY route and stopped at
+the 256 KiB cap. Its failed proof is retained. The stable archived alias now
+loads the route map and points to opt-in historical sections; no history or
+acceptance is removed and no context ceiling is raised.
+No new model work, downloads, consumer changes, commits or publication are part
+of this review/repair. Deferred acceptance and closed allowances are unchanged.
+
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-review | change=recorded immutable publication and bounded snapshot-race repair
+
 ## 2026-10-14 - Independent MVP scope freeze
 
 The owner selected three independently finishable MVPs: Candle overlay source

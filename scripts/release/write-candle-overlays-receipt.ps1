@@ -55,13 +55,16 @@ function Get-GitLine([string[]]$Arguments) {
     if ($lines.Count -ne 1) { throw "Expected one Git result: $($Arguments -join ' ')" }
     return $lines[0].Trim()
 }
-function Get-Hash([string]$Path, [switch]$CanonicalText) {
-    if (-not $CanonicalText) { return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
+function Get-CanonicalTextHash([string]$Text) {
     # Match source-archive LF bytes on Windows CRLF checkouts.
-    $bytes = [Text.UTF8Encoding]::new($false, $true).GetBytes([IO.File]::ReadAllText($Path).Replace("`r`n", "`n"))
+    $bytes = [Text.UTF8Encoding]::new($false, $true).GetBytes($Text.Replace("`r`n", "`n"))
     $sha = [Security.Cryptography.SHA256]::Create()
     try { return ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '').ToLowerInvariant() }
     finally { $sha.Dispose() }
+}
+function Get-Hash([string]$Path, [switch]$CanonicalText) {
+    if ($CanonicalText) { return Get-CanonicalTextHash ([IO.File]::ReadAllText($Path)) }
+    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 function Assert-ExternalFresh([string]$Path) {
     $full = [IO.Path]::GetFullPath($Path)
@@ -134,11 +137,13 @@ $packageFullPath = Assert-ExternalFresh $SourcePackagePath
 if ($receiptFullPath.Equals($packageFullPath, [StringComparison]::OrdinalIgnoreCase)) { throw 'Outputs must be distinct.' }
 $canonicalRoot = [IO.Path]::GetFullPath($ExpectedRepositoryRoot).TrimEnd('\', '/')
 if (-not $repositoryRoot.Equals($canonicalRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Canonical checkout mismatch.' }
-Assert-Exact 'reviewed expectations SHA-256' (Get-Hash $ExpectationsPath -CanonicalText) $ExpectedExpectationsSha256.ToLowerInvariant()
+$expectationsText = [IO.File]::ReadAllText($ExpectationsPath)
+$expectationsHash = Get-CanonicalTextHash $expectationsText
+Assert-Exact 'reviewed expectations SHA-256' $expectationsHash $ExpectedExpectationsSha256.ToLowerInvariant()
 $gitRoot = [IO.Path]::GetFullPath((Get-GitLine @('rev-parse', '--show-toplevel'))).TrimEnd('\', '/')
 if (-not $gitRoot.Equals($repositoryRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Git checkout mismatch.' }
 if ($env:FORK_OVERLAYS_REPO_ROOT) { throw 'Clear FORK_OVERLAYS_REPO_ROOT before release verification; inventory must use this checkout.' }
-$freeze = Get-Content -LiteralPath $ExpectationsPath -Raw | ConvertFrom-Json
+$freeze = $expectationsText | ConvertFrom-Json
 Assert-Exact 'expectations schema' $freeze.schema 'candle_overlays_mvp_expectations_v1'
 Assert-Exact 'release tag' $freeze.release_tag $releaseTag
 Assert-Exact 'named branch' (Get-GitLine @('branch', '--show-current')) 'main'
@@ -231,7 +236,7 @@ try {
         release_tag=$release
         immutable_historical_tag=$historical
         toolchain=[ordered]@{ platform='windows-msvc'; rustc=$rustc; cargo=$cargo }
-        expectations_sha256=(Get-Hash $ExpectationsPath -CanonicalText)
+        expectations_sha256=$expectationsHash
         input_hash_convention='UTF-8 without BOM, CRLF normalized to LF'
         inputs=$inputs
         overlays=$inventories

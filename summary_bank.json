@@ -555,11 +555,11 @@
       ]
     },
     "issue__gknome_adoption_and_linked_git": {
-      "description": "Archived context for the rejected Gknome adoption attempt and its former coupling to this checkout's linked-worktree investigation.",
+      "description": "Archived compatibility lookup for Gknome history and the separate current Git-ownership route.",
       "status": "archived",
-      "_archive_note": "Retained for historical lookup; current Git ownership is routed separately and Gknome adoption is outside the product backlog.",
+      "_archive_note": "Use issue__linked_worktree_git_boundary for current ownership. Historical Gknome sections remain in docs/lfm2-vl/HISTORY.md and at release9a7c65c2; retrieve those headings explicitly instead of loading the growing history monolith. Gknome adoption remains deferred. This alias loads the route map only.",
       "paths": [
-        "docs/lfm2-vl/HISTORY.md"
+        "summary_bank.json"
       ]
     },
     "workflow__historical_phase_guide": {

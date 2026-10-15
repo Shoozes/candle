@@ -2,71 +2,78 @@
 
 ## Current phase
 
-Independent overlay MVP 0.2.0 closeout. Baseline is published clean `main`
-`63f0d2cd275e4653b268939b429cbb9af25aba1a`; upstream integration base remains
-`c68b24997319b8d76e5a4e775dab197c7f26322a`. This record describes the verified
-pre-publication candidate. The external identity receipt owns its eventual
-checkpoint/tree/publication state; this source file claims no tag or release.
+Post-release maintenance closeout from published baseline
+`9a7c65c2ebca67e7997ae1a73b652e38d0a3781f`, tree
+`dc253834a70de59802401a498544c4618024e386`. Pinned upstream remains
+`c68b24997319b8d76e5a4e775dab197c7f26322a`. The nine-file repair is locally
+verified and selected for an owner-authorized checkpoint/guarded main push.
+Its exact successor commit/tree and remote result belong to the matching
+external publication receipt; the released tag/assets stay at `9a7c65c2`.
 
-Scope is the five existing overlays and release tooling, source package,
-support matrix and replay instructions. No new model capability is required.
-[Release contract](../releases/CANDLE_OVERLAYS_MVP_0.2.0.md) owns the exact
-support boundary; [TODO](TODO.md#release-blockers) owns finite blockers.
+The [five-overlay MVP release](https://github.com/Shoozes/candle/releases/tag/candle-overlays-mvp-0.2.0)
+is complete. [HISTORY](HISTORY.md#2026-10-14---overlay-mvp-publication-and-review)
+owns its final source, tag, asset and external receipt identities;
+[TODO](TODO.md#current-maintenance) records the maintenance stopping boundary.
 
-## Proven behavior
+## Proven behavior and recheck
 
-Existing LFM/VL/d1, retained Q8/F32, Q8Rows, diffusion, compatibility and Qwen
-implementation/proof boundaries remain unchanged. See the release support
-matrix, [d1 loading](D1_LOADING.md), [Qwen status](../qwen35/STATUS.md), and
-[GPT experimental status](../gpt-oss/STATUS.md). Original receipts keep their
-runtime source, inputs, numerical limits and cleanup evidence.
+Existing LFM/VL/d1, Q8/F32, Q8Rows, diffusion, compatibility and Qwen
+boundaries are unchanged. Original numerical receipts retain their source,
+input, device and cleanup identities. Edge keeps `a0c70e1d`, GenEye
+`3fa7075e`, SnapFlash `1660f9fc`, and Symbio Codex 0.154.0.
 
-Edge's core uses its existing `a0c70e1d` graph; GenEye retains `3fa7075e`;
-SnapFlash retains `1660f9fc`; Symbio retains Codex 0.154.0. These independent
-consumers are not repinned by this source release.
+Remote main, the annotated 0.2.0 tag and all four hosted asset digests match
+the retained publication/readback proof. Historical 0.1.0 object/target remain
+unchanged. Prior checkout, inventory, archive-byte and failure-cleanup findings
+remain closed; the original draft lookup failure and normalized completion
+record remain recoverable. No release asset or numerical study is repeated.
 
-## Last green verification and active files
+A writer race is repaired: admission hashes, parsing and receipt
+identity now use one expectations text snapshot. Deterministic mutation tests
+failed against the old writer and pass after the fix. Live routing/backlog
+now describe maintenance; the registry no longer advertises retired inputs.
 
-The current 16-file working candidate passes the complete native gate, including
-188 release-contract assertions on each of PS7 and PS5.1, 461 model-free GPT
-controls, maintained Rust tests/checks, core doctests, example tests and strict
-Clippy. Two additional diffusion transaction/rollback integration tests and all
-three owning manifest checks pass. Native inventory is 326 paths/five overlays/
-31 shared declarations (30 actual overlaps). Exact commands/results/logs are in
-`artifacts/releases/mvp-0.2.0-20261014/`; the 16 GiB/1,800-second Job exits zero
-after 256.679 seconds, peak Job memory 3,012,374,528 bytes. Its native launcher
-and invoker are absent after cleanup. Final source binding follows a separately
-authorized clean checkpoint; a real candidate archive is not yet claimed.
+## Verification and active files
 
-Active files: release writer/test/expectations/contract, native gate, owning
-LFM/diffusion inventories/verifiers, current status/backlog/history, registry,
-GPT research disposition and Summary Bank release route. Experimental Short
-source is parked outside the release source; its exact bytes/proof are retained.
+Current focused controls pass 197 assertions on each of PowerShell 7 and 5.1.
+The published source's guarded native gate passed with 189 per host. The final
+maintenance native gate also passes: locked/offline checks, maintained tests,
+strict scoped Clippy, 461 model-free GPT controls, context/layout and overlay
+gates. Its 16 GiB/1,800-second Job exits zero after 102.274 seconds with peak
+Job memory 1,517,199,360 bytes; launcher/controller release is verified.
+Source-bound results belong under
+`artifacts/releases/mvp-0.2.0-review-9a7c65c2-20261014/`.
+
+Closeout batch: release writer/test/expectations, overlay registry, LFM
+START_HERE/STATUS/TODO/HISTORY and Summary Bank. No new path or overlay
+ownership is introduced. The archived Gknome alias now loads the route map
+with an explicit historical-section pointer; it no longer loads all HISTORY.
+The current expectations update refreshes only the corrected registry hash;
+the release's original expectations remain frozen at `9a7c65c2`.
 
 ## Known limitations and blockers
 
-The real clean candidate package/receipt and publication proof remain pending. Commits,
-guarded main publication, annotated tag and hosted assets require explicit
-authorization for this batch. Existing model allowances are closed.
+The first native maintenance gate passed code/test lanes but stopped at an
+archived Summary Bank route loading 259 KiB of HISTORY against a 256 KiB cap.
+Its exit-one Job/log are retained; the alias is narrowed without deleting
+history or raising the limit. Final local gates pass. The current Closeout +
+Publish task authorizes saving only this nine-file maintenance batch through
+the guarded main helper. Tags, hosted assets, model work and consumers are excluded.
 
-Only named native Windows lanes are advertised. WSL2 `Codex-Compat` overlay
-inventory replay passes; locked/offline `candle-core` check exits 101 because
-`accelerate-src` is not cached. No dependency was fetched. Metal is unrun.
-GPT-OSS remains experimental: short parity is not chat/coding qualification;
-637.218s of 8k fixed-token forward work exceeds 90s/600s routes; physical 16k/32k
-is unqualified. Native 3B/400M MMProj and real-adapter quality remain deferred
-with their original acceptance criteria.
+Only named native Windows lanes are advertised. Earlier WSL overlay replay
+passed; optional offline Rust replay lacks `accelerate-src` and is not rerun
+without a changed dependency hypothesis. Metal is unrun. GPT remains
+experimental: short parity is not chat/coding qualification, 8k fixed-token
+work exceeds 90s/600s routes, and physical 16k/32k is unqualified. Native
+3B/400M MMProj and real-adapter quality remain deferred with original criteria.
 
 ## Exact next task
 
-Authorize the reviewed scoped local checkpoint to bind the clean candidate
-source archive and receipt, then prepare consolidated remaining native and
-publication actions. Coordinate Edge installed-core and Symbio native-manager
-proof independently. After publication, stop in maintenance; do not start the
-deferred research backlog automatically.
-
-Completed narrative and prior states are in
-[HISTORY](HISTORY.md#2026-10-14---independent-mvp-scope-freeze).
+Remain in maintenance. The authorized batch's source-bound checkpoint/push,
+final gate, remote equality and unchanged release identities are recorded in
+`artifacts/releases/mvp-0.2.0-review-9a7c65c2-20261014/publish-20261014/receipt.json`.
+Publication is established only by that observed receipt, not this source
+snapshot. No further implementation, deferred research or consumer repin is selected.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-release | change=froze independent MVP scope and retained historical proof
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-maintenance-publish | change=closed reviewed maintenance and separated publication evidence

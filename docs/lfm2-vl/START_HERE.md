@@ -15,81 +15,33 @@ This is the live execution entry point for the Candle 0.11 LFM2.5-VL/MMProj exte
 
 ## Current Gate
 
-Pinned upstream sync targets `c68b24997319b8d76e5a4e775dab197c7f26322a`.
-Read `UPSTREAM_SYNC.md` for integration proof, retained ug/onig contracts, and
-platform limitations. The older S3/S4 consumer pin is historical and is not a
-blocker for this owner-authorized Candle sync. Consumer repinning remains a
-separate task; do not merge an unreviewed floating upstream tip.
+Maintenance follows the published independent five-overlay source MVP
+[`candle-overlays-mvp-0.2.0`](https://github.com/Shoozes/candle/releases/tag/candle-overlays-mvp-0.2.0)
+at `9a7c65c2ebca67e7997ae1a73b652e38d0a3781f`. Its source package,
+annotated tag and four asset hashes are verified; the immutable
+`lfm2-vl-mvp-0.1.0` object/target remain unchanged. Pinned upstream remains
+`c68b24997319b8d76e5a4e775dab197c7f26322a`.
 
-Q8 stays the product default. GPT-OSS is an independent experiment whose
-accepted 2,080-token receipt retains its original source identity; this sync
-does not prove new model parity. No production downloads, training, longer
-context qualification, or release tags are implied.
+Use `STATUS.md` for the current working-tree repair and proof, `TODO.md` for
+the selected bounded maintenance task, and `HISTORY.md` for completed release
+records. The [release contract at the published revision](https://github.com/Shoozes/candle/blob/9a7c65c2ebca67e7997ae1a73b652e38d0a3781f/docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md)
+and its matching identity receipt own the frozen release inputs. Later source
+maintenance does not replace that tag, archive or numerical evidence.
 
-The LFM2-VL implementation phases and the coordinated Candle/SnapFlash
-framework primitives are complete. Their detailed lineage and proof belong in
-`HISTORY.md`, `PARITY.md`, and `docs/FORK_OVERLAYS.md`; do not copy those
-snapshots back into this entry point.
+Existing LFM/VL/d1, Q8Rows, diffusion, compatibility and Qwen behavior remains
+within its source-bound support matrix. GPT-OSS is experimental; its completed
+short qualification is not long-context, coding or route acceptance. Deferred
+research needs separate selection and fresh allowances; no model task starts
+automatically after release. See `D1_LOADING.md`, `MAINTAINED_MODELS.md`,
+`PARITY.md` and the owning overlay status only when that behavior is selected.
 
-The reusable LFM d1 API is published at Candle `3300bef20be161e63816b8820c845264acb1942d`.
-GenEye's consumer integration is published at `48bf4de746ebbfe4226cb8bb79fd37e3c8e96e4e`,
-and its producer API compatibility review is closed. GenEye's separate LTS
-release gate remains open and owner-managed. CPU one-row projection has been
-profiled and qualified with exact Q8/F32 parity and retained readout replay;
-see `D1.md` and `STATUS.md` for source-bound proof and publication identity.
-Opt-in d1 Q8Rows loading is published at `7c9067bc` and fresh CPU/CUDA parity
-with retained artifacts is complete; see `D1_LOADING.md` for the construction
-contract and source-bound proof. `STATUS.md` identifies the separate guarded
-publication receipt for these completed parity records. GenEye's local worker,
-lock and packaging policy pin Candle `3fa7075e` and select shared Q8Rows.
-The adoption is published at GenEye `8e97e33`; its package proof records are
-published at `0d552b0`. The original four-request private-worker CPU/CUDA proof
-retains its source identity. Clean CPU/CUDA portable packages pass model-free
-checks, but the fresh numerical attempt stopped at owner admission before any
-model load or request. Its allowance is closed. GenEye owns a quiet admission
-window and fresh bounded qualification; LTS activation remains a separate gate.
-See [the current handoff](D1_LOADING.md#geneye-consumer-qualification).
-The maintained-model batch is published at `7568791a`, based on `4c2dfaf3`:
-explicit text-only d1 loading, Qwen recovery/projection options and VAE input
-validation. Fresh retained t01 text/hybrid parity is complete on CPU first,
-then CUDA, with both embedding modes; its eight-request allowance is closed.
-See [the source-bound result](MAINTAINED_MODELS.md#retained-t01-text-loading-qualification).
-The five parity/review records are the owner-authorized guarded closeout;
-their publication identity and native gate belong to the matching receipt
-identified in `STATUS.md`. [Completed record saving](MAINTAINED_MODELS.md#guarded-proof-record-closeout)
-leaves TODO. The next active model gate needs the exact-base 2.6B producer/Edge
-inputs; no production allowance is reopened by this documentation publication.
-Qwen retained-model qualification is conditional on a separately selected
-packet and fresh allowance; the real 2.6B adapter gate still awaits producer
-inputs. GenEye remains pinned to `3fa7075e`. CUDA prefill qualification is published at
-`f93a4111ae41683b548758225940f80de6cd37e8`.
-The subsequent pinned upstream/CPU-options batch is qualified at `34830c19`;
-its final guarded publication identity is owned by the current source-bound
-receipt recorded in `STATUS.md`.
-Use `STATUS.md` for the exact publication receipt, `D1.md` for the API and
-consumer evidence, and `HISTORY.md` for completed publication records.
+Consumers keep their qualified graphs independently: Edge uses `a0c70e1d`
+with Q8/Nomic defaults and disabled GPT profiles, GenEye keeps `3fa7075e`,
+SnapFlash keeps `1660f9fc`, and Symbio keeps Codex 0.154.0. Their package/native
+proof and publication are separately owned; Candle publication does not repin
+or activate them. Native Windows/MSVC remains primary; WSL2 is secondary,
+with missing offline dependencies reported rather than fetched.
 
-The combined-overlay 0.2.0 source checkpoint was clean-head verified and
-published to `origin/main` at
-`e2c6565d2970de7a9e507b7759a608d3a2c827e7`. Its tracked lock/toolchain,
-local verification contract, overlay inventories, and external
-identity-receipt gate are implemented. The remaining release work is the
-separately authorized immutable tag/receipt/release sequence in `TODO.md`.
-
-Annotated tag `lfm2-vl-mvp-0.1.0` remains the immutable first-MVP snapshot at
-`ff885586f6d44a3d9b9ac1724032cdf5f0155384`; never move or reuse it. The new
-candidate uses the distinct `candle-overlays-mvp-0.2.0` namespace. Native
-Windows/MSVC is release authority and WSL2/Linux is a secondary replay.
-Production models and caches are external inputs. The current adapter
-coordination found retained 2.6B Q8 and native HF base files; see `STATUS.md`
-for current findings and the prepared GenUni/Edge stock diagnostic.
-All eight public views fit its explicit 384-output/2048-context policy; actual
-model calls still require acceptance of the exact invocation/resource proposal
-and fresh call admission. The stricter retained-file importer and authored
-protocol proof are described in `STATUS.md`; actual semantic review follows
-an approved run.
-Retained hash-bound parity remains valid; artifact discovery establishes no
-new inference or trained-adapter qualification.
 
 ## One-Task Contract
 
@@ -203,4 +155,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=d1-proof-records-publish | change=aligned current routing with guarded record closeout and remaining model gates
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-review | change=routed maintenance from the completed source release

@@ -13,7 +13,7 @@
     "rust-toolchain.toml": "8e390d6a0838315f972690f46ef8bae8b7ecc9ee6c1ed70140ef852869c2482e",
     ".github/workflows/rust-ci.yml": "7cfd11932a6cba0aeae364fe23dda6ea2baa99cf023a597dead5b7e939a6a6ca",
     "docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md": "d63f9b579c152275a57b82bb0b359ca312851fccab6f2f64b67f9c170efa856d",
-    "docs/FORK_OVERLAYS.md": "6906bb3ceebff8adafc33c7b194f2e21615d875959e76f752646e01064fd5b85",
+    "docs/FORK_OVERLAYS.md": "d3ec29ccb34bbca17060db56032c6df3f085d968a0d301a3190c9c8f576a7d92",
     "docs/lfm2-vl/MOD_MANIFEST.md": "d2fc17153458a2799da7b9f10b55079fd945b7fa6c05b097ee8a62608d2763d9",
     "docs/snapflash/MOD_MANIFEST.md": "2122f490568470a31d2ad06ee43de7a79f499feea7d28ea498e2d560705f5d74",
     "docs/gpt-oss/MOD_MANIFEST.md": "9ff533fd951a287b6c99e4f0ff43852a6729cd8f656e605451fef4cd204e1794",

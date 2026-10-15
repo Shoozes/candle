@@ -26,6 +26,7 @@ $wrong = '5555555555555555555555555555555555555555'
 $global:ReleaseTestRoot = $fixtureRoot
 $global:ReleaseTestCalls = [Collections.Generic.List[string]]::new()
 $global:ReleaseTestOverrides = @{}
+$global:ReleaseTestGitHook = $null
 $global:ReleaseTestDefaults = @{
     'branch --show-current' = 'main'
     'status --porcelain=v1 --untracked-files=all' = @()
@@ -50,6 +51,7 @@ $fakeGit = {
     $key = $commandArgs[2..($commandArgs.Count - 1)] -join ' '
     [void]$global:ReleaseTestCalls.Add($key)
     $global:LASTEXITCODE = 0
+    if ($null -ne $global:ReleaseTestGitHook) { & $global:ReleaseTestGitHook $key }
     if ($global:ReleaseTestOverrides.ContainsKey($key)) { return $global:ReleaseTestOverrides[$key] }
     if ($key -eq 'rev-parse --show-toplevel') { return $global:ReleaseTestRoot }
     if ($key -like '-c core.autocrlf=false archive --format=zip --prefix=candle-overlays-mvp-0.2.0/*') {
@@ -76,6 +78,7 @@ $freezePath = Join-Path $fixtureRoot 'freeze.json'
 function Reset-Fixture {
     $global:ReleaseTestOverrides.Clear()
     $global:ReleaseTestCalls.Clear()
+    $global:ReleaseTestGitHook = $null
     foreach ($path in $inputPaths) { Write-TestText (Join-Path $fixtureRoot $path) "fixed $path`n" }
     Write-TestText (Join-Path $fixtureRoot 'docs/FORK_OVERLAYS.md') ('<!-- shared-paths:start -->' + "`n" + '- `Cargo.lock`' + "`n" + '<!-- shared-paths:end -->' + "`n")
     $overlays = [ordered]@{}
@@ -161,6 +164,29 @@ try {
     $candidate=Get-Content -LiteralPath $success.ReceiptPath -Raw | ConvertFrom-Json
     Assert-Test (-not $candidate.publication_verified -and $null -eq $candidate.release_tag) 'candidate masqueraded as published'
     Assert-Test (-not ($global:ReleaseTestCalls -match '^ls-remote|refs/tags/candle-overlays')) 'candidate touched public refs or required new tag'
+    # A file change after admission cannot replace the reviewed in-memory freeze.
+    foreach ($phase in @('before-parse', 'after-parse')) {
+        Reset-Fixture
+        Save-Freeze
+        $approvedHash = Get-TestHash $freezePath
+        if ($phase -eq 'after-parse') {
+            [IO.File]::WriteAllText($freezePath, [IO.File]::ReadAllText($freezePath).Replace("`n", "`r`n"), [Text.UTF8Encoding]::new($false))
+        }
+        $global:ReleaseTestMutationPhase = $phase
+        $global:ReleaseTestGitHook = {
+            param($Key)
+            if (($global:ReleaseTestMutationPhase -eq 'before-parse' -and $Key -eq 'rev-parse --show-toplevel') -or
+                ($global:ReleaseTestMutationPhase -eq 'after-parse' -and $Key.StartsWith('-c core.autocrlf=false archive '))) {
+                [IO.File]::WriteAllText((Join-Path $global:ReleaseTestRoot 'freeze.json'), '{"schema":"unreviewed"}')
+            }
+        }
+        $snapshot = @{ ExpectedHead=$head; ExpectedTree=$tree; ExpectedRepositoryRoot=$fixtureRoot; ExpectationsPath=$freezePath; ExpectedExpectationsSha256=$approvedHash; ReceiptPath=(Join-Path $testRoot "$phase.json"); SourcePackagePath=(Join-Path $testRoot "$phase.zip"); Stage='Candidate' }
+        & $writer @snapshot
+        $snapshotReceipt = Get-Content -LiteralPath $snapshot.ReceiptPath -Raw | ConvertFrom-Json
+        Assert-Test ([IO.File]::ReadAllText($freezePath) -ceq '{"schema":"unreviewed"}') "$phase mutation did not execute"
+        Assert-Test ($snapshotReceipt.expectations_sha256 -ceq $approvedHash -and $snapshotReceipt.union.paths -eq 6) "$phase receipt did not bind the admitted snapshot"
+        Assert-SafeCalls
+    }
     Test-Rejection 'canonical-root' 'Canonical checkout mismatch' { $script:options.ExpectedRepositoryRoot=Join-Path $testRoot 'other' }
     Test-Rejection 'second-checkout' 'Git checkout mismatch' { $global:ReleaseTestOverrides['rev-parse --show-toplevel']=Join-Path $testRoot 'other' }
     Test-Rejection 'dirty' 'not clean' { $global:ReleaseTestOverrides['status --porcelain=v1 --untracked-files=all']=' M owner.rs' }
@@ -222,7 +248,7 @@ try {
     Write-Host "Candle release receipt tests: pass ($script:assertions assertions)"
 } finally {
     foreach ($name in @('git.exe','rustc','cargo')) { Remove-Item -LiteralPath "Function:global:$name" -ErrorAction SilentlyContinue }
-    foreach ($name in @('ReleaseTestRoot','ReleaseTestCalls','ReleaseTestOverrides','ReleaseTestDefaults')) { Remove-Variable -Name $name -Scope Global -ErrorAction SilentlyContinue }
+    foreach ($name in @('ReleaseTestRoot','ReleaseTestCalls','ReleaseTestOverrides','ReleaseTestDefaults','ReleaseTestGitHook','ReleaseTestMutationPhase')) { Remove-Variable -Name $name -Scope Global -ErrorAction SilentlyContinue }
     $fullRoot=[IO.Path]::GetFullPath($testRoot)
     $prefix=[IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
     if (-not $fullRoot.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) { throw 'Unsafe fixture cleanup target' }

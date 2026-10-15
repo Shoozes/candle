@@ -6,32 +6,20 @@ Local-only proof and original numerical/resource contracts remain mandatory.
 
 ## Release blockers
 
-### [ ] Finish the five-overlay source release 0.2.0
+None for the published
+[`candle-overlays-mvp-0.2.0`](https://github.com/Shoozes/candle/releases/tag/candle-overlays-mvp-0.2.0)
+at `9a7c65c2`. The tag, source package, four asset hashes and historical tag
+were verified. Completed release proof is in
+[HISTORY](HISTORY.md#2026-10-14---overlay-mvp-publication-and-review).
 
-- What: Repair native identity/receipt tooling, freeze the supported source
-  scope, and produce a reproducible source archive and evidence index.
-- Why: The unshipped August writer uses a retired WSL checkout and two-overlay
-  inventory; a green ordinary source push does not prove a usable release.
-- When: Current bounded work, before any new model, optimization or consumer
-  activation. Each repository can finish independently.
-- Where: `docs/releases/CANDLE_OVERLAYS_MVP_0.2.0.md`, release writer/test/frozen
-  expectations, native gate, five manifests and existing status/routes.
-- How / finite remaining blockers:
-  - [x] Native single-checkout identity, fixed five-overlay expectations,
-    package creation and failure-contract tests pass on PS7 and PS5.1.
-  - [ ] Maintained native source and diffusion gates pass; reviewed clean
-    checkpoint, externally frozen commit/tree, candidate source archive and
-    compact evidence index agree. No production study is repeated.
-  - [ ] Under separate explicit authority, guarded main publication,
-    annotated `candle-overlays-mvp-0.2.0`, hosted source/receipt assets and remote
-    identities/hashes agree; historical `lfm2-vl-mvp-0.1.0` remains unchanged.
-- Done when: The source release has immutable identity, usable archive, honest
-  support matrix, replay/recovery instructions and no scoped release blocker.
-- Verification: The release contract's native commands, no-overwrite/identity/
-  inventory/tag tests, maintained gate, source-package inspection and final
-  remote/tag/asset comparison. Publication is not authorized by this Work.
-- Stop: Maintenance after release. No new model, kernel, context length,
-  benchmark, repin or LTS commitment enters this batch.
+## Current maintenance
+
+No further implementation task is selected. The locally verified nine-file
+snapshot-race/record/context repair is the owner-authorized closing save batch;
+[HISTORY](HISTORY.md#2026-10-14---mvp-maintenance-closeout) retains its acceptance
+and proof. Its matching external publication receipt establishes delivery.
+Keep existing release tags/assets unchanged and stop in maintenance. No new
+release, model qualification, consumer repin or deferred research is selected.
 
 ## Deferred outside the MVP release
 
@@ -312,4 +300,4 @@ unstarted. That allowance is consumed and closed. See
 
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-release | change=separated finite release blockers from unchanged deferred acceptance
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-maintenance-publish | change=closed local maintenance and retained deferred acceptance

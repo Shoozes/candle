@@ -33,9 +33,11 @@ in one overlay cannot silently become release evidence for another. Historic
 registered paths remain valid across a rolling baseline while the verifiers
 still reject missing manifest files and any new unregistered path. The live
 union baseline is the pinned upstream integration commit
-`c68b24997319b8d76e5a4e775dab197c7f26322a`. Frozen
-`candle-overlays-mvp-0.2.0` receipt scripts still encode
-the earlier `6f74e7c` identity and are not this slice.
+`c68b24997319b8d76e5a4e775dab197c7f26322a`. The published
+[`candle-overlays-mvp-0.2.0`](https://github.com/Shoozes/candle/releases/tag/candle-overlays-mvp-0.2.0)
+snapshot at `9a7c65c2` uses this five-overlay base. The earlier `6f74e7c`
+two-overlay candidate is historical and explicitly superseded in the release
+contract. Its old inputs are not the current writer's expectations.
 
 The `candle-overlays-mvp-0.2.0` closeout admits only build or verification
 fixes, reproducibility and packaging changes, release metadata, distribution
@@ -196,8 +198,12 @@ the one-row kernel and Qwen's separate MMVQ/MMQ branch retain their behavior.
 4. Run `bash scripts/verify-fork-overlays.sh` before publication.
 5. Never move or reuse the immutable `lfm2-vl-mvp-0.1.0` tag for a composite
    runtime release.
-6. Create any future composite tag only after both consumer repositories pin
+6. Create any future composite consumer/runtime tag only after both consumer repositories pin
    the same exact Candle revision and pass their local acceptance gates.
 
+That joint-consumer condition does not gate an independent overlay source
+release. Each consumer keeps the dependency tuple it actually qualified;
+publishing a newer Candle source snapshot does not require a consumer repin.
+
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-release | change=froze five-overlay MVP ownership and superseded research sequencing
+AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-review | change=corrected source-release baseline and independent consumer boundary
