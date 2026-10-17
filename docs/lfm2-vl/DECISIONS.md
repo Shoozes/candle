@@ -1,5 +1,17 @@
 # LFM2.5-VL Decisions
 
+## D-0080: Portable ZIP 9 dependency and decoded tensor-archive names
+
+The selected parent security repair belongs to fork compatibility. Require ZIP
+9.0.4 in workspace dependencies with defaults disabled; its manifest and tiny
+NPZ/PyTorch adaptations travel with Candle rather than an application patch.
+Propagate fallible names and retain CP437 lookups through a private shared
+name-index adapter; no extraction subsystem or precision/model change is added.
+See [ZIP_COMPATIBILITY](../fork-compat/ZIP_COMPATIBILITY.md) for the advisory DB,
+regression, audit and held-pin adoption envelope. Local proof precedes separately
+authorized immutable publication and all four Edge consumer audits. Historical
+release identities and numerical receipts do not move.
+
 ## D-0079: Lossless CUDA tables and transactional paged GPT-OSS cache
 
 The coordinated human-selected 32k Work keeps F32 activations and packed MXFP4.
@@ -1832,4 +1844,4 @@ it consumed zero model forwards. Quality and consumer package acceptance remain
 separately owned. No publication follows from this local qualification.
 
 ---
-AI-edited: 2026-10-13 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-characterization | change=preserved frozen proof contract and added separate common-session characterization
+AI-edited: 2026-10-17T16:52:42-04:00 | agent=Codex/root | task=zip-parent-repair | change=recorded portable ZIP compatibility and local proof boundary

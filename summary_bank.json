@@ -79,6 +79,19 @@
         "candle-core/src/quantized/repack_x86.rs"
       ]
     },
+    "fork__zip_compatibility": {
+      "description": "Portable patched ZIP dependency and NPZ/PyTorch decoded-name compatibility, malformed-input/caller-file regressions and separately owned consumer adoption.",
+      "status": "active",
+      "paths": [
+        "Cargo.toml",
+        "candle-core/Cargo.toml",
+        "candle-core/src/npy.rs",
+        "candle-core/src/pickle.rs",
+        "candle-core/tests/archive_tests.rs",
+        "docs/fork-compat/ZIP_COMPATIBILITY.md",
+        "docs/fork-compat/MOD_MANIFEST.md"
+      ]
+    },
     "fork_compatibility": {
       "description": "Retained upstream ug APIs, onig selection, and exact fork-delta ownership.",
       "status": "active",

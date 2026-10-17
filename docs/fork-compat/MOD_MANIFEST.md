@@ -17,7 +17,14 @@ Run the resulting binary through the existing bounded oracle wrapper. Normal
 non-ug builds do not need the API-version override. See UPSTREAM_SYNC for the
 failed detection/link alternatives and bounded runtime receipts.
 
+The ZIP 9 parent requirement and NPZ/PyTorch filename adaptation are also owned
+here; see [ZIP compatibility](ZIP_COMPATIBILITY.md). Local proof does not
+qualify a consumer repin or unrelated GPT-OSS changes.
+
 ## Owned paths
+
+Current inventory: 25 paths, with 15 fork-origin modifications and 10 additions
+relative to the pinned upstream base. Shared paths retain their registered owners.
 
 - `candle-core/src/quantized/cpu_matmul_mode.rs`
 - `candle-core/src/quantized/k_quants.rs`
@@ -25,6 +32,13 @@ failed detection/link alternatives and bounded runtime receipts.
 - `candle-core/tests/cpu_quantized_matmul_tests.rs`
 - `candle-core/tests/quantized_tests.rs`
 - `docs/fork-compat/MOD_MANIFEST.md`
+- `docs/fork-compat/ZIP_COMPATIBILITY.md`
+- `candle-core/src/npy.rs`
+- `candle-core/src/pickle.rs`
+- `candle-core/tests/archive_tests.rs`
+- `Cargo.lock`
+- `docs/FORK_OVERLAYS.md`
+- `summary_bank.json`
 - `Cargo.toml`
 - `candle-core/Cargo.toml`
 - `candle-core/src/cuda_backend/device.rs`
@@ -51,4 +65,4 @@ undersized-output panic to a controlled error and prove deterministic mode
 parity. Qwen rounding and LFM2-VL native Q8/F32 hunks retain their owners.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution
+AI-edited: 2026-10-17T16:52:42-04:00 | agent=Codex/root | task=zip-parent-repair | change=recorded portable ZIP compatibility and local proof boundary

@@ -14,17 +14,32 @@ were verified. Completed release proof is in
 
 ## Current maintenance
 
-No further implementation task is selected. The nine-file
-snapshot-race/record/context repair is published on main at `475b9045`;
-[HISTORY](HISTORY.md#2026-10-14---mvp-maintenance-closeout) retains its acceptance
-and proof. The published-delta review found no new material code issues;
-prior findings remain closed. Remote main and unchanged release identities
-were rechecked against the matching external publication receipt. This
-STATUS/TODO closeout saves the result through the guarded main helper, with
-exact delivery and fresh gate results bound to the receipt named in STATUS.
-Keep existing release tags/assets
-unchanged and stop in maintenance. No new release, model qualification,
-consumer repin or deferred research is selected.
+### [ ] Portable ZIP parent repair and consumer delivery
+
+- What: Replace the inherited ZIP 8.6.0 parent requirement with patched ZIP 9.0.4,
+  preserving NPZ/PyTorch tensor behavior and default feature/source constraints.
+- Why: RUSTSEC-2026-0367/0368/0369 cannot be repaired by an Edge lock-only update.
+- When: Local implementation/model-free proof complete; scoped Candle commit
+  and guarded main push authorized. Tags/assets, Edge pins and consumer files
+  stay unchanged; real-model/GPU execution is outside this batch.
+- Where: Compatibility overlay; [ZIP contract](../fork-compat/ZIP_COMPATIBILITY.md).
+- How: Propagate fallible ZIP names, preserve decoded CP437 lookups, keep
+  extraction absent, and prove the portable dependency through an independent
+  local/package consumer without a hidden override. Preserve unrelated owner work.
+- Done when: Local archive/model-loading and malformed/truncated/owned-file tests,
+  focused checks/Clippy, full native gate and transparent audit proof pass for
+  the selected repair. Then, after separate owner authorization, publish an
+  immutable successor; Edge must adopt that exact revision, update all four
+  locks and pass dependency/consumer checks and all four audits without exclusion.
+  Local path proof alone cannot close final Git-consumer/Edge acceptance.
+- Verification: Local proof passes: 14 archive tests, full native gate, Clippy,
+  standalone consumer and route/manifest checks. Consumer audit: 0; workspace: 5
+  unrelated. C:/WSL limits and exact counts/commands are in STATUS and the summary.
+- Adoption boundary: Current main also has intervening GPT-OSS cache/storage,
+  memory and prefill runtime changes versus Edge's held `a0c70e1d`; consumer
+  review must not silently accept them. Q8/Nomic/defaults/pins remain unchanged.
+- Evidence: `D:/Compact_Evidence/candle/runs/zip-parent-20261017/summary.json`;
+  final immutable source/remote binding follows in adjacent `publication.json`.
 
 ## Deferred outside the MVP release
 
@@ -305,4 +320,4 @@ unstarted. That allowance is consumed and closed. See
 
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-record-closeout | change=closed review records and retained deferred acceptance
+AI-edited: 2026-10-17T17:19:22-04:00 | agent=Codex/root | task=zip-parent-closeout-publish | change=bound authorized guarded publication and preserved consumer acceptance

@@ -21,7 +21,7 @@ native Windows and WSL report the same candidate paths.
 | Overlay | Manifest | Current boundary |
 | --- | --- | --- |
 | LFM2-VL/MMProj | `docs/lfm2-vl/MOD_MANIFEST.md` | Proven model, loader, processor, fixture, and verification work; CPU hash-bound quantized-text adapter mechanics proven; real adapter qualification pending |
-| Retained upstream compatibility | `docs/fork-compat/MOD_MANIFEST.md` | Public ug APIs, onig tokenizer selection and scoped CPU quantized execution options |
+| Retained upstream compatibility | `docs/fork-compat/MOD_MANIFEST.md` | Public ug APIs, onig tokenizer selection, scoped CPU quantized execution options and ZIP tensor-reader compatibility |
 | SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic SDXL LoRA transaction, controlled unsupported flash attention, residual/`text_time` conditioning and validated VAE channel construction/distribution |
 | GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Packed CPU/CUDA interfaces and source-bound short-parity/2,080-token receipt; no new production claim from upstream sync |
 | Qwen3.5 GGUF compatibility | `docs/qwen35/MOD_MANIFEST.md` | Bounded Q8_0/F32 text admission, proven CPU parity, and scoped CUDA quantization under qualification; no Edge activation |
@@ -107,13 +107,18 @@ own application request schemas, HTTP or Tauri types, queues, filesystem
 policy, resource brokers, proof-report schemas, licensing allowlists, or
 product-specific names.
 
+The compatibility overlay owns the ZIP workspace/lock dependency hunks and
+its new focused Summary Bank route. NPZ/PyTorch filename adaptation and archive
+regressions are exclusively compatibility-owned; model math and consumer
+qualification retain their existing owners.
+
 ## Shared-path registry
 
 The GPT-OSS overlay owns the characterization and capacity example/control additions to
 `.tools/verify-before-push.ps1`; existing LFM2-VL verification steps retain their
 ownership. Its Summary Bank edits route the new harness and move current GPT
 status out of the bounded synthetic-oracle group. The native live inventory is
-326 union paths across five overlays, with 31 shared paths. GPT-OSS owns the
+330 union paths across five overlays, with 31 shared paths. GPT-OSS owns the
 optional stop-event and regression hunks in the shared bounded Job helper/tests;
 LFM2-VL retains existing execution/limits. Frozen inventories
 and historical release identities are unchanged. LFM2-VL and diffusion jointly
@@ -206,4 +211,4 @@ release. Each consumer keeps the dependency tuple it actually qualified;
 publishing a newer Candle source snapshot does not require a consumer repin.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-review | change=corrected source-release baseline and independent consumer boundary
+AI-edited: 2026-10-17T16:52:42-04:00 | agent=Codex/root | task=zip-parent-repair | change=recorded portable ZIP compatibility and local proof boundary
