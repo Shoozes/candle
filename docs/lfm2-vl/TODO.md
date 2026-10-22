@@ -14,41 +14,48 @@ were verified. Completed release proof is in
 
 ## Current maintenance
 
-### [ ] Portable ZIP parent repair and consumer delivery
+### [ ] Portable ZIP repair: remaining Edge consumer qualification
 
-- What: Replace the inherited ZIP 8.6.0 parent requirement with patched ZIP 9.0.4,
-  preserving NPZ/PyTorch tensor behavior and default feature/source constraints.
-- Why: RUSTSEC-2026-0367/0368/0369 cannot be repaired by an Edge lock-only update.
-- When: Local implementation/model-free proof complete; scoped Candle commit
-  and guarded main push authorized. Tags/assets, Edge pins and consumer files
-  stay unchanged; real-model/GPU execution is outside this batch.
-- Where: Compatibility overlay; [ZIP contract](../fork-compat/ZIP_COMPATIBILITY.md).
-- How: Propagate fallible ZIP names, preserve decoded CP437 lookups, keep
-  extraction absent, and prove the portable dependency through an independent
-  local/package consumer without a hidden override. Preserve unrelated owner work.
-- Done when: Local archive/model-loading and malformed/truncated/owned-file tests,
-  focused checks/Clippy, full native gate and transparent audit proof pass for
-  the selected repair. Then, after separate owner authorization, publish an
-  immutable successor; Edge must adopt that exact revision, update all four
-  locks and pass dependency/consumer checks and all four audits without exclusion.
-  Local path proof alone cannot close final Git-consumer/Edge acceptance.
-- Verification: Local proof passes: 14 archive tests, full native gate, Clippy,
-  standalone consumer and route/manifest checks. Consumer audit: 0; workspace: 5
-  unrelated. C:/WSL limits and exact counts/commands are in STATUS and the summary.
-- Adoption boundary: Current main also has intervening GPT-OSS cache/storage,
-  memory and prefill runtime changes versus Edge's held `a0c70e1d`; consumer
-  review must not silently accept them. Q8/Nomic/defaults/pins remain unchanged.
-- Evidence: `D:/Compact_Evidence/candle/runs/zip-parent-20261017/summary.json`;
-  final immutable source/remote binding follows in adjacent `publication.json`.
+- What: Finish Edge's installed/core qualification using the published Candle
+  `38d90519f8ed10ddbbe160e5482b0d0089efbaad` and patched ZIP 9.0.4.
+- Why: Candle archive/API proof and consumer adoption do not prove the installed
+  Q8/Nomic, RAG and recovery paths or final package attestation.
+- When: Candle repair/publication and Edge's four consumer lock adoptions are
+  complete. The `86e1eb10` qualification allowance is closed after first failure;
+  another attempt requires clean source/package, a fresh packet and exact approval.
+- Where: Edge owns its canonical/installed/aggregate gates; Candle compatibility
+  owns the [ZIP contract](../fork-compat/ZIP_COMPATIBILITY.md) and this handoff.
+- How: Diagnose the nested canonical deadline before another native window.
+  Preserve the existing limits, source-bound failure receipts, all nine locks,
+  Q8/Nomic defaults, disabled GPT profiles and immutable release identities.
+- Done when: Existing Candle archive/model-loading, malformed-input, Clippy and
+  native proof remains bound to its published source; Edge's four consumer
+  graphs and audits pass, then its fresh package/native/installed and aggregate
+  acceptance pass with cleanup. Local path proof alone cannot close this item.
+- Verification: Rechecked the exact packet and nine unchanged lock hashes; all
+  four Candle graphs use `38d90519`/ZIP 9.0.4. The October 22 run passed setup,
+  nine audits, GenAce 27+2, Harmony 2, both Clippy lanes and backend 1,110 tests
+  (three ignored). The nested verifier timed out at 1,800 seconds (exit 124)
+  during the next graph compilation; aggregate/controller exit 1. Calibration,
+  core sweep, installation and final aggregate validation were not reached.
+- Cleanup: Outer/aggregate Jobs empty with verified cleanup and no forced
+  cleanup; four owner PIDs absent, disposable checkout removed, hold released.
+- Adoption boundary: ZIP publication and consumer pin/lock adoption are closed.
+  Intervening GPT-OSS changes retain their separate experimental acceptance;
+  the Q8/Nomic qualification does not activate or qualify GPT-OSS.
+- Evidence: Immutable Candle `D:/Compact_Evidence/candle/runs/zip-parent-20261017/publication.json`;
+  Edge `D:/Compact_Evidence/edgesymbio/runs/cargo-isolation-20261018/summary.json`,
+  section `native86Execution20261022`, plus its original bound terminal/Job/setup receipts.
 
 ## Deferred outside the MVP release
 
 These tasks retain their acceptance criteria and closed allowances. Their
 historical sequencing does not gate the source MVP; later execution needs
-separate selection. Edge owns Windows core-runtime 0.2.1 at `a0c70e1d`, and
-Symbio owns manager 0.1.1 on Codex 0.154.0. Neither depends on GPT activation or
-the newest Candle graph. Broader GenAce/VL, new engines/providers, fast precision,
-voice/image promotion, broad portability, signing and LTS remain separate.
+separate selection. Edge owns Windows core-runtime 0.2.1 qualification using
+Candle `38d90519`; Symbio owns manager 0.1.1 on Codex 0.154.0. Neither requires
+GPT activation or automatic adoption of later Candle revisions. Broader
+GenAce/VL, new engines/providers, fast precision, voice/image promotion, broad
+portability, signing and LTS remain separate.
 
 ### [ ] Maintained GPT-OSS support through EdgeSymbio and symbio-code
 
@@ -320,4 +327,4 @@ unstarted. That allowance is consumed and closed. See
 
 
 ---
-AI-edited: 2026-10-17T17:19:22-04:00 | agent=Codex/root | task=zip-parent-closeout-publish | change=bound authorized guarded publication and preserved consumer acceptance
+AI-edited: 2026-10-22T14:34:21-04:00 | agent=Codex/root | task=edge86-docs-closeout | change=bound reviewed qualification records to authorized guarded publication

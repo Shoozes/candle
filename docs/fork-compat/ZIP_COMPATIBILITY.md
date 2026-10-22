@@ -64,12 +64,13 @@ or advisory suppression is introduced. Post-repair audits: ZIP findings are gone
 (workspace exit 1). The consumer has zero vulnerabilities (exit 0) and retains
 the paste unmaintained warning.
 
-## Adoption envelope from Edge's held pin
+## Historical adoption envelope from Edge's previous pin
 
-Compared with Edge's held Candle
-`a0c70e1d632e1f5989ab05ef9294d00bb259ccf2`, the pre-repair base `b70f5f32`
-has no changes to root Cargo.toml/Cargo.lock, any of the four consumer crate
-manifests, or candle-core/candle-nn/candle-vlm runtime source.
+At the original ZIP review, Edge held Candle
+`a0c70e1d632e1f5989ab05ef9294d00bb259ccf2`. Compared with that pin, the
+pre-repair base `b70f5f32` has no changes to root Cargo.toml/Cargo.lock, any
+of the four consumer crate manifests, or candle-core/candle-nn/candle-vlm
+runtime source.
 The intervening runtime changes are confined to GPT-OSS:
 
 - Seven transformer runtime files: cache.rs, cuda.rs, cuda_storage.rs,
@@ -87,18 +88,35 @@ LFM/Q8/Nomic model implementations are unchanged by that intervening delta.
 Adopting a successor from current main still needs explicit consumer review
 of the whole revision; this ZIP proof does not grant GPT-OSS acceptance.
 
-## Remaining delivery acceptance
+## Published delivery and remaining consumer acceptance
 
-Local implementation and review are complete. The owner has authorized this
-12-file batch's commit on main and publication through Candle's guarded helper.
-The immutable commit, complete native gate and confirmed remote identity are
-recorded in `artifacts/publication/last-push.json` and the adjacent compact
-`publication.json` after successful publication. No tags, hosted release, repin
-or model/GPU execution is included. Edge then separately adopts that exact
-revision, updates all four locks and verifies the dependency/API graph and all four complete audits without
-exclusions. Fresh package/native qualification follows its own approved packet.
-Existing pins, historical releases, tags, assets and closed allowances stay
-unchanged. A successful local path consumer cannot close that final sequence.
+The 12-file repair was published through Candle's guarded helper at
+`38d90519f8ed10ddbbe160e5482b0d0089efbaad`. The immutable source/tree,
+clean native gate and confirmed remote identity are preserved in
+`D:/Compact_Evidence/candle/runs/zip-parent-20261017/publication.json`, including
+its hashed helper-receipt snapshot. `artifacts/publication/last-push.json` is
+only the mutable latest-publication pointer. Historical release tags/assets
+and numerical receipts remain unchanged.
+
+Edge `86e1eb10` has adopted this exact revision and ZIP 9.0.4 in all four
+consumer lock graphs. Its nine packet-bound locks rehash unchanged. The fresh
+October 22 attempt passed setup, nine Rust audits, GenAce 27+2, Harmony 2,
+both Clippy lanes and backend 1,110 tests (three ignored). The nested canonical
+verifier then reached its 1,800-second deadline (exit 124) during the next graph
+compilation; the aggregate/controller returned exit 1. Both Jobs verify empty
+membership and cleanup without forced cleanup; owner processes and disposable
+checkout are absent. Original receipts are summarized in
+`D:/Compact_Evidence/edgesymbio/runs/cargo-isolation-20261018/summary.json`,
+section `native86Execution20261022`.
+
+The closed allowance cannot retry. Edge must first resolve the canonical
+deadline bottleneck within its retained contract, then prepare and obtain fresh
+exact approval for any successor qualification. Calibration/core proofs,
+installed Q8/Nomic/RAG/recovery, aggregate acceptance and package attestation
+remain open; no installed acceptance or release is inferred. GPT-OSS remains
+separately held. The owner separately authorized scoped publication of these
+Candle documentation records through the guarded main helper. This does not
+qualify Edge or authorize consumer edits, model/GPU work, tags or releases.
 
 ---
-AI-edited: 2026-10-17T17:19:22-04:00 | agent=Codex/root | task=zip-parent-closeout-publish | change=bound authorized guarded publication and preserved consumer acceptance
+AI-edited: 2026-10-22T14:34:21-04:00 | agent=Codex/root | task=edge86-docs-closeout | change=bound reviewed qualification records to authorized guarded publication
