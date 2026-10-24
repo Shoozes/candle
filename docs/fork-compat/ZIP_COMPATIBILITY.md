@@ -98,25 +98,56 @@ its hashed helper-receipt snapshot. `artifacts/publication/last-push.json` is
 only the mutable latest-publication pointer. Historical release tags/assets
 and numerical receipts remain unchanged.
 
-Edge `86e1eb10` has adopted this exact revision and ZIP 9.0.4 in all four
-consumer lock graphs. Its nine packet-bound locks rehash unchanged. The fresh
-October 22 attempt passed setup, nine Rust audits, GenAce 27+2, Harmony 2,
-both Clippy lanes and backend 1,110 tests (three ignored). The nested canonical
-verifier then reached its 1,800-second deadline (exit 124) during the next graph
-compilation; the aggregate/controller returned exit 1. Both Jobs verify empty
-membership and cleanup without forced cleanup; owner processes and disposable
-checkout are absent. Original receipts are summarized in
-`D:/Compact_Evidence/edgesymbio/runs/cargo-isolation-20261018/summary.json`,
-section `native86Execution20261022`.
+Edge's local checkpoint `3512099d44f5f3406f5a7be19b4f9846ddfce3f8` retains
+this revision and ZIP 9.0.4 in all four consumer graphs. Its nine packet-bound
+locks rehash unchanged. Clean canonical proof passed 493 Python tests (seven
+skips) and all 16 browser cases; CPU package/bundle/health and 16 packet controls
+passed. The nested browser owner, fail-fast and bounded trace-retention repair
+also has model-free full-suite and real failure/cleanup proof. These results
+remain bound to that local checkpoint and do not establish installed acceptance.
 
-The closed allowance cannot retry. Edge must first resolve the canonical
-deadline bottleneck within its retained contract, then prepare and obtain fresh
-exact approval for any successor qualification. Calibration/core proofs,
+Its exact packet
+`2a718d73190e6c8043da24b30575929f69c6c4898834a789da8b540325818f4b`
+was refused at the first actual admission: three Cargo processes and one rustc
+process competed for the host. Memory and desktop checks passed. No reservation,
+native dispatch, model request, fetch, install or aggregate attempt occurred.
+The admission process exited, no persistent children or outer/aggregate Jobs
+were created, normal/installed roots were absent, and the execution hold was
+released. No foreign process was stopped. Original packet/admission/outcome
+records and restoration maps are retained in
+`D:/Compact_Evidence/edgesymbio/runs/cargo-isolation-20261018/native-3512099d-20261023/`;
+the separate preparation receipt is in `browser-review-cleanup-20261023/`.
+Earlier failures remain closed; the missing original e9 browser traces are not
+recreated by the later retention proof.
+
+That closed approval cannot be resampled or retried. The later clean Edge
+checkpoint `10e970ce50adbb64f9919c6dae1e1d69687ebd9e` ran exact packet
+`2df06d3eca1507e91a2101bc346666f2fa78a4750a34f3a841f1aa4b603820fe`
+once. Setup, nine Rust audits and 27 GenAce backend conformance tests passed;
+the nested GenAce v2 API build then failed writing Windows `full.rmeta` in the
+actual C: temporary checkout (error 112; Cargo 101, handshake/controller 1).
+Its allowance is closed. The light sweep ran Nomic work, with zero
+positive-token-cap text requests; total model calls were not measured.
+All six Jobs were empty, three `vctip` helpers were producer-terminated, the
+owned temporary checkout was removed and all four quiet holds were released.
+The source-bound outcome and restoration map are retained in
+`native-10e970ce-20261023/summary.json` under that same Edge run collection.
+
+Edge now owns bounded model-free scratch-placement/capacity proof, preserving
+same-volume shared-cache identity, pins, CPU defaults and existing limits.
+Renewed exact-source canonical/CPU/package evidence and a fresh exact packet
+with new approval must precede another native attempt. Calibration/core proofs,
 installed Q8/Nomic/RAG/recovery, aggregate acceptance and package attestation
 remain open; no installed acceptance or release is inferred. GPT-OSS remains
-separately held. The owner separately authorized scoped publication of these
-Candle documentation records through the guarded main helper. This does not
-qualify Edge or authorize consumer edits, model/GPU work, tags or releases.
+separately held. Candle's earlier documentation publication is bound to
+`efe80886332ac5e5893370490cf46047173a8c75` in
+`D:/Compact_Evidence/candle/runs/edge86-docs-closeout-20261022/summary.json`.
+The owner separately selected closeout and guarded publication of these Candle
+documentation records. Its candidate, native gate and confirmed remote identity
+are recorded after helper success in
+`D:/Compact_Evidence/candle/runs/edge-handoff-closeout-20261023/summary.json`.
+Consumer acceptance and later model/GPU, tag or release work retain their
+separate approval boundaries.
 
 ---
-AI-edited: 2026-10-22T14:34:21-04:00 | agent=Codex/root | task=edge86-docs-closeout | change=bound reviewed qualification records to authorized guarded publication
+AI-edited: 2026-10-23T23:48:04-04:00 | agent=Codex/root | task=edge-handoff-closeout | change=preserve ZIP delivery and reconcile the later closed consumer attempt

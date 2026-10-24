@@ -35,8 +35,10 @@ research needs separate selection and fresh allowances; no model task starts
 automatically after release. See `D1_LOADING.md`, `MAINTAINED_MODELS.md`,
 `PARITY.md` and the owning overlay status only when that behavior is selected.
 
-Consumers keep their qualified graphs independently: Edge uses `a0c70e1d`
-with Q8/Nomic defaults and disabled GPT profiles, GenEye keeps `3fa7075e`,
+Consumers keep their graphs independently: Edge has adopted Candle `38d90519`
+and ZIP 9.0.4, with Q8/Nomic defaults and disabled GPT profiles. Its installed
+qualification remains open; bounded storage preparation precedes a fresh native
+packet as recorded in `STATUS.md`. GenEye keeps `3fa7075e`,
 SnapFlash keeps `1660f9fc`, and Symbio keeps Codex 0.154.0. Their package/native
 proof and publication are separately owned; Candle publication does not repin
 or activate them. Native Windows/MSVC remains primary; WSL2 is secondary,
@@ -155,4 +157,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-review | change=routed maintenance from the completed source release
+AI-edited: 2026-10-23T23:48:04-04:00 | agent=Codex/root | task=edge-handoff-closeout | change=correct adopted Edge graph and route the current storage prerequisite

@@ -21,31 +21,55 @@ were verified. Completed release proof is in
 - Why: Candle archive/API proof and consumer adoption do not prove the installed
   Q8/Nomic, RAG and recovery paths or final package attestation.
 - When: Candle repair/publication and Edge's four consumer lock adoptions are
-  complete. The `86e1eb10` qualification allowance is closed after first failure;
-  another attempt requires clean source/package, a fresh packet and exact approval.
+  complete. The `3512099d` packet `2a718d73` closed on admission; the later
+  `10e970ce` packet `2df06d3e` closed after storage failure. Another attempt
+  requires verified source/package, a fresh packet and exact approval.
 - Where: Edge owns its canonical/installed/aggregate gates; Candle compatibility
   owns the [ZIP contract](../fork-compat/ZIP_COMPATIBILITY.md) and this handoff.
-- How: Diagnose the nested canonical deadline before another native window.
-  Preserve the existing limits, source-bound failure receipts, all nine locks,
-  Q8/Nomic defaults, disabled GPT profiles and immutable release identities.
+- How: Edge's `R-ES-CORE-RELEASE-PREP-001` proves actual clean-setup temporary,
+  model and Cargo placement plus sufficient capacity through bounded model-free
+  fixtures. Preserve same-volume shared-cache identity/ownership, existing
+  limits, source-bound receipts, all nine locks, Q8/Nomic defaults, disabled GPT
+  profiles and immutable release identities. Renew exact-source canonical,
+  CPU/package and packet evidence; do not retry a closed allowance or discard
+  local owner edits and the held documentation patch to claim a clean candidate.
 - Done when: Existing Candle archive/model-loading, malformed-input, Clippy and
   native proof remains bound to its published source; Edge's four consumer
   graphs and audits pass, then its fresh package/native/installed and aggregate
   acceptance pass with cleanup. Local path proof alone cannot close this item.
-- Verification: Rechecked the exact packet and nine unchanged lock hashes; all
-  four Candle graphs use `38d90519`/ZIP 9.0.4. The October 22 run passed setup,
-  nine audits, GenAce 27+2, Harmony 2, both Clippy lanes and backend 1,110 tests
-  (three ignored). The nested verifier timed out at 1,800 seconds (exit 124)
-  during the next graph compilation; aggregate/controller exit 1. Calibration,
-  core sweep, installation and final aggregate validation were not reached.
-- Cleanup: Outer/aggregate Jobs empty with verified cleanup and no forced
-  cleanup; four owner PIDs absent, disposable checkout removed, hold released.
+- Verification: Nine lock hashes match the closed packet; all four Candle graphs
+  retain `38d90519`/ZIP 9.0.4. Local checkpoint `3512099d` passed clean canonical
+  verification (493 Python tests/seven skips, browser 16/16), CPU package and
+  16 packet controls. The browser owner/fail-fast/trace-retention repair passed
+  full nested and real failure/cleanup proof under unchanged limits. Native
+  admission then refused three Cargo processes and one rustc process; memory
+  and desktop checks passed. No native, calibration, core sweep, installed or
+  aggregate qualification ran for that candidate. Later checkpoint `10e970ce`
+  ran packet `2df06d3e` once: setup and nine Rust audits passed, followed by 27
+  GenAce backend conformance tests; API compilation then failed writing Windows
+  `full.rmeta` on C: (error 112; Cargo 101, handshake/controller 1). Its light
+  sweep ran Nomic work (11 real outputs, one missing asset, four gated); zero
+  positive-token-cap text requests, total model calls unmeasured. Calibration,
+  core/installed proof and final aggregate acceptance remain unrun.
+- Cleanup: The `3512099d` admission process exited; zero reservations/dispatches, no persistent
+  children or outer/aggregate Jobs, normal/installed roots absent, no foreign
+  process stops. The execution quiet hold was released; closed approval cannot
+  be resampled or reused. The later attempt also closed: all six Jobs empty,
+  three `vctip` helpers producer-terminated, owned temporary checkout removed,
+  all four quiet holds released and zero foreign process stops. Neither
+  allowance has reusable work.
 - Adoption boundary: ZIP publication and consumer pin/lock adoption are closed.
   Intervening GPT-OSS changes retain their separate experimental acceptance;
   the Q8/Nomic qualification does not activate or qualify GPT-OSS.
 - Evidence: Immutable Candle `D:/Compact_Evidence/candle/runs/zip-parent-20261017/publication.json`;
-  Edge `D:/Compact_Evidence/edgesymbio/runs/cargo-isolation-20261018/summary.json`,
-  section `native86Execution20261022`, plus its original bound terminal/Job/setup receipts.
+  published docs `edge86-docs-closeout-20261022/summary.json` in that Candle run
+  collection. Edge `D:/Compact_Evidence/edgesymbio/runs/cargo-isolation-20261018/`
+  retains `browser-review-cleanup-20261023/summary.json`,
+  `native-3512099d-20261023/summary.json` and
+  `native-10e970ce-20261023/summary.json`. This Candle documentation publication
+  is bound by `edge-handoff-closeout-20261023/summary.json` in the Candle run
+  collection after guarded helper success. Earlier failed allowances stay closed;
+  the original e9 browser traces remain unavailable.
 
 ## Deferred outside the MVP release
 
@@ -327,4 +351,4 @@ unstarted. That allowance is consumed and closed. See
 
 
 ---
-AI-edited: 2026-10-22T14:34:21-04:00 | agent=Codex/root | task=edge86-docs-closeout | change=bound reviewed qualification records to authorized guarded publication
+AI-edited: 2026-10-23T23:48:04-04:00 | agent=Codex/root | task=edge-handoff-closeout | change=retain acceptance and route storage preparation before a fresh packet
