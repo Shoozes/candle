@@ -44,6 +44,17 @@ paths. Exact clean-commit verification and the confirmed remote result belong
 to `publication.json` in the same run. Package/model execution, installation
 and activation remain held; this delivery does not repin consumers.
 
+The first guarded attempt at `d72b045b` passed the Rust/library/example and
+preceding model-free controls, then stopped at watcher arming before any push.
+The test observed a newly reserved empty JSON file before its armed record was
+written. Production already polls a parsed armed record; the focused test repair
+uses that same handshake at both startup sites. Seventeen native controls pass,
+including bounded empty/partial-record refusal and completed-record acceptance.
+The existing five-second arm, 15-second fixture and cleanup limits are unchanged.
+No production runtime or model path changed. This adds the already routed
+watcher test to the scoped delivery; the fresh guarded gate must pass before
+publication. Original failure evidence remains retained with the run.
+
 The registered proof run is
 `D:/Compact_Evidence/candle/runs/root-lock-security-20261025-c24a6353/`:
 `work-start.json`, `audit-verified-execution.json`, `audit-verified.json`,

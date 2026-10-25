@@ -41,6 +41,13 @@ overlay ownership passed. Candidate lock SHA-256 is
 This retained working-tree proof precedes publication; the guarded helper must
 rerun the required gate against the clean candidate commit.
 
+The first guarded attempt at `d72b045b` stopped before pushing when the
+model-free watcher test read its empty reservation as an armed record. The
+test now follows the existing production readiness handshake, retaining the
+five-second arm bound and original worker limits. All 17 focused native
+controls pass, including empty/partial JSON refusal. Runtime code is unchanged;
+the full guarded gate remains required for the repaired publication candidate.
+
 GenEye's exact clean package source `3200310fba0d0c81ed9fd5ab8acff0e78c0dffa1`
 and Candle `81e1aa28` passed reviewed packet `caa0c311` once on October 25:
 CPU t01/i01 and cleanup preceded CUDA t01/i01. Actual work was two loads,
@@ -130,7 +137,8 @@ The eight incoming handoff-document edits are preserved. This scoped delivery ad
 the compatible Cargo.lock repair, DEPENDENCY_SECURITY, compatibility ownership,
 a focused Summary Bank route and current status/TODO/history updates. Runtime
 source and manifests, frozen inputs and release bytes remain unchanged. Only the
-13 reviewed task paths may be committed; publication requires clean main.
+14 reviewed task paths may be committed, including the watcher-test repair;
+publication requires clean main.
 Proof is retained under
 `D:/Compact_Evidence/candle/runs/root-lock-security-20261025-c24a6353/`.
 

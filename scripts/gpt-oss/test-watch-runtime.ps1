@@ -6,7 +6,34 @@ $root=Join-Path $repo ('artifacts\gpt-oss\watcher-fixture-'+[guid]::NewGuid().To
 New-Item -ItemType Directory -Path $root|Out-Null
 $watcher=$null;$worker=$null;$passed=0;$success=$false
 function Assert-WatcherTest([bool]$Condition,[string]$Message){if(-not $Condition){throw "Watcher test failed: $Message"};$script:passed++}
+function Wait-WatcherTestArmed {
+    param([Diagnostics.Process]$Process,[string]$Path,[ValidateRange(1,5000)][int]$TimeoutMilliseconds=5000)
+    $wait=[Diagnostics.Stopwatch]::StartNew()
+    while($wait.Elapsed.TotalMilliseconds -lt $TimeoutMilliseconds) {
+        $Process.Refresh();if($Process.HasExited){throw 'Watcher exited before arming'}
+        if(Test-Path -LiteralPath $Path -PathType Leaf) {
+            # The create-new reservation may still be empty or partially written.
+            try {
+                $state=Get-Content -LiteralPath $Path -Raw|ConvertFrom-Json -ErrorAction Stop
+                if($null -ne $state -and $state.schema -eq 'candle.gpt-oss.runtime-observation.v1' -and $state.status -eq 'armed'){return $state}
+            } catch {}
+        }
+        Start-Sleep -Milliseconds 50
+    }
+    throw 'Watcher did not arm within bound'
+}
 try {
+    $readinessFile=Join-Path $root 'readiness.json';$readinessProcess=Get-Process -Id $PID
+    try {
+        foreach($pending in @('', '{"schema":')) {
+            [IO.File]::WriteAllText($readinessFile,$pending,[Text.UTF8Encoding]::new($false))
+            $caught=$false;try{Wait-WatcherTestArmed $readinessProcess $readinessFile 100|Out-Null}catch{$caught=$_.Exception.Message -eq 'Watcher did not arm within bound'}
+            Assert-WatcherTest $caught 'empty or partial reservation cannot prove arming'
+        }
+        Write-SessionProfileJson $readinessFile ([ordered]@{schema='candle.gpt-oss.runtime-observation.v1';status='armed'})
+        $ready=Wait-WatcherTestArmed $readinessProcess $readinessFile 100
+        Assert-WatcherTest ($ready.status -eq 'armed') 'completed reservation proves arming'
+    } finally {$readinessProcess.Dispose()}
     $shell=(Get-Command pwsh).Source;$source='a'*40
     $output=Join-Path $root 'fake-output';$packetFile=Join-Path $root 'packet input.json';$observation=Join-Path $root 'observation.json'
     $lane=[pscustomobject]@{backend='cpu';binary=[pscustomobject]@{path=$shell};required_modules=@()}
@@ -19,10 +46,8 @@ try {
     $watcher=Start-Process $shell -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $root 'watcher.stdout.log') -RedirectStandardError (Join-Path $root 'watcher.stderr.log')
     $owner=[ordered]@{owner='model-free watcher test';pid=$watcher.Id;creation_utc=$watcher.StartTime.ToUniversalTime().ToString('o');executable=$watcher.Path;intended_lifetime='15-second passive fixture';endpoints=@();output_root=$root;shutdown='Stop exact owned watcher and fake worker handles'}
     Write-SessionProfileJson (Join-Path $root 'owner.json') $owner
-    $wait=[Diagnostics.Stopwatch]::StartNew()
-    while(-not (Test-Path -LiteralPath $observation) -and $wait.Elapsed.TotalSeconds -lt 5){Start-Sleep -Milliseconds 50}
-    Assert-WatcherTest (Test-Path -LiteralPath $observation) 'watcher arms before fake lane exists'
-    $initial=Get-Content $observation -Raw|ConvertFrom-Json
+    $initial=Wait-WatcherTestArmed $watcher $observation
+    Assert-WatcherTest ($initial.schema -eq 'candle.gpt-oss.runtime-observation.v1') 'watcher arms before fake lane exists'
     Assert-WatcherTest ($initial.status -eq 'armed') 'armed record'
     $fakeScript=Join-Path $root 'fake-worker.ps1'
     [IO.File]::WriteAllText($fakeScript,@'
@@ -72,9 +97,8 @@ Start-Sleep -Seconds 4
     $watcher=Start-Process $shell -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$failedEncoded) -PassThru -WindowStyle Hidden `
         -RedirectStandardOutput (Join-Path $root 'failed.stdout.log') -RedirectStandardError (Join-Path $root 'failed.stderr.log')
     $failedIdentity=Get-SessionProfileOwnerIdentity $watcher.Id $watcher.StartTime $shell
-    $armWait=[Diagnostics.Stopwatch]::StartNew()
-    while(-not (Test-Path -LiteralPath $failedObservation) -and $armWait.Elapsed.TotalSeconds -lt 5){Start-Sleep -Milliseconds 50}
-    Assert-WatcherTest (Test-Path -LiteralPath $failedObservation) 'failure watcher arms before lane exists'
+    $failedArmed=Wait-WatcherTestArmed $watcher $failedObservation
+    Assert-WatcherTest ($failedArmed.status -eq 'armed') 'failure watcher arms before lane exists'
     New-Item -ItemType Directory -Path (Join-Path $failedOutput 'cpu')|Out-Null
     Write-SessionProfileJson (Join-Path $failedOutput 'cpu/terminal.json') ([ordered]@{status='failed';error='authored GPU rejection'})
     $failedStop=Stop-SessionProfileController $watcher -Identity $failedIdentity -GraceMilliseconds 5000 -PassThru
