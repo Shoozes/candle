@@ -36,6 +36,22 @@ use std::path::Path;
 const NPY_MAGIC_STRING: &[u8] = b"\x93NUMPY";
 const NPY_SUFFIX: &str = ".npy";
 
+// ZIP 9 indexes raw names. Tensor readers also accept decoded legacy CP437 keys.
+pub(crate) fn zip_index_for_name<R: Read + std::io::Seek>(
+    archive: &zip::ZipArchive<R>,
+    name: &str,
+) -> zip::result::ZipResult<usize> {
+    if let Some(index) = archive.index_for_name(name) {
+        return Ok(index);
+    }
+    for (index, candidate) in archive.file_names().enumerate() {
+        if candidate?.as_ref() == name {
+            return Ok(index);
+        }
+    }
+    Err(zip::result::ZipError::FileNotFound)
+}
+
 fn read_header<R: Read>(reader: &mut R) -> Result<String> {
     let mut magic_string = vec![0u8; NPY_MAGIC_STRING.len()];
     reader.read_exact(&mut magic_string)?;
@@ -286,8 +302,8 @@ impl Tensor {
         for i in 0..zip.len() {
             let mut reader = zip.by_index(i)?;
             let name = {
-                let name = reader.name();
-                name.strip_suffix(NPY_SUFFIX).unwrap_or(name).to_owned()
+                let name = reader.name()?;
+                name.strip_suffix(NPY_SUFFIX).unwrap_or(&name).to_owned()
             };
             let header = read_header(&mut reader)?;
             let header = Header::parse(&header)?;
@@ -306,7 +322,8 @@ impl Tensor {
         let mut zip = zip::ZipArchive::new(zip_reader)?;
         let mut result = vec![];
         for name in names.iter() {
-            let mut reader = match zip.by_name(&format!("{name}{NPY_SUFFIX}")) {
+            let index = zip_index_for_name(&zip, &format!("{name}{NPY_SUFFIX}"));
+            let mut reader = match index.and_then(|index| zip.by_index(index)) {
                 Ok(reader) => reader,
                 Err(_) => Err(Error::Npy(format!(
                     "no array for {name} in {:?}",
@@ -383,8 +400,8 @@ impl NpzTensors {
         for i in 0..zip.len() {
             let file = zip.by_index(i)?;
             let name = {
-                let name = file.name();
-                name.strip_suffix(NPY_SUFFIX).unwrap_or(name).to_owned()
+                let name = file.name()?;
+                name.strip_suffix(NPY_SUFFIX).unwrap_or(&name).to_owned()
             };
             index_per_name.insert(name, i);
         }
