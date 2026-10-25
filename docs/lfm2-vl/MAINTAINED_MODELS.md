@@ -1,5 +1,13 @@
 # Maintained-model implementation, 2026-10-12
 
+These are retained October 12 implementation/parity records. GenEye pin and
+pending-work statements below describe that historical cohort. Current GenEye
+packages bind `3200310f` and Candle `81e1aa28`; their finite CPU/CUDA d1 proof
+passed under the closed `caa0c311` allowance. See
+[current consumer qualification](D1_LOADING.md#geneye-consumer-qualification)
+for exact source, evidence and remaining release gates. The t01 receipts below
+remain bound to their original inputs and do not supply new image or LTS proof.
+
 ## Guarded proof-record closeout
 
 The owner selected Closeout/Publish for the five parity/review documents on
@@ -243,4 +251,4 @@ fails resolving cached `accelerate-src` before compilation. No dependency
 fetch or hosted substitute was used. Native Windows/MSVC is the primary lane.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=d1-proof-records-publish | change=closed out scoped parity records while preserving original qualification identities
+AI-edited: 2026-10-25 | agent=Codex/root | task=review-recheck-cleanup | change=label retained maintained-model records and route current consumer proof

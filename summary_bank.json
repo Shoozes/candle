@@ -92,6 +92,19 @@
         "docs/fork-compat/MOD_MANIFEST.md"
       ]
     },
+    "fork__dependency_security": {
+      "description": "Compatible root-lock HTTP/TLS/certificate/Tokio security patches, exact advisory/database scope, Hub acquisition callers, visible maintenance notices and native CPU regression proof; frozen consumer revisions remain independent.",
+      "status": "active",
+      "paths": [
+        "Cargo.lock",
+        "Cargo.toml",
+        "candle-datasets/Cargo.toml",
+        "candle-datasets/src/hub.rs",
+        "candle-examples/Cargo.toml",
+        "candle-examples/src/lib.rs",
+        "docs/fork-compat/DEPENDENCY_SECURITY.md"
+      ]
+    },
     "fork_compatibility": {
       "description": "Retained upstream ug APIs, onig selection, and exact fork-delta ownership.",
       "status": "active",

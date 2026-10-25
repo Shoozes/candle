@@ -111,6 +111,9 @@ The compatibility overlay owns the ZIP workspace/lock dependency hunks and
 its new focused Summary Bank route. NPZ/PyTorch filename adaptation and archive
 regressions are exclusively compatibility-owned; model math and consumer
 qualification retain their existing owners.
+It also owns compatible root-lock HTTP/TLS/certificate/Tokio security patch
+hunks and `docs/fork-compat/DEPENDENCY_SECURITY.md`. Frozen consumer revisions
+and release receipts are not changed by current root-lock maintenance.
 
 ## Shared-path registry
 
@@ -118,7 +121,7 @@ The GPT-OSS overlay owns the characterization and capacity example/control addit
 `.tools/verify-before-push.ps1`; existing LFM2-VL verification steps retain their
 ownership. Its Summary Bank edits route the new harness and move current GPT
 status out of the bounded synthetic-oracle group. The native live inventory is
-330 union paths across five overlays, with 31 shared paths. GPT-OSS owns the
+331 union paths across five overlays, with 31 shared paths. GPT-OSS owns the
 optional stop-event and regression hunks in the shared bounded Job helper/tests;
 LFM2-VL retains existing execution/limits. Frozen inventories
 and historical release identities are unchanged. LFM2-VL and diffusion jointly
@@ -211,4 +214,4 @@ release. Each consumer keeps the dependency tuple it actually qualified;
 publishing a newer Candle source snapshot does not require a consumer repin.
 
 ---
-AI-edited: 2026-10-17T16:52:42-04:00 | agent=Codex/root | task=zip-parent-repair | change=recorded portable ZIP compatibility and local proof boundary
+AI-edited: 2026-10-25 | agent=Codex/root | task=root-lock-security | change=register compatible security ownership and the additive live documentation path

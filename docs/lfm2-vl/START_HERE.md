@@ -38,8 +38,12 @@ automatically after release. See `D1_LOADING.md`, `MAINTAINED_MODELS.md`,
 Consumers keep their graphs independently: Edge has adopted Candle `38d90519`
 and ZIP 9.0.4, with Q8/Nomic defaults and disabled GPT profiles. Its installed
 qualification remains open; bounded storage preparation precedes a fresh native
-packet as recorded in `STATUS.md`. GenEye keeps `3fa7075e`,
-SnapFlash keeps `1660f9fc`, and Symbio keeps Codex 0.154.0. Their package/native
+packet as recorded in `STATUS.md`. GenEye's corrected d1 packages use source
+`3200310f` and the published ZIP-only Candle `81e1aa28`; their one-shot CPU/CUDA
+qualification passed under packet `caa0c311`. Full LTS and ordinary VLM proof
+remain separate; [D1_LOADING.md](D1_LOADING.md#geneye-consumer-qualification)
+owns the exact cohort and limitations. SnapFlash keeps `1660f9fc`, and Symbio
+keeps Codex 0.154.0. Their package/native
 proof and publication are separately owned; Candle publication does not repin
 or activate them. Native Windows/MSVC remains primary; WSL2 is secondary,
 with missing offline dependencies reported rather than fetched.
@@ -81,8 +85,10 @@ cargo check --locked --offline -p candle-examples --example lfm2-vl
 ```
 
 Then replay the portable baseline in WSL when its local cache is available.
-The installed distro observed on 2026-10-08 is `Codex-Compat`; its current
-offline cache lacks `accelerate-src`, so this optional lane remains blocked:
+The historical 2026-10-08 replay selected `Codex-Compat` and could not resolve
+offline `accelerate-src`. The command below records that lane; it does not
+establish current distro/cache readiness. GenEye's later native WSL2 software
+proof belongs to its own source cohort and does not replace a Candle replay:
 
 ```powershell
 wsl.exe -d Codex-Compat --cd /mnt/c/DevStuff/candle bash -lc "CARGO_NET_OFFLINE=true CARGO_TARGET_DIR=/mnt/c/DevStuff/candle/artifacts/wsl-target bash scripts/lfm2-vl/verify-baseline.sh"
@@ -157,4 +163,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-10-23T23:48:04-04:00 | agent=Codex/root | task=edge-handoff-closeout | change=correct adopted Edge graph and route the current storage prerequisite
+AI-edited: 2026-10-25 | agent=Codex/root | task=review-recheck-cleanup | change=route the qualified GenEye cohort and date the historical WSL limitation

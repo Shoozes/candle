@@ -21,9 +21,13 @@ The ZIP 9 parent requirement and NPZ/PyTorch filename adaptation are also owned
 here; see [ZIP compatibility](ZIP_COMPATIBILITY.md). Local proof does not
 qualify a consumer repin or unrelated GPT-OSS changes.
 
+Compatible root-lock HTTP/TLS/certificate security patches are owned here;
+see [dependency security](DEPENDENCY_SECURITY.md). These lock hunks do not
+change model source, consumer pins or the frozen ZIP-only backport.
+
 ## Owned paths
 
-Current inventory: 25 paths, with 15 fork-origin modifications and 10 additions
+Current inventory: 26 paths, with 15 fork-origin modifications and 11 additions
 relative to the pinned upstream base. Shared paths retain their registered owners.
 
 - `candle-core/src/quantized/cpu_matmul_mode.rs`
@@ -33,6 +37,7 @@ relative to the pinned upstream base. Shared paths retain their registered owner
 - `candle-core/tests/quantized_tests.rs`
 - `docs/fork-compat/MOD_MANIFEST.md`
 - `docs/fork-compat/ZIP_COMPATIBILITY.md`
+- `docs/fork-compat/DEPENDENCY_SECURITY.md`
 - `candle-core/src/npy.rs`
 - `candle-core/src/pickle.rs`
 - `candle-core/tests/archive_tests.rs`
@@ -65,4 +70,4 @@ undersized-output panic to a controlled error and prove deterministic mode
 parity. Qwen rounding and LFM2-VL native Q8/F32 hunks retain their owners.
 
 ---
-AI-edited: 2026-10-17T16:52:42-04:00 | agent=Codex/root | task=zip-parent-repair | change=recorded portable ZIP compatibility and local proof boundary
+AI-edited: 2026-10-25 | agent=Codex/root | task=root-lock-security | change=own compatible dependency security hunks and their current contract

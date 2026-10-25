@@ -2,6 +2,105 @@
 
 Dated entries are historical. Current state: `STATUS.md`; active work: `TODO.md`. New maintained-model work: [2026-10-12](MAINTAINED_MODELS.md).
 
+## 2026-10-25 - Compatible root-lock security closure
+
+Dropin/Work selected the eight retained workspace vulnerability records at
+published base `f1b002c3733da283c57aebddd317346f5751330b` plus the existing
+eight-document cleanup. The incoming patch and file identities are preserved
+in the named run. Six cached compatible patches update h2 to 0.4.16, rustls
+to 0.23.46, rustls-webpki to 0.103.16, both root packages to 1.0.10 and Tokio
+to 1.53.3. The last closes the existing Unix I/O-safety warning exposed during
+the full audit. No manifests/features or runtime code changed. Only these six
+version/checksum selections and the required webpki wrapper edge differ;
+unrelated compatible resolver edge drift was restored and the locked graph
+was verified stable. The lock retains 805 packages.
+
+Cargo-audit 0.22.2 with unchanged RustSec DB
+`21d909e4c8bd4e14c7aea58bf980c881a0053ab1` reports zero vulnerabilities and
+zero unsoundness warnings, without ignores, target filters or network fetch.
+Five unchanged unmaintained-package notices remain visible. Candidate lock
+SHA-256 is `b7c0c561aaf0b193909317f41cb88910c04f7257d8fea4a71fa67708c836e735`.
+The [security contract](../fork-compat/DEPENDENCY_SECURITY.md) records patched
+advisories, acquisition callers, remaining notices and exact proof scope.
+
+The unmodified native gate passed in 305,512 ms on Rust 1.97.1/MSVC with
+two build jobs and incremental compilation disabled: 585 Rust tests passed,
+14 ignored; both PowerShell hosts passed 197 release assertions. Library and
+example checks, strict Clippy, model-free controls, formatting, module layout,
+routing, overlay ownership and whitespace passed. Supplemental datasets tests
+passed one unit test and two doctests; they call the Hub, and their request/cache
+activity was not instrumented. They are not deterministic offline proof and
+were not repeated. No Candle WSL or production-model run was performed.
+
+The completed security item leaves TODO. The compatibility manifest now owns
+26 paths (15 modifications/11 additions), and the five-overlay union contains
+331 paths with 31 shared paths. The focused dependency-security route remains
+within the existing context budget. Original GenEye proof, closed allowances,
+published `81e1aa28`, package inputs and the other incoming handoff edits are
+preserved. At the Work closeout, changes remained local and uncommitted;
+package assembly, models, installation, activation and publication were held.
+The owner subsequently selected Closeout/Publish for the 13 reviewed Candle
+paths. Exact clean-commit verification and the confirmed remote result belong
+to `publication.json` in the same run. Package/model execution, installation
+and activation remain held; this delivery does not repin consumers.
+
+The registered proof run is
+`D:/Compact_Evidence/candle/runs/root-lock-security-20261025-c24a6353/`:
+`work-start.json`, `audit-verified-execution.json`, `audit-verified.json`,
+`native-gate.log` and `summary.json` retain exact source/command/runtime/exit
+bindings and the incoming-document recovery patch. Existing Candle target
+cache remains under its owner; no bulk cleanup or other-repository edit occurred.
+
+## 2026-10-25 - GenEye ZIP-only backport and finite package qualification
+
+The owner-authorized Candle ZIP-only source commit
+`81e1aa282922110569176464f86f54640b8daed5`, sole parent
+`3fa7075e536e66b024d14cee3f6f423d81d67162`, changes exactly Cargo.toml,
+Cargo.lock, npy.rs, pickle.rs and archive_tests.rs. Published integration
+`f1b002c3733da283c57aebddd317346f5751330b` preserves the preceding main tree.
+The guarded locked/offline native gate passed 585 Rust tests (14 ignored) and
+197 release assertions on each PowerShell host. Exact publication proof remains
+in `D:/Compact_Evidence/candle/runs/geneye-zip-backport-20261024-27d9b8c1/publication.json`;
+these are retained publication results, not new tests in this documentation task.
+
+GenEye repinned its six-package worker graph and coherent admission contracts
+to `81e1aa28`. Its separately published clean build source is
+`3200310fba0d0c81ed9fd5ab8acff0e78c0dffa1`. The corrected sealed CPU/CUDA
+packages and private inventories retain their exact model/DLL inputs. Review
+closed the stale-admission defect in a replacement controller, then corrected
+the replay journal/owner locators in a fresh immutable packet. Its 37 model-free
+tests and guarded seven-module/one-recipe import audit with five negatives
+passed before execution; superseded packets remain unchanged.
+
+The owner then authorized one attempt for 33,563-byte packet SHA-256
+`caa0c31121d2a8a5d49e30aad7be5ef59ee95034c79e3ecd6b53ec39620c7d1f`.
+Fresh admission passed with no competing workloads; receipt age at consumption
+was 2.898039 seconds. The Windows Node controller exited 0 after 57,074 ms.
+CPU t01/i01 and cleanup preceded CUDA t01/i01. Work was two loads, four requests,
+twelve language forwards, two vision forwards, 3,470 input tokens and zero
+output tokens/retries. Independent same-device numerical replay had maximum
+answer delta zero. Ordering, native Q8 dispatch, shared Q8Rows storage and
+all five owned process releases passed, with no owned listener remaining.
+
+The allowance is consumed and closed. All eight original criteria, frozen
+inputs and twelve intake owner files were preserved. The exact closeout is
+[summary.json](D:/Compact_Evidence/GenEye/runs/d1-corrected-packages-3200310f-20261025-cfbcd3fc/attempt-caa0c311/summary.json),
+SHA-256 `0e943fe6324b41a6fd4d62c775b56f9d3297afef44742bfa74142e6485fe28fe`;
+its terminal is SHA-256 `bc404b2caaa486f20c916b14d2ee74b5f21b7a19bf2cb07dc29c5e96bf8cc7cf`.
+This establishes the finite private q8 d1 cohort. Ordinary CUDA VLM retains
+its dense policy and still needs separate qualification. Image accuracy/calibration,
+caller usefulness, full LTS, installation and activation are not established
+by four requests.
+
+Read-only Review/Recheck then selected an eight-document Candle cleanup:
+current source/pin/proof statements are reconciled, retained October 11/12
+records are explicitly historical, and completed finite work leaves TODO.
+Current main's lock matches the retained audited input and still has eight
+non-ZIP findings at RustSec DB `21d909e4`; root-lock security closure becomes
+the next Candle-owned batch. GenEye's remaining release evidence stays with
+GenEye. Runtime/dependency/route/release bytes remain unchanged. Builds,
+further model runs, installation, activation, commit and push are held.
+
 ## 2026-10-14 - MVP maintenance closeout
 
 The owner selected Closeout + Publish for the reviewed nine-file maintenance
@@ -3332,4 +3431,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=gpt-oss-prefill-review | change=rechecked published fixes and scoped model-free prefill attribution
+AI-edited: 2026-10-25 | agent=Codex/root | task=root-lock-security-publish | change=retain security and consumer proof while recording scoped publication authority

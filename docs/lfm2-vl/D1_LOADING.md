@@ -257,6 +257,47 @@ only after helper success. Runtime source and numerical receipts stay bound to
 
 ## GenEye consumer qualification
 
+### Current corrected-package cohort, 2026-10-25
+
+The exact clean GenEye build source is
+`3200310fba0d0c81ed9fd5ab8acff0e78c0dffa1`; all six worker Candle packages
+resolve to ZIP-only `81e1aa282922110569176464f86f54640b8daed5` and ZIP 9.0.4.
+Both sealed CPU/CUDA packages and isolated private inventories reuse the verified
+model bundle and original DLLs. Ordinary CUDA VLM metadata remains dense;
+private d1 execution explicitly selects q8 and shared Q8Rows embeddings.
+
+The 33,563-byte reviewed packet is SHA-256
+`caa0c31121d2a8a5d49e30aad7be5ef59ee95034c79e3ecd6b53ec39620c7d1f`.
+Fresh quiet/resource admission passed; its receipt was 2.898039 seconds old at
+allowance consumption, within the unchanged 60-second contract. One native
+Windows controller attempt exited 0 after 57,074 ms. CPU t01/i01 passed and
+released before CUDA t01/i01. Actual work was two loads, four requests, twelve
+language forwards, two vision forwards, 3,470 input tokens and zero output
+tokens/retries. Numerical replay against each same-device producer had maximum
+answer delta zero. Semantic/lexical order, 501/638 native Q8 dispatches per case,
+278,528,000 shared embedding bytes with zero extra lookup bytes, counters and
+owned cleanup passed. All five owned processes exited; no owned listener remained.
+
+The allowance is consumed and closed. Frozen inputs, twelve intake owner files
+and all eight original criteria were preserved. Exact command/runtime/exit,
+request associations, admission, marker and replay are bound by the
+[terminal closeout](D:/Compact_Evidence/GenEye/runs/d1-corrected-packages-3200310f-20261025-cfbcd3fc/attempt-caa0c311/summary.json).
+Its terminal receipt is SHA-256
+`bc404b2caaa486f20c916b14d2ee74b5f21b7a19bf2cb07dc29c5e96bf8cc7cf`.
+
+This proves the finite private d1 package cohort. The retained image-case
+accuracy limitation remains; four matching requests do not establish accuracy
+or calibration. Full exact-candidate LTS evidence, ordinary VLM, caller usefulness
+and installation/activation remain separately owned. Builds, further model
+runs, installation, activation and push are held. Earlier allowances cannot be
+reused, and later documentation heads do not replace build source `3200310f`.
+
+### Historical 2026-10-11 cohort
+
+The following records retain their original source identities and then-current
+pending work. The current corrected-package result above supersedes that work;
+these paragraphs do not reopen a historical allowance or change its receipt.
+
 GenEye's local worker selects the additive Q8Rows constructor at Candle
 `3fa7075e536e66b024d14cee3f6f423d81d67162`. Its lock and packaging policy bind
 that revision. Private CPU/CUDA workers report shared 278,528,000-byte Q8 storage
@@ -292,4 +333,4 @@ packet/package/terminal objects; all match. The terminal receipt is SHA-256
 `56a97b9607e187e56636b3d65bb8e4e43135d35cd40ff18afbf5ac9fe3efdaa7`.
 
 ---
-AI-edited: 2026-10-12 | agent=Codex/root | model=unknown | effort=unknown | task=d1-proof-records-publish | change=preserved qualified source identity through the documentation closeout
+AI-edited: 2026-10-25 | agent=Codex/root | task=review-recheck-cleanup | change=bind the qualified corrected package separately from historical and LTS proof

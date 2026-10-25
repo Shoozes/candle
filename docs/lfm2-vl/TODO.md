@@ -187,36 +187,29 @@ portability, signing and LTS remain separate.
   `git diff --check`, and the bounded external oracle/Candle receipt audit.
 
 
-### GenEye-owned Q8Rows portable handoff
+### GenEye-owned release follow-up
 
-Current boundary (2026-10-11): GenEye's Q8Rows adoption is published at
-`8e97e33`, with package progress records at `0d552b0`; Candle remains pinned to
-`3fa7075e`. Clean CPU/CUDA candidates pass model-free package and process-owner
-checks. The new package's numerical proof stopped at CPU owner admission before
-worker startup: zero model loads, requests or forwards, and all four slots
-unstarted. That allowance is consumed and closed. See
-[the source-bound package records](D1_LOADING.md#geneye-consumer-qualification).
+The finite corrected-package item is complete; its retained result belongs in
+[HISTORY](HISTORY.md#2026-10-25---geneye-zip-only-backport-and-finite-package-qualification)
+and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
-- What: Finish fresh bounded CPU/CUDA numerical qualification of the clean
-  portable candidate at the unchanged Candle pin. GenEye owns this remaining
-  consumer gate.
-- Why: The original four-request private-worker proof and model-free package
-  checks do not qualify the new package's numerical execution.
-- When: After a quiet admission window and explicit approval of a newly reviewed
-  finite proof packet. All earlier allowances remain closed.
-- Where: GenEye's active `docs/TODO.md`, its clean `q8rows-portable` checkout and
-  retained `D:\GenEye-evidence\candle-q8rows-portable-20261011` records.
-- How: Revalidate source, lock, packages, binaries, DLLs, models and frozen
-  inputs; prepare the fresh finite allowance before execution. Use the existing
-  bounded Job and worker/request limits, CPU first, CUDA only after CPU passes,
-  stop on any failure and verify process release. Preserve shared workloads,
-  existing receipts and the unchanged pin. LTS activation stays separate.
-- Done when: Exact published source, Candle lock/worker/package identities and
-  CPU/CUDA text/image numerical, native-dispatch, Q8Rows storage, counters,
-  ordering and cleanup receipts agree at the admitted bounds. Existing consumer
-  proof keeps its original source and image-case quality limitation.
-- Verification: The freshly admitted package proof and identity/process-release
-  recheck. Original numerical and model-free records remain explicitly separate.
+- What: GenEye reconciles exact-candidate LTS evidence and specifies the missing
+  ordinary VLM qualification. This is consumer release work, not a Candle
+  implementation blocker.
+- Why: Finite private q8 d1 proof does not establish ordinary dense CUDA VLM,
+  general accuracy, caller usefulness, installation or activation readiness.
+- When: Read-only evidence scoping may proceed. Further model work, builds,
+  installation, activation and push remain held; closed allowances stay closed.
+- Where: GenEye's active `docs/TODO.md` and exact source `3200310f` package
+  records under `D:/Compact_Evidence/GenEye/runs/d1-corrected-packages-3200310f-20261025-cfbcd3fc/`.
+- How: Preserve Candle `81e1aa28`, sealed CPU/CUDA packages, private inventories,
+  model/DLL inputs and original limits. Keep private q8 d1, ordinary CUDA dense
+  VLM and historical proofs separate. Do not rerun the completed finite gate.
+- Done when: A source-bound gap inventory names each missing LTS/ordinary-VLM
+  criterion, its owner and smallest later proof packet, with no implied runtime
+  or activation authority. Actual release acceptance keeps GenEye's existing gates.
+- Verification: Read existing evidence and schemas; no execution, installation
+  or saved passing receipt may substitute for missing qualification.
 
 
 ### Conditional maintained-model qualification — Qwen recovery/projections
@@ -351,4 +344,4 @@ unstarted. That allowance is consumed and closed. See
 
 
 ---
-AI-edited: 2026-10-23T23:48:04-04:00 | agent=Codex/root | task=edge-handoff-closeout | change=retain acceptance and route storage preparation before a fresh packet
+AI-edited: 2026-10-25 | agent=Codex/root | task=root-lock-security-publish | change=retain remaining gates and repair six damaged heading separators

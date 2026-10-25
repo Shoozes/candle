@@ -149,5 +149,32 @@ are recorded after helper success in
 Consumer acceptance and later model/GPU, tag or release work retain their
 separate approval boundaries.
 
+## GenEye ZIP-only backport and consumer qualification
+
+Published `81e1aa282922110569176464f86f54640b8daed5` has sole parent
+`3fa7075e536e66b024d14cee3f6f423d81d67162`. Its five-file scope is Cargo.toml,
+Cargo.lock, the NPZ/PyTorch readers and archive tests. This carries the same
+ZIP 9 compatibility repair without importing intervening overlay work into
+GenEye's frozen lineage. Published main integration
+`f1b002c3733da283c57aebddd317346f5751330b` preserves the preceding main file tree.
+The exact source/parent/tree, guarded gate and remote confirmation are retained in
+`D:/Compact_Evidence/candle/runs/geneye-zip-backport-20261024-27d9b8c1/publication.json`.
+
+GenEye's clean `3200310f` source resolves all six Candle packages to `81e1aa28`.
+Its exact sealed CPU/CUDA packages passed the separately admitted `caa0c311`
+finite private d1 proof. [D1_LOADING](../lfm2-vl/D1_LOADING.md#geneye-consumer-qualification)
+owns the numerical/work/cleanup scope, closed allowance and remaining release
+gates. Ordinary CUDA dense VLM and LTS activation are separate from private q8 d1.
+
+At review intake, published Candle main's lock matched the backport's lock byte for byte. The retained
+audit at DB `21d909e4` closes ZIP findings but retains eight findings in h2,
+rustls and certificate-root dependencies. Consumer lock audits do not establish
+a clean producer workspace audit. The independent local batch is now recorded
+in [completed security work](../lfm2-vl/HISTORY.md#2026-10-25---compatible-root-lock-security-closure);
+the older audit counts above retain their original database scope. The
+compatible repair and full-lock audit are recorded in
+[dependency security](DEPENDENCY_SECURITY.md); the published ZIP-only source
+and its original audit remain unchanged.
+
 ---
-AI-edited: 2026-10-23T23:48:04-04:00 | agent=Codex/root | task=edge-handoff-closeout | change=preserve ZIP delivery and reconcile the later closed consumer attempt
+AI-edited: 2026-10-25 | agent=Codex/root | task=root-lock-security | change=preserve the published ZIP cohort and route current root-lock security work

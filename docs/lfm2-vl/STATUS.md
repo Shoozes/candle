@@ -2,34 +2,55 @@
 
 ## Current phase and baseline
 
-Published ZIP parent repair; Edge storage preparation and consumer qualification
-remain open. Candle's preceding published documentation baseline is
-`efe80886332ac5e5893370490cf46047173a8c75`; its guarded publication and native
-gate are recorded in
-`D:/Compact_Evidence/candle/runs/edge86-docs-closeout-20261022/summary.json`.
-The separately adopted ZIP implementation baseline remains
-`38d90519f8ed10ddbbe160e5482b0d0089efbaad`, tree
-`b6f5c690dc8a44047bdff2d1a0304cad091f2f98`, published through the guarded
-helper. Its immutable receipt is
-`D:/Compact_Evidence/candle/runs/zip-parent-20261017/publication.json`.
+This source snapshot closes compatible root-lock security maintenance from
+published baseline `f1b002c3733da283c57aebddd317346f5751330b`. The exact clean
+commit/tree and guarded publication result belong to
+`D:/Compact_Evidence/candle/runs/root-lock-security-20261025-c24a6353/publication.json`.
+The reviewed ZIP-only backport `81e1aa282922110569176464f86f54640b8daed5`
+has sole parent `3fa7075e536e66b024d14cee3f6f423d81d67162`; its non-force
+integration preserves the preceding main file tree. Exact source, integration,
+native gate and remote confirmation are retained in
+`D:/Compact_Evidence/candle/runs/geneye-zip-backport-20261024-27d9b8c1/publication.json`.
+GenEye's corrected finite d1 package qualification is complete at that pin.
+Edge's independently adopted ZIP baseline remains
+`38d90519f8ed10ddbbe160e5482b0d0089efbaad`; its storage preparation and
+installed/aggregate acceptance remain under Edge ownership.
 Pinned upstream remains `c68b24997319b8d76e5a4e775dab197c7f26322a`;
 released 0.2.0 tag/assets remain at `9a7c65c2ebca67e7997ae1a73b652e38d0a3781f`.
 
 ## Last green verification and proven behavior
 
-The source-bound October 22 Candle publication gate passed 585 Rust tests
+The source-bound October 24 Candle publication gate at `f1b002c3` passed 585 Rust tests
 (14 ignored) and 197 release assertions on each PowerShell host, with native
 formatting, locked/offline checks, Clippy and documentation gates. The October
 17 ZIP repair separately retains its 14 focused archive tests and archive
 Clippy proof; those tests are included in its native total.
 ZIP 9.0.4 retains disabled default features and decoded CP437 NPZ/PyTorch keys.
 The independent local consumer built all four crates and loaded tiny NPZ/PTH
-fixtures without an override. These are historical source-bound results;
-this documentation update does not relabel them as new runtime proof. This
-closeout's clean candidate, native gate and confirmed remote identity belong to
-`D:/Compact_Evidence/candle/runs/edge-handoff-closeout-20261023/summary.json`,
-written after the guarded helper completes. Summary Bank routes already cover
-the four affected documents and passed the current baseline verifier unchanged.
+fixtures without an override. These are retained source-bound results;
+this documentation cleanup does not relabel them as new runtime proof.
+The earlier Edge documentation delivery remains bound to
+`D:/Compact_Evidence/candle/runs/edge-handoff-closeout-20261023/summary.json`.
+
+The local root-lock security candidate passed the unmodified native gate on
+October 25 with Rust 1.97.1/MSVC: 585 Rust tests passed, 14 ignored, and 197
+release assertions passed on each PowerShell host. Four-library and example
+checks, strict Clippy, model-free controls, formatting, layout/routing and
+overlay ownership passed. Candidate lock SHA-256 is
+`b7c0c561aaf0b193909317f41cb88910c04f7257d8fea4a71fa67708c836e735`.
+This retained working-tree proof precedes publication; the guarded helper must
+rerun the required gate against the clean candidate commit.
+
+GenEye's exact clean package source `3200310fba0d0c81ed9fd5ab8acff0e78c0dffa1`
+and Candle `81e1aa28` passed reviewed packet `caa0c311` once on October 25:
+CPU t01/i01 and cleanup preceded CUDA t01/i01. Actual work was two loads,
+four requests, twelve language forwards, two vision forwards and zero output
+tokens/retries. Independent same-device replay had zero answer delta; order,
+Q8Rows storage, native dispatch and release of all five owned processes passed.
+The allowance is consumed and closed. The
+[consumer contract](D1_LOADING.md#geneye-consumer-qualification) owns exact
+receipts, the unchanged eight criteria and retained image-case limitation.
+Full LTS, ordinary VLM and caller usefulness remain separately owned.
 
 Edge's local model-free checkpoint
 `3512099d44f5f3406f5a7be19b4f9846ddfce3f8` retains Candle `38d90519` and
@@ -88,22 +109,37 @@ Earlier `86e1eb10` deadline, `594ad6f9` Cargo-source and `e9d1003f` browser
 failures remain historical and closed. Original e9 browser traces were lost;
 the retained raw log/journal and later retention repair do not recreate them.
 
-The October 17 Candle workspace audit retained five unrelated h2/rustls findings;
-its standalone consumer audit had zero vulnerabilities with the paste warning.
-These remain historical DB/source-bound results, not a fresh audit claim.
-Optional WSL replay was unavailable because Codex-Compat's VHD was missing.
-Q8/Nomic defaults and disabled GPT profiles stay unchanged. This Candle batch
-changes documentation only; the owner separately selected local closeout and
-guarded publication. Its native offline checks do not retry either Edge packet
-or authorize production-model work.
+The published ZIP-backport audit at RustSec DB `21d909e4` retains eight
+h2/rustls/root-certificate findings. The current local compatible lock repair
+closes all eight plus Tokio's existing Unix I/O-safety warning at the same
+database, with zero vulnerabilities/unsoundness warnings and five unchanged
+unmaintained notices. The [security contract](../fork-compat/DEPENDENCY_SECURITY.md)
+owns exact patches, caller scope and passing native regression proof. The
+selected Done When is complete; GenEye's locks and frozen `81e1aa28` are unchanged.
+The older October 17 five-finding
+audit and missing-WSL-disk observation retain their historical scope; this
+review does not claim a fresh advisory database or Candle WSL replay.
+Q8/Nomic defaults, disabled GPT profiles and immutable releases are preserved.
+Local CPU verification and this scoped Candle commit/push are authorized by
+Closeout/Publish. Package assembly, further model runs, installation and
+activation remain held.
 
 ## Active files and exact next task
 
-The scoped closeout files are STATUS, TODO, START_HERE and ZIP_COMPATIBILITY.
-The owner authorized their commit and guarded main publication. No runtime,
-dependency, route, consumer pin or immutable release identity changes are needed;
-no implementation files are active. The external closeout receipt binds delivery
-after helper success.
+The eight incoming handoff-document edits are preserved. This scoped delivery adds
+the compatible Cargo.lock repair, DEPENDENCY_SECURITY, compatibility ownership,
+a focused Summary Bank route and current status/TODO/history updates. Runtime
+source and manifests, frozen inputs and release bytes remain unchanged. Only the
+13 reviewed task paths may be committed; publication requires clean main.
+Proof is retained under
+`D:/Compact_Evidence/candle/runs/root-lock-security-20261025-c24a6353/`.
+
+The root-lock batch has passed its audit and native CPU gate and leaves TODO.
+No further Candle implementation batch is selected by this closeout.
+The supplemental datasets unit/doctests passed
+but invoke the Hub; their network/cache activity was not measured and is not
+claimed as deterministic offline proof. Preserve the published `81e1aa28` and
+consumer package cohorts; a local main dependency repair does not repin consumers.
 
 Edge owns `R-ES-CORE-RELEASE-PREP-001`: prove actual temporary/model/Cargo
 placement and sufficient capacity, preserving same-volume shared-cache identity,
@@ -117,4 +153,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-10-23T23:48:04-04:00 | agent=Codex/root | task=edge-handoff-closeout | change=reconcile closed storage failure and bind scoped guarded publication
+AI-edited: 2026-10-25 | agent=Codex/root | task=root-lock-security-publish | change=bind scoped guarded delivery and preserve consumer qualification limits
