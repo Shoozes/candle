@@ -2,8 +2,16 @@
 
 ## Current phase and baseline
 
-This source snapshot closes compatible root-lock security maintenance from
-published baseline `f1b002c3733da283c57aebddd317346f5751330b`. The exact clean
+D1 pixel-cap hardening is locally complete from published baseline
+`443f67c57a37178dd1bf39d7fc06eebaa1a2cc57`. The D1 component is
+maintenance-complete for the current tested integration. Paired Closeout/Publish
+selects the eight reviewed paths for guarded delivery to `origin/main`.
+Consumer packages and release inputs remain frozen. The exact candidate
+commit/tree, clean-commit gate and confirmed remote result belong to
+`D:/Compact_Evidence/candle/runs/d1-pixel-cap-20261025-d64863b3/publication.json`.
+
+Published `443f67c5` closed compatible root-lock security maintenance from
+baseline `f1b002c3733da283c57aebddd317346f5751330b`. The exact clean
 commit/tree and guarded publication result belong to
 `D:/Compact_Evidence/candle/runs/root-lock-security-20261025-c24a6353/publication.json`.
 The reviewed ZIP-only backport `81e1aa282922110569176464f86f54640b8daed5`
@@ -19,6 +27,25 @@ Pinned upstream remains `c68b24997319b8d76e5a4e775dab197c7f26322a`;
 released 0.2.0 tag/assets remain at `9a7c65c2ebca67e7997ae1a73b652e38d0a3781f`.
 
 ## Last green verification and proven behavior
+
+The October 25 D1 native gate passed on Rust 1.97.1/MSVC in 122,672 ms:
+592 Rust tests passed, 14 ignored, and 197 release assertions passed on each
+PowerShell host. Formatting, library/example checks, strict Clippy, model-free
+controls, routing, module layout, overlay ownership and whitespace passed.
+Eight focused image-cap tests pass; four behavioral checks failed before the
+repair. Seven independently generated Pillow 11.3 RGB cases match, including
+normal landscape/portrait output, and all five original fixture hashes remain
+unchanged. The checked pure helper covers 567 dimension/cap combinations without
+allocating extreme images. The bicubic kernel itself is unchanged.
+Exact commands, code inputs, final record checks and source identities belong to
+`D:/Compact_Evidence/candle/runs/d1-pixel-cap-20261025-d64863b3/summary.json`.
+
+The subsequent read-only Review/Recheck matched all eight candidate files to
+that receipt, inspected the session caller and neighboring processor tests, and
+found no new D1 defect. Native test results above are reused at unchanged source;
+they were not rerun for documentation cleanup. Only STATUS, HISTORY and TODO
+change in this follow-up. Its exact scope and final checks are retained beside
+the original summary in `review-recheck-cleanup.json`.
 
 The source-bound October 24 Candle publication gate at `f1b002c3` passed 585 Rust tests
 (14 ignored) and 197 release assertions on each PowerShell host, with native
@@ -38,15 +65,15 @@ release assertions passed on each PowerShell host. Four-library and example
 checks, strict Clippy, model-free controls, formatting, layout/routing and
 overlay ownership passed. Candidate lock SHA-256 is
 `b7c0c561aaf0b193909317f41cb88910c04f7257d8fea4a71fa67708c836e735`.
-This retained working-tree proof precedes publication; the guarded helper must
-rerun the required gate against the clean candidate commit.
+That retained working-tree proof preceded the successful clean-commit guarded
+publication at `443f67c5`; its exact receipt remains in the security run above.
 
 The first guarded attempt at `d72b045b` stopped before pushing when the
 model-free watcher test read its empty reservation as an armed record. The
 test now follows the existing production readiness handshake, retaining the
 five-second arm bound and original worker limits. All 17 focused native
 controls pass, including empty/partial JSON refusal. Runtime code is unchanged;
-the full guarded gate remains required for the repaired publication candidate.
+the repaired publication candidate subsequently passed its full guarded gate.
 
 GenEye's exact clean package source `3200310fba0d0c81ed9fd5ab8acff0e78c0dffa1`
 and Candle `81e1aa28` passed reviewed packet `caa0c311` once on October 25:
@@ -58,6 +85,15 @@ The allowance is consumed and closed. The
 [consumer contract](D1_LOADING.md#geneye-consumer-qualification) owns exact
 receipts, the unchanged eight criteria and retained image-case limitation.
 Full LTS, ordinary VLM and caller usefulness remain separately owned.
+
+GenEye's later canonical supplemental collection closes CPU LTS at the same
+`3200310f`/Candle `81e1aa28`: independent index and package verification both
+report 20/20. Its `controller-20261025/supplemental-closure.json` remains under
+the frozen cohort's `lts-preparation/feedback-adviser-20261025/` evidence root.
+The separately accepted CPU adviser packet `78d63154` remains inert; no grant,
+consumption marker or attempt output exists at this recheck. Ordinary dense
+CUDA VLM, caller usefulness and CUDA LTS still require their own proof. This
+review neither repeats nor changes any prior installation/activation.
 
 Edge's local model-free checkpoint
 `3512099d44f5f3406f5a7be19b4f9846ddfce3f8` retains Candle `38d90519` and
@@ -116,8 +152,8 @@ Earlier `86e1eb10` deadline, `594ad6f9` Cargo-source and `e9d1003f` browser
 failures remain historical and closed. Original e9 browser traces were lost;
 the retained raw log/journal and later retention repair do not recreate them.
 
-The published ZIP-backport audit at RustSec DB `21d909e4` retains eight
-h2/rustls/root-certificate findings. The current local compatible lock repair
+The historical ZIP-backport audit at RustSec DB `21d909e4` retains eight
+h2/rustls/root-certificate findings. The published compatible root-lock repair
 closes all eight plus Tokio's existing Unix I/O-safety warning at the same
 database, with zero vulnerabilities/unsoundness warnings and five unchanged
 unmaintained notices. The [security contract](../fork-compat/DEPENDENCY_SECURITY.md)
@@ -127,23 +163,32 @@ The older October 17 five-finding
 audit and missing-WSL-disk observation retain their historical scope; this
 review does not claim a fresh advisory database or Candle WSL replay.
 Q8/Nomic defaults, disabled GPT profiles and immutable releases are preserved.
-Local CPU verification and this scoped Candle commit/push are authorized by
-Closeout/Publish. Package assembly, further model runs, installation and
-activation remain held.
+The preceding security publication, local image-cap verification and read-only
+review are complete. Current Closeout/Publish authorizes the reviewed eight-path
+batch's commit and guarded push to Candle `origin/main`. Package assembly,
+further model runs, installation and activation remain held.
 
 ## Active files and exact next task
 
-The eight incoming handoff-document edits are preserved. This scoped delivery adds
-the compatible Cargo.lock repair, DEPENDENCY_SECURITY, compatibility ownership,
-a focused Summary Bank route and current status/TODO/history updates. Runtime
-source and manifests, frozen inputs and release bytes remain unchanged. Only the
-14 reviewed task paths may be committed, including the watcher-test repair;
-publication requires clean main.
-Proof is retained under
-`D:/Compact_Evidence/candle/runs/root-lock-security-20261025-c24a6353/`.
+The scoped files are `candle-vlm/src/lfm2_d1/image_cap.rs`, its existing
+`tests.rs` suite, D1/DECISIONS/STATUS/TODO/HISTORY and `summary_bank.json`.
+Dimensions are positive, source-bounded and checked against the requested cap;
+every valid legacy size and the original resampler are preserved. Oversized
+results alone shorten their longer axis. D-0074 keeps the historical invalid
+`9x1`, cap-six golden separate from corrected cap-six output. A focused image-cap
+route keeps the existing 256 KiB context ceiling. Proof is retained under
+`D:/Compact_Evidence/candle/runs/d1-pixel-cap-20261025-d64863b3/`.
 
-The root-lock batch has passed its audit and native CPU gate and leaves TODO.
-No further Candle implementation batch is selected by this closeout.
+The root-lock batch remains complete; Cargo.lock and its security claims are
+unchanged. No package build, consumer repin or model qualification is selected.
+The image-cap item leaves TODO; no further Candle implementation batch is
+selected. Full-resolution RGB conversion and the horizontal bicubic intermediate
+remain unchanged. The cap limits returned pixels, not peak temporary memory;
+no allocation optimization or measured memory-regression claim is included.
+Current delivery uses `.tools/gitpush.ps1` from clean named `main`; the helper
+reruns the native gate and verifies the exact fast-forward remote commit.
+Publication-record updates add no dependency, Rust or route change. The original
+read-only review and native receipts remain unchanged beside the delivery record.
 The supplemental datasets unit/doctests passed
 but invoke the Hub; their network/cache activity was not measured and is not
 claimed as deterministic offline proof. Preserve the published `81e1aa28` and
@@ -161,4 +206,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-10-25 | agent=Codex/root | task=root-lock-security-publish | change=bind scoped guarded delivery and preserve consumer qualification limits
+AI-edited: 2026-10-25 | agent=Codex/root | task=d1-pixel-cap-publish | change=bind the reviewed eight-path delivery to current guarded publication and preserved consumer holds

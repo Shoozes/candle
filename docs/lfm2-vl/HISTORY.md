@@ -2,6 +2,116 @@
 
 Dated entries are historical. Current state: `STATUS.md`; active work: `TODO.md`. New maintained-model work: [2026-10-12](MAINTAINED_MODELS.md).
 
+## 2026-10-25 - D1 scoped closeout and guarded publication
+
+The owner's paired Closeout/Publish selects the eight reviewed D1 image-cap
+paths from published `443f67c5` for one scoped commit on existing `main` and
+guarded delivery to `Shoozes/candle` `origin/main`. Entry matched every file to
+reviewed candidate `88cc9f6a2318ee936438ace7e920256b1ca06144c0e1e88a7f0bfe5f4078245a`.
+Fresh native Git fetch confirmed no incoming or outgoing commits; the index was
+empty and no unrelated modified/untracked path was present.
+
+Closeout changes only STATUS, TODO and this history to reflect current delivery
+authority. Rust, fixtures, Summary Bank and Cargo.lock retain their verified
+bytes. The existing native gate's 592 passes/14 ignored and eight focused passes
+remain source-bound; the guarded helper also requires a fresh native locked/
+offline gate against the clean candidate commit before its exact fast-forward
+push. Delivery outcome, command/runtime/exit, totals, candidate commit/tree and
+remote confirmation belong to
+`D:/Compact_Evidence/candle/runs/d1-pixel-cap-20261025-d64863b3/publication.json`.
+The helper's ignored `artifacts/publication/last-push.json` remains its own
+publication receipt. Original regression, reference and review receipts are
+preserved; no audit or advisory-database claim is refreshed.
+
+The D1 component remains maintenance-complete for the current tested integration.
+Edge's pending qualification and GenEye's ordinary VLM/usefulness work retain
+their existing owners and gates. Frozen `3200310f`/Candle `81e1aa28`, packages,
+release artifacts, owner files, caches and closed allowances remain unchanged.
+Package builds, real-model runs, installation and activation remain held.
+No deployment, release tag or consumer repin is selected.
+
+## 2026-10-25 - D1 review recheck and consumer queue reconciliation
+
+Read-only Review/Recheck inspected published base `443f67c5` plus the eight-file
+local candidate `c7eb146fd6fd38118c2587f743a168f35a2d1e68c4b02e7a02cb7b4e76235227`.
+All eight files matched the preceding pixel-cap closure. The original extreme
+aspect-ratio defect is verified closed; the session caller, neighboring processor
+tests, unchanged bicubic kernel and five frozen fixture identities reveal no new
+blocking D1 defect. Cargo.lock remains unchanged. The eight focused and 592-test
+native passes are reused at their recorded source; no native gate or audit was
+rerun. Full-resolution RGB/intermediate allocation retains its documented limit.
+
+GenEye's retained supplemental closure is complete at frozen `3200310f`/Candle
+`81e1aa28`: independent index/package checks both pass 20/20. The 6,189-byte
+`controller-20261025/supplemental-closure.json` has SHA-256
+`a9f3842edaf931f4ee221947db620cb163a97e63e105b1afb810559d7224b638`.
+Its bound index and canonical Windows artifact rehash unchanged. The separately
+accepted 7,740-byte CPU adviser packet `78d63154` and its eleven modules/two data
+files also match the prior review; all thirteen future output/authority paths
+remain absent. This supplies no grant, fresh admission or model execution.
+
+Cleanup changes only STATUS, HISTORY and TODO: security wording now reflects
+the already published repair, the completed GenEye gap inventory leaves the
+queue, and an inert ordinary dense CUDA VLM packet is the next consumer-owned
+scope. Caller usefulness and CUDA LTS remain separate. Edge's bounded model-free
+storage preparation retains priority; no consumer work is dispatched here.
+No further Candle implementation batch is selected. Commit/push, package builds,
+real-model runs, installation and activation remain held. Owner files, original
+receipts, packages, caches and all closed allowances are preserved.
+
+The follow-up source binding and exact final metadata checks are retained in
+`D:/Compact_Evidence/candle/runs/d1-pixel-cap-20261025-d64863b3/review-recheck-cleanup.json`.
+
+## 2026-10-25 - D1 strict pixel-cap maintenance
+
+The architect Dropin/Work selected one arithmetic repair from published base
+`443f67c57a37178dd1bf39d7fc06eebaa1a2cc57`. A pure internal helper preserves
+the square-root/floor result whenever it fits. Only oversized results shorten
+the longer axis to the largest fitting integer; width wins a tie. Quotient
+conversion, final area and source bounds are checked. The bicubic kernel and
+all unrelated inference/API paths remain unchanged. Both `16x1`/`1x16`, cap four,
+now fit four pixels; `2097152x1`, cap 1048576, now returns `1048576x1`.
+
+The existing baseline image test passed before changes. New behavioral coverage
+then failed four checks on legacy sizing, including both orientations and the
+two-million-pixel reproduction. All eight focused tests pass after repair.
+The pure helper exercises 567 dimension/cap combinations, zero-input refusal,
+max-one, exact/below limits and u32/u64 boundary arithmetic without huge images.
+Python 3.13.3 with existing Pillow 11.3 independently generated seven exact RGB
+expectations, including normal landscape/portrait resizing. All five frozen
+fixture hashes remain unchanged. The old `9x1`, cap-six golden expects seven
+pixels: its original bytes are retained and tested as a resampler golden,
+while corrected cap-six bytes are separately checked. [D-0074](DECISIONS.md#d-0074-enforce-the-d1-pixel-cap-without-changing-valid-resampling)
+owns that compatibility distinction.
+
+The unmodified `pwsh -NoProfile -File .tools/verify-before-push.ps1` passed on
+native Windows Rust 1.97.1/MSVC in 122,672 ms, with two jobs and incremental
+compilation disabled: 592 Rust tests passed, 14 ignored, and 197 release
+assertions passed on each PowerShell host. Required library/example checks,
+strict Clippy, model-free controls, formatting, layout, routing, overlays and
+whitespace passed. Final record checks retain the exact source binding.
+The new image-cap context route and parent route keep the existing 256 KiB
+ceiling; no publication path or dependency was added.
+
+Allocation inspection confirms image 0.25.10 `DynamicImage::to_rgb8` still
+copies the full-resolution RGB image, and the horizontal intermediate uses
+output width times original height. The output cap is not a peak-memory cap.
+This concern is recorded without an allocation rewrite or an unsupported
+measured-regression claim; caller resource admission remains unchanged.
+
+The D1 component is maintenance-complete for the current tested integration,
+and the completed cap item leaves TODO. Cargo.lock remains byte-identical
+(`b7c0c561aaf0b193909317f41cb88910c04f7257d8fea4a71fa67708c836e735`);
+the published security result remains bound to RustSec `21d909e4`, zero
+vulnerabilities/unsoundness warnings and five visible unmaintained notices.
+No audit, production-model, GenEye package/LTS, installation or activation run
+was repeated. Frozen `3200310f`/Candle `81e1aa28`, closed allowances, numerical
+evidence, releases and caches are preserved. Changes remain local and
+uncommitted; commit and guarded publication require separate selection.
+
+Compact red/green/reference, native gate and final source/diff proof are retained
+in `D:/Compact_Evidence/candle/runs/d1-pixel-cap-20261025-d64863b3/`.
+
 ## 2026-10-25 - Compatible root-lock security closure
 
 Dropin/Work selected the eight retained workspace vulnerability records at
@@ -3442,4 +3552,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-10-25 | agent=Codex/root | task=root-lock-security-publish | change=retain security and consumer proof while recording scoped publication authority
+AI-edited: 2026-10-25 | agent=Codex/root | task=d1-pixel-cap-publish | change=retain scoped closeout and guarded delivery identity without relabeling consumer proof

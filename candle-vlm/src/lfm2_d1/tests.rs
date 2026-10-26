@@ -445,55 +445,6 @@ fn d1_choice_prompt_limit_excludes_unrendered_explicit_label() -> candle::Result
 }
 
 #[test]
-fn d1_pixel_cap_matches_pillow_bicubic_bytes() -> candle::Result<()> {
-    #[derive(serde::Deserialize)]
-    struct Case {
-        width: u32,
-        height: u32,
-        cap: u64,
-        output_width: u32,
-        output_height: u32,
-        rgb: Vec<u8>,
-    }
-    #[derive(serde::Deserialize)]
-    struct Suite {
-        cases: Vec<Case>,
-    }
-    let suite: Suite = serde_json::from_slice(include_bytes!(
-        "../../../tests/fixtures/lfm2_d1_tiny/bicubic.json"
-    ))
-    .map_err(candle::Error::wrap)?;
-    for case in suite.cases {
-        let image = image::RgbImage::from_fn(case.width, case.height, |x, y| {
-            image::Rgb([
-                ((x * 37 + y * 19) % 256) as u8,
-                ((x * 17 + y * 71) % 256) as u8,
-                ((x * 91 + y * 13) % 256) as u8,
-            ])
-        });
-        let output =
-            super::image_cap::cap_pixels(&image::DynamicImage::ImageRgb8(image), case.cap)?
-                .into_rgb8();
-        assert_eq!(output.dimensions(), (case.output_width, case.output_height));
-        assert_eq!(output.as_raw(), &case.rgb);
-    }
-    let image = image::DynamicImage::ImageRgba8(image::RgbaImage::from_pixel(
-        2,
-        2,
-        image::Rgba([32, 64, 96, 0]),
-    ));
-    assert_eq!(
-        super::image_cap::cap_pixels(&image, 4)?
-            .into_rgb8()
-            .get_pixel(0, 0)
-            .0,
-        [32, 64, 96]
-    );
-    assert!(super::image_cap::cap_pixels(&image, 0).is_err());
-    Ok(())
-}
-
-#[test]
 fn d1_processor_resize_matches_pinned_torchvision_bicubic() -> candle::Result<()> {
     #[derive(serde::Deserialize)]
     struct Case {

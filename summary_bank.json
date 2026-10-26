@@ -755,7 +755,7 @@
       ]
     },
     "feature__lfm2_d1": {
-      "description": "Reusable d1 API, prompt/readout policy, native Q8 admission, independent prefills, benchmarks/replay and small goldens. Expand to workflow__d1_example_outputs for the standalone runner, workflow__d1_reference_parity for oracle/export tooling, workflow__d1_cuda_performance for CUDA prefill, feature__lfm2_text and feature__gguf_mmproj for storage/load changes, and workflow__gguf_artifact_inspection for metadata diagnostics.",
+      "description": "Reusable d1 API, prompt/readout policy, native Q8 admission, independent prefills, benchmarks/replay and small goldens. Expand to feature__d1_image_cap for dimension bounds and Pillow resampling, workflow__d1_example_outputs for the standalone runner, workflow__d1_reference_parity for oracle/export tooling, workflow__d1_cuda_performance for CUDA prefill, feature__lfm2_text and feature__gguf_mmproj for storage/load changes, and workflow__gguf_artifact_inspection for metadata diagnostics.",
       "status": "active",
       "paths": [
         "docs/lfm2-vl/D1.md",
@@ -767,7 +767,6 @@
         "candle-vlm/src/image/bicubic.rs",
         "candle-transformers/src/models/lfm2_d1.rs",
         "candle-transformers/src/models/lfm2_vl/linear.rs",
-        "candle-vlm/src/lfm2_d1/image_cap.rs",
         "candle-vlm/src/lfm2_d1/mod.rs",
         "candle-vlm/src/lfm2_d1/prompt.rs",
         "candle-vlm/src/lfm2_d1/profiling.rs",
@@ -787,6 +786,18 @@
         "tests/fixtures/lfm2_d1_tiny/tokenizer.json",
         "candle-vlm/src/lfm2_d1/tests/embedding.rs",
         "candle-vlm/src/lfm2_d1/backend.rs"
+      ]
+    },
+    "feature__d1_image_cap": {
+      "description": "Checked D1 pixel-cap dimensions, unchanged Pillow bicubic kernel, extreme-aspect and ordinary RGB regressions, frozen fixture identities and the D-0074 compatibility boundary. Expand feature__lfm2_d1 for the session/API contract.",
+      "status": "active",
+      "paths": [
+        "candle-vlm/src/lfm2_d1/image_cap.rs",
+        "candle-vlm/src/lfm2_d1/tests.rs",
+        "tests/fixtures/lfm2_d1_tiny/bicubic.json",
+        "tests/fixtures/lfm2_d1_tiny/manifest.json",
+        "docs/lfm2-vl/DECISIONS.md",
+        "docs/lfm2-vl/licenses/PILLOW_LICENSE.txt"
       ]
     },
     "workflow__d1_example_outputs": {

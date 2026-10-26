@@ -14,6 +14,11 @@ were verified. Completed release proof is in
 
 ## Current maintenance
 
+No further Candle implementation batch is selected. Current Closeout/Publish
+saves the reviewed D1 batch through the guarded helper; [STATUS](STATUS.md#active-files-and-exact-next-task)
+owns the source-bound delivery record. Edge's unfinished consumer qualification
+retains priority.
+
 ### [ ] Portable ZIP repair: remaining Edge consumer qualification
 
 - What: Finish Edge's installed/core qualification using the published Candle
@@ -193,23 +198,33 @@ The finite corrected-package item is complete; its retained result belongs in
 [HISTORY](HISTORY.md#2026-10-25---geneye-zip-only-backport-and-finite-package-qualification)
 and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
-- What: GenEye reconciles exact-candidate LTS evidence and specifies the missing
-  ordinary VLM qualification. This is consumer release work, not a Candle
-  implementation blocker.
-- Why: Finite private q8 d1 proof does not establish ordinary dense CUDA VLM,
-  general accuracy, caller usefulness, installation or activation readiness.
-- When: Read-only evidence scoping may proceed. Further model work, builds,
-  installation, activation and push remain held; closed allowances stay closed.
-- Where: GenEye's active `docs/TODO.md` and exact source `3200310f` package
-  records under `D:/Compact_Evidence/GenEye/runs/d1-corrected-packages-3200310f-20261025-cfbcd3fc/`.
+- What: GenEye prepares an inert qualification packet for the missing ordinary
+  dense CUDA VLM path and keeps caller-usefulness evaluation separately scoped.
+  This is consumer release work, not a Candle implementation blocker.
+- Why: Private q8 d1 replay and the completed CPU LTS gate do not establish
+  ordinary dense CUDA image/generation/lifecycle behavior, caller usefulness or
+  CUDA LTS readiness.
+- When: Read-only packet scoping may proceed after GenEye selects the batch.
+  Further model work, builds, installation, activation and push remain held;
+  closed allowances stay closed.
+- Where: GenEye's active `docs/TODO.md`, `docs/releases/LTS_CURRENT.md` and exact
+  source `3200310f` records under
+  `D:/Compact_Evidence/GenEye/runs/d1-corrected-packages-3200310f-20261025-cfbcd3fc/`.
 - How: Preserve Candle `81e1aa28`, sealed CPU/CUDA packages, private inventories,
-  model/DLL inputs and original limits. Keep private q8 d1, ordinary CUDA dense
-  VLM and historical proofs separate. Do not rerun the completed finite gate.
-- Done when: A source-bound gap inventory names each missing LTS/ordinary-VLM
-  criterion, its owner and smallest later proof packet, with no implied runtime
-  or activation authority. Actual release acceptance keeps GenEye's existing gates.
-- Verification: Read existing evidence and schemas; no execution, installation
-  or saved passing receipt may substitute for missing qualification.
+  model/DLL inputs and original limits. Retain completed canonical CPU LTS 20/20
+  and finite d1 proof. Accepted CPU adviser packet `78d63154` remains a separate,
+  unconsumed text-only packet with no execution authority. Do not repin, rebuild,
+  repeat completed qualification or use that packet for ordinary VLM proof.
+- Done when: The inert packet binds the exact ordinary dense CUDA worker,
+  package and inputs; names the missing image/generation/lifecycle criteria,
+  proposed finite work counts, existing resource/cleanup gates and owners; and
+  identifies caller-quality and CUDA LTS proof still outside its scope. Runtime
+  execution requires later exact approval and fresh admission.
+- Verification: Read existing evidence and schemas. Preserve the supplemental
+  CPU LTS closure and accepted adviser review recorded in
+  [HISTORY](HISTORY.md#2026-10-25---d1-review-recheck-and-consumer-queue-reconciliation).
+  No new execution, installation or saved passing receipt substitutes for
+  missing qualification.
 
 
 ### Conditional maintained-model qualification — Qwen recovery/projections
@@ -344,4 +359,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-10-25 | agent=Codex/root | task=root-lock-security-publish | change=retain remaining gates and repair six damaged heading separators
+AI-edited: 2026-10-25 | agent=Codex/root | task=d1-pixel-cap-publish | change=route scoped guarded delivery while preserving independently gated consumer priorities

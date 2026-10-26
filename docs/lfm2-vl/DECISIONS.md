@@ -1844,4 +1844,31 @@ it consumed zero model forwards. Quality and consumer package acceptance remain
 separately owned. No publication follows from this local qualification.
 
 ---
-AI-edited: 2026-10-17T16:52:42-04:00 | agent=Codex/root | task=zip-parent-repair | change=recorded portable ZIP compatibility and local proof boundary
+## D-0074: Enforce the d1 pixel cap without changing valid resampling
+
+Status: Accepted; focused regressions and the native maintenance gate pass.
+
+Decision:
+Keep the existing square-root/floor sizing whenever its positive dimensions
+fit the requested area. A short axis clamped to one, or floating-point rounding
+near an integer boundary, can leave that result oversized. Only then shorten
+the longer axis to the largest integer fitting the unchanged shorter axis;
+width wins an exact tie. Check the quotient conversion, final area and source
+dimension bounds using integer arithmetic. Reject zero dimensions or limits.
+
+Preserve the Pillow 11.3 bicubic kernel and every valid legacy pixel result.
+The frozen `9x1`, cap-six golden authenticates a seven-pixel resample but its
+legacy size violates the cap. Keep its bytes/hash and test that resampler
+directly; compare the corrected six-pixel result against independently
+generated Pillow 11.3 bytes. The same tests retain all valid original cap
+goldens, normal landscape/portrait results and unresized RGB conversion.
+
+Consequences:
+This is a local dimension-contract repair, not a policy-ID, schema, model-math,
+precision or public API change. Original numerical receipts and qualified
+consumer packages keep their source identity; no repin or new inference
+allowance follows. Full-resolution RGB conversion and bicubic intermediate
+allocation are unchanged; the pixel cap is not a peak-memory admission limit.
+
+---
+AI-edited: 2026-10-25 | agent=Codex/root | task=d1-pixel-cap | change=record the strict area invariant and preserved frozen resampling evidence
