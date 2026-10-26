@@ -2,13 +2,21 @@
 
 ## Current phase and baseline
 
-D1 pixel-cap hardening is locally complete from published baseline
+D1 pixel-cap hardening is published at
+`27f24e9fc9e9d46fd25549655c3a6617eea75e4a`, from baseline
 `443f67c57a37178dd1bf39d7fc06eebaa1a2cc57`. The D1 component is
-maintenance-complete for the current tested integration. Paired Closeout/Publish
-selects the eight reviewed paths for guarded delivery to `origin/main`.
-Consumer packages and release inputs remain frozen. The exact candidate
-commit/tree, clean-commit gate and confirmed remote result belong to
+maintenance-complete for the current tested integration. Consumer packages and
+release inputs remain frozen. The exact commit/tree, clean-commit gate and
+confirmed remote result belong to
 `D:/Compact_Evidence/candle/runs/d1-pixel-cap-20261025-d64863b3/publication.json`.
+
+Current Closeout/Publish saves the reconciled GenEye acceptance and held adviser
+handoff in Candle's STATUS/TODO/HISTORY only. Review/Recheck confirms the
+published code and admitted verdict are unchanged. Cleanup separates the
+one-attempt finish line from later deployment/usefulness gates and preserves
+unproven runtime criteria after failure. No Candle implementation is reopened.
+The exact delivery commit/tree, clean-commit native gate and confirmed remote
+result belong to the existing D1 run's `handoff-publication-20261026.json`.
 
 Published `443f67c5` closed compatible root-lock security maintenance from
 baseline `f1b002c3733da283c57aebddd317346f5751330b`. The exact clean
@@ -27,6 +35,15 @@ Pinned upstream remains `c68b24997319b8d76e5a4e775dab197c7f26322a`;
 released 0.2.0 tag/assets remain at `9a7c65c2ebca67e7997ae1a73b652e38d0a3781f`.
 
 ## Last green verification and proven behavior
+
+The published clean commit `27f24e9f` passed the guarded native gate: 592 Rust
+tests, 14 ignored, all eight image-cap tests and 197 release assertions on each
+PowerShell host. The complete guarded helper finished in 83,009 ms. Its exact
+commands, runtime and remote confirmation are in the publication receipt above.
+The October 26 receipt-reconciliation pass reused that unchanged Rust/bank proof
+without new native or model qualification. Current guarded publication requires
+a fresh native software gate against its clean commit; model qualification stays
+outside this delivery.
 
 The October 25 D1 native gate passed on Rust 1.97.1/MSVC in 122,672 ms:
 592 Rust tests passed, 14 ignored, and 197 release assertions passed on each
@@ -90,10 +107,14 @@ GenEye's later canonical supplemental collection closes CPU LTS at the same
 `3200310f`/Candle `81e1aa28`: independent index and package verification both
 report 20/20. Its `controller-20261025/supplemental-closure.json` remains under
 the frozen cohort's `lts-preparation/feedback-adviser-20261025/` evidence root.
-The separately accepted CPU adviser packet `78d63154` remains inert; no grant,
-consumption marker or attempt output exists at this recheck. Ordinary dense
-CUDA VLM, caller usefulness and CUDA LTS still require their own proof. This
-review neither repeats nor changes any prior installation/activation.
+GenEye has now admitted the original inline acceptance for CPU adviser packet
+`78d63154` as an exact 808-byte copy, with original chat/message provenance.
+The review step is closed. The review path alone exists; the other twelve future
+paths, including grant, consumption and attempt outputs, remain absent. The next
+step is a separately authorized finite CPU adviser attempt. Caller usefulness,
+plugin 110 deployment and ordinary dense CUDA VLM/CUDA LTS remain separately
+owned. [The admission record](HISTORY.md#2026-10-26---geneye-original-review-admission-and-owned-handoff)
+preserves the original verdict; no installation/activation is repeated.
 
 Edge's local model-free checkpoint
 `3512099d44f5f3406f5a7be19b4f9846ddfce3f8` retains Candle `38d90519` and
@@ -163,15 +184,16 @@ The older October 17 five-finding
 audit and missing-WSL-disk observation retain their historical scope; this
 review does not claim a fresh advisory database or Candle WSL replay.
 Q8/Nomic defaults, disabled GPT profiles and immutable releases are preserved.
-The preceding security publication, local image-cap verification and read-only
-review are complete. Current Closeout/Publish authorizes the reviewed eight-path
-batch's commit and guarded push to Candle `origin/main`. Package assembly,
-further model runs, installation and activation remain held.
+The preceding security and image-cap publications and their reviews are
+complete. The current paired request authorizes only the three reviewed handoff
+records' commit and guarded push to Candle `origin/main`. GenEye's CPU adviser
+attempt, package assembly, further model runs, installation, activation and
+plugin changes remain held.
 
 ## Active files and exact next task
 
-The scoped files are `candle-vlm/src/lfm2_d1/image_cap.rs`, its existing
-`tests.rs` suite, D1/DECISIONS/STATUS/TODO/HISTORY and `summary_bank.json`.
+Active files are STATUS/TODO/HISTORY. The eight-path image-cap batch is already
+published; its Rust, fixtures, dependency lock and Summary Bank remain unchanged.
 Dimensions are positive, source-bounded and checked against the requested cap;
 every valid legacy size and the original resampler are preserved. Oversized
 results alone shorten their longer axis. D-0074 keeps the historical invalid
@@ -185,10 +207,16 @@ The image-cap item leaves TODO; no further Candle implementation batch is
 selected. Full-resolution RGB conversion and the horizontal bicubic intermediate
 remain unchanged. The cap limits returned pixels, not peak temporary memory;
 no allocation optimization or measured memory-regression claim is included.
-Current delivery uses `.tools/gitpush.ps1` from clean named `main`; the helper
-reruns the native gate and verifies the exact fast-forward remote commit.
-Publication-record updates add no dependency, Rust or route change. The original
-read-only review and native receipts remain unchanged beside the delivery record.
+The completed image-cap delivery used `.tools/gitpush.ps1` and confirmed the
+exact remote commit. Current handoff publication uses the same guarded helper,
+with a fresh gate against the clean three-file commit. GenEye owns receipt
+admission and its current-state/TODO updates; Candle records that result here.
+The original review, native and publication receipts remain unchanged. A live
+CPU adviser attempt still needs an exact grant and fresh admission under its
+existing limits.
+The immediate handoff ends with one terminal attempt and its evidence. Any
+failed runtime criterion remains open; later plugin/usefulness acceptance stays
+separate and supplies no retry authority.
 The supplemental datasets unit/doctests passed
 but invoke the Hub; their network/cache activity was not measured and is not
 claimed as deterministic offline proof. Preserve the published `81e1aa28` and
@@ -206,4 +234,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-10-25 | agent=Codex/root | task=d1-pixel-cap-publish | change=bind the reviewed eight-path delivery to current guarded publication and preserved consumer holds
+AI-edited: 2026-10-26 | agent=Codex/root | task=geneye-handoff-publish | change=bind scoped guarded record delivery while preserving adviser and deployment holds

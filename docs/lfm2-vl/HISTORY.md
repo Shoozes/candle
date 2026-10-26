@@ -2,6 +2,85 @@
 
 Dated entries are historical. Current state: `STATUS.md`; active work: `TODO.md`. New maintained-model work: [2026-10-12](MAINTAINED_MODELS.md).
 
+## 2026-10-26 - Scoped GenEye handoff record publication
+
+The owner's paired Closeout/Publish selects only STATUS, TODO and HISTORY on
+Candle's existing `main`, from published `27f24e9f`. Entry matched all three
+reviewed file identities; the index was empty and no unrelated modified or
+untracked path was present. A fresh fetch confirmed no incoming or outgoing
+commit. The origin's equivalent HTTPS URL passes the helper's documented
+destination normalization; no remote configuration changed.
+
+This delivery records GenEye's admitted original acceptance, preserves the held
+one-call CPU scope and separates its terminal finish line from later runtime,
+usefulness and plugin acceptance. Failure closes only that allowance; unproven
+criteria remain open. No Rust, fixture, dependency or Summary Bank change enters
+the batch. The guarded helper reruns the required native locked/offline gate
+against the clean candidate and confirms the exact fast-forward remote commit.
+The final commit/tree, commands, exits, totals and remote result belong to
+`D:/Compact_Evidence/candle/runs/d1-pixel-cap-20261025-d64863b3/handoff-publication-20261026.json`.
+Original review, admission, numerical and publication receipts are preserved.
+
+Candle D1 maintenance and GenEye CPU LTS remain closed at their tested inputs.
+Frozen `3200310f`/Candle `81e1aa28`, sealed packages, model/DLL inputs, owner edits
+and closed allowances remain unchanged. No GenEye attempt, repin, package build,
+real-model run, installation, activation, plugin change or release tag is
+selected by this documentation publication.
+
+## 2026-10-26 - GenEye original review admission and owned handoff
+
+The human authorized Candle and GenEye to coordinate their own work against
+the new architect pass-down. Candle maintenance stays closed at published
+`27f24e9f`; its eight source identities and publication receipt match, and no
+Rust, fixture, dependency, bank or numerical qualification change is needed.
+
+Candle reopened its original accepted review from chat
+`01a16c03-5275-7611-b75d-3165957a408c`, turn
+`01a175e8-443e-7220-b110-50cbd1153230`, final message
+`msg_000465f1166abc5d016adec26fa2888196ab64a70d4c25b674`.
+The original was inline under a no-file-writes review boundary. Its UTF-8/LF
+JSON body has 808 bytes, no terminal newline and SHA-256
+`486ad1d1f2cebe6e8f3a0d6cab69a9fb1ca8f5d18267eb5132bcd90f2a2bf371`.
+The full message has 1,755 bytes and SHA-256
+`1b20d535a3a0adb93b819200a6052959fdea513cc0553bd83bf0de5c8461fc67`.
+These are recovered original data, not a replacement verdict.
+
+GenEye independently recovered both identities and admitted an exact create-new
+copy to `packet-final/controller-review.json` under
+`D:/Compact_Evidence/GenEye/runs/d1-corrected-packages-3200310f-20261025-cfbcd3fc/lts-preparation/feedback-adviser-20261025/controller-20261025/callback-cancellation-20261025/`.
+The adjacent `review-admission-20261026/` retains original message/body,
+`origin.json`, `admission.json` and the exit-zero Node 26.5.0 admission result.
+The accepted packet `78d63154`, source `55bd67df` and approved PowerShell runtime
+`2a6769a3` match. Only the review path now exists; all twelve other future paths,
+including grant, resource admission, consumption and attempt outputs, are absent.
+No fresh reviewer decision, resource admission or model start occurred.
+
+GenEye owns its intake and APP_STATE/TODO/guide/bank/history updates. Candle
+changes only STATUS/TODO/HISTORY to remove its stale next-step packet cycle and
+record the actual held one-call CPU adviser proof. Completed CPU LTS 20/20,
+controller fixes, frozen `3200310f`/Candle `81e1aa28` and previous allowances
+stay closed. Plugin 110 deployment and twenty-case usefulness evaluation remain
+independent later actions. Commit/push, builds, real-model runs, installation,
+activation and plugin changes remain held for this reconciliation.
+
+Candle's local metadata checks pass: `pwsh -NoProfile -File
+scripts/lfm2-vl/verify-summary-bank.ps1`, Git for Windows
+`bash scripts/lfm2-vl/verify-mod-manifest.sh`,
+`bash scripts/verify-fork-overlays.sh` and `git diff --check`.
+Three added local links/anchors resolve; all five other published candidate
+files and Cargo.lock still match. The three record edits remain unstaged and
+uncommitted. Native Rust, model and package checks were not rerun.
+
+The subsequent read-only Review/Recheck matched those three records to their
+prior identities, rechecked D1's cap/session path and confirmed the original
+acceptance, packet, thirteen source/data inputs and approved runtime bindings.
+The prior code findings remain closed; only the expected review path exists.
+Cleanup corrects a queue-contract ambiguity: terminal completion of the single
+CPU allowance is distinct from runtime qualification, and later plugin and
+usefulness criteria leave that attempt's Done When. The original separate gates
+remain required. A failed criterion stays unproven and creates no retry authority.
+No runtime, source, route or dependency change is selected.
+
 ## 2026-10-25 - D1 scoped closeout and guarded publication
 
 The owner's paired Closeout/Publish selects the eight reviewed D1 image-cap
@@ -3552,4 +3631,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-10-25 | agent=Codex/root | task=d1-pixel-cap-publish | change=retain scoped closeout and guarded delivery identity without relabeling consumer proof
+AI-edited: 2026-10-26 | agent=Codex/root | task=geneye-handoff-publish | change=retain the scoped record delivery and unchanged runtime and deployment boundaries

@@ -14,10 +14,10 @@ were verified. Completed release proof is in
 
 ## Current maintenance
 
-No further Candle implementation batch is selected. Current Closeout/Publish
-saves the reviewed D1 batch through the guarded helper; [STATUS](STATUS.md#active-files-and-exact-next-task)
-owns the source-bound delivery record. Edge's unfinished consumer qualification
-retains priority.
+No further Candle implementation batch is selected. The D1 batch is published
+at `27f24e9f`; [STATUS](STATUS.md#active-files-and-exact-next-task) owns the
+source-bound delivery and the reviewed handoff records selected for current
+guarded publication. Edge's unfinished consumer qualification retains priority.
 
 ### [ ] Portable ZIP repair: remaining Edge consumer qualification
 
@@ -198,33 +198,38 @@ The finite corrected-package item is complete; its retained result belongs in
 [HISTORY](HISTORY.md#2026-10-25---geneye-zip-only-backport-and-finite-package-qualification)
 and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
-- What: GenEye prepares an inert qualification packet for the missing ordinary
-  dense CUDA VLM path and keeps caller-usefulness evaluation separately scoped.
-  This is consumer release work, not a Candle implementation blocker.
-- Why: Private q8 d1 replay and the completed CPU LTS gate do not establish
-  ordinary dense CUDA image/generation/lifecycle behavior, caller usefulness or
-  CUDA LTS readiness.
-- When: Read-only packet scoping may proceed after GenEye selects the batch.
-  Further model work, builds, installation, activation and push remain held;
-  closed allowances stay closed.
+- What: GenEye runs and accounts for one finite CPU adviser attempt after
+  separate exact-packet authorization. Plugin 110 deployment and the twenty-case
+  usefulness comparison remain independently owned and selected.
+- Why: The controller, original independent review and corrected CPU LTS are
+  complete. The remaining adviser criteria are actual runtime/replay/cleanup and
+  usefulness; no additional implementation cycle is selected by this handoff.
+- When: The CPU attempt remains held until an explicit grant and fresh quiet/
+  resource admission. Package builds, installation, activation, plugin changes
+  and push remain held; earlier consumed allowances stay closed.
 - Where: GenEye's active `docs/TODO.md`, `docs/releases/LTS_CURRENT.md` and exact
   source `3200310f` records under
   `D:/Compact_Evidence/GenEye/runs/d1-corrected-packages-3200310f-20261025-cfbcd3fc/`.
-- How: Preserve Candle `81e1aa28`, sealed CPU/CUDA packages, private inventories,
-  model/DLL inputs and original limits. Retain completed canonical CPU LTS 20/20
-  and finite d1 proof. Accepted CPU adviser packet `78d63154` remains a separate,
-  unconsumed text-only packet with no execution authority. Do not repin, rebuild,
-  repeat completed qualification or use that packet for ordinary VLM proof.
-- Done when: The inert packet binds the exact ordinary dense CUDA worker,
-  package and inputs; names the missing image/generation/lifecycle criteria,
-  proposed finite work counts, existing resource/cleanup gates and owners; and
-  identifies caller-quality and CUDA LTS proof still outside its scope. Runtime
-  execution requires later exact approval and fresh admission.
-- Verification: Read existing evidence and schemas. Preserve the supplemental
-  CPU LTS closure and accepted adviser review recorded in
-  [HISTORY](HISTORY.md#2026-10-25---d1-review-recheck-and-consumer-queue-reconciliation).
-  No new execution, installation or saved passing receipt substitutes for
-  missing qualification.
+- How: Preserve `3200310f`/Candle `81e1aa28`, sealed packages, model/DLL inputs,
+  completed canonical CPU LTS 20/20 and original limits. The exact original
+  808-byte acceptance for packet `78d63154` is admitted with chat provenance;
+  do not issue another review. Keep one CPU load/request, three language
+  forwards and zero images/vision/generated tokens/warmups/retries. Preserve the
+  packet's existing resource/deadline caps, stop on failure and prove release.
+- Done when: The separately granted attempt completes or fails terminally with
+  counters, replay, unchanged inputs and owned cleanup retained. A valid
+  `needs_review` result is acceptable; no particular recommendation is forced.
+  Failure closes that allowance and preserves any unproven runtime criterion;
+  it does not qualify the adviser or authorize another attempt.
+- Verification: GenEye owns exact packet/grant/admission associations and the
+  bounded runtime receipt. [The admitted original review](HISTORY.md#2026-10-26---geneye-original-review-admission-and-owned-handoff)
+  closes review only and supplies no execution authority.
+- Separate remaining gates: The later frozen twenty-case usefulness comparison
+  yields an explicit keep/revise/park decision. Plugin 110 deployment requires
+  supported deployment, deployed-byte checks, guarded executable synchronization
+  and fresh-host confirmation. Ordinary dense CUDA VLM/CUDA LTS retain their own
+  consumer criteria. None is added to this one-attempt finish line or reopens
+  completed CPU LTS or four-request d1 qualification.
 
 
 ### Conditional maintained-model qualification — Qwen recovery/projections
@@ -359,4 +364,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-10-25 | agent=Codex/root | task=d1-pixel-cap-publish | change=route scoped guarded delivery while preserving independently gated consumer priorities
+AI-edited: 2026-10-26 | agent=Codex/root | task=geneye-handoff-publish | change=save reviewed handoff criteria while keeping runtime and later consumer gates separate
