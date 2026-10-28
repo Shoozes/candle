@@ -10,6 +10,7 @@ pub struct Cache {
     cos: Tensor,
     sin: Tensor,
     device: Device,
+    attention_window: Option<usize>,
 }
 
 fn calculate_default_inv_freq(cfg: &Config) -> Vec<f32> {
@@ -43,6 +44,7 @@ impl Cache {
             device: device.clone(),
             cos,
             sin,
+            attention_window: None,
         })
     }
 
@@ -53,7 +55,18 @@ impl Cache {
         if let Some(mask) = self.masks.get(&(seq_len, kv_len)) {
             Ok(mask.clone())
         } else {
-            let mask = crate::utils::build_causal_mask(seq_len, index_pos, &self.device)?;
+            let mask = if let Some(window) = self.attention_window {
+                let values = (0..seq_len)
+                    .flat_map(|i| {
+                        (0..kv_len).map(move |j| {
+                            u8::from(j > index_pos + i || j.saturating_add(window) <= index_pos + i)
+                        })
+                    })
+                    .collect::<Vec<_>>();
+                Tensor::from_vec(values, (seq_len, kv_len), &self.device)?
+            } else {
+                crate::utils::build_causal_mask(seq_len, index_pos, &self.device)?
+            };
             self.masks.insert((seq_len, kv_len), mask.clone());
             Ok(mask)
         }
@@ -63,6 +76,15 @@ impl Cache {
         self.masks.clear();
         self.kvs.iter_mut().for_each(|v| *v = None);
         self.conv_states.iter_mut().for_each(|v| *v = None);
+    }
+
+    pub(crate) fn with_attention_window(mut self, window: usize) -> Result<Self> {
+        if window == 0 || self.use_kv_cache {
+            candle::bail!("LFM2 feature encoder requires a positive window and uncached execution")
+        }
+        self.attention_window = Some(window);
+        self.masks.clear();
+        Ok(self)
     }
 }
 

@@ -18,6 +18,32 @@
     ]
   },
   "groups": {
+    "feature__lfm3_audio": {
+      "description": "Native LFM3 backbone, bounded cache, speech depth/MaskGIT and LiquidCodec operations with finite CPU TTS/ASR acceptance. This is independent from completed D1 and consumer defaults.",
+      "status": "active",
+      "paths": [
+        "docs/lfm3-audio/STATUS.md",
+        "docs/lfm3-audio/TODO.md",
+        "docs/lfm3-audio/SOURCES.md",
+        "docs/lfm3-audio/HISTORY.md",
+        "docs/lfm3-audio/MOD_MANIFEST.md",
+        "candle-transformers/src/models/lfm3/mod.rs",
+        "candle-transformers/src/models/lfm3/config.rs",
+        "candle-transformers/src/models/lfm3/layers.rs",
+        "candle-transformers/src/models/lfm3/tests.rs",
+        "candle-transformers/src/models/lfm3_audio/mod.rs",
+        "candle-transformers/src/models/lfm3_audio/encoder.rs",
+        "candle-transformers/src/models/lfm3_audio/features.rs",
+        "candle-transformers/src/models/lfm2/cache.rs",
+        "candle-transformers/src/models/lfm2/model.rs",
+        "candle-transformers/src/models/liquid_codec/mod.rs",
+        "candle-transformers/src/models/liquid_codec/signal.rs",
+        "candle-transformers/src/models/liquid_codec/stream.rs",
+        "candle-examples/examples/lfm3-audio/main.rs",
+        "candle-examples/examples/lfm3-audio/asr.rs",
+        "candle-examples/examples/lfm3-audio/README.md"
+      ]
+    },
     "workflow__d1_cpu_projection": {
       "description": "Native Q8/F32 single-row column scheduling, frozen authored profiling, exact scheduler/scalar parity and retained readout replay; expand to feature__lfm2_d1 for session controls.",
       "status": "active",

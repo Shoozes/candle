@@ -2,6 +2,11 @@
 
 ## Current phase and baseline
 
+On October 28 the operator selected an independent native
+[LFM3-Audio implementation](../lfm3-audio/STATUS.md), from current main
+`87e1304638344bb4644d35ab20284824fa826c77`. Its own TODO/source map owns
+audio acceptance. D1 remains maintenance-complete and consumer pins stay frozen.
+
 D1 pixel-cap hardening is published at
 `27f24e9fc9e9d46fd25549655c3a6617eea75e4a`, from baseline
 `443f67c57a37178dd1bf39d7fc06eebaa1a2cc57`. The D1 component is
@@ -10,11 +15,11 @@ release inputs remain frozen. The exact commit/tree, clean-commit gate and
 confirmed remote result belong to
 `D:/Compact_Evidence/candle/runs/d1-pixel-cap-20261025-d64863b3/publication.json`.
 
-Current Closeout/Publish saves the reconciled GenEye acceptance and held adviser
-handoff in Candle's STATUS/TODO/HISTORY only. Review/Recheck confirms the
-published code and admitted verdict are unchanged. Cleanup separates the
-one-attempt finish line from later deployment/usefulness gates and preserves
-unproven runtime criteria after failure. No Candle implementation is reopened.
+The October 26 Closeout/Publish saved the reconciled GenEye acceptance and held
+adviser handoff in Candle's STATUS/TODO/HISTORY. That review confirmed the
+published D1 code and admitted verdict were unchanged. Its cleanup separated
+the one-attempt finish line from later deployment/usefulness gates and preserved
+unproven runtime criteria after failure. No D1 implementation was reopened.
 The exact delivery commit/tree, clean-commit native gate and confirmed remote
 result belong to the existing D1 run's `handoff-publication-20261026.json`.
 
@@ -185,15 +190,18 @@ audit and missing-WSL-disk observation retain their historical scope; this
 review does not claim a fresh advisory database or Candle WSL replay.
 Q8/Nomic defaults, disabled GPT profiles and immutable releases are preserved.
 The preceding security and image-cap publications and their reviews are
-complete. The current paired request authorizes only the three reviewed handoff
-records' commit and guarded push to Candle `origin/main`. GenEye's CPU adviser
+complete. The October 26 handoff publication covered only three reviewed records
+on Candle `origin/main`; it grants no further publication authority. GenEye's CPU adviser
 attempt, package assembly, further model runs, installation, activation and
 plugin changes remain held.
 
 ## Active files and exact next task
 
-Active files are STATUS/TODO/HISTORY. The eight-path image-cap batch is already
-published; its Rust, fixtures, dependency lock and Summary Bank remain unchanged.
+Current active work is the independent LFM3-Audio source, tests and documentation
+routed by [its STATUS](../lfm3-audio/STATUS.md) and [TODO](../lfm3-audio/TODO.md).
+The eight-path image-cap batch is already published; its implementation and
+fixtures remain unchanged. Existing security pins and consumer locks are
+preserved; audio adds only a direct edge to the already-pinned RustFFT dependency.
 Dimensions are positive, source-bounded and checked against the requested cap;
 every valid legacy size and the original resampler are preserved. Oversized
 results alone shorten their longer axis. D-0074 keeps the historical invalid
@@ -201,16 +209,18 @@ results alone shorten their longer axis. D-0074 keeps the historical invalid
 route keeps the existing 256 KiB context ceiling. Proof is retained under
 `D:/Compact_Evidence/candle/runs/d1-pixel-cap-20261025-d64863b3/`.
 
-The root-lock batch remains complete; Cargo.lock and its security claims are
-unchanged. No package build, consumer repin or model qualification is selected.
-The image-cap item leaves TODO; no further Candle implementation batch is
-selected. Full-resolution RGB conversion and the horizontal bicubic intermediate
+The root-lock security batch remains complete, with its original source-bound
+claims. No package build, consumer repin or new model qualification is selected
+by this review/recheck/cleanup pass.
+The image-cap item is closed; no further D1 implementation batch is selected.
+Full-resolution RGB conversion and the horizontal bicubic intermediate
 remain unchanged. The cap limits returned pixels, not peak temporary memory;
 no allocation optimization or measured memory-regression claim is included.
-The completed image-cap delivery used `.tools/gitpush.ps1` and confirmed the
-exact remote commit. Current handoff publication uses the same guarded helper,
-with a fresh gate against the clean three-file commit. GenEye owns receipt
-admission and its current-state/TODO updates; Candle records that result here.
+The completed image-cap delivery and October 26 handoff used `.tools/gitpush.ps1`
+and confirmed their exact remote commits. The current paired Closeout/Publish
+selects the reviewed audio source for the same guarded delivery; its separate
+[STATUS](../lfm3-audio/STATUS.md) binds that receipt and retained qualification
+limits. GenEye owns its receipt admission and current-state/TODO updates.
 The original review, native and publication receipts remain unchanged. A live
 CPU adviser attempt still needs an exact grant and fresh admission under its
 existing limits.
@@ -234,4 +244,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-10-26 | agent=Codex/root | task=geneye-handoff-publish | change=bind scoped guarded record delivery while preserving adviser and deployment holds
+AI-edited: 2026-10-28 | agent=Codex/root | task=lfm3-audio-publish | change=route authorized audio source delivery while preserving completed D1 and frozen consumers

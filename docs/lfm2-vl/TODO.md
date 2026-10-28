@@ -14,10 +14,14 @@ were verified. Completed release proof is in
 
 ## Current maintenance
 
-No further Candle implementation batch is selected. The D1 batch is published
+The separately selected [LFM3-Audio implementation](../lfm3-audio/TODO.md)
+owns current native audio work. The completed D1 milestone stays closed;
+no additional D1 implementation batch is selected. The D1 batch is published
 at `27f24e9f`; [STATUS](STATUS.md#active-files-and-exact-next-task) owns the
-source-bound delivery and the reviewed handoff records selected for current
-guarded publication. Edge's unfinished consumer qualification retains priority.
+source-bound delivery and the completed October 26 handoff publication.
+Edge's unfinished qualification remains consumer-owned and does not select
+another Candle batch. Current audio closeout/publication follows its separate
+TODO and guarded helper; consumer adoption remains held.
 
 ### [ ] Portable ZIP repair: remaining Edge consumer qualification
 
@@ -364,4 +368,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-10-26 | agent=Codex/root | task=geneye-handoff-publish | change=save reviewed handoff criteria while keeping runtime and later consumer gates separate
+AI-edited: 2026-10-28 | agent=Codex/root | task=lfm3-audio-publish | change=route reviewed audio progress saving without reopening D1 or consumer adoption

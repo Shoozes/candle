@@ -1,3 +1,54 @@
+/// Internal feature-only body for the released LFM3-Audio encoder. It shares
+/// LFM2 model math while loading neither token embeddings nor an unused head.
+#[derive(Debug, Clone)]
+pub(crate) struct FeatureEncoder {
+    config: Config,
+    layers: Vec<DecoderLayer>,
+    norm: RmsNorm,
+    window: usize,
+    device: Device,
+}
+
+impl FeatureEncoder {
+    pub(crate) fn new(config: &Config, window: usize, vb: VarBuilder) -> Result<Self> {
+        config.validate()?;
+        if window == 0 || vb.dtype() != DType::F32 {
+            candle::bail!("LFM2 feature encoder requires a positive attention window and F32")
+        }
+        let layers = (0..config.num_hidden_layers)
+            .map(|i| DecoderLayer::new(config, i, vb.pp("layers").pp(i)))
+            .collect::<Result<Vec<_>>>()?;
+        Ok(Self {
+            config: config.clone(),
+            layers,
+            norm: RmsNorm::new(config.hidden_size, config.norm_eps, vb.pp("embedding_norm"))?,
+            window,
+            device: vb.device().clone(),
+        })
+    }
+
+    pub(crate) fn forward(&self, input: &Tensor) -> Result<Tensor> {
+        let (batch, length, hidden) = input.dims3()?;
+        if batch != 1
+            || length == 0
+            || hidden != self.config.hidden_size
+            || length > self.config.max_position_embeddings
+            || input.dtype() != DType::F32
+        {
+            candle::bail!("invalid LFM2 feature encoder input shape, dtype or length")
+        }
+        let mut bounded = self.config.clone();
+        bounded.max_position_embeddings = length;
+        let mut cache = Cache::new(false, DType::F32, &bounded, &self.device)?
+            .with_attention_window(self.window)?;
+        let mut hidden = input.clone();
+        for (i, layer) in self.layers.iter().enumerate() {
+            hidden = layer.forward(&hidden, 0, i, &mut cache)?;
+        }
+        self.norm.forward(&hidden)
+    }
+}
+
 /// LFM2 model for causal language modeling.
 #[derive(Debug, Clone)]
 pub struct Model {

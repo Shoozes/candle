@@ -943,6 +943,7 @@ dependencies = [
  "num-traits",
  "rand 0.9.5",
  "rayon",
+ "rustfft",
  "serde",
  "serde_json",
  "serde_plain",

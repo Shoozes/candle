@@ -48,6 +48,41 @@ mod tests {
         }
     }
 
+    #[test]
+    fn feature_encoder_reuses_text_math_and_applies_exact_window_mask() -> Result<()> {
+        let device = Device::Cpu;
+        let cfg = tiny_config(true);
+        let vb = VarBuilder::from_slice_safetensors(TINY_FIXTURE, DType::F32, &device)?
+            .pp("weights.model.language_model");
+        let model = Model::new_from_parts(&cfg, vb.clone(), None)?;
+        let encoder = FeatureEncoder::new(&cfg, 8, vb)?;
+        let ids = Tensor::new(&[[1u32, 2, 3, 4]], &device)?;
+        let embeds = model.embed_tokens(&ids)?;
+        let mut cache = Cache::new(false, DType::F32, &cfg, &device)?;
+        let ordinary = model.forward_hidden(&embeds, 0, &mut cache)?;
+        assert_close(
+            &encoder.forward(&embeds)?,
+            &ordinary,
+            1e-6,
+            "feature body reuse",
+        )?;
+        let mut windowed =
+            Cache::new(false, DType::F32, &cfg, &device)?.with_attention_window(2)?;
+        assert_eq!(
+            windowed.mask(4, 0)?.to_vec2::<u8>()?,
+            vec![
+                vec![0, 1, 1, 1],
+                vec![0, 0, 1, 1],
+                vec![1, 0, 0, 1],
+                vec![1, 1, 0, 0]
+            ]
+        );
+        assert!(Cache::new(true, DType::F32, &cfg, &device)?
+            .with_attention_window(2)
+            .is_err());
+        Ok(())
+    }
+
     #[cfg(not(feature = "flash-attn"))]
     #[test]
     fn flash_attention_without_feature_returns_an_error() -> Result<()> {

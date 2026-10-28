@@ -15,6 +15,7 @@ MANIFESTS=(
     "docs/gpt-oss/MOD_MANIFEST.md"
     "docs/fork-compat/MOD_MANIFEST.md"
     "docs/qwen35/MOD_MANIFEST.md"
+    "docs/lfm3-audio/MOD_MANIFEST.md"
 )
 
 usage() {

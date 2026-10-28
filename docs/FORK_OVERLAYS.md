@@ -25,6 +25,7 @@ native Windows and WSL report the same candidate paths.
 | SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic SDXL LoRA transaction, controlled unsupported flash attention, residual/`text_time` conditioning and validated VAE channel construction/distribution |
 | GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Packed CPU/CUDA interfaces and source-bound short-parity/2,080-token receipt; no new production claim from upstream sync |
 | Qwen3.5 GGUF compatibility | `docs/qwen35/MOD_MANIFEST.md` | Bounded Q8_0/F32 text admission, proven CPU parity, and scoped CUDA quantization under qualification; no Edge activation |
+| LFM3-Audio | `docs/lfm3-audio/MOD_MANIFEST.md` | Native CPU-F32 TTS/ASR with bounded cache/codec chunk proof; local uncommitted source, independent from D1 and consumer defaults |
 
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each
@@ -117,11 +118,19 @@ and release receipts are not changed by current root-lock maintenance.
 
 ## Shared-path registry
 
+LFM3-Audio owns its new model registry entries, direct RustFFT dependency edge,
+private feature-only LFM2 encoder body/window mask and their reuse regression,
+and current routing/overlay records. Ordinary LFM2 behavior and public APIs
+remain unchanged. The frozen five-overlay 0.2.0 release is
+unchanged; new audio implementation is a separate local capability.
+
 The GPT-OSS overlay owns the characterization and capacity example/control additions to
 `.tools/verify-before-push.ps1`; existing LFM2-VL verification steps retain their
 ownership. Its Summary Bank edits route the new harness and move current GPT
-status out of the bounded synthetic-oracle group. The native live inventory is
-331 union paths across five overlays, with 31 shared paths. GPT-OSS owns the
+status out of the bounded synthetic-oracle group. With the separate native
+audio additions, the current inventory is 349 union paths across six overlays,
+with 35 shared paths. Frozen five-overlay release inventories are unchanged.
+GPT-OSS owns the
 optional stop-event and regression hunks in the shared bounded Job helper/tests;
 LFM2-VL retains existing execution/limits. Frozen inventories
 and historical release identities are unchanged. LFM2-VL and diffusion jointly
@@ -134,6 +143,10 @@ it. Every change to such a path must state which overlay owns each hunk and
 must pass both affected focused gates plus the repository-wide overlay gate.
 
 <!-- shared-paths:start -->
+- `candle-transformers/src/models/lfm2.rs`
+- `candle-transformers/src/models/lfm2/cache.rs`
+- `candle-transformers/src/models/lfm2/model.rs`
+- `scripts/tests/test-verify-fork-overlays.sh`
 - `.tools/verify-before-push.ps1`
 - `candle-core/src/quantized/k_quants.rs`
 - `candle-core/src/quantized/mod.rs`
@@ -214,4 +227,4 @@ release. Each consumer keeps the dependency tuple it actually qualified;
 publishing a newer Candle source snapshot does not require a consumer repin.
 
 ---
-AI-edited: 2026-10-25 | agent=Codex/root | task=root-lock-security | change=register compatible security ownership and the additive live documentation path
+AI-edited: 2026-10-28 | agent=Codex/root | task=lfm3-audio | change=register independent native audio ownership and preserve frozen release inventories
