@@ -21,9 +21,15 @@ implementation checkpoint or admit any new model, package or consumer result.
 The four-record portable-evidence follow-up has its own delivery identity,
 clean-commit software gate and confirmed remote result in
 `D:/Compact_Evidence/candle/runs/lfm3-evidence-docs-publish-20261029-7630e31b/publication.json`.
-That receipt establishes documentation publication only. The consumer gap below
-is a historical review observation, not a new check or qualification of its
-live artifacts during this delivery.
+That receipt establishes documentation publication only. The earlier missing
+consumer summary was a historical review observation; the later read-only
+recheck below closes that part without renewing runtime qualification.
+
+Publication of the catalog-only reconciliation is established only by its
+guarded helper's exact commit/tree, software gate and confirmed remote result in
+`D:/Compact_Evidence/candle/runs/lfm3-catalog-docs-publish-20261029-2e96f6e3/publication.json`.
+That delivery preserves the preceding consumer observation and conditional
+handoff without rechecking live consumer state or changing qualification.
 
 Status: Complete with verified limitations for finite native CPU-F32 TTS/ASR.
 The LFM3 backbone, released audio encoder, codebook embeddings, three-pass
@@ -73,8 +79,22 @@ portable recipient qualification remains consumer-owned. During review of
 documentation commit `7630e31b`, the consumer reported local portable CPU
 qualification and retained bundle/native artifacts, but its documented top-level
 summary and portable catalog entry were unavailable. That review did not admit
-that claim. TODO now points to model-free reconciliation of existing evidence,
-with the consumer's own TODO authoritative for live status; no dispatch or repin.
+that claim.
+
+Review of `2e96f6e3` now finds the canonical consumer summary at
+`D:/Compact_Evidence/symbio-voice/runs/portable-cpu-20261029/summary.json`.
+All 18 published-file hashes match consumer commit
+`303dfa1073771069c13528aeea2b6171ce894ed7`; all 69 bundle build-input hashes
+match its current source. ZIP, manifest, executable and six DLL hashes match
+the retained receipt. A newer owner edit to its TODO is separate from that
+published identity. These checks verify the binding of the recorded Windows
+x64 CPU proof; no model, browser or recipient test was rerun. Manifest, lock and
+runtime evidence retain Candle `6a46737c`. Catalog registration alone was pending
+behind an existing `.index.lock`, which that review left untouched. TODO narrows the
+handoff to consumer-owned catalog repair after lock ownership is resolved;
+the consumer's own TODO remains authoritative for live status, without dispatch,
+repin or another Candle implementation task. Clean OS VM, other Windows builds,
+GPU, installer/public release and Edge/MOSS qualification remain separate.
 
 Read-only review/recheck first matched all 30 candidate files, the native
 executable and compact proof archive to that prior receipt. Earlier model-level
@@ -142,4 +162,4 @@ and full portable-recipient acceptance retain their existing limits.
 The old disk cleanup batch remains unapproved and untouched.
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-evidence-docs-publish | change=bind documentation delivery without changing supplier or consumer qualification
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-docs-publish | change=bind documentation publication separately from consumer qualification

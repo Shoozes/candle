@@ -1,5 +1,59 @@
 # LFM3-Audio completion history
 
+## 2026-10-29: four-record catalog-handoff delivery
+
+The paired Closeout/Publish covers only the four reviewed documentation files.
+Intake observed an empty index and refreshed `origin/main` at `2e96f6e3`.
+Implementation checkpoint `a213f04f`, consumer Candle `6a46737c`, frozen inputs,
+owner edits and existing acceptance limits remain unchanged. Existing Summary
+Bank routes cover these records; no route or implementation change is selected.
+
+The guarded helper's exact commit/tree, clean-commit software gate, confirmed
+remote result and owned-resource disposition belong to
+`D:/Compact_Evidence/candle/runs/lfm3-catalog-docs-publish-20261029-2e96f6e3/publication.json`.
+Only its confirmed receipt establishes publication. This delivery preserves
+the preceding read-only consumer observation and conditional catalog handoff;
+it does not recheck live consumer status, resolve its lock or dispatch work.
+No model run, package build, installation, activation, release/tag creation or
+old disk cleanup is included.
+
+## 2026-10-29: 2e96f6e3 review and portable receipt recheck
+
+Read-only review observed clean Candle `main` at `2e96f6e3`, equal to its
+tracking ref. All four publication-file hashes, the tree and guarded-log digest
+match its retained receipt. The diff changes documentation only; implementation,
+tests, lock and Summary Bank remain unchanged from `a213f04f`. No new Candle
+implementation defect was found. Earlier native/software gates remain retained
+source-bound results, not tests rerun here.
+
+The consumer's previously missing canonical summary now exists at
+`D:/Compact_Evidence/symbio-voice/runs/portable-cpu-20261029/summary.json`, with
+observed SHA-256
+`03933cf94028641fabe5144ff762a52761d0ee4e4603890d15aead13874735ed`.
+Its 18 published-file hashes match consumer commit
+`303dfa1073771069c13528aeea2b6171ce894ed7`. All 69 bundle build-input hashes
+match the current consumer files; the ZIP, manifest, executable and six DLLs
+also match their recorded hashes. The later owner TODO edit is not part of that
+published receipt and is preserved. Manifest, crate and lock retain Candle
+`6a46737c`; frozen model inputs remain external to the bundle and untouched.
+This verifies the recorded local Windows x64 CPU evidence binding, without new
+native/browser/recipient execution or broader platform/release acceptance.
+
+Catalog registration is explicitly pending because the existing `.index.lock`
+was retained; `D:/Compact_Evidence/symbio-voice/index.json` still contains no
+portable-run entry. We do not infer stale ownership or break that lock. Cleanup
+narrows TODO to consumer-owned lock resolution and catalog registration from
+existing proof. No repeated preparation, build or native qualification is
+selected. Only four Candle records change; no consumer files, pins, artifacts,
+Rust source/tests, fetch, commit, push or bulk deletion is included.
+
+Current checks passed: `cargo fmt --all -- --check`,
+`scripts/lfm2-vl/verify-summary-bank.ps1` (audio/default below 256 KiB),
+`scripts/verify-fork-overlays.sh` (349 paths, six overlays, 35 shared),
+`scripts/lfm2-vl/verify-mod-manifest.sh` (215 paths; fixture attributes unchanged)
+and `git diff --check`. No Rust tests or compilation were repeated for this
+documentation-only delta.
+
 ## 2026-10-29: four-record portable-evidence handoff delivery
 
 The paired Closeout/Publish covers only the four reconciled documentation
@@ -329,4 +383,4 @@ No Python release/oracle gate, WSL lane, GPU run, consumer package test or
 publication ran. See STATUS for the exact qualification boundary.
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-evidence-docs-publish | change=retain scoped guarded record delivery separately from consumer qualification
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-docs-publish | change=bind the scoped record delivery while preserving consumer evidence limits
