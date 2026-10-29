@@ -75,6 +75,8 @@ replaces only those embeddings and performs greedy text decoding with speech
 entry/placeholder tokens suppressed. The input ceiling is 160,000 samples
 (10 seconds), with at most 512 generated tokens and 4096 context positions.
 The frontend rejects wrong sample rates and nonfinite/out-of-range floats.
+WAV admission also rejects missing chunk padding; valid padded metadata before
+or after sample data is skipped without changing decoded PCM.
 
 ## Reusable operations and remaining scope
 
@@ -97,4 +99,4 @@ are separate work. Apps own request scheduling, cancellation and resource
 admission; reusable model operations do not start child processes.
 
 ---
-AI-edited: 2026-10-28 | agent=Codex/root | task=lfm3-review-cleanup | change=document sampler window and codec verification admission contracts
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-wav-review | change=document strict RIFF chunk padding admission and preserved PCM

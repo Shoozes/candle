@@ -6,6 +6,12 @@ starting with finite TTS, then audio input/ASR. Baseline is
 qualification remain separate.
 This is a separate model capability; the completed D1 milestone stays closed.
 
+Published source checkpoint: `6a46737ca4e427c00aa704ae30c91d49b91bb238`.
+The October 29 review/recheck matched all 30 files to its publication receipt.
+The subsequent cleanup repairs only malformed WAV admission and current records.
+The paired Closeout/Publish selects that seven-file repair for guarded source
+delivery; the implementation baseline above remains historical.
+
 Status: Complete with verified limitations for finite native CPU-F32 TTS/ASR.
 The LFM3 backbone, released audio encoder, codebook embeddings, three-pass
 MaskGIT depth decoder and LiquidCodec synthesis are implemented with Candle
@@ -25,8 +31,8 @@ Candle's own WAV. The Candle round trip transcribed:
 "Hello, this is Symbio Voice testing local audio without Python."
 This is finite synthetic-speech proof, not a speech-quality or ASR benchmark.
 
-The review/cleanup model-free gate passed 199 library tests, with six ignored,
-and all four example tests. The four CPU libraries and new example checked
+The October 28 review/cleanup model-free gate passed 199 library tests, with six
+ignored, and all four example tests. The four CPU libraries and new example checked
 locked/offline; strict Clippy, formatting, whitespace, Summary Bank, six-overlay
 ownership and the unchanged LFM2 manifest passed. Twelve isolated overlay
 controls were retained from the prior candidate; their verifier source is
@@ -65,12 +71,30 @@ No real-model run or release executable rebuild ran in this cleanup pass.
 Earlier native WAV/ASR results qualify their original candidate only; consumer
 adoption needs a fresh receipt for the source it actually selects.
 
-The operator-selected Closeout/Publish saves the reviewed source and records
+The October 28 Closeout/Publish saved the reviewed source and records
 on Candle `main` through `.tools/gitpush.ps1`. Its exact delivery commit/tree,
 fresh clean-commit gate and confirmed remote result belong to
 `D:/Compact_Evidence/candle/runs/lfm3-audio-publish-20261028-87e13046/publication.json`.
 Only that receipt establishes publication. The gate includes model-free Python
 module-layout and typed-receipt checks; no Python model runtime is introduced.
+
+The October 29 review kept the prior sampling and codec-admission findings
+closed, then reproduced a newly found WAV defect: an odd-sized terminal chunk
+could omit its pad byte while satisfying the declared RIFF length. The parser
+now rejects that truncated extent. Properly padded metadata before and after
+the data chunk preserves exact PCM. All five example tests, four CPU-library
+checks, the example check, strict example Clippy and formatting passed in this
+pass. Current proof and documentation-verifier results are retained in
+`D:/Compact_Evidence/candle/runs/lfm3-wav-review-20261029-6a46737c/summary.json`.
+That review retained the prior 609-test publication gate without rerunning it,
+and performed no model run or publication.
+
+The separate WAV-repair Closeout/Publish uses `.tools/gitpush.ps1` to save only
+the seven reviewed files. Its fresh clean-commit software gate, exact commit/tree
+and confirmed remote result belong to
+`D:/Compact_Evidence/candle/runs/lfm3-wav-publish-20261029-6a46737c/publication.json`.
+Only that receipt establishes this repair's publication; it does not renew
+native model qualification or change consumer acceptance.
 
 All six model Jobs used four CPU threads, context 1024, an 8 GiB Job memory
 ceiling and a 180-second wall limit. Every child exited 0 and was absent after
@@ -90,8 +114,8 @@ tensor parity, broad language/quality evaluation, live input frontend/encoder,
 interleaved conversation, tools and product deployment are unqualified here.
 
 No real-model execution, model conversion, package build/installation,
-activation or consumer pin/default change is selected by this publication.
+activation or consumer pin/default change is selected by this source publication.
 The old disk cleanup batch remains unapproved and untouched.
 
 ---
-AI-edited: 2026-10-28 | agent=Codex/root | task=lfm3-audio-publish | change=bind scoped source delivery separately from native qualification and consumer adoption
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-wav-publish | change=bind guarded WAV repair delivery separately from model and consumer qualification

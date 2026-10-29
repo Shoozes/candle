@@ -2,10 +2,12 @@
 
 ## Current phase and baseline
 
-On October 28 the operator selected an independent native
-[LFM3-Audio implementation](../lfm3-audio/STATUS.md), from current main
-`87e1304638344bb4644d35ab20284824fa826c77`. Its own TODO/source map owns
-audio acceptance. D1 remains maintenance-complete and consumer pins stay frozen.
+The independent native [LFM3-Audio source](../lfm3-audio/STATUS.md) was published
+at `6a46737ca4e427c00aa704ae30c91d49b91bb238`, from baseline `87e13046`.
+The October 29 review/cleanup repaired only WAV padding admission and records.
+Its paired Closeout/Publish now selects that verified seven-file source patch
+for guarded delivery. Its own TODO/source map owns audio
+acceptance. D1 remains maintenance-complete and consumer pins stay frozen.
 
 D1 pixel-cap hardening is published at
 `27f24e9fc9e9d46fd25549655c3a6617eea75e4a`, from baseline
@@ -217,10 +219,12 @@ Full-resolution RGB conversion and the horizontal bicubic intermediate
 remain unchanged. The cap limits returned pixels, not peak temporary memory;
 no allocation optimization or measured memory-regression claim is included.
 The completed image-cap delivery and October 26 handoff used `.tools/gitpush.ps1`
-and confirmed their exact remote commits. The current paired Closeout/Publish
-selects the reviewed audio source for the same guarded delivery; its separate
+and confirmed their exact remote commits. The audio source was also delivered
+through that guarded helper at `6a46737c`; its separate
 [STATUS](../lfm3-audio/STATUS.md) binds that receipt and retained qualification
-limits. GenEye owns its receipt admission and current-state/TODO updates.
+limits. The verified seven-file parser repair is selected for guarded publication;
+its own delivery receipt does not renew model or consumer qualification.
+GenEye owns its receipt admission and current-state/TODO updates.
 The original review, native and publication receipts remain unchanged. A live
 CPU adviser attempt still needs an exact grant and fresh admission under its
 existing limits.
@@ -244,4 +248,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-10-28 | agent=Codex/root | task=lfm3-audio-publish | change=route authorized audio source delivery while preserving completed D1 and frozen consumers
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-wav-publish | change=route scoped WAV repair delivery while preserving completed D1 and frozen inputs

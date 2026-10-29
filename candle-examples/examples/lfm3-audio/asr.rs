@@ -74,6 +74,9 @@ fn parse_wav(bytes: &[u8], max_samples: usize) -> Result<Vec<f32>> {
             data = Some(payload);
         }
         cursor = stop.checked_add(size % 2).context("WAV padding overflow")?;
+        if cursor > end {
+            bail!("truncated WAV chunk padding");
+        }
     }
     let channels = format.context("missing WAV format")?;
     let data = data.context("missing WAV data")?;
@@ -263,8 +266,7 @@ mod tests {
         assert!(parse_wav(b"RIFF", 10).is_err());
     }
 
-    #[test]
-    fn pcm16_stereo_is_mean_reduced_and_wrong_rate_or_extent_is_rejected() -> Result<()> {
+    fn stereo_wav() -> Vec<u8> {
         let mut bytes = vec![];
         bytes.extend(b"RIFF");
         bytes.extend(44u32.to_le_bytes());
@@ -281,6 +283,12 @@ mod tests {
         for sample in [32767i16, -32767, -32768, 0] {
             bytes.extend(sample.to_le_bytes());
         }
+        bytes
+    }
+
+    #[test]
+    fn pcm16_stereo_is_mean_reduced_and_wrong_rate_or_extent_is_rejected() -> Result<()> {
+        let mut bytes = stereo_wav();
         assert_eq!(parse_wav(&bytes, 2)?, vec![0., -0.5]);
         assert!(parse_wav(&bytes, 1).is_err());
         let mut wrong_rate = bytes.clone();
@@ -288,6 +296,30 @@ mod tests {
         assert!(parse_wav(&wrong_rate, 2).is_err());
         bytes.pop();
         assert!(parse_wav(&bytes, 2).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn odd_sized_metadata_requires_padding_without_changing_pcm() -> Result<()> {
+        for before_data in [false, true] {
+            let mut bytes = stereo_wav();
+            let offset = if before_data { 36 } else { bytes.len() };
+            let mut chunk = b"JUNK".to_vec();
+            chunk.extend(1u32.to_le_bytes());
+            chunk.extend([7, 0]);
+            bytes.splice(offset..offset, chunk);
+            let riff_size = (bytes.len() - 8) as u32;
+            bytes[4..8].copy_from_slice(&riff_size.to_le_bytes());
+            assert_eq!(parse_wav(&bytes, 2)?, vec![0., -0.5]);
+
+            bytes.remove(offset + 9);
+            let riff_size = (bytes.len() - 8) as u32;
+            bytes[4..8].copy_from_slice(&riff_size.to_le_bytes());
+            assert!(
+                parse_wav(&bytes, 2).is_err(),
+                "missing padding must fail even when RIFF length matches the input"
+            );
+        }
         Ok(())
     }
 }

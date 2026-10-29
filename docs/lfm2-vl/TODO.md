@@ -20,8 +20,10 @@ no additional D1 implementation batch is selected. The D1 batch is published
 at `27f24e9f`; [STATUS](STATUS.md#active-files-and-exact-next-task) owns the
 source-bound delivery and the completed October 26 handoff publication.
 Edge's unfinished qualification remains consumer-owned and does not select
-another Candle batch. Current audio closeout/publication follows its separate
-TODO and guarded helper; consumer adoption remains held.
+another Candle batch. Audio source was published at `6a46737c`; the verified
+seven-file WAV-padding repair is selected for scoped guarded publication.
+Its separate TODO retains the next bounded handoff; consumer adoption and
+renewed model execution remain held.
 
 ### [ ] Portable ZIP repair: remaining Edge consumer qualification
 
@@ -368,4 +370,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-10-28 | agent=Codex/root | task=lfm3-audio-publish | change=route reviewed audio progress saving without reopening D1 or consumer adoption
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-wav-publish | change=save the scoped WAV repair without reopening D1 or consumer qualification

@@ -1,11 +1,12 @@
 # LFM3-Audio next bounded handoff
 
-No Candle implementation remains in the selected finite CPU-F32 TTS/ASR
-slice or its review/recheck/cleanup batch. Completed criteria and exact proof are in
-[HISTORY](HISTORY.md) and [STATUS](STATUS.md). The paired Closeout/Publish
-selects this reviewed source snapshot for guarded delivery to Candle `main`;
-the delivery receipt in STATUS owns the exact remote result. Consumer adoption
-requires separate selection and evidence.
+No Candle implementation remains in the selected finite CPU-F32 TTS/ASR slice
+or the October 29 WAV-padding repair. Completed criteria and proof are in
+[HISTORY](HISTORY.md) and [STATUS](STATUS.md). Source checkpoint `6a46737c`
+was published; the scoped Closeout/Publish selects the seven-file parser/record
+repair for guarded delivery. The receipt in STATUS owns its exact remote result.
+Renewed model execution and consumer adoption require separate selection and
+evidence for the actual source adopted.
 
 ## Proposed consumer step; not dispatched
 
@@ -38,4 +39,4 @@ streaming audio input, live interleaving/tools and model distribution.
 None reopens the completed D1 milestone or changes its frozen packages.
 
 ---
-AI-edited: 2026-10-28 | agent=Codex/root | task=lfm3-audio-publish | change=save reviewed progress while retaining the separate consumer acceptance contract
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-wav-publish | change=save verified WAV repair while preserving the bounded consumer handoff

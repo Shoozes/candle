@@ -1,5 +1,60 @@
 # LFM3-Audio completion history
 
+## 2026-10-29: scoped WAV repair closeout and publication
+
+The paired request selects only the verified seven-file WAV-padding repair:
+one ASR parser/test file, its example README, and five current-state/history
+records. All seven files matched the passing review receipt at intake; the
+index was empty and refreshed `origin/main` matched baseline `6a46737c`.
+Delivery wording was then updated within those same paths. Existing Summary
+Bank routes cover the complete batch and require no route rewrite.
+
+The repair retains its malformed-input rejection and exact valid-PCM controls.
+The guarded helper owns the fresh clean-commit software gate and one exact
+fast-forward push. Its command/results, candidate identities, confirmed remote
+commit/tree and resource disposition belong to
+`D:/Compact_Evidence/candle/runs/lfm3-wav-publish-20261029-6a46737c/publication.json`.
+Only that receipt establishes publication. Earlier native WAV/ASR receipts
+remain bound to their original candidate. No model run, package build,
+installation, activation, consumer repin, release/tag creation or old disk
+cleanup is included; frozen inputs and consumer pins remain preserved.
+
+## 2026-10-29: published-source recheck and WAV extent cleanup
+
+Read-only review/recheck observed clean local `main` and its tracking ref at
+`6a46737ca4e427c00aa704ae30c91d49b91bb238`; all 30 files matched the retained
+publication receipt. The prior cutoff-tie, direct history-window and CLI
+codec-verification findings remained closed. Coverage reused the unchanged
+published model graph/proof and directly inspected the audio group's public
+sampling, CLI, WAV admission, tests and records. Those phases regenerated no
+context pack and performed no fetch or model run.
+
+One new defect was selected: the WAV chunk loop advanced past the declared
+RIFF extent for an odd-sized final metadata chunk without checking for its
+required padding byte. [Microsoft's RIFF contract](https://learn.microsoft.com/en-us/windows/win32/xaudio2/resource-interchange-file-format--riff-)
+requires word-aligned chunk storage, with padding excluded from the child
+chunk's declared size. A regression control failed before the repair even
+when the truncated packet's RIFF length matched its actual bytes.
+
+The local repair adds an extent check after padding arithmetic. Positive
+controls place padded metadata both before and after data, preserving exact
+stereo-to-mono PCM; omitted padding is rejected. The existing fixture builder
+is shared by the two WAV tests. No new dependency or inference behavior was
+introduced. Current Windows/MSVC, locked/offline proof passed all five example
+tests, checks for four CPU libraries and the example, strict example Clippy,
+and `cargo fmt --all -- --check`. Retained library/native results are not
+represented as new runs. Stale publication-selection wording was updated to
+distinguish published `6a46737c` from the local parser patch.
+
+Exact commands, failing/passing controls, source identities and documentation
+checks are retained under
+`D:/Compact_Evidence/candle/runs/lfm3-wav-review-20261029-6a46737c/summary.json`.
+TODO has no additional automatic Candle implementation batch; the proposed
+consumer adapter still needs explicit selection and its own current-source
+proof. Native runs, package operations, installation, activation and publication
+remain held. D1, frozen model/package inputs, consumer pins, owner files and
+the old unapproved disk-deletion plan are unchanged.
+
 ## 2026-10-28: scoped source closeout and publication
 
 The paired Closeout/Publish selects the 30-file reviewed native audio batch
@@ -179,4 +234,4 @@ No Python release/oracle gate, WSL lane, GPU run, consumer package test or
 publication ran. See STATUS for the exact qualification boundary.
 
 ---
-AI-edited: 2026-10-28 | agent=Codex/root | task=lfm3-audio-publish | change=record scoped source delivery with separate runtime and consumer proof boundaries
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-wav-publish | change=retain scoped guarded delivery alongside WAV regression and qualification limits
