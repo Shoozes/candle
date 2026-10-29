@@ -18,6 +18,13 @@ software gate and confirmed remote result in
 That receipt alone establishes its publication; it does not replace the
 implementation checkpoint or admit any new model, package or consumer result.
 
+The four-record portable-evidence follow-up has its own delivery identity,
+clean-commit software gate and confirmed remote result in
+`D:/Compact_Evidence/candle/runs/lfm3-evidence-docs-publish-20261029-7630e31b/publication.json`.
+That receipt establishes documentation publication only. The consumer gap below
+is a historical review observation, not a new check or qualification of its
+live artifacts during this delivery.
+
 Status: Complete with verified limitations for finite native CPU-F32 TTS/ASR.
 The LFM3 backbone, released audio encoder, codebook embeddings, three-pass
 MaskGIT depth decoder and LiquidCodec synthesis are implemented with Candle
@@ -62,8 +69,12 @@ documents usable APIs and commands. No further Candle implementation is
 automatically selected by consumer work remaining. Read-only consumer source
 inspection supersedes the old adapter proposal: SymbioVoice already implements
 it and retains Candle `6a46737c`. Its owner records local TTS/app acceptance;
-portable recipient qualification remains separate. TODO now proposes only
-model-free preparation for its existing `SV-PKG-001`, without dispatch or repin.
+portable recipient qualification remains consumer-owned. During review of
+documentation commit `7630e31b`, the consumer reported local portable CPU
+qualification and retained bundle/native artifacts, but its documented top-level
+summary and portable catalog entry were unavailable. That review did not admit
+that claim. TODO now points to model-free reconciliation of existing evidence,
+with the consumer's own TODO authoritative for live status; no dispatch or repin.
 
 Read-only review/recheck first matched all 30 candidate files, the native
 executable and compact proof archive to that prior receipt. Earlier model-level
@@ -131,4 +142,4 @@ and full portable-recipient acceptance retain their existing limits.
 The old disk cleanup batch remains unapproved and untouched.
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-handoff-docs-publish | change=bind documentation delivery separately from the stable implementation and consumer evidence
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-evidence-docs-publish | change=bind documentation delivery without changing supplier or consumer qualification

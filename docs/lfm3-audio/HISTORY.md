@@ -1,5 +1,52 @@
 # LFM3-Audio completion history
 
+## 2026-10-29: four-record portable-evidence handoff delivery
+
+The paired Closeout/Publish covers only the four reconciled documentation
+files. Intake observed an empty index and refreshed `origin/main` at `7630e31b`.
+No code, tests, dependencies, frozen inputs, consumer pins or consumer files
+are included. Existing Summary Bank routes remain unchanged and are validated.
+The guarded helper's clean-commit software gate, exact commit/tree, confirmed
+remote result and resource disposition are retained in
+`D:/Compact_Evidence/candle/runs/lfm3-evidence-docs-publish-20261029-7630e31b/publication.json`.
+Only that receipt establishes publication. This delivery preserves the earlier
+consumer observation and conditional evidence-reconciliation handoff; it does
+not recheck live consumer artifacts or admit their qualification. No model run,
+package build, installation, activation, consumer dispatch, release/tag creation
+or old disk cleanup is included. Implementation checkpoint `a213f04f`, consumer
+Candle `6a46737c` and all existing native/recipient limits remain separate.
+
+## 2026-10-29: 7630e31b documentation and handoff recheck
+
+Read-only review observed clean `main` at `7630e31b`, matching its tracking ref,
+all five publication file hashes, the retained tree and guarded-log digest.
+The diff changes records only; implementation, lock and Summary Bank bytes are
+unchanged from `a213f04f`. Prior WAV and reconciliation findings remain closed.
+No new Candle implementation defect was found. The 609-pass/14-ignored gate
+and earlier audio tests remain retained source-bound proof, not new test runs.
+
+The new discrepancy was the follow-up state. Read-only consumer inspection
+observed `075439d` with 19 owner-dirty paths and the unchanged Candle `6a46737c`
+pin. Its TODO/HISTORY now report local `SV-PKG-001` qualification. The referenced
+`D:/Compact_Evidence/symbio-voice/runs/portable-cpu-20261029/summary.json` was not
+present, nor was a portable entry in its catalog. The run directory does contain
+a ZIP, browser results, `bundle`/`bundle-final` manifests and
+`native`/`native-qualified` results. Their existence alone does not bind one
+canonical source/artifact/qualification claim; this pass did not admit it.
+
+Cleanup replaces the superseded preparation proposal with consumer-owned,
+model-free reconciliation of existing proof, or recognition of a subsequently
+finished canonical receipt. Live consumer status stays in its own queue rather
+than becoming Candle implementation work. Missing proof is a traceability gap,
+not a failed-run verdict or retry allowance. Only four Candle records changed;
+no consumer files, pins, frozen inputs, artifacts, Rust source or tests were
+modified, and no model/package/deployment, fetch, commit or push operation ran.
+
+Current documentation checks passed: `scripts/lfm2-vl/verify-summary-bank.ps1`
+(audio/default routes below 256 KiB), `scripts/verify-fork-overlays.sh`
+(349 paths, six overlays, 35 shared), `scripts/lfm2-vl/verify-mod-manifest.sh`
+(215 paths; fixture attributes unchanged) and `git diff --check`.
+
 ## 2026-10-29: five-record documentation delivery
 
 The paired Closeout/Publish covers only the five reconciled STATUS/TODO/HISTORY
@@ -282,4 +329,4 @@ No Python release/oracle gate, WSL lane, GPU run, consumer package test or
 publication ran. See STATUS for the exact qualification boundary.
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-handoff-docs-publish | change=retain scoped record delivery with unchanged implementation and consumer qualification boundaries
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-evidence-docs-publish | change=retain scoped guarded record delivery separately from consumer qualification

@@ -22,9 +22,10 @@ source-bound delivery and the completed October 26 handoff publication.
 Edge's unfinished qualification remains consumer-owned and does not select
 another Candle batch. Audio/WAV source is published through `a213f04f` and the
 WAV finding remains closed. The adapter proposal is superseded by existing
-SymbioVoice source; its separate audio TODO now proposes model-free preparation
-for consumer-owned `SV-PKG-001`. Preserve its Candle `6a46737c` pin. The
-five-record documentation delivery selects no new Candle implementation,
+SymbioVoice source; its separate audio TODO now proposes model-free evidence
+reconciliation for the consumer-reported portable result. Live consumer status
+stays in its own queue. Preserve its Candle `6a46737c` pin. The
+documentation deliveries select no new Candle implementation,
 model/package/deployment operation or consumer adoption.
 
 ### [ ] Portable ZIP repair: remaining Edge consumer qualification
@@ -372,4 +373,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-handoff-docs-publish | change=save the corrected consumer dependency without selecting new implementation or deployment
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-evidence-docs-publish | change=save the evidence boundary without selecting new implementation or consumer execution
