@@ -2,11 +2,11 @@
 
 ## Current phase and baseline
 
-The independent native [LFM3-Audio source](../lfm3-audio/STATUS.md) was published
-at `6a46737ca4e427c00aa704ae30c91d49b91bb238`, from baseline `87e13046`.
-The October 29 review/cleanup repaired only WAV padding admission and records.
-Its paired Closeout/Publish now selects that verified seven-file source patch
-for guarded delivery. Its own TODO/source map owns audio
+The independent native [LFM3-Audio source](../lfm3-audio/STATUS.md) and subsequent
+WAV repair are published through `a213f04f1b404c5b404172c84223ca1776136ec2`.
+The review/recheck kept the WAV finding closed and corrected stale
+publication/consumer handoff records. That five-file documentation delivery is
+recorded separately in the audio STATUS. Its own TODO/source map owns audio
 acceptance. D1 remains maintenance-complete and consumer pins stay frozen.
 
 D1 pixel-cap hardening is published at
@@ -222,8 +222,9 @@ The completed image-cap delivery and October 26 handoff used `.tools/gitpush.ps1
 and confirmed their exact remote commits. The audio source was also delivered
 through that guarded helper at `6a46737c`; its separate
 [STATUS](../lfm3-audio/STATUS.md) binds that receipt and retained qualification
-limits. The verified seven-file parser repair is selected for guarded publication;
-its own delivery receipt does not renew model or consumer qualification.
+limits. The seven-file parser repair was published at `a213f04f`; its receipt
+does not renew model or consumer qualification. Current TODO reflects the
+already implemented SymbioVoice adapter and its separate portable-delivery work.
 GenEye owns its receipt admission and current-state/TODO updates.
 The original review, native and publication receipts remain unchanged. A live
 CPU adviser attempt still needs an exact grant and fresh admission under its
@@ -248,4 +249,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-wav-publish | change=route scoped WAV repair delivery while preserving completed D1 and frozen inputs
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-handoff-docs-publish | change=route documentation delivery independently from completed code and frozen consumers

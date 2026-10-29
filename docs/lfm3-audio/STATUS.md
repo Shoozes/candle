@@ -6,11 +6,17 @@ starting with finite TTS, then audio input/ASR. Baseline is
 qualification remain separate.
 This is a separate model capability; the completed D1 milestone stays closed.
 
-Published source checkpoint: `6a46737ca4e427c00aa704ae30c91d49b91bb238`.
-The October 29 review/recheck matched all 30 files to its publication receipt.
-The subsequent cleanup repairs only malformed WAV admission and current records.
-The paired Closeout/Publish selects that seven-file repair for guarded source
-delivery; the implementation baseline above remains historical.
+Reviewed implementation checkpoint: `a213f04f1b404c5b404172c84223ca1776136ec2`, the published
+WAV-padding repair after `6a46737c`. Review/recheck matched all seven delivery
+files to the passing publication receipt and found no new code regression in
+the changed parser, fixture controls or adjacent admission path. The current
+reconciliation changes records only; the implementation baseline above is historical.
+
+The five-file documentation delivery has its own exact commit/tree, clean-commit
+software gate and confirmed remote result in
+`D:/Compact_Evidence/candle/runs/lfm3-handoff-docs-publish-20261029-a213f04f/publication.json`.
+That receipt alone establishes its publication; it does not replace the
+implementation checkpoint or admit any new model, package or consumer result.
 
 Status: Complete with verified limitations for finite native CPU-F32 TTS/ASR.
 The LFM3 backbone, released audio encoder, codebook embeddings, three-pass
@@ -53,7 +59,11 @@ WAVs and results are retained under
 [HISTORY](HISTORY.md) records this completed slice; [TODO](TODO.md) names the
 next bounded consumer handoff. [The example](../../candle-examples/examples/lfm3-audio/README.md)
 documents usable APIs and commands. No further Candle implementation is
-automatically selected by consumer work remaining.
+automatically selected by consumer work remaining. Read-only consumer source
+inspection supersedes the old adapter proposal: SymbioVoice already implements
+it and retains Candle `6a46737c`. Its owner records local TTS/app acceptance;
+portable recipient qualification remains separate. TODO now proposes only
+model-free preparation for its existing `SV-PKG-001`, without dispatch or repin.
 
 Read-only review/recheck first matched all 30 candidate files, the native
 executable and compact proof archive to that prior receipt. Earlier model-level
@@ -89,12 +99,14 @@ pass. Current proof and documentation-verifier results are retained in
 That review retained the prior 609-test publication gate without rerunning it,
 and performed no model run or publication.
 
-The separate WAV-repair Closeout/Publish uses `.tools/gitpush.ps1` to save only
-the seven reviewed files. Its fresh clean-commit software gate, exact commit/tree
+The separate WAV-repair Closeout/Publish used `.tools/gitpush.ps1` to save only
+the seven reviewed files at `a213f04f`. Its clean-commit software gate, exact commit/tree
 and confirmed remote result belong to
 `D:/Compact_Evidence/candle/runs/lfm3-wav-publish-20261029-6a46737c/publication.json`.
-Only that receipt establishes this repair's publication; it does not renew
-native model qualification or change consumer acceptance.
+That receipt confirms 609 Rust tests passed, 14 ignored, five audio example
+tests and 197 release assertions on each PowerShell host. These are retained
+results, not new tests run by this recheck. They do not renew native model
+qualification or change consumer acceptance.
 
 All six model Jobs used four CPU threads, context 1024, an 8 GiB Job memory
 ceiling and a 180-second wall limit. Every child exited 0 and was absent after
@@ -113,9 +125,10 @@ safetensors namespace. GPU, lower precision, native GGUF, full reference-model
 tensor parity, broad language/quality evaluation, live input frontend/encoder,
 interleaved conversation, tools and product deployment are unqualified here.
 
-No real-model execution, model conversion, package build/installation,
-activation or consumer pin/default change is selected by this source publication.
+This documentation reconciliation changes no model/runtime behavior, package,
+installation, activation or consumer pin/default. Native model qualification
+and full portable-recipient acceptance retain their existing limits.
 The old disk cleanup batch remains unapproved and untouched.
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-wav-publish | change=bind guarded WAV repair delivery separately from model and consumer qualification
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-handoff-docs-publish | change=bind documentation delivery separately from the stable implementation and consumer evidence

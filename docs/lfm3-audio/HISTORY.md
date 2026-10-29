@@ -1,5 +1,53 @@
 # LFM3-Audio completion history
 
+## 2026-10-29: five-record documentation delivery
+
+The paired Closeout/Publish covers only the five reconciled STATUS/TODO/HISTORY
+records. Intake observed an empty index, the exact five-file diff and refreshed
+`origin/main` at `a213f04f`. No implementation, test, dependency, consumer or
+frozen-input file is part of this commit. Existing Summary Bank routes remain
+unchanged and are validated. The guarded helper owns the clean-commit software
+gate and exact fast-forward delivery; its confirmed commit/tree, commands,
+results and resource disposition are retained in
+`D:/Compact_Evidence/candle/runs/lfm3-handoff-docs-publish-20261029-a213f04f/publication.json`.
+Only that receipt establishes publication. The implementation checkpoint remains
+`a213f04f`; consumer Candle `6a46737c` and its owner-held acceptance remain
+separate. No model run, package build, installation, activation, consumer repin,
+release/tag creation or old disk cleanup is included. The next proposal remains
+model-free `SV-PKG-001` preparation, not consumer dispatch or package acceptance.
+
+## 2026-10-29: a213f04f recheck and consumer handoff reconciliation
+
+Read-only review/recheck observed clean Candle `main` at `a213f04f`, matching
+its tracking ref and all seven hashes in the retained WAV publication receipt.
+The padding-extent finding is verified closed; the changed parser/test diff and
+adjacent admission path revealed no new code regression. The prior 609-test
+gate and five audio tests are reused by source identity, not claimed as new runs.
+
+The actionable finding was stale coordination: Candle still proposed creating
+an adapter that already exists. Read-only SymbioVoice inspection observed HEAD
+`075439debdf8f9fb5b46c0e55d6eec84f5652966` with 15 owner-modified paths. Its
+`engines/symbio-voice-lfm3/src/inference.rs` implements `VoiceEngine` with native
+Candle model/codec operations, and its crate/lock retain Candle `6a46737c`.
+`docs/engines/LFM3_AUDIO.md`, `docs/TODO.md` and the retained
+`D:/Compact_Evidence/symbio-voice/runs/lfm3-app-6a46737c-20261028/summary.json`
+record local app/listening acceptance. That is owner-held historical evidence;
+this pass neither reran it nor qualified the later admission edits or a package.
+
+Cleanup corrects current publication wording and marks the adapter proposal
+superseded. TODO's next bounded proposal is model-free layout/manifest
+preparation for consumer-owned `SV-PKG-001`; its full build/native/recipient
+Done When stays unchanged and unproven. No consumer files, pins, frozen inputs,
+source code or tests were changed. No model/package/deployment operation,
+fetch, commit or push ran. Existing Summary Bank routes cover the record edits;
+documentation checks are reported with this pass without another proof bundle.
+
+Current checks passed: `scripts/lfm2-vl/verify-summary-bank.ps1` (audio 20 files
+and default eight files, both below the 256 KiB ceiling),
+`scripts/verify-fork-overlays.sh` (349 paths, six overlays, 35 shared),
+`scripts/lfm2-vl/verify-mod-manifest.sh` (215 paths; 19 text/six binary fixture
+attributes) and `git diff --check`. No Rust or consumer test was rerun.
+
 ## 2026-10-29: scoped WAV repair closeout and publication
 
 The paired request selects only the verified seven-file WAV-padding repair:
@@ -234,4 +282,4 @@ No Python release/oracle gate, WSL lane, GPU run, consumer package test or
 publication ran. See STATUS for the exact qualification boundary.
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-wav-publish | change=retain scoped guarded delivery alongside WAV regression and qualification limits
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-handoff-docs-publish | change=retain scoped record delivery with unchanged implementation and consumer qualification boundaries
