@@ -17,12 +17,15 @@ consumer pin.
 - What/why: Register the existing `SV-PKG-001` receipt in its intended evidence
   catalog after consumer-owned lock resolution. The missing-summary finding is
   closed; another preparation, build or native attempt would duplicate proof.
-- Review observation: Read-only review of `2e96f6e3` found
+- Rechecked boundary: Read-only review of `ea026436` found the same
   `D:/Compact_Evidence/symbio-voice/runs/portable-cpu-20261029/summary.json`
-  with source/artifact bindings verified in [HISTORY](HISTORY.md). It retains
-  local Windows x64 CPU qualification and its existing limits. At that review,
-  catalog state was explicitly pending: the existing `.index.lock` was preserved
-  and `D:/Compact_Evidence/symbio-voice/index.json` had no portable-run entry.
+  digest as the prior source/artifact review in [HISTORY](HISTORY.md). Its local
+  Windows x64 CPU proof retains those source bindings and limits; no new runtime
+  proof is claimed. At that review catalog state was pending: the existing
+  `.index.lock` was retained and `D:/Compact_Evidence/symbio-voice/index.json`
+  had no portable-run entry. This leaves the same consumer-owned record repair
+  if it is not already closed there; no additional Candle
+  implementation or packet is selected.
 - Owner/when: SymbioVoice owns live status in `docs/TODO.md` and chooses the
   record repair if it is not already closed there. Candle edits no consumer
   files and dispatches no work through this handoff.
@@ -44,4 +47,4 @@ streaming audio input, live interleaving/tools and model distribution.
 None reopens the completed D1 milestone or changes its frozen packages.
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-docs-publish | change=preserve the conditional catalog handoff and dated evidence boundary
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-recheck-publish | change=save the conditional consumer step without selecting new supplier work

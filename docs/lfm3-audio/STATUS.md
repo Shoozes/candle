@@ -31,6 +31,21 @@ guarded helper's exact commit/tree, software gate and confirmed remote result in
 That delivery preserves the preceding consumer observation and conditional
 handoff without rechecking live consumer state or changing qualification.
 
+Latest read-only recheck: clean `main` at `ea026436` matched all four publication
+file hashes, the tree and guarded-log digest in that receipt. Implementation,
+tests, lock and Summary Bank remain unchanged from `a213f04f`; no new Candle
+implementation defect was found. The 609-pass/14-ignored software gate and
+197 release assertions on each PowerShell host are retained results, not new
+runs in this recheck. At that review the consumer summary digest was unchanged;
+its catalog entry was absent and its existing lock was retained. [TODO](TODO.md) keeps
+the same conditional consumer-owned catalog step and completion condition.
+
+The subsequent two-file documentation delivery is established only by the
+guarded helper's exact commit/tree, clean-commit gate and confirmed remote result in
+`D:/Compact_Evidence/candle/runs/lfm3-catalog-recheck-publish-20261029-ea026436/publication.json`.
+It preserves the reviewed consumer observation without another live consumer
+check, new supplier implementation or model/package/deployment operation.
+
 Status: Complete with verified limitations for finite native CPU-F32 TTS/ASR.
 The LFM3 backbone, released audio encoder, codebook embeddings, three-pass
 MaskGIT depth decoder and LiquidCodec synthesis are implemented with Candle
@@ -162,4 +177,4 @@ and full portable-recipient acceptance retain their existing limits.
 The old disk cleanup batch remains unapproved and untouched.
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-docs-publish | change=bind documentation publication separately from consumer qualification
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-recheck-publish | change=bind the two-file delivery while preserving the dated consumer gate
