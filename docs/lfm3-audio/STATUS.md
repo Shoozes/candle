@@ -31,20 +31,43 @@ guarded helper's exact commit/tree, software gate and confirmed remote result in
 That delivery preserves the preceding consumer observation and conditional
 handoff without rechecking live consumer state or changing qualification.
 
-Latest read-only recheck: clean `main` at `ea026436` matched all four publication
+The read-only recheck at clean `main` `ea026436` matched all four publication
 file hashes, the tree and guarded-log digest in that receipt. Implementation,
 tests, lock and Summary Bank remain unchanged from `a213f04f`; no new Candle
 implementation defect was found. The 609-pass/14-ignored software gate and
 197 release assertions on each PowerShell host are retained results, not new
 runs in this recheck. At that review the consumer summary digest was unchanged;
-its catalog entry was absent and its existing lock was retained. [TODO](TODO.md) keeps
-the same conditional consumer-owned catalog step and completion condition.
+its catalog entry was absent and its existing lock was retained. That observation
+preceded the consumer-owned catalog closure recorded below.
 
 The subsequent two-file documentation delivery is established only by the
 guarded helper's exact commit/tree, clean-commit gate and confirmed remote result in
 `D:/Compact_Evidence/candle/runs/lfm3-catalog-recheck-publish-20261029-ea026436/publication.json`.
 It preserves the reviewed consumer observation without another live consumer
 check, new supplier implementation or model/package/deployment operation.
+
+Catalog closure is verified at Candle `969beab2`: the consumer catalog contains
+exactly one relative `runs/portable-cpu-20261029` entry resolving to the retained
+canonical receipt. Ownership was resolved from completed historical catalog
+commands and an exclusive old-file handle; the task lock is released. The 12
+prior entries and retention flags were preserved. Only receipt catalog metadata
+changed; published consumer `303dfa10`, Candle `6a46737c`, qualification fields,
+package bytes and owner TODO edits remain unchanged. [HISTORY](HISTORY.md)
+records the exact receipt/catalog digests and ownership evidence.
+
+No Candle implementation or catalog task remains in this audio slice.
+[TODO](TODO.md) identifies the next consumer-owned read-only voice gap/source
+matrix and model-free preflight plan, subject to its voice-specific owner return.
+Existing Edge/MOSS qualification remains open. This reconciliation selects no
+consumer execution or publication; prior native and software results remain
+retained source-bound proof, not new runs.
+
+The separately authorized five-file documentation publication is established
+only by the guarded helper's exact commit/tree, clean-commit gate and confirmed
+remote result in
+`D:/Compact_Evidence/candle/runs/lfm3-catalog-closure-publish-20261029-969beab2/publication.json`.
+It saves the closure and conditional planning handoff without changing frozen
+inputs, consumer pins or any model/package/deployment state.
 
 Status: Complete with verified limitations for finite native CPU-F32 TTS/ASR.
 The LFM3 backbone, released audio encoder, codebook embeddings, three-pass
@@ -96,7 +119,7 @@ qualification and retained bundle/native artifacts, but its documented top-level
 summary and portable catalog entry were unavailable. That review did not admit
 that claim.
 
-Review of `2e96f6e3` now finds the canonical consumer summary at
+Review of `2e96f6e3` found the canonical consumer summary at
 `D:/Compact_Evidence/symbio-voice/runs/portable-cpu-20261029/summary.json`.
 All 18 published-file hashes match consumer commit
 `303dfa1073771069c13528aeea2b6171ce894ed7`; all 69 bundle build-input hashes
@@ -105,9 +128,9 @@ the retained receipt. A newer owner edit to its TODO is separate from that
 published identity. These checks verify the binding of the recorded Windows
 x64 CPU proof; no model, browser or recipient test was rerun. Manifest, lock and
 runtime evidence retain Candle `6a46737c`. Catalog registration alone was pending
-behind an existing `.index.lock`, which that review left untouched. TODO narrows the
-handoff to consumer-owned catalog repair after lock ownership is resolved;
-the consumer's own TODO remains authoritative for live status, without dispatch,
+behind an existing `.index.lock`, which that review left untouched. The later
+consumer-owned registration closes that historical traceability gap. The
+consumer's own TODO remains authoritative for live status, without automatic
 repin or another Candle implementation task. Clean OS VM, other Windows builds,
 GPU, installer/public release and Edge/MOSS qualification remain separate.
 
@@ -177,4 +200,4 @@ and full portable-recipient acceptance retain their existing limits.
 The old disk cleanup batch remains unapproved and untouched.
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-recheck-publish | change=bind the two-file delivery while preserving the dated consumer gate
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-closure-publish | change=bind the documentation delivery separately from consumer acceptance

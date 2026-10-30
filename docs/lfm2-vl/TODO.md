@@ -15,7 +15,7 @@ were verified. Completed release proof is in
 ## Current maintenance
 
 The separately selected [LFM3-Audio implementation](../lfm3-audio/TODO.md)
-owns current native audio work. The completed D1 milestone stays closed;
+owns native audio scope. The completed D1 milestone stays closed;
 no additional D1 implementation batch is selected. The D1 batch is published
 at `27f24e9f`; [STATUS](STATUS.md#active-files-and-exact-next-task) owns the
 source-bound delivery and the completed October 26 handoff publication.
@@ -23,11 +23,13 @@ Edge's unfinished qualification remains consumer-owned and does not select
 another Candle batch. Audio/WAV source is published through `a213f04f` and the
 WAV finding remains closed. The adapter proposal is superseded by existing
 SymbioVoice source; its portable summary/source/artifact bindings are now
-verified for the recorded Windows CPU scope. The separate audio TODO narrows
-the remaining handoff to consumer-owned catalog registration after lock
-ownership is resolved. Live consumer status stays in its own queue. Preserve
-its Candle `6a46737c` pin. The documentation deliveries select no new Candle
-implementation, model/package/deployment operation or consumer adoption.
+verified for the recorded Windows CPU scope, and catalog registration/lock
+ownership are now closed. No Candle audio implementation or catalog task
+remains. The separate audio TODO identifies the consumer-owned read-only voice
+gap/source-matrix review and model-free preflight plan. Live consumer status
+stays in its own queue. Preserve its Candle `6a46737c` pin. The documentation
+deliveries select no new Candle implementation, model/package/deployment
+operation or consumer adoption.
 
 ### [ ] Portable ZIP repair: remaining Edge consumer qualification
 
@@ -374,4 +376,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-docs-publish | change=save the catalog handoff without selecting new implementation or consumer adoption
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-closure-publish | change=save the completed catalog gate and unchanged consumer-owned next step

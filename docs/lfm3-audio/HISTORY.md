@@ -1,5 +1,46 @@
 # LFM3-Audio completion history
 
+## 2026-10-29: five-record catalog-closure delivery
+
+The paired Closeout/Publish covers only the five reviewed root/audio records.
+Intake observed an empty index and refreshed `origin/main` at `969beab2`.
+The guarded helper's exact commit/tree, clean-commit software gate, confirmed
+remote result and owned-resource disposition are recorded in
+`D:/Compact_Evidence/candle/runs/lfm3-catalog-closure-publish-20261029-969beab2/publication.json`.
+Only that confirmed receipt establishes publication. This delivery saves the
+catalog closure and bounded consumer-owned planning handoff without rechecking
+live consumer state. Implementation checkpoint `a213f04f`, consumer Candle
+`6a46737c`, frozen inputs and owner edits are preserved. No model run, package
+build, installation, activation, consumer dispatch or release/tag is included.
+
+## 2026-10-29: portable receipt catalog closure
+
+At clean Candle `969beab2`, read-only recheck confirms that
+`D:/Compact_Evidence/symbio-voice/index.json` contains exactly one relative
+`runs/portable-cpu-20261029` entry resolving to its retained `summary.json`.
+The catalog SHA-256 is
+`422ad4856444c4ddc817a9370d9a6afb7e9ba3e54ea4113c947475f0c9419668`;
+the canonical receipt SHA-256 is
+`0b5cba89be1a2d1e79950434fe8262e10caac6767d6bb6cdbe7bc33ccf3495a8`.
+Its prior `03933cf9` digest remains the historical pre-registration identity.
+
+SymbioVoice resolved ownership using completed creator/writer commands, their
+recorded timestamps and an exclusive handle on the old persistent sentinel.
+Those commands used `OpenOrCreate/FileShare.None` and disposed their handles
+without unlinking the file. This was positive protocol/ownership evidence,
+not age-based lock breaking. Registration used an exclusive new task lock and
+atomic metadata replacements; that lock is released. All 12 prior catalog
+entries/extensions and `safeToRemove=false` were preserved. The receipt's
+`catalog.ownershipDisposition` retains the exact command identities and checks.
+
+Only catalog metadata changed in the receipt. Consumer `303dfa10`, Candle
+`6a46737c`, native/source/artifact qualification and package bytes are unchanged;
+the existing owner TODO edit was preserved. Candle accepts this traceability
+closure without another supplier implementation or qualification packet.
+The remaining consumer step is the voice-specific gap/source-matrix review and
+model-free preflight plan in its own queue. Edge native and MOSS acceptance stay
+open; no new model run, build, install, activation, dispatch or push is selected.
+
 ## 2026-10-29: four-record catalog-handoff delivery
 
 The paired Closeout/Publish covers only the four reviewed documentation files.
@@ -383,4 +424,4 @@ No Python release/oracle gate, WSL lane, GPU run, consumer package test or
 publication ran. See STATUS for the exact qualification boundary.
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-docs-publish | change=bind the scoped record delivery while preserving consumer evidence limits
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-closure-publish | change=bind the scoped closure delivery without extending consumer qualification

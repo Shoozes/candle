@@ -9,6 +9,11 @@ publication/consumer handoff records. That five-file documentation delivery is
 recorded separately in the audio STATUS. Its own TODO/source map owns audio
 acceptance. D1 remains maintenance-complete and consumer pins stay frozen.
 
+SymbioVoice's portable receipt/catalog handoff is now verified closed. No
+Candle audio implementation or catalog repair remains; the next bounded voice
+coverage/source review and model-free preflight plan belong to the consumer
+queues. Audio STATUS/HISTORY bind the closure without new native qualification.
+
 D1 pixel-cap hardening is published at
 `27f24e9fc9e9d46fd25549655c3a6617eea75e4a`, from baseline
 `443f67c57a37178dd1bf39d7fc06eebaa1a2cc57`. The D1 component is
@@ -199,8 +204,11 @@ plugin changes remain held.
 
 ## Active files and exact next task
 
-Current active work is the independent LFM3-Audio source, tests and documentation
-routed by [its STATUS](../lfm3-audio/STATUS.md) and [TODO](../lfm3-audio/TODO.md).
+The selected finite LFM3-Audio implementation and portable catalog handoff are
+closed, as recorded in [its STATUS](../lfm3-audio/STATUS.md) and
+[TODO](../lfm3-audio/TODO.md). Current reconciliation changes root/audio records
+only. No new Candle implementation or consumer execution is selected; the
+remaining voice gap/source review and preflight planning stay consumer-owned.
 The eight-path image-cap batch is already published; its implementation and
 fixtures remain unchanged. Existing security pins and consumer locks are
 preserved; audio adds only a direct edge to the already-pinned RustFFT dependency.
@@ -224,7 +232,8 @@ through that guarded helper at `6a46737c`; its separate
 [STATUS](../lfm3-audio/STATUS.md) binds that receipt and retained qualification
 limits. The seven-file parser repair was published at `a213f04f`; its receipt
 does not renew model or consumer qualification. Current TODO reflects the
-already implemented SymbioVoice adapter and its separate portable-delivery work.
+implemented SymbioVoice adapter, closed portable traceability and separate
+consumer-owned coverage planning.
 GenEye owns its receipt admission and current-state/TODO updates.
 The original review, native and publication receipts remain unchanged. A live
 CPU adviser attempt still needs an exact grant and fresh admission under its
@@ -249,4 +258,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-handoff-docs-publish | change=route documentation delivery independently from completed code and frozen consumers
+AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-closure-publish | change=save the catalog closure while preserving frozen consumer gates
