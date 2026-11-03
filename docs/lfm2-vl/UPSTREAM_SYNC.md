@@ -1,6 +1,56 @@
 # Upstream integration
 
-## Current integration — 2026-10-09
+## Current integration — 2026-11-03
+
+Starting clean local/remote `main`: `7b9b9a941d4f72da9bf36f71e906190ad670f509`.
+Pinned official upstream: `cfcbd7186d13271843ce7eb41d25659bd0835850`
+(Candle 0.11.1). The local merge preserves both histories and imports five
+commits after the previous `c68b2499` base:
+
+- `12bb5d1f`: pin CI action references. Our existing full action SHA, explicit
+  Rust 1.97.1 selection and locked commands are retained rather than adopting
+  the upstream stable-toolchain selection. No hosted job was requested or run.
+- `9515d410`: ZIP 9.1.3 and fallible archive-name APIs. Keep the fork's decoded
+  CP437 lookup and controlled errors; ZIP requires typed-path 0.13.0. These are
+  the only third-party lock version changes; existing security pins remain.
+- `59f8e903`: Candle 0.11.1, including the retained ug/vlm workspace crates.
+- `2cf0e66d`: reject mutating scatter operations whose indices share storage
+  with the destination, with the upstream CPU regression assertions.
+- `cfcbd718`: feature-gated routed quantized Metal MoE projections and tests.
+  The existing CPU/non-Metal dispatch and fork quantized modes are preserved.
+
+The owner authorized the required Cargo downloads and a verified local merge
+commit. Push, model runs, package builds, installation and activation remain
+held. Consumers retain their qualified source/lock tuples; this integration
+does not repin Edge, GenEye, SymbioVoice or other consumers.
+
+### Verification boundary
+
+The pre-merge archive/tensor baseline passed 59 tests. The merged ZIP/PyTorch/
+serialization/tensor gate passed 65 tests (8 archive, 3 PyTorch, 3 serialization,
+51 tensor). Strict CPU library Clippy passed. Commands, source hashes, final
+merge identity and maintained native gate results are bound by
+`D:/Compact_Evidence/candle/runs/upstream-sync-20261103-cfcbd718/summary.json`.
+
+```powershell
+cargo test --locked --offline -j 2 -p candle-core --test archive_tests --test serialization_tests --test pth_tests --test tensor_tests
+cargo clippy --locked --offline -j 2 -p candle-core -p candle-nn -p candle-transformers -p candle-vlm --lib -- -D warnings
+pwsh -NoProfile -File .tools/verify-before-push.ps1
+```
+
+Dependencies were fetched only for the owner-authorized targeted verification;
+the maintained gate uses the resulting locked/offline inputs. The live overlay
+baseline advances to the pinned upstream commit. Frozen release expectations,
+tags/assets and original numerical receipts retain their original bases.
+The overlay/manifest checks require upstream ancestry, so their final replay
+follows the local merge commit rather than weakening that guard for a pending merge.
+
+An independent source audit found no substantiated defect in the Metal/scatter
+changes. Windows CPU checks do not compile or execute the Metal backend;
+macOS/Metal runtime and parity proof remain unverified. No new CUDA, production
+model or cross-platform qualification follows from this local source sync.
+
+## Previous integration — 2026-10-09
 
 Starting clean local/remote `main`: `f93a4111ae41683b548758225940f80de6cd37e8`.
 Pinned official upstream: `c68b24997319b8d76e5a4e775dab197c7f26322a`.
@@ -230,4 +280,4 @@ checkpoint. Both histories must remain ancestors of the published delivery.
   verification, Metal execution, or AArch64 execution are part of this task.
 
 ---
-AI-edited: 2026-10-09 | agent=Codex/root | model=unknown | effort=unknown | task=upstream-cpu-options | change=integrated pinned upstream and verified scoped CPU execution
+AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=record the pinned 0.11.1 local integration and preserve historical proof boundaries

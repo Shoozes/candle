@@ -2,6 +2,18 @@
 
 ## Current phase and baseline
 
+Local upstream integration selects Candle 0.11.1 at
+`cfcbd7186d13271843ce7eb41d25659bd0835850`, from clean fork `7b9b9a94`.
+It imports the five official commits, preserves ug/onig/CP437 and existing
+overlay behavior, and limits third-party lock version changes to ZIP 9.1.3
+and its required typed-path 0.13.0. [UPSTREAM_SYNC](UPSTREAM_SYNC.md) owns the
+current source/verification contract. Exact local merge identity, commands and
+final gate results are retained in
+`D:/Compact_Evidence/candle/runs/upstream-sync-20261103-cfcbd718/summary.json`.
+The owner authorized required Cargo downloads and a local merge commit; push,
+model runs, package builds, installation and activation remain held. Metal
+runtime/parity is unverified on Windows; no consumer qualification is renewed.
+
 The independent native [LFM3-Audio source](../lfm3-audio/STATUS.md) and subsequent
 WAV repair are published through `a213f04f1b404c5b404172c84223ca1776136ec2`.
 The review/recheck kept the WAV finding closed and corrected stale
@@ -43,7 +55,7 @@ GenEye's corrected finite d1 package qualification is complete at that pin.
 Edge's independently adopted ZIP baseline remains
 `38d90519f8ed10ddbbe160e5482b0d0089efbaad`; its storage preparation and
 installed/aggregate acceptance remain under Edge ownership.
-Pinned upstream remains `c68b24997319b8d76e5a4e775dab197c7f26322a`;
+Live upstream is `cfcbd7186d13271843ce7eb41d25659bd0835850`;
 released 0.2.0 tag/assets remain at `9a7c65c2ebca67e7997ae1a73b652e38d0a3781f`.
 
 ## Last green verification and proven behavior
@@ -204,10 +216,12 @@ plugin changes remain held.
 
 ## Active files and exact next task
 
-The selected finite LFM3-Audio implementation and portable catalog handoff are
+Current local work is the bounded upstream sync described above; no new model
+capability or consumer execution is selected. Its next publication step remains
+held until separately authorized. The selected finite LFM3-Audio implementation
+and portable catalog handoff are
 closed, as recorded in [its STATUS](../lfm3-audio/STATUS.md) and
-[TODO](../lfm3-audio/TODO.md). Current reconciliation changes root/audio records
-only. No new Candle implementation or consumer execution is selected; the
+[TODO](../lfm3-audio/TODO.md). No further audio implementation is selected; the
 remaining voice gap/source review and preflight planning stay consumer-owned.
 The eight-path image-cap batch is already published; its implementation and
 fixtures remain unchanged. Existing security pins and consumer locks are
@@ -258,4 +272,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-closure-publish | change=save the catalog closure while preserving frozen consumer gates
+AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=record local 0.11.1 integration with frozen consumer and release identities

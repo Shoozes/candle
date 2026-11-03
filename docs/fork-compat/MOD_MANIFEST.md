@@ -1,6 +1,6 @@
 # Retained Upstream Compatibility Manifest
 
-Live upstream baseline: `c68b24997319b8d76e5a4e775dab197c7f26322a`.
+Live upstream baseline: `cfcbd7186d13271843ce7eb41d25659bd0835850`.
 These intentional differences retain our public API and tokenizer contract
 after upstream removed ug and selected fancy-regex. This overlay is independent
 of LFM2-VL, diffusion, and experimental GPT-OSS model ownership.
@@ -17,7 +17,7 @@ Run the resulting binary through the existing bounded oracle wrapper. Normal
 non-ug builds do not need the API-version override. See UPSTREAM_SYNC for the
 failed detection/link alternatives and bounded runtime receipts.
 
-The ZIP 9 parent requirement and NPZ/PyTorch filename adaptation are also owned
+The ZIP 9.1.3 parent requirement and NPZ/PyTorch filename adaptation are also owned
 here; see [ZIP compatibility](ZIP_COMPATIBILITY.md). Local proof does not
 qualify a consumer repin or unrelated GPT-OSS changes.
 
@@ -70,4 +70,4 @@ undersized-output panic to a controlled error and prove deterministic mode
 parity. Qwen rounding and LFM2-VL native Q8/F32 hunks retain their owners.
 
 ---
-AI-edited: 2026-10-25 | agent=Codex/root | task=root-lock-security | change=own compatible dependency security hunks and their current contract
+AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=retain compatibility ownership on the updated live upstream base

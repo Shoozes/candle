@@ -25,7 +25,7 @@ native Windows and WSL report the same candidate paths.
 | SnapFlash-derived diffusion | `docs/snapflash/MOD_MANIFEST.md` | Generic SDXL LoRA transaction, controlled unsupported flash attention, residual/`text_time` conditioning and validated VAE channel construction/distribution |
 | GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Packed CPU/CUDA interfaces and source-bound short-parity/2,080-token receipt; no new production claim from upstream sync |
 | Qwen3.5 GGUF compatibility | `docs/qwen35/MOD_MANIFEST.md` | Bounded Q8_0/F32 text admission, proven CPU parity, and scoped CUDA quantization under qualification; no Edge activation |
-| LFM3-Audio | `docs/lfm3-audio/MOD_MANIFEST.md` | Native CPU-F32 TTS/ASR with bounded cache/codec chunk proof; local uncommitted source, independent from D1 and consumer defaults |
+| LFM3-Audio | `docs/lfm3-audio/MOD_MANIFEST.md` | Published native CPU-F32 TTS/ASR and WAV repair with source-bound cache/codec proof; independent from D1 and consumer defaults |
 
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each
@@ -34,9 +34,10 @@ in one overlay cannot silently become release evidence for another. Historic
 registered paths remain valid across a rolling baseline while the verifiers
 still reject missing manifest files and any new unregistered path. The live
 union baseline is the pinned upstream integration commit
-`c68b24997319b8d76e5a4e775dab197c7f26322a`. The published
+`cfcbd7186d13271843ce7eb41d25659bd0835850`. The published
 [`candle-overlays-mvp-0.2.0`](https://github.com/Shoozes/candle/releases/tag/candle-overlays-mvp-0.2.0)
-snapshot at `9a7c65c2` uses this five-overlay base. The earlier `6f74e7c`
+snapshot at `9a7c65c2` retains its frozen five-overlay base `c68b2499` and
+original expectations. The earlier `6f74e7c`
 two-overlay candidate is historical and explicitly superseded in the release
 contract. Its old inputs are not the current writer's expectations.
 
@@ -227,4 +228,4 @@ release. Each consumer keeps the dependency tuple it actually qualified;
 publishing a newer Candle source snapshot does not require a consumer repin.
 
 ---
-AI-edited: 2026-10-28 | agent=Codex/root | task=lfm3-audio | change=register independent native audio ownership and preserve frozen release inventories
+AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=advance live upstream ownership checks without changing frozen inventories

@@ -4,7 +4,7 @@ export LC_ALL=C
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd -P)"
-BASELINE="${1:-c68b24997319b8d76e5a4e775dab197c7f26322a}"
+BASELINE="${1:-cfcbd7186d13271843ce7eb41d25659bd0835850}"
 MANIFEST="${REPO_ROOT}/docs/lfm2-vl/MOD_MANIFEST.md"
 cd -- "$REPO_ROOT"
 

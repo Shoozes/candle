@@ -5,7 +5,7 @@ This manifest separates the LFM2-VL mod overlay from the integrated Candle fork.
 ## Classification Rule
 
 - Model and compatibility baseline: Candle 0.11.0 at `31f35b147389700ed2a178ee66a91c3cc25cc80d`.
-- Live overlay baseline: Hugging Face `c68b24997319b8d76e5a4e775dab197c7f26322a` after the October 9 upstream sync. Historical unshipped August candidate inputs used `6f74e7c390c717f8fd34f23ce02aceb058173370`.
+- Live overlay baseline: Hugging Face `cfcbd7186d13271843ce7eb41d25659bd0835850` after the November 3 upstream sync. Frozen release expectations retain `c68b2499`. Historical unshipped August candidate inputs used `6f74e7c390c717f8fd34f23ce02aceb058173370`.
 - Historical mod checkpoint: `c9b60f0b906fa8fe70423295e2e1164648a8fa53` on `feat/lfm2-vl-mmproj`; that branch is retained as evidence, not used as a second publication line.
 - Current local LFM2-VL overlay: 215 paths, exactly 20 fork-origin modifications and 195 mod-owned additions. The repository-wide overlay registry owns union completeness; this manifest remains specific to LFM2-VL. Historical receipts retain their original inventory; the current five-overlay release contract supersedes the unshipped August candidate.
 - A **fork-origin modification** is a path that exists in the current publication baseline and is intentionally changed by this mod.
@@ -286,4 +286,4 @@ commands are prohibited. The LFM2-VL verifier remains independently runnable
 and does not absorb unfinished diffusion paths.
 
 ---
-AI-edited: 2026-10-14 | agent=Codex/root | model=unknown | effort=unknown | task=overlay-mvp-release | change=registered reviewed five-overlay release expectations
+AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=advance the live provenance base while retaining frozen release inventories

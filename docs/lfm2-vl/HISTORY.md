@@ -2,6 +2,25 @@
 
 Dated entries are historical. Current state: `STATUS.md`; active work: `TODO.md`. New maintained-model work: [2026-10-12](MAINTAINED_MODELS.md).
 
+## 2026-11-03 - Local Candle 0.11.1 upstream integration
+
+The owner selected the five official commits through `cfcbd718`, authorized
+required dependency downloads and a verified local merge, and kept publication
+held. Starting `main` was clean at `7b9b9a94`. The integration retains both
+histories, ug/onig, scoped CPU quantized modes, CP437 tensor readers, pinned
+Rust 1.97.1 and the original frozen release/consumer identities. Root ZIP is
+9.1.3 with its required typed-path 0.13.0; no other third-party lock version
+changes are selected. Live upstream verifiers use the new base, while frozen
+release writer expectations keep their historical base and inventory.
+
+The archive/tensor baseline passed 59 tests; targeted merged CPU archive,
+serialization, PyTorch and tensor checks passed 65. Strict CPU library Clippy
+passed. The exact merge identity, source hashes and final maintained gate are
+bound by `D:/Compact_Evidence/candle/runs/upstream-sync-20261103-cfcbd718/summary.json`.
+[UPSTREAM_SYNC](UPSTREAM_SYNC.md) records the conflict decisions and commands.
+Metal MoE remains unverified on a supported macOS/Metal host. No model run,
+package build, installation, activation, hosted verification or push is selected.
+
 ## 2026-10-26 - Scoped GenEye handoff record publication
 
 The owner's paired Closeout/Publish selects only STATUS, TODO and HISTORY on
@@ -3631,4 +3650,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-10-26 | agent=Codex/root | task=geneye-handoff-publish | change=retain the scoped record delivery and unchanged runtime and deployment boundaries
+AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=retain the local upstream integration and its source-bound verification limits

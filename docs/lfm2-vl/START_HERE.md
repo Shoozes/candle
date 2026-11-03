@@ -19,8 +19,9 @@ Maintenance follows the published independent five-overlay source MVP
 [`candle-overlays-mvp-0.2.0`](https://github.com/Shoozes/candle/releases/tag/candle-overlays-mvp-0.2.0)
 at `9a7c65c2ebca67e7997ae1a73b652e38d0a3781f`. Its source package,
 annotated tag and four asset hashes are verified; the immutable
-`lfm2-vl-mvp-0.1.0` object/target remain unchanged. Pinned upstream remains
-`c68b24997319b8d76e5a4e775dab197c7f26322a`.
+`lfm2-vl-mvp-0.1.0` object/target remain unchanged. The live upstream integration
+is Candle 0.11.1 at `cfcbd7186d13271843ce7eb41d25659bd0835850`.
+The frozen 0.2.0 receipt keeps its original `c68b2499` base and inventory.
 
 Use `STATUS.md` for the current working-tree repair and proof, `TODO.md` for
 the selected bounded maintenance task, and `HISTORY.md` for completed release
@@ -163,4 +164,4 @@ prohibited.
 - `summary_bank.json`: focused context routes, never a progress log.
 
 ---
-AI-edited: 2026-10-25 | agent=Codex/root | task=review-recheck-cleanup | change=route the qualified GenEye cohort and date the historical WSL limitation
+AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=separate live 0.11.1 integration from frozen release expectations

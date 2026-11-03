@@ -14,6 +14,18 @@ were verified. Completed release proof is in
 
 ## Current maintenance
 
+### [ ] Publish the verified local upstream sync only when authorized
+
+- What/why: The local Candle 0.11.1 integration at official `cfcbd718` preserves
+  both histories but is not a remote publication. [UPSTREAM_SYNC](UPSTREAM_SYNC.md)
+  and its compact receipt own the exact merge identity and verification.
+- Boundary: Preserve all overlays, frozen release inputs and consumer pins.
+  Push, model runs, package builds, installation and activation remain held.
+- How/Done when: After explicit publication authorization, review the clean
+  named `main` and refreshed destination, then use Candle's `.tools/gitpush.ps1`
+  to replay the gate and confirm the exact remote commit. No consumer repin or
+  Metal/runtime qualification follows from saving this source snapshot.
+
 The separately selected [LFM3-Audio implementation](../lfm3-audio/TODO.md)
 owns native audio scope. The completed D1 milestone stays closed;
 no additional D1 implementation batch is selected. The D1 batch is published
@@ -376,4 +388,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-10-29 | agent=Codex/root | task=lfm3-catalog-closure-publish | change=save the completed catalog gate and unchanged consumer-owned next step
+AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=track held publication of the local upstream sync without reopening consumer work

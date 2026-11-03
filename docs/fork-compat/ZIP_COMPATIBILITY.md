@@ -1,6 +1,21 @@
 # ZIP dependency compatibility
 
-## Selected maintenance boundary
+## Current upstream integration — 2026-11-03
+
+The local upstream sync selects ZIP 9.1.3 with Candle 0.11.1 from official
+`cfcbd7186d13271843ce7eb41d25659bd0835850`. ZIP's required typed-path moves to
+0.13.0; other third-party lock versions are retained. The owner authorized the
+required Cargo downloads. `default-features = false`, fallible name decoding,
+CP437 lookup, read-only member handling and controlled errors are preserved.
+The current targeted archive/PyTorch/serialization/tensor gate passed 65 tests;
+[UPSTREAM_SYNC](../lfm2-vl/UPSTREAM_SYNC.md) owns its commands and local proof.
+
+This is supplier-source maintenance. Edge's qualified `38d90519` graph,
+GenEye's frozen `81e1aa28` ZIP-only backport and all other consumer pins and
+package evidence remain unchanged. The following 9.0.4 repair and its receipts
+are historical source-bound proof, not a claim that consumers adopted 9.1.3.
+
+## Original maintenance boundary
 
 The verified repair starts at clean Candle main
 `b70f5f3264d88413ee77e7e7c9827644590de3c7`. It moves the workspace ZIP requirement
@@ -177,4 +192,4 @@ compatible repair and full-lock audit are recorded in
 and its original audit remain unchanged.
 
 ---
-AI-edited: 2026-10-25 | agent=Codex/root | task=root-lock-security | change=preserve the published ZIP cohort and route current root-lock security work
+AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=record current 9.1.3 compatibility separately from frozen consumer cohorts

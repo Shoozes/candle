@@ -1870,5 +1870,34 @@ consumer packages keep their source identity; no repin or new inference
 allowance follows. Full-resolution RGB conversion and bicubic intermediate
 allocation are unchanged; the pixel cap is not a peak-memory admission limit.
 
+## D-0075: Integrate upstream 0.11.1 without changing qualified consumer identities
+
+Context:
+Official upstream `cfcbd718` adds ZIP 9.1.3, patch-level Candle versions, scatter
+alias guards and optional routed Metal MoE. Its action-pin change overlaps our
+already-pinned workflow/compiler contract, and its archive API adaptation
+overlaps the fork's existing decoded-name compatibility repair.
+
+Decision:
+Preserve both Git histories in a local merge. Keep our full CI action SHA,
+explicit Rust 1.97.1 and locked commands; do not select a moving stable compiler
+or run hosted verification. Adopt upstream 0.11.1 and ZIP 9.1.3, including the
+required typed-path 0.13.0 update, while retaining ug/vlm workspace registration,
+onig, CPU scheduling modes, native-Q8 policy and CP437/error boundaries. The
+owner authorized required Cargo downloads and a verified local merge commit.
+No production dependency beyond the selected ZIP graph change is introduced.
+
+Advance only live upstream baseline records and verifier defaults. Frozen
+release expectations, immutable tags/assets, native receipts and qualified
+consumer pins retain their original source identities. Inherited Metal source
+does not become a new fork overlay or a Windows/Metal runtime claim.
+
+Consequences:
+Native CPU verification and exact overlay checks remain mandatory; ancestry
+checks are replayed after the merge commit rather than bypassed for a pending
+merge. Metal parity needs a supported macOS environment. Push, model runs,
+package builds, installation and activation remain held. Exact commands and
+merge identity belong to the compact upstream-sync receipt.
+
 ---
-AI-edited: 2026-10-25 | agent=Codex/root | task=d1-pixel-cap | change=record the strict area invariant and preserved frozen resampling evidence
+AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=record compatible upstream conflict resolution and frozen consumer boundaries
