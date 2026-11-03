@@ -14,17 +14,13 @@ were verified. Completed release proof is in
 
 ## Current maintenance
 
-### [ ] Publish the verified local upstream sync only when authorized
-
-- What/why: The local Candle 0.11.1 integration at official `cfcbd718` preserves
-  both histories but is not a remote publication. [UPSTREAM_SYNC](UPSTREAM_SYNC.md)
-  and its compact receipt own the exact merge identity and verification.
-- Boundary: Preserve all overlays, frozen release inputs and consumer pins.
-  Push, model runs, package builds, installation and activation remain held.
-- How/Done when: After explicit publication authorization, review the clean
-  named `main` and refreshed destination, then use Candle's `.tools/gitpush.ps1`
-  to replay the gate and confirm the exact remote commit. No consumer repin or
-  Metal/runtime qualification follows from saving this source snapshot.
+The selected upstream sync is locally integrated at `311d267b` from official
+Candle 0.11.1 `cfcbd718`. The owner's paired Closeout/Publish selects saving
+that verified scope and these completion records through Candle's guarded
+helper. [STATUS](STATUS.md) and [UPSTREAM_SYNC](UPSTREAM_SYNC.md) bind the exact
+delivery to its confirmed publication receipt; no further upstream implementation
+is selected. Metal runtime remains unverified on Windows. Model runs, package
+builds, installation, activation and consumer adoption remain separately held.
 
 The separately selected [LFM3-Audio implementation](../lfm3-audio/TODO.md)
 owns native audio scope. The completed D1 milestone stays closed;
@@ -388,4 +384,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=track held publication of the local upstream sync without reopening consumer work
+AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync-publish | change=close the selected source-delivery task without extending consumer qualification

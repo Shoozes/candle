@@ -2,6 +2,23 @@
 
 Dated entries are historical. Current state: `STATUS.md`; active work: `TODO.md`. New maintained-model work: [2026-10-12](MAINTAINED_MODELS.md).
 
+## 2026-11-03 - Guarded upstream-sync source delivery
+
+The owner's paired Closeout/Publish saves local merge `311d267b` and its five
+official upstream commits, then closes the selected publication task in four
+root records. Intake observed clean named `main`, an empty index, all 34 local
+integration hashes matching the retained proof, and refreshed `origin/main`
+still at `7b9b9a94`; no unrelated outgoing commit was included. Existing Summary
+Bank routes cover the batch without regeneration.
+
+Exact final commit/tree, the fresh clean-commit native gate, remote confirmation
+and owned-resource disposition belong to
+`D:/Compact_Evidence/candle/runs/upstream-sync-publish-20261103-311d267b/publication.json`.
+Only that confirmed receipt establishes publication. No model run, package
+build, installation, activation, consumer repin, hosted verification or release/
+tag creation is included. Metal runtime remains unverified on Windows, and the
+frozen release tags/assets and original numerical receipts retain their identities.
+
 ## 2026-11-03 - Local Candle 0.11.1 upstream integration
 
 The owner selected the five official commits through `cfcbd718`, authorized
@@ -3650,4 +3667,4 @@ projection and optional loading remain the next independent TODO batches;
 GenEye's adoption of this published source remains separately owned.
 
 ---
-AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=retain the local upstream integration and its source-bound verification limits
+AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync-publish | change=retain scoped source delivery independently from platform and consumer acceptance

@@ -19,9 +19,11 @@ commits after the previous `c68b2499` base:
 - `cfcbd718`: feature-gated routed quantized Metal MoE projections and tests.
   The existing CPU/non-Metal dispatch and fork quantized modes are preserved.
 
-The owner authorized the required Cargo downloads and a verified local merge
-commit. Push, model runs, package builds, installation and activation remain
-held. Consumers retain their qualified source/lock tuples; this integration
+The owner authorized the required Cargo downloads and verified local merge
+`311d267be6c02dd7b9fc6c06604702f81c669701`. That local phase held publication;
+the subsequent paired Closeout/Publish authorizes scoped delivery through
+`.tools/gitpush.ps1`. Model runs, package builds, installation and activation
+remain held. Consumers retain their qualified source/lock tuples; this integration
 does not repin Edge, GenEye, SymbioVoice or other consumers.
 
 ### Verification boundary
@@ -49,6 +51,17 @@ An independent source audit found no substantiated defect in the Metal/scatter
 changes. Windows CPU checks do not compile or execute the Metal backend;
 macOS/Metal runtime and parity proof remain unverified. No new CUDA, production
 model or cross-platform qualification follows from this local source sync.
+
+### Source publication
+
+The selected delivery contains the five official commits, local integration
+`311d267b` and four completion records, with no unrelated outgoing work.
+The clean-commit replay, exact final commit/tree, confirmed `origin/main` and
+owned-resource disposition are retained in
+`D:/Compact_Evidence/candle/runs/upstream-sync-publish-20261103-311d267b/publication.json`.
+Only its confirmed receipt establishes publication. Local integration proof
+above remains independently source-bound; delivery grants no consumer repin,
+deployment, release/tag creation or new runtime qualification.
 
 ## Previous integration — 2026-10-09
 
@@ -280,4 +293,4 @@ checkpoint. Both histories must remain ancestors of the published delivery.
   verification, Metal execution, or AArch64 execution are part of this task.
 
 ---
-AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=record the pinned 0.11.1 local integration and preserve historical proof boundaries
+AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync-publish | change=separate confirmed source publication from local integration and platform proof
