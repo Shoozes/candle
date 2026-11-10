@@ -1,0 +1,64 @@
+{
+  "schema": "candle.lfm2-moe.sources.v1",
+  "native_revision": "3dc4cd09c9a2a99e1e819693e79d3aba5e9bb4f2",
+  "gguf_revision": "7be3a8c77b010e612c42089d0dc082962cecb3a6",
+  "transformers_revision": "ddb849abe009d1089e6c691bfc897f27211c663c",
+  "llamacpp_revision": "582eab718608b99792286729890aac1675547c29",
+  "sources": [
+    {
+      "name": "configuration_lfm2_moe.py",
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/ddb849abe009d1089e6c691bfc897f27211c663c/src/transformers/models/lfm2_moe/configuration_lfm2_moe.py",
+      "bytes": 2873,
+      "sha256": "a29fa7f2dc70c6ce468e6bfcad7e93634e091c70c0e747075d56f5349e923361"
+    },
+    {
+      "name": "modeling_lfm2_moe.py",
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/ddb849abe009d1089e6c691bfc897f27211c663c/src/transformers/models/lfm2_moe/modeling_lfm2_moe.py",
+      "bytes": 30566,
+      "sha256": "535002e934c65ce7295b8e9046be0dc551a4dd13f82876f706f905a6ddb84b21"
+    },
+    {
+      "name": "config.json",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/resolve/3dc4cd09c9a2a99e1e819693e79d3aba5e9bb4f2/config.json",
+      "bytes": 1442,
+      "sha256": "b0c46662afe3881e49cf542e683bf5ea8a5e0b780a429b6141a48defc33531bf"
+    },
+    {
+      "name": "chat_template.jinja",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/resolve/3dc4cd09c9a2a99e1e819693e79d3aba5e9bb4f2/chat_template.jinja",
+      "bytes": 5443,
+      "sha256": "ea663864491de7ade391839479860ca95541f892f72665c73251fbd4643b1bef"
+    },
+    {
+      "name": "LICENSE",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/resolve/3dc4cd09c9a2a99e1e819693e79d3aba5e9bb4f2/LICENSE",
+      "bytes": 10574,
+      "sha256": "4d28ca14dedc0b3d0fcc2b3339f0e79931faa33874f3d24f522183a8fc70068c"
+    },
+    {
+      "name": "tokenizer.json",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/resolve/3dc4cd09c9a2a99e1e819693e79d3aba5e9bb4f2/tokenizer.json",
+      "bytes": 17905598,
+      "sha256": "695be7802a0e4b8a81048f0ff5ebb7fc811a0ba5a6be63dbb24deb5a81096f41"
+    },
+    {
+      "name": "tokenizer_config.json",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/resolve/3dc4cd09c9a2a99e1e819693e79d3aba5e9bb4f2/tokenizer_config.json",
+      "bytes": 363,
+      "sha256": "11f1de897317b489dd09199284528382eeb17f566398b16e2039bb2266d26b09"
+    },
+    {
+      "name": "model.safetensors.index.json",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/resolve/3dc4cd09c9a2a99e1e819693e79d3aba5e9bb4f2/model.safetensors.index.json",
+      "bytes": 701253,
+      "sha256": "b3c3d025ee3b7e78ca3d6160d1be872d85ff03272c64b0c2b5fc85a6f36c622f"
+    }
+  ],
+  "llamacpp_source_archive": {
+    "revision": "582eab718608b99792286729890aac1675547c29",
+    "url": "https://codeload.github.com/ggml-org/llama.cpp/zip/582eab718608b99792286729890aac1675547c29",
+    "archive_bytes": 41698114,
+    "archive_sha256": "4916b62d2b836d003f79c03924d77a4ad904ea1b4e98a3d906d1e953eefacc83",
+    "header_sha256": "a806cb05ff2f218945acefc0d5e49681f41d76af5d7ef7613d954fc18c81fe2a"
+  }
+}

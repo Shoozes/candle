@@ -1,6 +1,6 @@
 /// MLP layer with SwiGLU activation.
 #[derive(Debug, Clone)]
-struct Mlp {
+pub(crate) struct Mlp {
     gate_proj: Linear,
     up_proj: Linear,
     down_proj: Linear,
@@ -8,7 +8,7 @@ struct Mlp {
 }
 
 impl Mlp {
-    fn new(cfg: &Config, vb: VarBuilder) -> Result<Self> {
+    pub(crate) fn new(cfg: &Config, vb: VarBuilder) -> Result<Self> {
         let hidden_size = cfg.hidden_size;
         let intermediate_size = cfg.intermediate_size;
         // LFM2 uses w1 (gate), w3 (up), w2 (down) naming convention
@@ -23,7 +23,7 @@ impl Mlp {
         })
     }
 
-    fn forward(&self, x: &Tensor) -> Result<Tensor> {
+    pub(crate) fn forward(&self, x: &Tensor) -> Result<Tensor> {
         let _enter = self.span.enter();
         let gate = candle_nn::ops::silu(&self.gate_proj.forward(x)?)?;
         let up = self.up_proj.forward(x)?;
@@ -320,6 +320,36 @@ impl ShortConv {
 enum LayerKind {
     Attention(Box<Attention>),
     ShortConv(ShortConv),
+}
+
+/// Shared LFM2 token mixer; feed-forward policy belongs to each model family.
+#[derive(Debug, Clone)]
+pub(crate) struct Mixer(LayerKind);
+
+impl Mixer {
+    pub(crate) fn new(cfg: &Config, layer_idx: usize, vb: VarBuilder) -> Result<Self> {
+        let kind = match cfg.layer_types.get(layer_idx).copied() {
+            Some(LayerType::FullAttention) => {
+                LayerKind::Attention(Box::new(Attention::new(cfg, vb.pp("self_attn"))?))
+            }
+            Some(LayerType::Conv) => LayerKind::ShortConv(ShortConv::new(cfg, vb.pp("conv"))?),
+            None => candle::bail!("LFM2 mixer layer {layer_idx} is outside configuration"),
+        };
+        Ok(Self(kind))
+    }
+
+    pub(crate) fn forward(
+        &self,
+        x: &Tensor,
+        index_pos: usize,
+        block_idx: usize,
+        cache: &mut Cache,
+    ) -> Result<Tensor> {
+        match &self.0 {
+            LayerKind::Attention(attn) => attn.forward(x, index_pos, block_idx, cache),
+            LayerKind::ShortConv(conv) => conv.forward(x, index_pos, block_idx, cache),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

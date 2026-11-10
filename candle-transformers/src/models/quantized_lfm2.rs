@@ -11,6 +11,7 @@ use std::sync::Arc;
 
 mod embedding;
 mod lora;
+pub(crate) mod mixer;
 mod shortconv;
 use embedding::TokenEmbedding;
 pub use embedding::{Lfm2EmbeddingLoadMode, Lfm2EmbeddingStorage};

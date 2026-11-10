@@ -16,6 +16,7 @@ MANIFESTS=(
     "docs/fork-compat/MOD_MANIFEST.md"
     "docs/qwen35/MOD_MANIFEST.md"
     "docs/lfm3-audio/MOD_MANIFEST.md"
+    "docs/lfm2-moe/MOD_MANIFEST.md"
 )
 
 usage() {

@@ -1,0 +1,54 @@
+{
+  "schema": "candle.lfm2-moe.fixture.v1",
+  "kind": "tiny-random-no-production-weights",
+  "transformers_revision": "ddb849abe009d1089e6c691bfc897f27211c663c",
+  "reference_files": [
+    {
+      "path": "configuration_lfm2_moe.py",
+      "sha256": "a29fa7f2dc70c6ce468e6bfcad7e93634e091c70c0e747075d56f5349e923361"
+    },
+    {
+      "path": "modeling_lfm2_moe.py",
+      "sha256": "535002e934c65ce7295b8e9046be0dc551a4dd13f82876f706f905a6ddb84b21"
+    }
+  ],
+  "environment": {
+    "torch": "2.8.0+cpu",
+    "safetensors": "0.8.0",
+    "tokenizers": "0.22.2",
+    "huggingface-hub": "1.5.0"
+  },
+  "transformers_loaded_version": "5.12.1",
+  "device": "cpu",
+  "dtype": "float32",
+  "attention_implementation": "eager",
+  "experts_implementation": "eager",
+  "seed": 371,
+  "files": [
+    {
+      "path": "native.json",
+      "bytes": 1174,
+      "sha256": "5a41309a5d046fcf95893fc81f4308e013b76d8ca0fc6d9aa65b56e75cfb2682"
+    },
+    {
+      "path": "native.safetensors",
+      "bytes": 88304,
+      "sha256": "991c0e6fd0c9eab8df5ef222eca771a9e45adea730b0a8c4d2f60f25c3cedcd4"
+    },
+    {
+      "path": "quantized.json",
+      "bytes": 1142,
+      "sha256": "7ffd6a44fd3c80c26803d958db3e4686449a95dc33479e91b696ea4717eedc98"
+    },
+    {
+      "path": "quantized.safetensors",
+      "bytes": 4090640,
+      "sha256": "35e2e0e79495701fa97835328873e03a0a2f208fbcab30d34b076420d0442000"
+    }
+  ],
+  "normalization": "packed Transformers experts exported to published per-expert w1/w2/w3 names",
+  "tolerance": {
+    "atol": 1e-05,
+    "rtol": 0.0001
+  }
+}

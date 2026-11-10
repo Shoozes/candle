@@ -1,5 +1,17 @@
 # LFM2.5-VL Decisions
 
+## D-0081: Independently owned LFM2-MoE capability
+
+The accepted November 10 capability uses narrow crate-private LFM2 mixer reuse
+without altering dense public behavior. Sigmoid routing with selection-only
+bias follows pinned Transformers rather than a preexisting softmax router.
+Published native per-expert checkpoint layout and the official GGUF tensor
+inventory take precedence over reference-internal packed parameter names.
+Its detailed [decisions](../lfm2-moe/DECISIONS.md), source lock, fixtures and
+qualification belong to the separate LFM2-MoE overlay. D1 remains closed;
+source implementation and fixture proof do not imply production qualification,
+consumer adoption or publication authority.
+
 ## D-0080: Portable ZIP 9 dependency and decoded tensor-archive names
 
 The selected parent security repair belongs to fork compatibility. Require ZIP
@@ -1900,4 +1912,4 @@ package builds, installation and activation remain held. Exact commands and
 merge identity belong to the compact upstream-sync receipt.
 
 ---
-AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=record compatible upstream conflict resolution and frozen consumer boundaries
+AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe | change=register independent capability ownership and proof routes

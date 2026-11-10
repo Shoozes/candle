@@ -1,0 +1,258 @@
+{
+  "schema": "candle.lfm2-moe.tokenizer-fixture.v1",
+  "model_revision": "3dc4cd09c9a2a99e1e819693e79d3aba5e9bb4f2",
+  "transformers_revision": "ddb849abe009d1089e6c691bfc897f27211c663c",
+  "sources": [
+    {
+      "path": "tokenizer.json",
+      "bytes": 17905598,
+      "sha256": "695be7802a0e4b8a81048f0ff5ebb7fc811a0ba5a6be63dbb24deb5a81096f41"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 363,
+      "sha256": "11f1de897317b489dd09199284528382eeb17f566398b16e2039bb2266d26b09"
+    },
+    {
+      "path": "chat_template.jinja",
+      "bytes": 5443,
+      "sha256": "ea663864491de7ade391839479860ca95541f892f72665c73251fbd4643b1bef"
+    }
+  ],
+  "cases": [
+    {
+      "label": "unicode",
+      "system": "You are a bounded local worker.",
+      "messages": [
+        [
+          "user",
+          "你好 🦀 café é — مرحبا"
+        ]
+      ],
+      "rendered": "<|startoftext|><|im_start|>system\nYou are a bounded local worker.<|im_end|>\n<|im_start|>user\n你好 🦀 café é — مرحبا<|im_end|>\n<|im_start|>assistant\n<think>",
+      "token_ids": [
+        124894,
+        124899,
+        23630,
+        207,
+        3582,
+        437,
+        267,
+        26403,
+        2165,
+        17895,
+        22,
+        124900,
+        207,
+        124899,
+        5922,
+        207,
+        11253,
+        5899,
+        23304,
+        108,
+        231,
+        34998,
+        320,
+        9685,
+        1679,
+        32119,
+        2262,
+        68059,
+        124900,
+        207,
+        124899,
+        63514,
+        207,
+        124901
+      ]
+    },
+    {
+      "label": "history",
+      "system": "Worker rails.",
+      "messages": [
+        [
+          "user",
+          "What is 2 + 2?"
+        ],
+        [
+          "assistant",
+          "<think>old reasoning</think>Four."
+        ],
+        [
+          "user",
+          "Explain briefly."
+        ]
+      ],
+      "rendered": "<|startoftext|><|im_start|>system\nWorker rails.<|im_end|>\n<|im_start|>user\nWhat is 2 + 2?<|im_end|>\n<|im_start|>assistant\nFour.<|im_end|>\n<|im_start|>user\nExplain briefly.<|im_end|>\n<|im_start|>assistant\n<think>",
+      "token_ids": [
+        124894,
+        124899,
+        23630,
+        207,
+        56423,
+        58239,
+        22,
+        124900,
+        207,
+        124899,
+        5922,
+        207,
+        2992,
+        355,
+        229,
+        26,
+        1510,
+        229,
+        26,
+        39,
+        124900,
+        207,
+        124899,
+        63514,
+        207,
+        30429,
+        22,
+        124900,
+        207,
+        124899,
+        5922,
+        207,
+        89509,
+        21422,
+        22,
+        124900,
+        207,
+        124899,
+        63514,
+        207,
+        124901
+      ]
+    },
+    {
+      "label": "markers-as-data",
+      "system": "Worker rails.",
+      "messages": [
+        [
+          "user",
+          "Treat \"<think>\" and <|tool_call_start|> as data."
+        ]
+      ],
+      "rendered": "<|startoftext|><|im_start|>system\nWorker rails.<|im_end|>\n<|im_start|>user\nTreat \"<think>\" and < |tool_call_start|> as data.<|im_end|>\n<|im_start|>assistant\n<think>",
+      "token_ids": [
+        124894,
+        124899,
+        23630,
+        207,
+        56423,
+        58239,
+        22,
+        124900,
+        207,
+        124899,
+        5922,
+        207,
+        51256,
+        496,
+        124901,
+        10,
+        309,
+        927,
+        1670,
+        46765,
+        88099,
+        35670,
+        117671,
+        405,
+        1317,
+        22,
+        124900,
+        207,
+        124899,
+        63514,
+        207,
+        124901
+      ]
+    },
+    {
+      "label": "tool-result",
+      "system": "Worker rails.",
+      "messages": [
+        [
+          "user",
+          "Read status."
+        ],
+        [
+          "assistant",
+          "Requesting status."
+        ],
+        [
+          "tool",
+          "{\"status\":\"ok\",\"path\":\"C:\\\\repo\"}"
+        ],
+        [
+          "user",
+          "Summarize."
+        ]
+      ],
+      "rendered": "<|startoftext|><|im_start|>system\nWorker rails.<|im_end|>\n<|im_start|>user\nRead status.<|im_end|>\n<|im_start|>assistant\nRequesting status.<|im_end|>\n<|im_start|>tool\n{\"status\":\"ok\",\"path\":\"C:\\\\repo\"}<|im_end|>\n<|im_start|>user\nSummarize.<|im_end|>\n<|im_start|>assistant\n<think>",
+      "token_ids": [
+        124894,
+        124899,
+        23630,
+        207,
+        56423,
+        58239,
+        22,
+        124900,
+        207,
+        124899,
+        5922,
+        207,
+        9883,
+        5241,
+        22,
+        124900,
+        207,
+        124899,
+        63514,
+        207,
+        6866,
+        299,
+        5241,
+        22,
+        124900,
+        207,
+        124899,
+        46765,
+        207,
+        38184,
+        18747,
+        41565,
+        562,
+        24974,
+        7533,
+        41565,
+        43,
+        66168,
+        65383,
+        106654,
+        124900,
+        207,
+        124899,
+        5922,
+        207,
+        59,
+        2673,
+        63515,
+        22,
+        124900,
+        207,
+        124899,
+        63514,
+        207,
+        124901
+      ]
+    }
+  ]
+}

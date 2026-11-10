@@ -26,6 +26,7 @@ native Windows and WSL report the same candidate paths.
 | GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Packed CPU/CUDA interfaces and source-bound short-parity/2,080-token receipt; no new production claim from upstream sync |
 | Qwen3.5 GGUF compatibility | `docs/qwen35/MOD_MANIFEST.md` | Bounded Q8_0/F32 text admission, proven CPU parity, and scoped CUDA quantization under qualification; no Edge activation |
 | LFM3-Audio | `docs/lfm3-audio/MOD_MANIFEST.md` | Published native CPU-F32 TTS/ASR and WAV repair with source-bound cache/codec proof; independent from D1 and consumer defaults |
+| LFM2-MoE | `docs/lfm2-moe/MOD_MANIFEST.md` | Native/split-expert GGUF CPU/CUDA implementation and synthetic proof; production qualification and Edge adoption held |
 
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each
@@ -129,8 +130,9 @@ The GPT-OSS overlay owns the characterization and capacity example/control addit
 `.tools/verify-before-push.ps1`; existing LFM2-VL verification steps retain their
 ownership. Its Summary Bank edits route the new harness and move current GPT
 status out of the bounded synthetic-oracle group. With the separate native
-audio additions, the current inventory is 349 union paths across six overlays,
-with 35 shared paths. Frozen five-overlay release inventories are unchanged.
+audio and MoE additions, the current inventory has seven overlays and 37
+registered shared paths. The verifier reports the exact current union; frozen
+five-overlay release inventories are unchanged.
 GPT-OSS owns the
 optional stop-event and regression hunks in the shared bounded Job helper/tests;
 LFM2-VL retains existing execution/limits. Frozen inventories
@@ -144,6 +146,8 @@ it. Every change to such a path must state which overlay owns each hunk and
 must pass both affected focused gates plus the repository-wide overlay gate.
 
 <!-- shared-paths:start -->
+- `candle-transformers/src/models/lfm2/layers.rs`
+- `candle-transformers/src/models/quantized_lfm2.rs`
 - `candle-transformers/src/models/lfm2.rs`
 - `candle-transformers/src/models/lfm2/cache.rs`
 - `candle-transformers/src/models/lfm2/model.rs`
@@ -180,6 +184,12 @@ must pass both affected focused gates plus the repository-wide overlay gate.
 - `scripts/lfm2-vl/test-bounded-oracle.ps1`
 - `summary_bank.json`
 <!-- shared-paths:end -->
+
+LFM2-MoE is the seventh independent overlay. It owns the new native/GGUF model
+modules, synthetic oracle, local example and capability documentation. Its
+shared hunks expose opaque crate-private LFM2 mixers, register the two model
+modules and update current routing/ownership records. Existing dense behavior,
+D1 acceptance, frozen release inventories and consumer pins are unchanged.
 
 Shared registration permits coexistence; it does not let one overlay claim
 another overlay's implementation or proof. Generic public names are required
@@ -228,4 +238,4 @@ release. Each consumer keeps the dependency tuple it actually qualified;
 publishing a newer Candle source snapshot does not require a consumer repin.
 
 ---
-AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync | change=advance live upstream ownership checks without changing frozen inventories
+AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe | change=register independent capability ownership and proof routes

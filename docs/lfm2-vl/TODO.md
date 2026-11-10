@@ -14,12 +14,22 @@ were verified. Completed release proof is in
 
 ## Current maintenance
 
-The selected upstream sync is locally integrated at `311d267b` from official
-Candle 0.11.1 `cfcbd718`. The owner's paired Closeout/Publish selects saving
-that verified scope and these completion records through Candle's guarded
-helper. [STATUS](STATUS.md) and [UPSTREAM_SYNC](UPSTREAM_SYNC.md) bind the exact
-delivery to its confirmed publication receipt; no further upstream implementation
-is selected. Metal runtime remains unverified on Windows. Model runs, package
+The selected implementation is [LFM2-MoE](../lfm2-moe/TODO.md): native and GGUF
+support, CPU/CUDA fixture proof and an opt-in Edge adapter. Its independent queue
+owns the complete accepted plan and held production/publication steps.
+The model-free binary/inert-packet refresh after the scoped verifier/EOS cleanup
+is complete. Its first remaining task is read-only review of the fresh packet;
+any finite production attempt needs a new exact grant and fresh quiet/resource
+admission. Previous packets remain preserved. Closeout/publish selects the verified
+Candle source progress only; model runs, packages and consumer adoption remain held.
+
+The selected upstream sync is published at `5f094821`, including merge
+`311d267b` from official Candle 0.11.1 `cfcbd718`. [STATUS](STATUS.md) and
+[UPSTREAM_SYNC](UPSTREAM_SYNC.md) bind the exact delivery to its confirmed
+publication receipt. No further upstream implementation or publication batch is
+selected. The current owned-cleanup result and resume instructions belong to
+STATUS and its linked receipt; completed cleanup creates no new backlog item.
+Metal runtime remains unverified on Windows. Model runs, package
 builds, installation, activation and consumer adoption remain separately held.
 
 The separately selected [LFM3-Audio implementation](../lfm3-audio/TODO.md)
@@ -384,4 +394,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync-publish | change=close the selected source-delivery task without extending consumer qualification
+AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe-publish | change=retain the MoE acceptance queue through authorized source-progress publication

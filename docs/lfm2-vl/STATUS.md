@@ -2,7 +2,20 @@
 
 ## Current phase and baseline
 
-Local upstream integration selects Candle 0.11.1 at
+The accepted November 10 [LFM2-MoE implementation](../lfm2-moe/STATUS.md) is the
+active capability batch. It is independent from completed D1 and earlier audio
+maintenance. Its own [TODO](../lfm2-moe/TODO.md) owns native/GGUF, CPU/CUDA and
+opt-in Edge acceptance. Existing cleanup edits and frozen consumer proof remain
+preserved. The owner's closeout/publish selects this Candle source progress;
+production model execution, deployment and consumer adoption remain held.
+The follow-up review closed two MoE proof/EOS defects. The model-free CUDA
+binary/packet refresh is complete; its next bounded step is read-only review of
+the fresh inert packet under the MoE STATUS/TODO. The previous packet remains
+preserved and is not admissible for the reviewed source. Production execution
+still requires a new exact grant and fresh quiet/resource admission.
+
+The preceding upstream-sync publication is `5f094821fa7612bdeea156f729ba6de35cda3e5d`,
+including local merge `311d267b` of Candle 0.11.1 at
 `cfcbd7186d13271843ce7eb41d25659bd0835850`, from clean fork `7b9b9a94`.
 It imports the five official commits, preserves ug/onig/CP437 and existing
 overlay behavior, and limits third-party lock version changes to ZIP 9.1.3
@@ -15,13 +28,28 @@ the maintained native gate (609 Rust tests, 14 ignored), 197 release assertions
 on each PowerShell host, 65 targeted CPU tests, strict CPU library Clippy and
 all overlay/manifest checks. These are retained local-integration results.
 
-The owner's subsequent Closeout/Publish selects this upstream scope and four
-completion records. Its exact delivery commit/tree, fresh clean-commit gate and
-confirmed remote result belong to
+The guarded publication delivered this upstream scope and four completion
+records. Its exact delivery commit/tree, fresh clean-commit gate and confirmed
+remote result belong to
 `D:/Compact_Evidence/candle/runs/upstream-sync-publish-20261103-311d267b/publication.json`.
 Only that receipt establishes publication. Model runs, package builds,
 installation and activation remain held. Metal runtime/parity is unverified
 on Windows; frozen release inputs and consumer qualification/pins are unchanged.
+
+The November 8 owned-cleanup pass removed the exact previously inventoried
+`target/debug/incremental` generation (13,400 files) and ten redundant local
+audio logs. It removed 10,546,274,008 logical bytes; C: free space increased by
+9,394,388,992 bytes during deletion, with concurrent activity limiting attribution.
+Existing Cargo/cache locks were acquired and released, and all 77 protected
+artifact hashes matched before and after. The logs remain byte-exact members of
+the historical audio `software-proof.zip`; the cleanup manifest maps each removed
+path to its retained member. The result and final checks belong to
+`D:/Compact_Evidence/candle/runs/owned-cleanup-20261108-5f094821/summary.json`.
+Unique diagnostics, compiled outputs, dependency caches, reference inputs, model
+assets and retained publication/runtime proof are preserved. The cataloged
+`D:/CodexStorage/build/candle-zip-parent-20261017` build exception was already
+absent at inspection; that pass removed no external files. Its original STATUS
+and TODO edits remain preserved within the current uncommitted capability work.
 
 The independent native [LFM3-Audio source](../lfm3-audio/STATUS.md) and subsequent
 WAV repair are published through `a213f04f1b404c5b404172c84223ca1776136ec2`.
@@ -225,9 +253,15 @@ plugin changes remain held.
 
 ## Active files and exact next task
 
-Current closeout saves the bounded upstream sync described above; no new model
-capability or consumer execution is selected. Its guarded publication is now
-owner-authorized and bound to the separate receipt above. The finite LFM3-Audio implementation
+The active implementation is the separate [LFM2-MoE capability](../lfm2-moe/STATUS.md).
+Its model modules, shared crate-private mixers, tiny fixtures, local example and
+owning records are under active work. Its STATUS/TODO bind current proof and the
+exact next gate. The prior owned-residue cleanup remains complete. Use cached
+dependencies, `CARGO_INCREMENTAL=0`, `CARGO_BUILD_JOBS=2` and locked/offline checks.
+The current Candle source publication is bound to the MoE STATUS and its guarded
+receipt. Production runs, package assembly, installation, activation and final
+Edge pin adoption remain held; consumer-owned planning below grants no execution.
+The finite LFM3-Audio implementation
 and portable catalog handoff are
 closed, as recorded in [its STATUS](../lfm3-audio/STATUS.md) and
 [TODO](../lfm3-audio/TODO.md). No further audio implementation is selected; the
@@ -281,4 +315,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-11-03 | agent=Codex/root | task=upstream-sync-publish | change=bind guarded upstream-source delivery and preserve existing runtime limits
+AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe-publish | change=reconcile selected supplier-source closeout while preserving owner notes and runtime holds
