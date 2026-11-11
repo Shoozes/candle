@@ -15,38 +15,47 @@
   production Q4 CPU/CUDA proof pass; reviewed dependency adoption is reconciled.
 - Verification: Pinned Transformers tiny oracle, focused Rust tests, native
   CPU/CUDA checks, required neighboring regressions and repository gates.
-- Held: Production runs need an exact finite packet and fresh admission.
-  Final Edge pin adoption, package assembly, installation, activation and release
-  creation remain separately gated. Current Candle source-progress publication
-  is selected by closeout/publish. Other consumer pins and frozen releases
-  are not changed. Full native/Q8 production, Metal and 131k context qualification
-  are outside this delivery.
+- Held: Production runs need a fresh exact grant, finite packet and admission.
+  Builds, publication, Edge pin adoption, package assembly, installation,
+  activation and release creation remain separately gated. Preserve consumer
+  pins and frozen releases. Full native/Q8 production, Metal and 131k context
+  qualification are outside this delivery.
 
 ## Remaining gates in order
 
-1. Review the committed-source inert Candle Q4 parity packet under
-   [QUALIFICATION](QUALIFICATION.md):
-   - What/why: Check the current source/binary/input binding before selecting
-     production execution. [STATUS](STATUS.md) identifies the fresh packet and
-     [HISTORY](HISTORY.md) records the completed model-free refresh.
-   - Where/how: Review `packet/packet.json` and `binding-verification.json` under
-     `D:/Compact_Evidence/candle/runs/lfm2-moe-publish-20261110-5f094821/`.
-     Preserve the old packet/binaries, frozen prompts/model, consumer pins and
-     all original limits. Require a new exact owner grant and fresh quiet/resource
-     admission before one finite attempt; preparation supplies no execution grant.
-   - Done when: The finalized source inventory, both binaries, all frozen inputs,
-     original limits and four comparison commands match their recorded identities;
-     the packet remains inert and the next execution boundary is explicit.
-2. After a new exact owner grant and fresh admission, run the reviewed finite
-   packet once under [QUALIFICATION](QUALIFICATION.md):
+1. Trace the first CPU prefill boundary before preparing a successor packet.
+   - What/why: The retained arithmetic logits differ before forced decode.
+     Position 2 still selects `1113` in the pinned reference and `6986` in
+     Candle. The Q8_K half-tie witness in [STATUS](STATUS.md) gives a concrete
+     hypothesis to test with actual production activations. Packet `00ab6c5e`
+     is consumed.
+   - Where/how: After separately authorized diagnostic preparation, use the
+     same 37 frozen prompt tokens on both CPU engines. Compare embedding rows,
+     layer 0 operator normalization and `blk.0.shortconv.in_proj` in order.
+     Include the packed prompt rows and the single tail row. Record per-row
+     deltas and retain the first unequal row. If the projection differs, replay
+     common normalized input in the original four-row group or tail path.
+     Compare Q8_K bytes and scales before comparing the Q4_K dot. If these
+     boundaries agree, extend to block outputs to find the first divergent layer.
+   - Done when: Paired observations identify the earliest divergent operation
+     and distinguish input drift, activation quantization and dot arithmetic.
+     Preserve the frozen inputs, binaries and qualification limits. Use separate
+     diagnostic artifacts. Builds and further model loads remain held pending
+     their own authorization.
+2. Resolve the CPU mismatch under the existing [QUALIFICATION](QUALIFICATION.md)
+   criteria. Bind a new inert packet to the reviewed candidate and its binaries,
+   frozen inputs, original limits and four comparison commands. Keep the consumed
+   packet and its receipts available for comparison.
+3. After a new exact owner grant and fresh admission, run the reviewed finite
+   packet once under [QUALIFICATION](QUALIFICATION.md).
    - Done when: The pinned CPU reference, Candle CPU and RTX 4090 complete the
      two frozen cases with exact teacher-forced selections, four frozen-input
      comparisons, finite logit differences, observed peaks and terminal cleanup.
      Stop on any admission or execution failure without retry or relaxed limits.
-3. After supplier parity, explicitly select the bounded Edge qualification
+4. After supplier parity, explicitly select the bounded Edge qualification
    admission through its held candidate gate. Prove CLI/API chat, strict JSON,
    cancellation, unload/reload and a successful recovery request on both devices.
-4. After confirmed Candle source publication and separately authorized Edge
+5. After confirmed Candle source publication and separately authorized Edge
    adoption, reconcile only Edge's
    reviewed Candle pin and affected locks, rerun its selected graph/gates and
    record adoption. Other consumers retain their exact qualified identities.
@@ -58,4 +67,4 @@ not close the remaining production/adoption criteria or authorize new work for
 completed D1. No mandatory package, installation or activation task is selected.
 
 ---
-AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe-publish | change=save supplier-source progress while retaining runtime and consumer acceptance criteria
+AI-edited: 2026-11-11 | agent=Codex/root | task=lfm2-moe-cpu-isolation | change=select paired prefill tracing after retained-evidence isolation

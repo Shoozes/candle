@@ -1,5 +1,26 @@
 # LFM2-MoE completed work
 
+## 2026-11-11 - CPU prefill isolation
+
+The frozen arithmetic logs place the first observed difference at the 37-token
+prefill output. Sampled logit delta reaches `0.70701456` before forced decode.
+Both existing synthetic prefill tests passed using the prebuilt executable.
+A controlled Q8_K half-tie witness shows different integer rounding on identical
+inputs and a resulting Q4_K dot difference. Four common fixture activation rows
+produce equal quants. The source arithmetic witness does not identify the cause
+of the production token mismatch. [STATUS](STATUS.md) links the compact receipt
+and the next paired checkpoint trace.
+
+## 2026-11-11 - Q4 comparator log repair
+
+Packet `00ab6c5e` passed admission and stopped on its first CPU comparison after
+three successful child exits. The reference's tokenizer diagnostic ended with
+an incomplete UTF-8 character. The comparator now filters byte lines before
+decoding JSON as strict UTF-8. Thirteen protocol tests passed. Offline replay
+of the retained arithmetic logs reached the numerical gate and reported the
+first differing top-1 token at zero-based position 2. The attempted run and
+offline repair receipts are linked from [STATUS](STATUS.md).
+
 ## 2026-11-10 - Supplier source-progress closeout
 
 The owner's paired closeout/publish selects the reviewed 49-path Candle scope:
@@ -50,4 +71,4 @@ owns packet review, separately granted finite production qualification, Edge
 acceptance and separately authorized publication/adoption. D1 stays closed.
 
 ---
-AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe-publish | change=record scoped source-progress closeout separately from production qualification
+AI-edited: 2026-11-11 | agent=Codex/root | task=lfm2-moe-cpu-isolation | change=record prefill boundary and quantization witness

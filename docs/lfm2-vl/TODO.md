@@ -17,11 +17,11 @@ were verified. Completed release proof is in
 The selected implementation is [LFM2-MoE](../lfm2-moe/TODO.md): native and GGUF
 support, CPU/CUDA fixture proof and an opt-in Edge adapter. Its independent queue
 owns the complete accepted plan and held production/publication steps.
-The model-free binary/inert-packet refresh after the scoped verifier/EOS cleanup
-is complete. Its first remaining task is read-only review of the fresh packet;
-any finite production attempt needs a new exact grant and fresh quiet/resource
-admission. Previous packets remain preserved. Closeout/publish selects the verified
-Candle source progress only; model runs, packages and consumer adoption remain held.
+The first packet consumed its attempt. Retained arithmetic logits differ before
+forced decode. The MoE queue now selects a paired CPU trace through the first
+ShortConv projection to isolate the difference. A successor production packet
+needs exact review, a new grant and fresh quiet/resource admission. Builds, model
+runs, publication, packages and consumer adoption remain held.
 
 The selected upstream sync is published at `5f094821`, including merge
 `311d267b` from official Candle 0.11.1 `cfcbd718`. [STATUS](STATUS.md) and
@@ -394,4 +394,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe-publish | change=retain the MoE acceptance queue through authorized source-progress publication
+AI-edited: 2026-11-11 | agent=Codex/root | task=lfm2-moe-cpu-isolation | change=select first-layer paired diagnostics after prefill isolation

@@ -5,14 +5,13 @@
 The accepted November 10 [LFM2-MoE implementation](../lfm2-moe/STATUS.md) is the
 active capability batch. It is independent from completed D1 and earlier audio
 maintenance. Its own [TODO](../lfm2-moe/TODO.md) owns native/GGUF, CPU/CUDA and
-opt-in Edge acceptance. Existing cleanup edits and frozen consumer proof remain
-preserved. The owner's closeout/publish selects this Candle source progress;
-production model execution, deployment and consumer adoption remain held.
-The follow-up review closed two MoE proof/EOS defects. The model-free CUDA
-binary/packet refresh is complete; its next bounded step is read-only review of
-the fresh inert packet under the MoE STATUS/TODO. The previous packet remains
-preserved and is not admissible for the reviewed source. Production execution
-still requires a new exact grant and fresh quiet/resource admission.
+opt-in Edge acceptance. Candle source progress was published at `95df99a0`.
+Packet `00ab6c5e` consumed its attempt and stopped at the first CPU comparison.
+After the comparator repair, retained logs show sampled logits already differ
+at prefill and top-1 differs at zero-based position 2. The next task is a paired
+CPU trace of the embedding, layer 0 normalization and first ShortConv projection.
+Builds, further production model execution, deployment and consumer adoption
+remain held.
 
 The preceding upstream-sync publication is `5f094821fa7612bdeea156f729ba6de35cda3e5d`,
 including local merge `311d267b` of Candle 0.11.1 at
@@ -315,4 +314,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe-publish | change=reconcile selected supplier-source closeout while preserving owner notes and runtime holds
+AI-edited: 2026-11-11 | agent=Codex/root | task=lfm2-moe-cpu-isolation | change=route the prefill difference to a paired CPU trace

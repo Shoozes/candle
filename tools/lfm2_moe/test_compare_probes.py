@@ -79,7 +79,7 @@ class ComparisonTests(unittest.TestCase):
                 self.check(candidate=candidate)
 
     def test_next_token_shape_type_and_finite_logits_are_required(self):
-        bad_values = [("probe_top1", [True] * 8), ("probe_top1", [21] * 8),
+        bad_values = [("probe_top1", [True] * 8),
                       ("probe_logits", [[1.]]), ("input_token_ids", []),
                       ("probe_token_ids", [False] * len(self.probes))]
         for field, value in bad_values:
@@ -90,6 +90,11 @@ class ComparisonTests(unittest.TestCase):
             candidate["probe_logits"][0][0] = value
             with self.subTest(value=value), self.assertRaises(ValueError):
                 self.check(candidate=candidate)
+
+    def test_top1_mismatch_reports_the_first_difference(self):
+        self.candidate["probe_top1"][2:4] = [90, 91]
+        with self.assertRaisesRegex(ValueError, r"zero-based position 2 \(reference=22, candidate=90\)"):
+            self.check()
 
     def test_frozen_positions_are_exact_and_integral(self):
         for positions in [[0], [0] * 8, [False] + list(range(1, 8))]:
@@ -127,10 +132,21 @@ class ComparisonTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 read_result(path)
 
+    def test_invalid_utf8_in_json_is_rejected(self):
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "probe.log"
+            valid = json.dumps(self.reference).encode("utf-8")
+            path.write_bytes(b'{"probe_logits":"\xc4..."}\n' + valid + b"\n")
+            with self.assertRaisesRegex(ValueError, r"probe\.log:1: invalid UTF-8 in JSON probe line"):
+                read_result(path)
+
     def test_cli_requires_frozen_inputs_and_reports_the_bound_case(self):
         with tempfile.TemporaryDirectory() as root:
             reference, candidate = Path(root) / "reference.json", Path(root) / "candidate.json"
-            reference.write_text(json.dumps(self.reference), encoding="utf-8")
+            reference.write_bytes(
+                b'llama_model_loader: tokenizer.ggml.tokens = ["\xc4\x8a\xc4...\r\n'
+                + json.dumps(self.reference).encode("utf-8") + b"\r\n"
+            )
             candidate.write_text(json.dumps(self.candidate), encoding="utf-8")
             command = [sys.executable, "-B", str(ROOT / "tools/lfm2_moe/compare_probes.py"),
                        "--reference", str(reference), "--candidate", str(candidate)]

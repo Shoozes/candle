@@ -33,7 +33,10 @@ attempt. `tools/lfm2_moe/compare_probes.py` requires `--inputs` pointing to the
 frozen qualification manifest and `--case` naming one exact case. It checks the
 locked reference revision, exact prompt/probe IDs, every frozen position and
 the candidate's complete teacher-forced continuation before comparing selections
-and recording maximum absolute/RMS logit differences. Matching shortened runs
+and recording maximum absolute/RMS logit differences. It scans combined logs as
+bytes and decodes JSON lines as strict UTF-8 so clipped native diagnostic text
+cannot hide a numerical failure. A top-1 mismatch reports the first divergent
+position and both token IDs. Matching shortened runs
 or matching wrong inputs cannot qualify. New packets include all four comparison
 commands explicitly. These checks supplement binary/input identity and process
 receipts; they do not authorize execution. A numerical disagreement stays a failure
@@ -59,4 +62,4 @@ remain outside the selected delivery. Native and other implemented storage
 types retain their deterministic fixture scope.
 
 ---
-AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe | change=require frozen-case and reference-bound complete parity records
+AI-edited: 2026-11-11 | agent=Codex/root | task=lfm2-moe-review-cleanup | change=document strict JSON decoding and top-1 mismatch reporting

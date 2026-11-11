@@ -7,12 +7,15 @@ from pathlib import Path
 
 def read_result(path):
     record = None
-    with path.open(encoding="utf-8") as stream:
-        for line in stream:
-            if not line.startswith("{"):
+    # Native diagnostics can truncate multibyte text. Decode only JSON lines.
+    with path.open("rb") as stream:
+        for number, line in enumerate(stream, 1):
+            if not line.startswith(b"{"):
                 continue
             try:
-                value = json.loads(line)
+                value = json.loads(line.decode("utf-8"))
+            except UnicodeDecodeError as error:
+                raise ValueError(f"{path}:{number}: invalid UTF-8 in JSON probe line") from error
             except json.JSONDecodeError:
                 continue
             fields = {"input_token_ids", "probe_token_ids", "probe_top1", "probe_logits"}
@@ -71,8 +74,12 @@ def compare(reference, candidate, case, probe_ids, reference_revision):
                 raise ValueError("probe logit shape mismatch")
             if any(type(value) not in (int, float) or not math.isfinite(value) for value in row):
                 raise ValueError("nonfinite or nonnumeric probe logit")
-    if candidate["probe_top1"] != reference["probe_top1"]:
-        raise ValueError("teacher-forced next-token selections differ")
+    for position, (reference_id, candidate_id) in enumerate(zip(reference["probe_top1"], candidate["probe_top1"])):
+        if reference_id != candidate_id:
+            raise ValueError(
+                f"teacher-forced next-token selections differ at zero-based position {position} "
+                f"(reference={reference_id}, candidate={candidate_id})"
+            )
     differences = [abs(x - y) for left, right in zip(reference["probe_logits"], candidate["probe_logits"])
                    for x, y in zip(left, right)]
     if not all(math.isfinite(value) for value in differences):

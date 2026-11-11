@@ -1,10 +1,10 @@
 # LFM2-MoE current state
 
-The accepted November 10 capability is implemented from Candle
-`5f094821fa7612bdeea156f729ba6de35cda3e5d`. The owner's closeout/publish selects
-this verified supplier-source progress for guarded publication. Full delivery
-remains open pending production qualification and reviewed Edge adoption.
-D1 stays closed.
+The November 10 capability was published as Candle
+`95df99a0bda2f6ac64dbeb8475850f826bd92ca9` from base `5f094821`.
+The first Q4 parity attempt stopped during CPU comparison. The comparator
+repair exposes a remaining CPU numerical disagreement. Edge qualification and
+adoption follow supplier parity. D1 stays closed.
 
 Native `models::lfm2_moe::{Config, Model, Cache}` loads the official per-expert
 safetensors layout and exposes token/embedding forward, hidden states, logits
@@ -102,9 +102,49 @@ without rebuilding unchanged Rust inputs or changing the binary/model identity.
 Its `binding-verification.json` records the source bridge and original limits.
 No historical packet or binary is replaced.
 
-The exact next task is read-only review of that commit-bound packet in TODO. A new exact
-grant and fresh quiet/resource admission must select any one finite parity
-attempt. Stop on failure without retry.
+Packet `00ab6c5e` consumed its one attempt on November 11. Both CPU reference
+children and Candle's CPU arithmetic child exited successfully and released
+their Jobs. The first comparison failed while decoding a clipped UTF-8 tokenizer
+diagnostic. CPU Unicode and both RTX 4090 children were skipped. The host returned
+to its pre-run resource range. The [attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-qualification-20261111-00ab6c5e/failure-review.json)
+binds the three original logs and cleanup evidence.
+
+The comparator reads JSON lines from byte logs and reports the first
+top-1 mismatch. Thirteen protocol tests passed. Offline replay of the original
+arithmetic pair reached the numerical gate and rejected zero-based position 2
+with reference token `1113` and Candle token `6986`.
+The [cleanup receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-review-cleanup-20261111-95df99a0/summary.json)
+records the source and replay identities.
+
+The retained pair already differs at the output of the 37-token prefill. Its
+seven sampled logits have a maximum absolute delta of `0.70701456` at position
+0, before either engine consumes a forced token. Both still select `207` there.
+The current records omit intermediate tensors and the logits for both competing
+tokens at position 2. They cannot identify the first unequal layer or the rank
+margin at the first top-1 mismatch.
+
+The pinned reference log identifies layer 0 ShortConv input projection as
+repacked `Q4_K_8x8`. Candle's generic and packed x86 Q4_K paths use
+`BlockQ8K::from_float`,
+which rounds activation half-ties away from zero. The pinned reference's scalar
+and AVX2 conversions round half-ties to even. A controlled 256-value block
+demonstrates the difference with identical operands. The same arithmetic
+comparison found equal quantization for four existing synthetic fixture rows.
+Both prebuilt synthetic prefill tests passed. This establishes a source-level
+difference and a fixture coverage gap. The production cause is unresolved.
+
+The next task in TODO is a paired CPU prefill trace at the embedding, layer 0
+operator normalization and ShortConv input projection. If the projection differs
+on common normalized inputs, compare the Q8_K blocks with the same packed
+group or tail dispatch before attributing the difference to the dot product.
+The [isolation receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-cpu-isolation-20261111-95df99a0/summary.json)
+binds the witness, fixture results and source anchors. Further builds and model
+loads remain held. A future production attempt requires a new reviewed packet,
+exact grant and fresh quiet/resource admission.
+
+The comparator and prefill isolation closeout is recorded in its
+[guarded publication receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-comparator-publish-20261111-95df99a0/summary.json).
+The receipt binds the verified source change to its commit and remote main.
 Production runs, package assembly, installation, activation, release creation and
 consumer repinning remain held. Edge runtime/CLI/API acceptance and reviewed adoption stay
 open after the supplier gate. Full native/Q8 production, Metal and 131k context
@@ -118,4 +158,4 @@ implementation attempts remain in the original run record. Native lower-
 precision activation parity is not claimed by the CPU-F32 numerical gate.
 
 ---
-AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe-publish | change=bind authorized source-progress publication and keep production/adoption gates open
+AI-edited: 2026-11-11 | agent=Codex/root | task=lfm2-moe-comparator-publish | change=link scoped comparator closeout and retain the paired trace gate
