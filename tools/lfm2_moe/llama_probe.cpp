@@ -67,7 +67,16 @@ int main(int argc, char **argv) {
                 if (llama_decode(context.get(), batch) != 0) throw std::runtime_error("decode failed");
             }
         }
-        std::cout << json{{"reference_revision","582eab718608b99792286729890aac1675547c29"},{"input_token_ids",tokens},{"probe_top1",top1},{"probe_token_ids",probes},{"probe_logits",values}}.dump() << '\n';
+        const json result = {
+            {"reference_revision", "582eab718608b99792286729890aac1675547c29"},
+            {"teacher_forced", true},
+            {"tokens", forced},
+            {"input_token_ids", tokens},
+            {"probe_top1", top1},
+            {"probe_token_ids", probes},
+            {"probe_logits", values},
+        };
+        std::cout << result.dump() << '\n';
         return 0;
     } catch (const std::exception &error) { std::cerr << error.what() << '\n'; return 1; }
 }

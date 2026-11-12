@@ -23,29 +23,26 @@
 
 ## Remaining gates in order
 
-1. Trace the first CPU prefill boundary before preparing a successor packet.
-   - What/why: The retained arithmetic logits differ before forced decode.
-     Position 2 still selects `1113` in the pinned reference and `6986` in
-     Candle. The Q8_K half-tie witness in [STATUS](STATUS.md) gives a concrete
-     hypothesis to test with actual production activations. Packet `00ab6c5e`
-     is consumed.
-   - Where/how: After separately authorized diagnostic preparation, use the
-     same 37 frozen prompt tokens on both CPU engines. Compare embedding rows,
-     layer 0 operator normalization and `blk.0.shortconv.in_proj` in order.
-     Include the packed prompt rows and the single tail row. Record per-row
-     deltas and retain the first unequal row. If the projection differs, replay
-     common normalized input in the original four-row group or tail path.
-     Compare Q8_K bytes and scales before comparing the Q4_K dot. If these
-     boundaries agree, extend to block outputs to find the first divergent layer.
-   - Done when: Paired observations identify the earliest divergent operation
-     and distinguish input drift, activation quantization and dot arithmetic.
-     Preserve the frozen inputs, binaries and qualification limits. Use separate
-     diagnostic artifacts. Builds and further model loads remain held pending
-     their own authorization.
+1. Separate the ShortConv C-slice and convolution contributions to the
+   output-projection input.
+   - What/why: The [matched output-projection replay](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-out-replay-20261112-42deff05-proof/summary.json)
+     attributed the row-16 channel-557 mixer gap to the incoming F32 input.
+     Both the input and the matched dot affected downstream FFN scales.
+   - Where/how: Cross the two retained middle projection slices with the
+     two retained convolution outputs in F32. Keep all 37 rows in order.
+     Reproduce both original products, then compare Q8_K scales and bytes at
+     row 16. Hold one verified dot kernel fixed when measuring the effect
+     of each crossed input at channel 557. Reuse the verified libraries and
+     witnesses. Preserve the frozen weight and original limits, and admit
+     any new native children separately.
+   - Done when: Reproduce the two original projection inputs and their
+     saved fixed-kernel outputs. Identify which C or convolution changes
+     account for the row-16 scale changes and channel-557 input effect.
 2. Resolve the CPU mismatch under the existing [QUALIFICATION](QUALIFICATION.md)
-   criteria. Bind a new inert packet to the reviewed candidate and its binaries,
-   frozen inputs, original limits and four comparison commands. Keep the consumed
-   packet and its receipts available for comparison.
+   criteria. Bind a new inert packet to the reviewed candidate, a reference
+   binary built from the continuation-reporting probe source, frozen inputs,
+   original limits and four comparison commands. Keep the consumed packet and
+   its receipts available for comparison.
 3. After a new exact owner grant and fresh admission, run the reviewed finite
    packet once under [QUALIFICATION](QUALIFICATION.md).
    - Done when: The pinned CPU reference, Candle CPU and RTX 4090 complete the
@@ -67,4 +64,4 @@ not close the remaining production/adoption criteria or authorize new work for
 completed D1. No mandatory package, installation or activation task is selected.
 
 ---
-AI-edited: 2026-11-11 | agent=Codex/root | task=lfm2-moe-cpu-isolation | change=select paired prefill tracing after retained-evidence isolation
+AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-shortconv-out-replay | change=select the crossed ShortConv input operand replay

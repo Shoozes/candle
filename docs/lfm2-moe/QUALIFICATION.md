@@ -32,21 +32,23 @@ Do not retry, change prompts/positions, relax limits or add probes in that
 attempt. `tools/lfm2_moe/compare_probes.py` requires `--inputs` pointing to the
 frozen qualification manifest and `--case` naming one exact case. It checks the
 locked reference revision, exact prompt/probe IDs, every frozen position and
-the candidate's complete teacher-forced continuation before comparing selections
-and recording maximum absolute/RMS logit differences. It scans combined logs as
-bytes and decodes JSON lines as strict UTF-8 so clipped native diagnostic text
-cannot hide a numerical failure. A top-1 mismatch reports the first divergent
-position and both token IDs. Matching shortened runs
-or matching wrong inputs cannot qualify. New packets include all four comparison
-commands explicitly. These checks supplement binary/input identity and process
-receipts; they do not authorize execution. A numerical disagreement stays a failure
-for investigation; it does not authorize an automatic precision change.
+the complete frozen continuation reported by both engines before comparing
+selections and recording maximum absolute/RMS logit differences. It scans
+combined logs as bytes and decodes JSON lines as strict UTF-8 so clipped native
+diagnostic text cannot hide a numerical failure. A top-1 mismatch reports the
+first divergent position and both token IDs. The comparator rejects shortened
+runs and wrong inputs. New packets include all four comparison commands
+explicitly and retain binary/input identities and process receipts. Record any
+numerical disagreement as a qualification failure for investigation.
 
 Before review, bind the inert packet to the current dirty-source inventory and
 SHA-256 of both binaries. The task-local reference probe is built from locked
-llama.cpp `582eab71`, CPU-only, without modifying `C:/llamacpp`. The installed
-bundle at `9df0b73c` is not substituted for that reference. The existing model's
-size/hash and unchanged path are recorded in [SOURCES](SOURCES.md).
+llama.cpp `582eab71` and the continuation-reporting probe source, CPU-only,
+without modifying `C:/llamacpp`. Packet `00ab6c5e` predates the reference
+continuation fields. Its archived position-2 mismatch is replayed with the
+comparator at `42deff05`. The current comparator rejects that older record.
+The installed bundle at `9df0b73c` has a separate runtime identity.
+[SOURCES](SOURCES.md) records the existing model's size, hash and path.
 
 Edge's six model-free profile/template/output tests and CLI/API compilation are
 software proof only. After successful Candle parity, select the next bounded
@@ -62,4 +64,4 @@ remain outside the selected delivery. Native and other implemented storage
 types retain their deterministic fixture scope.
 
 ---
-AI-edited: 2026-11-11 | agent=Codex/root | task=lfm2-moe-review-cleanup | change=document strict JSON decoding and top-1 mismatch reporting
+AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-closeout | change=bind both reports to the frozen continuation and document archived replay

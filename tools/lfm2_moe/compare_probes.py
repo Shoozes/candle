@@ -57,10 +57,11 @@ def compare(reference, candidate, case, probe_ids, reference_revision):
         raise ValueError("frozen probe positions or bounds are invalid")
     if reference.get("reference_revision") != reference_revision:
         raise ValueError("reference revision differs from the source lock")
-    if (candidate.get("teacher_forced") is not True
-            or token_ids(candidate.get("tokens"), "candidate continuation") != forced):
-        raise ValueError("candidate did not consume the frozen teacher-forced continuation")
-    for record in (reference, candidate):
+    for label, record in (("reference", reference), ("candidate", candidate)):
+        if record.get("teacher_forced") is not True:
+            raise ValueError(f"{label} did not report a teacher-forced continuation")
+        if token_ids(record.get("tokens"), f"{label} continuation") != forced:
+            raise ValueError(f"{label} continuation differs from the frozen qualification case")
         if (token_ids(record.get("input_token_ids"), "prompt") != prompt
                 or token_ids(record.get("probe_token_ids"), "logit probes") != ids):
             raise ValueError("probe inputs differ from the frozen qualification case")

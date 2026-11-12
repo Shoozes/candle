@@ -1,5 +1,89 @@
 # LFM2-MoE completed work
 
+## 2026-11-12 - Matched-input ShortConv output projection replay
+
+Both engines reproduced their retained mixer outputs. Q8_K matched on common
+inputs. At row 16, channel 557, switching the input accounted for the entire
+mixer difference. Matched dots differed elsewhere, and the verified offline
+FFN propagation showed both effects in the downstream scale witnesses.
+[STATUS](STATUS.md) links the native and offline results.
+
+## 2026-11-12 - Frozen reference continuation check
+
+The model-free review reproduced a false pass when the reference record used a
+different forced sequence with the same length. The reference probe now emits
+the schedule, and the comparator requires both engines to match the frozen IDs.
+The original qualification record remains archived with its original format.
+
+## 2026-11-12 - Matched-residual FFN RMSNorm replay
+
+Reconstructed both F32 post-mixer residuals and replayed the frozen weighted
+normalization. Both engines reproduced their retained outputs and agreed on
+each shared residual. Switching only the residual reproduced the exact seven
+row-16 Q8_K scale changes with each engine and quantizer. [STATUS](STATUS.md)
+links the witness.
+
+## 2026-11-12 - Matched-input FFN up projection replay
+
+Replayed the single Q4_K up weight with both retained FFN-normalized tensors
+and their original CPU groupings. The Q8_K quantizers agreed on each shared
+input before dot work. Both the dot kernel and the retained normalization
+scales contributed to the row-16 up differences. The offline witness rounded
+to `9` with the reference dot and reference input, and to `10` after either
+factor changed. [STATUS](STATUS.md) links the measurements.
+
+## 2026-11-12 - Matched-input SwiGLU replay
+
+Separated CPU SiLU from multiplication on retained gate and up inputs. Both
+engines reproduced their full retained SwiGLU outputs. SiLU differed by one
+ULP at each selected feature. Multiplication agreed on all shared operands
+in the row-16 block. Switching the up tensor moved the threshold lane across
+`9.5` for both gate inputs and SiLU engines. [STATUS](STATUS.md) links the replay.
+
+## 2026-11-12 - Matched-input FFN down projection replay
+
+Replayed the single Q6_K weight with both retained 37-row SwiGLU tensors.
+The two Q8_K quantizers matched on each identical input before dot work.
+The retained input difference crossed the row-16 rounding threshold and
+reproduced the projection gap. Both engines' dots on identical bytes differed
+by at most `2.2351742e-8`. [STATUS](STATUS.md) links the exact witness.
+
+## 2026-11-12 - Complete CPU layer-0 trace
+
+Built the pinned CPU reference observer and locked Candle diagnostic, then
+captured 11 checkpoints per engine on the 37 frozen tokens with both Candle
+switches enabled. The maximum delta rose from `2.0861626e-7` at SwiGLU to
+`1.4526770e-5` at the FFN down projection and persisted into the final
+layer-0 output. Both Jobs exited and passed the post-run resource checks.
+[STATUS](STATUS.md) links the source-bound result.
+
+## 2026-11-12 - Three CPU arithmetic variants
+
+Reused the isolated diagnostic and retained controls under fresh admission.
+Reference RMSNorm alone restored position 2. Ties-to-even alone narrowed its
+wrong-token margin. The combined arm matched layer-0 RMSNorm and brought its
+ShortConv input projection within `1.4305115e-6`, while the position-2 mismatch
+persisted. All three Jobs exited and the final census was quiet. [STATUS](STATUS.md)
+links the exact results and original limits.
+
+## 2026-11-12 - CPU diagnostic baseline
+
+Built one isolated CPU diagnostic with independent RMSNorm and Q8_K rounding
+switches. The pinned reference and Candle baseline reproduced the retained
+arithmetic results through all eight positions. A Python process observed by
+the post-baseline quiet-host check stopped the remaining arms before dispatch.
+Both model Jobs exited and the terminal census was quiet. [STATUS](STATUS.md)
+links the source-bound diagnostic record.
+
+## 2026-11-12 - Offline CPU arithmetic isolation
+
+Replayed the 37 retained layer-0 rows with four combinations of normalization
+and Q8_K rounding. Both native RMSNorm results and both common-input activation
+buffers were reproduced byte for byte. With the same projection weights and
+reduction in every arm, ties-to-even alone reduced the layer-0 projection gap
+from `3.411e-4` to `2.176e-6` against the arm with both reference rules.
+[STATUS](STATUS.md) links the compact receipt.
+
 ## 2026-11-11 - CPU prefill isolation
 
 The frozen arithmetic logs place the first observed difference at the 37-token
@@ -71,4 +155,4 @@ owns packet review, separately granted finite production qualification, Edge
 acceptance and separately authorized publication/adoption. D1 stays closed.
 
 ---
-AI-edited: 2026-11-11 | agent=Codex/root | task=lfm2-moe-cpu-isolation | change=record prefill boundary and quantization witness
+AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-shortconv-out-replay | change=record the completed matched ShortConv output replay

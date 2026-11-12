@@ -8,8 +8,25 @@ maintenance. Its own [TODO](../lfm2-moe/TODO.md) owns native/GGUF, CPU/CUDA and
 opt-in Edge acceptance. Candle source progress was published at `95df99a0`.
 Packet `00ab6c5e` consumed its attempt and stopped at the first CPU comparison.
 After the comparator repair, retained logs show sampled logits already differ
-at prefill and top-1 differs at zero-based position 2. The next task is a paired
-CPU trace of the embedding, layer 0 normalization and first ShortConv projection.
+at prefill and top-1 differs at zero-based position 2. The paired CPU trace
+found exact embeddings, first drift at layer-0 RMSNorm and five Q8_K half-tie
+byte differences on common normalized inputs. Offline replay isolated their
+layer-0 effects. The isolated CPU diagnostic validated both controls and all
+three arithmetic variants in two bounded attempts. Only the RMSNorm-only
+variant restored position 2. With both switches the first projection nearly
+matched while later sampled prefill drift grew. The complete layer-0 CPU pair
+measured its largest increase at the dense FFN down projection. The matched
+replay attributed that increase to incoming SwiGLU drift crossing a Q8_K
+rounding threshold. The SwiGLU replay isolated the retained up operand as the
+factor that changes the rounded byte. The matched FFN up replay measured
+both dot-kernel and input-scale effects. Matched-residual FFN RMSNorm tied
+the seven row-16 scale changes to the ShortConv mixer output. The matched
+output replay reproduced both mixer tensors and isolated the peak row-16
+difference to the projection input. Dot differences also affected downstream
+scales. The MoE queue now separates the two F32 operands of that projection.
+The local qualification comparator requires both engines to
+report the frozen continuation. The next packet needs a reference binary from
+the updated probe source.
 Builds, further production model execution, deployment and consumer adoption
 remain held.
 
@@ -314,4 +331,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-11-11 | agent=Codex/root | task=lfm2-moe-cpu-isolation | change=route the prefill difference to a paired CPU trace
+AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-shortconv-out-replay | change=route the completed mixer replay and next operand check

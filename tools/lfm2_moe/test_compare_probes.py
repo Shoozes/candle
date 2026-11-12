@@ -24,12 +24,12 @@ class ComparisonTests(unittest.TestCase):
     def records(self, case):
         count = len(case["forced_ids"])
         reference = dict(reference_revision=self.lock["llamacpp_revision"],
+                         teacher_forced=True, tokens=case["forced_ids"].copy(),
                          input_token_ids=case["prompt_ids"].copy(),
                          probe_token_ids=self.probes.copy(), probe_top1=list(range(20, 20 + count)),
                          probe_logits=[[float(i + j) for j in range(len(self.probes))] for i in range(count)])
         candidate = copy.deepcopy(reference)
         candidate.pop("reference_revision")
-        candidate.update(teacher_forced=True, tokens=case["forced_ids"].copy())
         return reference, candidate
 
     def check(self, reference=None, candidate=None, case=None):
@@ -77,6 +77,22 @@ class ComparisonTests(unittest.TestCase):
             candidate = dict(self.candidate, **{field: value})
             with self.subTest(field=field, value=value), self.assertRaises(ValueError):
                 self.check(candidate=candidate)
+
+    def test_reference_must_report_the_full_frozen_continuation(self):
+        wrong = self.case["forced_ids"].copy()
+        wrong[0] += 1
+        for field, value, expected in [
+            ("teacher_forced", None, "reference did not report a teacher-forced continuation"),
+            ("tokens", None, "reference continuation requires nonempty U32 token IDs"),
+            ("tokens", wrong, "reference continuation differs from the frozen qualification case"),
+        ]:
+            reference = dict(self.reference)
+            if value is None:
+                reference.pop(field)
+            else:
+                reference[field] = value
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, expected):
+                self.check(reference=reference)
 
     def test_next_token_shape_type_and_finite_logits_are_required(self):
         bad_values = [("probe_top1", [True] * 8),

@@ -17,11 +17,21 @@ were verified. Completed release proof is in
 The selected implementation is [LFM2-MoE](../lfm2-moe/TODO.md): native and GGUF
 support, CPU/CUDA fixture proof and an opt-in Edge adapter. Its independent queue
 owns the complete accepted plan and held production/publication steps.
-The first packet consumed its attempt. Retained arithmetic logits differ before
-forced decode. The MoE queue now selects a paired CPU trace through the first
-ShortConv projection to isolate the difference. A successor production packet
-needs exact review, a new grant and fresh quiet/resource admission. Builds, model
-runs, publication, packages and consumer adoption remain held.
+The first packet consumed its attempt. The paired trace found the first CPU
+drift at layer-0 RMSNorm and five Q8_K half-tie byte differences on common real
+inputs. The CPU diagnostic validated the controls and three variants. The
+combined variant brought the first projection close to the reference, while
+sampled prefill drift increased and position 2 still differed. The paired
+layer-0 trace localized the largest early increase to the dense FFN down
+projection. The replay isolated incoming SwiGLU drift crossing a rounding
+threshold. The SwiGLU replay isolated the FFN up operand, and the matched
+up replay measured both dot-kernel and input-scale effects. The FFN RMSNorm
+replay isolated the latter to the incoming ShortConv residual. The matched
+output replay reproduced the mixer outputs and attributed the peak row-16 gap
+to the input. The MoE queue now crosses the retained C and convolution operands.
+A successor production packet needs the continuation-reporting
+reference binary, separate review and admission. Builds, model runs,
+publication, packages and consumer adoption remain held.
 
 The selected upstream sync is published at `5f094821`, including merge
 `311d267b` from official Candle 0.11.1 `cfcbd718`. [STATUS](STATUS.md) and
@@ -394,4 +404,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-11-11 | agent=Codex/root | task=lfm2-moe-cpu-isolation | change=select first-layer paired diagnostics after prefill isolation
+AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-shortconv-out-replay | change=route the next ShortConv operand replay

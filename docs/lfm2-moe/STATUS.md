@@ -6,6 +6,13 @@ The first Q4 parity attempt stopped during CPU comparison. The comparator
 repair exposes a remaining CPU numerical disagreement. Edge qualification and
 adoption follow supplier parity. D1 stays closed.
 
+The review reproduced an acceptance gap in the comparator at `42deff05`.
+A reference record with a wrong same-length forced continuation could pass.
+The comparator requires the exact frozen schedule from both engines. The
+archived CPU result still reproduces at position 2 (`1113` vs `6986`) using the
+comparator from `42deff05`. A successor packet needs a newly bound reference
+binary. The 14 comparator tests and pinned VS 18 probe syntax check passed.
+
 Native `models::lfm2_moe::{Config, Model, Cache}` loads the official per-expert
 safetensors layout and exposes token/embedding forward, hidden states, logits
 projection and cache reset. The pinned native index confirms 7,610 tensor names.
@@ -119,9 +126,9 @@ records the source and replay identities.
 The retained pair already differs at the output of the 37-token prefill. Its
 seven sampled logits have a maximum absolute delta of `0.70701456` at position
 0, before either engine consumes a forced token. Both still select `207` there.
-The current records omit intermediate tensors and the logits for both competing
-tokens at position 2. They cannot identify the first unequal layer or the rank
-margin at the first top-1 mismatch.
+The original packet omitted intermediate tensors and both competing logits at
+position 2. The paired trace localized the first unequal operation, and the
+later diagnostic measured the rank margin for both controls.
 
 The pinned reference log identifies layer 0 ShortConv input projection as
 repacked `Q4_K_8x8`. Candle's generic and packed x86 Q4_K paths use
@@ -133,14 +140,177 @@ comparison found equal quantization for four existing synthetic fixture rows.
 Both prebuilt synthetic prefill tests passed. This establishes a source-level
 difference and a fixture coverage gap. The production cause is unresolved.
 
-The next task in TODO is a paired CPU prefill trace at the embedding, layer 0
-operator normalization and ShortConv input projection. If the projection differs
-on common normalized inputs, compare the Q8_K blocks with the same packed
-group or tail dispatch before attributing the difference to the dot product.
-The [isolation receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-cpu-isolation-20261111-95df99a0/summary.json)
-binds the witness, fixture results and source anchors. Further builds and model
-loads remain held. A future production attempt requires a new reviewed packet,
-exact grant and fresh quiet/resource admission.
+The paired CPU trace used the same 37 frozen arithmetic IDs. The reference ran
+one prefill with tensor callbacks. The Candle diagnostic invoked the same
+embedding, RMSNorm and Q4_K projection operators through its retained release
+libraries and read only their required GGUF tensors. All 75,776 embedding values
+matched. Layer-0 RMSNorm was first to differ, with a maximum absolute delta of
+`1.4305115e-6`. Candle uses a float sum and per-element division. The pinned
+reference accumulates float products in double and multiplies by a reciprocal.
+The ShortConv input projection differed by up to `0.00034119189`.
+
+Replaying the reference-normalized rows through both activation converters
+produced identical scale bits in all 296 Q8_K blocks. Five signed quant bytes
+differed at exact half-ties on packed rows 2, 9 and 30. The scalar tail matched.
+For example, the scaled operand `104.5` became `104` in llama.cpp and `105` in
+Candle. With common normalized inputs, the projection still differed by up to
+`0.00048783049`. That replay includes the rounding difference and cannot isolate
+dot arithmetic with identical quantized bytes. The trace establishes two early
+numerical differences that the CPU diagnostic then tested independently.
+
+The [paired trace receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-paired-trace-20261111-42deff05/summary.json)
+binds the operators, frozen input and both Job exits. The follow-up offline replay
+matched both native RMSNorm outputs and both captured common-input Q8_K buffers
+byte for byte. The RMS denominator differed on 33 of 37 rows. Using only the
+reference sum precision or only its reciprocal multiply did not reproduce the
+reference normalization. Both changes together did.
+
+The projection replay held Q4_K weights and the F64 reduction fixed. Compared
+with the arm using both reference rules, the maximum absolute deltas were
+`3.411e-4` for baseline, `4.878e-4` for RMSNorm alone and `2.176e-6` for ties-to-even
+alone. Ties-to-even changed two activation bytes with Candle normalization and
+five with reference normalization. The largest residual between a retained
+native projection and its own operand-matched oracle was `1.556e-6`. This is
+an arithmetic reconstruction of layer 0. The [offline replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-cpu-arithmetic-20261112-42deff05/summary.json)
+records the data and limits.
+
+The isolated CPU diagnostic built from `42deff05` with the frozen lockfile.
+The pinned reference and Candle baseline passed fresh admission and reproduced
+all eight retained top-1 selections and the original sampled logits. At
+zero-based position 2, the `1113` minus `6986` logit margin was `+0.307556`
+for the reference and `-0.638268` for Candle. Prefill sampled logits differed
+by up to `0.707015`. Both Jobs exited successfully and released their processes.
+The post-baseline quiet-host check saw a Python process and stopped the attempt
+before any variant launched. The terminal census was quiet.
+[Control receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-cpu-variants-20261112-42deff05/summary.json).
+
+The authorized continuation reused the verified diagnostic and both controls.
+All three CPU variants passed fresh admission and validation on the same 37
+tokens and eight teacher-forced positions. The 180-second, 32 GiB child limits,
+900-second sequence limit and two CPU threads were retained. Every Job exited
+and the final quiet-host check passed.
+
+| CPU run | Position 2 top token | `1113` minus `6986` logit | Prefill max sampled logit delta vs reference |
+| --- | ---: | ---: | ---: |
+| Pinned reference | `1113` | +0.307556 | 0 |
+| Candle baseline | `6986` | -0.638268 | 0.707015 |
+| Reference RMSNorm only | `1113` | +0.170671 | 0.848389 |
+| Q8_K ties-to-even only | `6986` | -0.262487 | 0.826451 |
+| Both | `6986` | -0.619778 | 1.496321 |
+
+RMSNorm alone matched all eight reference selections and reproduced the
+layer-0 normalized rows byte for byte. Rounding alone brought the layer-0
+ShortConv input projection within `2.6226044e-6` of the reference. Both changes
+reproduced the normalized rows and reduced that projection delta further to
+`1.4305115e-6`, while increasing downstream sampled prefill drift.
+[Three-variant receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-cpu-variants-resume-20261112-42deff05/summary.json).
+
+The paired layer-0 trace was prepared in an isolated source snapshot. Quiet
+host and memory admission passed for the reference build. The bounded launcher
+refused its `cmd.exe` wrapper because other sessions used that executable. The
+attempt stopped before compilation, leaving the layer-0 output unmeasured.
+[First build stop](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-paired-20261112-42deff05/summary.json).
+
+The direct retry bound VS 18 `cl.exe` and SDK `10.0.26100.0`. Fresh preflight
+found five Python processes. Physical RAM and commit headroom exceeded the
+original floors, but the quiet-host gate stopped the build before dispatch.
+[Direct build admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-paired-vs18-20261112-42deff05/summary.json).
+
+The completed pair used the pinned VS 18 compiler directly and the locked
+Candle CPU build from `42deff05`. For this diagnostic, admission recorded Python
+activity and enforced the original 40 GiB RAM and commit floors and absence of
+competing model or build processes. Both engines ran one prefill and reproduced
+their retained prefix checkpoints on all 37 frozen tokens. Both Candle
+arithmetic switches were enabled. Both bounded Jobs exited and released their
+processes.
+
+The ShortConv mixer output differed by at most `1.0430813e-7` and SwiGLU by
+`2.0861626e-7`. The largest increase came at the dense FFN down projection,
+with a maximum delta of `1.4526770e-5` at zero-based prompt row 16, channel
+1649, token `355`. The same delta reached the complete `37 × 2048` layer-0
+output. Both engines' captured tensors reconstructed the final residual
+exactly. [Completed trace receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-paired-bounded-20261112-42deff05/summary.json).
+
+The matched-input replay used the single Q6_K `blk.0.ffn_down.weight` tensor
+and all 37 retained SwiGLU rows in their original order. Before any dot work,
+the engines agreed on every Q8_K scale bit, quant byte and block sum on each
+identical input. Switching between the two retained inputs changed 1,473
+scale bit patterns and seven quant bytes. At row 16, block 38, lane 250, the
+F32 scaled operand crossed `9.5` (`9.4999971` to `9.5000019`) and both
+quantizers changed `9` to `10`.
+
+Both native dot replays reproduced the retained down projections. With
+identical Q8_K bytes, the maximum cross-engine dot delta was `2.2351742e-8`.
+At row 16, channel 1649, changing only the input in Candle contributed
+`-1.4528632e-5`, and switching dot kernels on the same reference bytes
+contributed `+1.8626451e-9`. Their sum reproduces the original
+`-1.4526770e-5`. [Matched-input replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-down-replay-20261112-42deff05/summary.json).
+
+The upstream SwiGLU replay preserved the `37 × 11776` layout. Both engines
+reproduced their retained SwiGLU outputs byte for byte. With either identical
+gate input, Candle SiLU was one ULP higher at feature 9978 and one ULP lower
+at feature 9835, with signed differences of `+7.4505806e-9` and
+`-7.4505806e-9`. Given identical SiLU and up operands, multiplication
+matched bit for bit over the full row-16 block in all eight combinations.
+
+The retained up operands differed by `+2.9802322e-8` at feature 9978 and
+`+5.9604645e-8` at feature 9835. Holding the gate input and SiLU engine fixed,
+switching from the reference up tensor to Candle's moved the scaled lane
+above `9.5` in all four combinations. With the reference up tensor every
+combination rounded to `9`. With Candle's every combination rounded to `10`.
+[SwiGLU replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-swiglu-replay-20261112-42deff05/summary.json).
+
+The matched-input `blk.0.ffn_up.weight` replay used the original Q4_K
+weights, the `37 × 2048` FFN-normalized rows, llama.cpp's four-row
+`q4_K_8x8` activation groups and scalar tail, and Candle's 16-row tiles.
+Both quantizers agreed on all scale bits, quant bytes and block sums for
+each shared input before either dot ran. Switching between the retained
+inputs changed 212 scale bit patterns, seven in row 16, with equal quant
+bytes throughout. Each native dot reproduced its retained up projection.
+
+| Row-16 feature | Dot change on reference Q8_K | Input change with Candle dot | Retained Candle minus reference |
+| --- | ---: | ---: | ---: |
+| `9978` | `+2.2351742e-8` | `+7.4505806e-9` | `+2.9802322e-8` |
+| `9835` | `+2.9802322e-8` | `+2.9802322e-8` | `+5.9604645e-8` |
+
+An offline reconstruction fed each of the four up-projection combinations
+through the retained gate and SiLU tensors at row 16. Only reference dot
+with reference normalized input yielded `9` at the downstream witness lane.
+Changing either factor on its own yielded `10` for all four gate/SiLU
+combinations.
+[FFN up replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-up-replay-20261112-42deff05/summary.json).
+
+The matched-residual FFN RMSNorm replay reconstructed the post-mixer input
+from the retained embedding and ShortConv mixer outputs in F32. It used the
+frozen `blk.0.ffn_norm.weight` and epsilon bits `0x3727c5ac`. Both engines
+reproduced their retained normalized tensors, and their outputs matched bit
+for bit on each shared residual with Candle's reference RMSNorm switch.
+
+On either shared residual the Q8_K converters agreed on every scale, quant
+byte and block sum. Changing only the residual reproduced all 212 original
+scale differences with no quant-byte differences. The seven row-16 changes
+reproduced the exact scale bit patterns at blocks `0, 2, 3, 4, 5, 6, 7` with
+each RMSNorm and converter combination. The retained embeddings were
+identical, so the input difference enters through the ShortConv mixer output.
+[FFN RMSNorm replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-norm-replay-20261112-42deff05/summary.json).
+
+The [ShortConv output replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-out-replay-20261112-42deff05-proof/summary.json)
+binds both native `37 × 2048` mixer outputs bit for bit. Candle `AdaptedLinear`
+used the `Auto` x86 AVX-512 VNNI kernel with four-row activation tiles.
+llama.cpp used `q4_K_8x8` four-row groups and a scalar tail. On either shared
+F32 input, the Q8_K scale bits, quant bytes and block sums matched exactly.
+Switching the retained inputs changed 263 scale bits, including all eight
+blocks at row 16, with zero changes to quant bytes.
+
+At row 16, channel 557, the input switch reproduced the full
+`-1.043081283569336e-7` mixer difference. The two kernels also differed on
+matched Q8_K operands elsewhere, by up to `8.940696716308594e-8` at the tail.
+An offline four-way propagation reproduced both retained FFN RMSNorm and Q8_K
+controls bit for bit. Of the seven retained row-16 FFN scale changes, blocks
+0 and 5 respond only to the input switch. Blocks 2, 3, 4, 6 and 7 also
+respond to the dot switch on at least one input. This isolates the ShortConv
+output projection contribution. The next task in TODO separates the two
+F32 operands that formed the input. Production parity remains open.
 
 The comparator and prefill isolation closeout is recorded in its
 [guarded publication receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-comparator-publish-20261111-95df99a0/summary.json).
@@ -158,4 +328,4 @@ implementation attempts remain in the original run record. Native lower-
 precision activation parity is not claimed by the CPU-F32 numerical gate.
 
 ---
-AI-edited: 2026-11-11 | agent=Codex/root | task=lfm2-moe-comparator-publish | change=link scoped comparator closeout and retain the paired trace gate
+AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-shortconv-out-replay | change=record the native matched-operand result and downstream scale effects
