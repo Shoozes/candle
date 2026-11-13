@@ -471,12 +471,145 @@ working-tree bytes and deleted paths so a shared-kernel change is visible
 before packet review. The prior receipts remain the controls for the
 composed mixer and FFN normalization replay.
 
-The [composed layer-0 attempt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-composed-replay-20261112-5648414d/summary.json)
-bound the candidate, frozen operands, reference tensors and FFN controls.
-Fresh admission found active Cargo and Clippy processes with 36.38 GiB
-available RAM and 38.63 GiB commit headroom. The controller stopped before
-dispatching either child. The composed outputs and recovery of the seven
-row-16 scale blocks remain to be measured.
+The composed layer-0 replay reused the verified executable after fresh
+admission. The stock controls reproduced and all seven composed stages
+matched bit for bit across the 37 frozen rows. FFN RMSNorm matched all
+75,776 values and the full 86,432-byte Q8_K buffer. Row-16 scale blocks
+`0, 2, 3, 4, 5, 6, 7` all recovered the reference bits. The single replay
+process exited and released its Job Object.
+[Composed replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-composed-replay-20261113-bd3094dd-reuse/summary.json).
+
+The FFN up dot trace replayed both native CPU schedules on the recovered
+reference Q8_K input. Both reproduced their retained outputs exactly.
+The integer scale and minimum sums agreed. At feature `9978`, the first
+completed-block difference was the F32 minimum term in block 0. At
+`9835`, the first minimum term difference appeared in the second subblock
+pair of block 0 and canceled by that block's end. Both F32 terms differed
+at the end of block 1. [FFN up dot trace](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-up-dot-trace-20261113-bd3094dd/summary.json).
+
+The isolated FFN up projection matched all 435,712 llama.cpp output values
+bit for bit on the matched Q8_K rows. This covered the 36 GEMM rows and
+the GEMV tail. Row 16 recovered `3d271bf2` at feature `9978` and
+`3eb6b243` at feature `9835`. The stock Candle and Q8_K controls
+reproduced, and both bounded Jobs exited and released their processes.
+[FFN up projection receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-up-schedule-20261113-bd3094dd/summary.json).
+
+The corrected-input SwiGLU replay used the same reference gate and corrected
+up tensor for both CPU paths across 37 rows. SiLU was the first differing
+stage. On row 16, Candle minus llama.cpp was `+7.4505806e-9` at feature
+`9978` and `-7.4505806e-9` at `9835`. The product difference was
+`+4.6566129e-10` at `9978`, and the products matched at `9835`.
+Both multiply paths agreed across row 16's block 38 when given identical
+SiLU outputs. Both quantizers agreed on each shared product tensor.
+Across the two product tensors, 470 Q8_K scales differed, and all quant
+bytes and block sums matched. At row 16, block 38, lane 250, both scaled
+operands stayed below `9.5` and encoded byte `9` with scale bits
+`b98d4480`. All six bounded processes exited.
+[Corrected-input SwiGLU receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-swiglu-corrected-up-20261113-bd3094dd/summary.json).
+
+The matched-gate SiLU trace reproduced both native witness values. At row 16,
+features `9978` and `9835`, the first difference was `exp(-x)`. The
+reconstructed Candle exponent was one ULP higher at each feature than the
+pinned AVX2/FMA approximation. Reference SiLU with the corrected up tensor
+matched all 435,712 reference products. Both quantizers recovered all 470
+scales and matched the entire 496,984-byte Q8_K buffer. Row 16, block 38,
+lane 250 remained byte `9`.
+[Reference SiLU receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-silu-reference-20261113-bd3094dd/summary.json).
+
+The Q6_K down-dot trace stopped at the first reference control. The
+recovered Q8_K input passed binding and admission. PowerShell left
+`GGML_CPU_TILED_MM` present with an empty value when the controller tried
+to clear it. The launcher passed that value through, disabling tiled
+matmul in the pinned reference. The reference process exited cleanly.
+Its output differed from the retained control at 67,485 values. The
+Candle child and term comparison did not run.
+[Stopped attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-down-dot-trace-20261113-bd3094dd/summary.json).
+
+The recheck with `GGML_CPU_TILED_MM=1` reproduced both native 37-row
+controls bit for bit. At row 16, channel `1649`, llama.cpp returned
+`3c08db15` and Candle returned `3c08db17`. The reconstruction returned
+`3c08db14` for llama.cpp, so the controller stopped before accepting a
+first differing term. Disassembly of the pinned tiled object shows
+separate F32 multiply and add instructions where the reconstruction used
+FMA. Both native processes exited and released their Jobs.
+[Tiled recheck receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-down-dot-trace-20261113-bd3094dd-tiled/summary.json).
+The offline reconstruction verified the retained 37-row native and
+prequantized controls and matched both native values at row 16, channel
+`1649`: llama.cpp `3c08db15` and Candle `3c08db17`. All 46 integer block
+sums agreed. In block 0 both engines summed to `-142899`. The first F32
+contribution was `b8d307b6` for llama.cpp and `b8d307b8` for Candle.
+The pinned llama.cpp kernel reduces the integers before applying the
+weight and activation scales, with separate F32 multiply and add. Candle
+combines the scales first and accumulates eight FMA lanes before reduction.
+The offline reconstruction covered that one output coordinate.
+[Offline dot receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-down-dot-offline-20261113-bd3094dd/summary.json).
+The isolated Candle Q6_K replay reproduced all 75,776 stock control
+values and matched all 75,776 llama.cpp outputs bit for bit on the
+recovered Q8_K rows. Row 16, channel `1649` matched `3c08db15`.
+All 2,048 values in row 36 matched using the same tiled F32 schedule.
+The single attempt passed fresh admission for both build and replay.
+Both Jobs exited and released their processes.
+[Full projection receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-down-schedule-20261113-bd3094dd/summary.json).
+
+One offline F32 addition of the corrected down projection and the
+retained post-mixer residual matched llama.cpp `layer_out` bit for bit
+across all 75,776 values, including all channels in rows 16 and 36.
+The complete output digest matched the retained capture.
+[Final residual receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-output-offline-20261113-bd3094dd/summary.json).
+
+The single-path candidate bound the 37 frozen token IDs and passed
+fresh build admission. The build stopped at Rust `E0284`. Four calls
+to `pack_weights` omitted the output width const argument for the
+ShortConv input and output projections and the FFN gate and up
+projections. The compiler Job released its process. The replay and
+stage comparisons did not run.
+[Stopped build receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-single-path-20261113-bd3094dd/summary.json).
+
+With explicit output widths at the four Q4_K packing calls, the next
+single admitted replay started from the same 37 frozen IDs and read
+the selected layer-0 weights and embedding rows from the frozen GGUF.
+All 15 F32 stage outputs and four Q8_K buffers matched the retained
+llama.cpp controls. The stock Candle FFN down control reproduced.
+The final `layer_out` matched all 75,776 values, including every
+channel in rows 16 and 36. Both Jobs exited and released their
+processes. This closes the isolated layer-0 comparison.
+[Layer-0 replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-single-path-20261113-bd3094dd-widths/summary.json).
+The isolated full-model CPU prefill candidate bound the 37 frozen IDs,
+the verified layer-0 control, and the retained pinned llama.cpp prefill
+record. Fresh build admission detected Cargo PID 41144 with 43.25 GiB
+available RAM and 44.30 GiB commit headroom. The controller stopped
+before dispatching a compiler or model process.
+[Prefill admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-full-cpu-prefill-20261113-bd3094dd/summary.json).
+
+The bound candidate passed fresh admission for the build and one
+full-model CPU prefill on the 37 frozen IDs. All 75,776 layer-0 output
+values matched bit for bit before the computed tensor entered the stock
+Candle layers. All 128,000 final-position Candle logits were finite.
+Both engines selected token `207` at position 36. Across the nine
+frozen probes, the maximum absolute logit delta was `1.313808` at token
+`440`, and RMS was `0.612766`. The replay Job peaked at 15,206,772,736
+bytes and both Jobs released their processes. This run covers one
+prefill position on one frozen prompt.
+[Full CPU prefill receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-full-cpu-prefill-20261113-bd3094dd-recheck/summary.json).
+The review recomputed the token and nine deltas from the retained F32
+logits and verified the source, binary and Job receipts. The successful
+diagnostic used a separate layer-0 implementation and ran stock Candle
+from layer 1 through the output head. The production position-2
+comparison remains open.
+
+The layer-1 CPU diagnostic is prepared as inert packet `cbdfeb0f`.
+It binds Candle `bd3094dd`, the verified layer-0 bytes and the pinned llama.cpp graph. The
+reference captures eleven checkpoints in one prefill. Candle checks the
+entry and then each layer-1 checkpoint before proceeding. Rust metadata
+and pinned MSVC syntax checks passed. The native attempt is unconsumed,
+with the first differing stage still unmeasured.
+[Preparation receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-inert-20261113-bd3094dd/summary.json).
+[TODO](TODO.md) owns authorization and admission for the native trace.
+
+The packet inventory recheck found that `candle-examples/build.rs` and
+its inputs were outside the bound paths. The local repair adds the
+build script, download module and CUDA kernel directory to future
+packet inventories. Existing packet receipts remain historical.
 
 The comparator and prefill isolation closeout is recorded in its
 [guarded publication receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-comparator-publish-20261111-95df99a0/summary.json).
@@ -494,4 +627,4 @@ implementation attempts remain in the original run record. Native lower-
 precision activation parity is not claimed by the CPU-F32 numerical gate.
 
 ---
-AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-layer0-composed-replay | change=record the composed candidate and admission outcome
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-closeout | change=identify the layer-1 packet source and retain its proof

@@ -36,9 +36,27 @@ rows and the final GEMV row bit for bit. The full mixer replay matched
 `B × X` and found the first remaining difference in convolution. The tap
 replay reproduced both F32 accumulation orders and the row-16 gate. The
 isolated output projection matched all 37 rows on the reference gate. The
-MoE queue next traces the corrected mixer into layer-0 FFN normalization.
-The composed probe passed input binding and stopped at admission because
-Cargo and Clippy were active.
+composed replay matched all 37 rows through FFN RMSNorm and recovered all
+seven row-16 Q8_K scales. The FFN up trace localized the remaining witness
+differences to F32 accumulation. The full FFN up projection matched all
+435,712 reference values with the corrected schedule. The SwiGLU replay
+recovered the original down-projection rounding witness. Reference SiLU
+recovered all 470 remaining Q8_K scales. The offline FFN down trace
+matched both native values at row 16, channel `1649`, and found the first
+F32 contribution difference in block 0. The isolated Q6_K replay
+matched all 75,776 reference projection outputs, including the final
+row, and reproduced the stock Candle control. The offline final residual
+addition matched all 37 rows of the reference layer-0 output. After
+fixing four Q4_K packing widths, one isolated Candle run from the
+frozen IDs matched all checked layer-0 stages and the full final output.
+A fresh full-model CPU prefill reproduced the verified layer-0 output
+and matched llama.cpp's final-position top token `207`. The nine
+sampled logits had a maximum absolute delta of `1.313808`. The review
+rechecked the retained logits. Inert packet `cbdfeb0f` is ready for
+review and starts with layer-1 weighted RMSNorm after an exact
+layer-0 output check. The packet inventory now binds the example
+package's build script and its local inputs.
+[MoE status](../lfm2-moe/STATUS.md).
 The local qualification comparator requires both engines to
 report the frozen continuation. The next packet needs a reference binary from
 the updated probe source.
@@ -346,4 +364,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-layer0-composed-replay | change=route the composed replay admission outcome
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-inert | change=route the prepared layer-1 CPU diagnostic

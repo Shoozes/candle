@@ -37,8 +37,20 @@ witnesses and matched all 37 projection rows, including the final GEMV row.
 The mixer replay matched `B × X` and found the first remaining difference
 in convolution. The tap replay reproduced both F32 accumulation orders
 and the row-16 gate. The isolated output projection matched every value
-on the reference gate. The MoE queue next traces the corrected mixer
-into layer-0 FFN normalization.
+on the reference gate. The composed replay matched through layer-0 FFN
+normalization and recovered all seven row-16 Q8_K scales. The matched-input
+FFN up replay matched the full reference projection. The corrected-input
+SwiGLU replay recovered the rounding witness. Reference SiLU recovered
+all remaining Q8_K scales. The offline FFN down trace matched both native
+witness values and isolated the first difference to block 0's F32
+contribution. The isolated replay matched the full reference projection.
+The offline F32 residual addition matched all 37 rows of the reference
+layer-0 output. The isolated Candle replay matched every checked
+layer-0 stage from the frozen IDs. The full-model CPU prefill matched
+the final-position top token with measured logit drift. The MoE queue
+owns inert layer-1 packet `cbdfeb0f`. Its native trace starts with
+weighted RMSNorm after an exact layer-0 output check and requires
+fresh authorization and admission.
 A successor production packet needs the continuation-reporting
 reference binary, separate review and admission. Builds, model runs,
 publication, packages and consumer adoption remain held.
@@ -414,4 +426,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-shortconv-out-proj-schedule | change=route the corrected mixer propagation check
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-inert | change=route the prepared packet and pending native trace

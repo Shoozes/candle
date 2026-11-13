@@ -19,7 +19,10 @@ BUILD_INPUTS = (
     "candle-nn/Cargo.toml", "candle-nn/src", "candle-transformers/Cargo.toml",
     "candle-transformers/src", "candle-ug/Cargo.toml", "candle-ug/src",
     "candle-vlm/Cargo.toml", "candle-vlm/src",
-    "candle-examples/Cargo.toml", "candle-examples/src", "candle-examples/examples/lfm2-moe",
+    "candle-examples/Cargo.toml", "candle-examples/build.rs", "candle-examples/buildtime_downloader.rs",
+    "candle-examples/src", "candle-examples/examples/lfm2-moe",
+    # The example package build script compiles these kernels when CUDA is enabled.
+    "candle-examples/examples/custom-ops/kernels",
     "tools/lfm2_moe",
 )
 SOURCE_SUFFIXES = {".rs", ".cu", ".cuh", ".h", ".c", ".cpp", ".py"}

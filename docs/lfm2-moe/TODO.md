@@ -23,26 +23,30 @@
 
 ## Remaining gates in order
 
-1. Trace the corrected ShortConv mixer into layer-0 FFN normalization.
-   - **Why** The [matched-gate replay](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-out-proj-schedule-20261112-5648414d/summary.json)
-     matched the entire output projection. The [matched-residual replay](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-norm-replay-20261112-42deff05/summary.json)
-     showed both engines agree on each shared FFN residual. The stock
-     mixer drift changed row-16 Q8_K scale blocks 0, 2, 3, 4, 5, 6 and 7.
-   - **How** In an isolated candidate, compose the proven input and output
-     Q4_K schedules with the reference three-tap accumulation on the same
-     37 rows. Bind the frozen operands and run from the retained normalized
-     input through the two projections and causal convolution. Use the
-     identical retained embedding, FFN RMSNorm weight and epsilon. Compare
-     the gate, mixer, residual, normalization and row-16 Q8_K blocks in
-     order. Any native replay needs fresh admission under the revised
-     component limits.
-   - **Done when** Reproduce the retained controls and compare the full
-     tensors through FFN RMSNorm. Report the first difference if present,
-     and which of the seven row-16 scales recover the reference bits.
-   - **Resume** The [prepared candidate](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-composed-replay-20261112-5648414d/summary.json)
-     passed input binding. The attempt stopped before compilation because
-     Cargo and Clippy were active. Reuse the bound source and controls in
-     the next fresh admission.
+1. Locate the first CPU difference in layer 1.
+   - **Why** Both engines chose token `207` after the 37-token prefill,
+     with a maximum sampled logit delta of `1.313808` despite exact layer-0
+     output. The GGUF uses ShortConv and dense FFN at zero-based layer 1.
+     [Full CPU prefill receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-full-cpu-prefill-20261113-bd3094dd-recheck/summary.json).
+   - **Ready for review** Packet `cbdfeb0f` binds 74 inputs, the same
+     37 frozen IDs and pinned llama.cpp `582eab71`. Rust metadata and
+     pinned MSVC syntax checks passed. A missing or wrong packet hash
+     rejected execution before dispatch. [Inert packet](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-inert-20261113-bd3094dd/packet.json).
+     The controller requires HEAD `bd3094dd`. On a successor commit,
+     verify the diagnostic build inputs are unchanged and bind a new
+     packet to that HEAD before requesting authorization.
+   - **How** After a fresh exact grant, require the layer-0 `l_out-0`
+     bytes to match before comparing layer 1. Start with weighted RMSNorm
+     (`model.layers.{}.operator_norm-1`), then compare the ShortConv and
+     FFN stages only while the preceding checkpoints match. The reference
+     graph labels its normalized FFN input `model.layers.{}.ffn_out-1`.
+     Admit each child under the revised component limits. The one
+     attempt allows two diagnostic builds and two CPU probes. Keep the
+     production CPU/CUDA packet and Edge adoption held.
+   - **Done when** The layer-0 entry control and all measured layer-1
+     stages through `l_out-1` agree bit for bit, or the trace stops at the
+     first mismatch and records its row, channel, values and operand
+     identities. The one-prompt prefill result leaves forced decode open.
 2. Resolve the CPU mismatch under the existing [QUALIFICATION](QUALIFICATION.md)
    criteria. Bind a new inert packet to the reviewed candidate, a reference
    binary built from the continuation-reporting probe source, frozen inputs,
@@ -69,4 +73,4 @@ not close the remaining production/adoption criteria or authorize new work for
 completed D1. No mandatory package, installation or activation task is selected.
 
 ---
-AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-layer0-composed-replay | change=record the verified inputs and next admission step
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-closeout | change=record the layer-1 packet source binding at publication

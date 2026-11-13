@@ -1,5 +1,91 @@
 # LFM2-MoE completed work
 
+## 2026-11-13 - Layer-1 diagnostic preparation
+
+Packet `cbdfeb0f` binds Candle `bd3094dd` and the pinned CPU reference.
+Model-free checks verified its input hashes, diagnostic syntax and digest
+rejections. Qualification packet preparation now also binds the example
+build script, download module and CUDA kernel sources. The native layer-1
+trace remains in [TODO](TODO.md).
+[Preparation receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-inert-20261113-bd3094dd/summary.json).
+
+## 2026-11-13 - Full-model CPU prefill with verified layer 0
+
+One admitted run reused the bound candidate on the 37 frozen IDs.
+Layer 0 matched all 75,776 output values. The final-position top token
+was `207` in both engines, with a maximum absolute delta of `1.313808`
+and RMS of `0.612766` across the nine frozen logit probes.
+Both bounded Jobs released their processes.
+[Full CPU prefill receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-full-cpu-prefill-20261113-bd3094dd-recheck/summary.json).
+
+## 2026-11-13 - Single-path layer-0 replay
+
+The four explicit Q4_K packing widths fixed the earlier compilation
+failure. One fresh attempt ran isolated Candle from the 37 frozen IDs.
+Fifteen F32 stages and four Q8_K buffers matched llama.cpp. The stock
+FFN down control reproduced, and the final output matched all 75,776
+values, including rows 16 and 36. Both Jobs released their processes.
+[Layer-0 replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-single-path-20261113-bd3094dd-widths/summary.json).
+
+## 2026-11-13 - Final layer-0 residual check
+
+One offline F32 addition of the corrected Q6_K FFN down output and the
+retained post-mixer residual matched all 37 rows of llama.cpp `layer_out`.
+All 75,776 values and the complete output SHA-256 matched.
+[Final residual receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-output-offline-20261113-bd3094dd/summary.json).
+
+## 2026-11-13 - Full Q6_K FFN down projection replay
+
+One admitted isolated Candle replay reproduced the stock control and
+matched all 75,776 reference outputs on the recovered Q8_K buffer.
+Row 16, channel `1649` matched `3c08db15` and all 2,048 channels in
+row 36 matched. Both bounded Jobs released their processes.
+[Full projection receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-down-schedule-20261113-bd3094dd/summary.json).
+
+## 2026-11-13 - Offline Q6_K FFN down dot trace
+
+The reconstruction verified the retained 37-row controls and matched both
+native outputs at row 16, channel `1649`. Block 0's F32 contribution was
+the first difference after matching the integer dot. This run read retained
+bytes and launched zero native probes.
+[Offline dot receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-down-dot-offline-20261113-bd3094dd/summary.json).
+
+## 2026-11-13 - Reference SiLU replay
+
+The two row-16 SiLU traces first differed at the exponent. The pinned
+reference SiLU and corrected up tensor recovered all 470 Q8_K scales
+across the 37 rows. Both quantizers matched the reference buffer.
+[Reference SiLU receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-silu-reference-20261113-bd3094dd/summary.json).
+
+## 2026-11-13 - Corrected-input SwiGLU replay
+
+Both CPU paths recovered Q8_K byte `9` at row 16, block 38, lane 250
+on the corrected up output and reference gate. SiLU was the first
+differing stage across the 37 rows and left 470 Q8_K scale differences.
+[Corrected-input SwiGLU receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-swiglu-corrected-up-20261113-bd3094dd/summary.json).
+
+## 2026-11-13 - Full FFN up projection replay
+
+The isolated GEMM/GEMV candidate matched all 435,712 llama.cpp outputs
+on the matched Q8_K input, including both row-16 witnesses. The stock
+projection and Q8_K controls reproduced.
+[FFN up replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-up-schedule-20261113-bd3094dd/summary.json).
+
+## 2026-11-13 - Matched-input FFN up dot trace
+
+Both native schedules reproduced their retained FFN up outputs. The
+source reconstruction matched both row-16 witnesses and traced the
+differences to F32 accumulation. [FFN up dot trace](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-up-dot-trace-20261113-bd3094dd/summary.json).
+
+## 2026-11-13 - Composed layer-0 ShortConv replay
+
+The verified executable reproduced the stock controls and matched the
+reference at all seven stages through FFN RMSNorm. All seven row-16
+Q8_K scale blocks recovered. The earlier attempts stopped at build and
+post-build admission. [First stop](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-composed-replay-20261112-5648414d/summary.json),
+[post-build stop](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-composed-replay-20261113-bd3094dd/summary.json),
+[completed replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-composed-replay-20261113-bd3094dd-reuse/summary.json).
+
 ## 2026-11-12 - Qualification packet source binding
 
 The packet now binds the working-tree bytes of shared build sources and
@@ -229,4 +315,4 @@ owns packet review, separately granted finite production qualification, Edge
 acceptance and separately authorized publication/adoption. D1 stays closed.
 
 ---
-AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-closeout | change=record the packet source-binding fix and completed replays
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-closeout | change=record layer-1 diagnostic preparation and inventory coverage

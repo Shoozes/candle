@@ -27,9 +27,13 @@ class SourceInventoryTests(unittest.TestCase):
             staged = "candle-core/src/deleted_from_index.rs"
             unstaged = "candle-nn/src/deleted_from_worktree.rs"
             added = "candle-core/src/local_kernel.rs"
+            example_build = "candle-examples/build.rs"
+            build_module = "candle-examples/buildtime_downloader.rs"
+            cuda_header = "candle-examples/examples/custom-ops/kernels/reduction_utils.cuh"
+            added_cuda = "candle-examples/examples/custom-ops/kernels/local.cu"
             status = "docs/lfm2-moe/STATUS.md"
             git("init", "-q")
-            tracked = (kernel, staged, unstaged, "Cargo.lock", status)
+            tracked = (kernel, staged, unstaged, example_build, build_module, cuda_header, "Cargo.lock", status)
             for name in tracked:
                 write(name, b"original")
             git("add", "--", *tracked)
@@ -41,6 +45,9 @@ class SourceInventoryTests(unittest.TestCase):
             git("rm", "-q", "--", staged)
             (root / unstaged).unlink()
             write(added, b"new source")
+            write(example_build, b"updated build script")
+            (root / cuda_header).unlink()
+            write(added_cuda, b"new CUDA source")
             write("candle-core/src/scratch.tmp", b"local scratch")
             write("artifacts/model-free-scratch.rs", b"generated output")
 
@@ -53,6 +60,10 @@ class SourceInventoryTests(unittest.TestCase):
                 staged: None,
                 unstaged: None,
                 added: digest(added),
+                example_build: digest(example_build),
+                build_module: digest(build_module),
+                cuda_header: None,
+                added_cuda: digest(added_cuda),
                 status: digest(status),
                 "Cargo.lock": digest("Cargo.lock"),
             })

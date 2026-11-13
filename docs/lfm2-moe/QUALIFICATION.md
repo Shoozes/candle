@@ -44,6 +44,8 @@ numerical disagreement as a qualification failure for investigation.
 Before review, bind the inert packet to the current dirty-source inventory and
 SHA-256 of both binaries. The inventory includes the MoE overlay and local
 CPU/CUDA build sources, manifests, lockfile and toolchain configuration.
+It includes the example package's build script, its download module and the
+CUDA sources compiled by that script.
 It hashes working-tree bytes and records deleted source paths with a null
 hash. The task-local reference probe is built from locked
 llama.cpp `582eab71` and the continuation-reporting probe source, CPU-only,
@@ -67,4 +69,4 @@ remain outside the selected delivery. Native and other implemented storage
 types retain their deterministic fixture scope.
 
 ---
-AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-review | change=document shared build inputs in the inert packet inventory
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-prefill-review | change=document example package build inputs in the packet inventory
