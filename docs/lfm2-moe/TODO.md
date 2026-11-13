@@ -23,32 +23,42 @@
 
 ## Remaining gates in order
 
-1. Compose the zero-based layer-1 CPU replay offline.
-   - **Why** Packet `8060130a` consumed its attempt and stopped at weighted
-     RMSNorm after an exact layer-0 entry check. All ten layer-1
-     checkpoints now match in separate offline runs. The composed replay
-     must prove that the candidate can carry its own intermediates through
-     layer 1. [Native terminal](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-inert-20261113-72a53981/terminal.json).
-     [Final offline checkpoint](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-output-offline-20261113-8060130a/summary.json).
-   - **How** Use the verified layer-0 output for the same 37 frozen IDs,
-     the frozen layer-1 weights and epsilon, and the existing isolated CPU
-     schedules. Verify the entry hash before executing. Feed each computed
-     tensor into the next operator and use pinned llama.cpp tensors as
-     comparison controls only. Allow one offline attempt and stop at the
-     first mismatch or failure. Keep production inference and adoption held.
-   - **Done when** The entry and all ten checkpoints through `l_out-1`
-     match bit for bit in one replay, including rows 16 and 36. Bind source,
-     executable, input and output hashes to the terminal receipt. If the
-     replay stops, retain the first mismatching row, channel, values and
-     available operands.
+1. Prepare a fresh inert zero-based layer-2 CPU diagnostic.
+   - **Why** One composed offline layer-1 replay matched all ten
+     checkpoints on the same 37 frozen IDs. Layer 2 is the first
+     attention and sparse-MoE block in this GGUF.
+     [Composed replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-composed-offline-20261113-60ce38d4/summary.json).
+   - **How** Bind the computed `l_out-1` entry, SHA-256
+     `0df2dfda89526966365f5787f063ccb07e6f4ad250f0aab004fb23be63946462`,
+     the 37 frozen IDs, pinned llama.cpp, and exact layer-2 sources and
+     weights. Require exact entry before weighted operator RMSNorm. Compare
+     Q/K/V, Q/K normalization and RoPE, attention output, FFN RMSNorm,
+     routing, sparse FFN and final residual in execution order. Stop at
+     the first mismatch or failure.
+   - **Capture contract** Bind each checkpoint's label, dtype, shape and
+     axis order. Normalize attention tensors to token-first order using
+     their strides (32 query heads, 8 KV heads, width 64). Compare the
+     ordered top-four expert IDs as integers. Capture router logits,
+     selection scores and IDs, gathered unbiased weights and normalized
+     weights separately. Candle follows Transformers' `sum + 1e-6` rule.
+     Pinned llama.cpp clamps the sum to at least `6.103515625e-5`.
+   - **Limits** Carry forward the native layer-1 CPU diagnostic envelope
+     from [packet `8060130a`](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-inert-20261113-72a53981/packet.json).
+     Allow one attempt, zero retries, at most four children, 180 seconds
+     per child and 900 seconds total. Preserve the 4 GiB build and 32 GiB
+     model Job limits, 16 GiB floors for available RAM and commit headroom,
+     two CPU threads, 12,288 context tokens and 128-token prefill chunks.
+   - **Done when** A fresh inert packet binds these sources, inputs,
+     checkpoint contracts, stops and admission controls. Model-free checks
+     cover strided attention capture, integer expert order and the
+     first-mismatch stop. The attempt remains unconsumed. Execution requires
+     separate authorization and fresh admission.
 2. Resolve the CPU mismatch under the existing [QUALIFICATION](QUALIFICATION.md)
-   criteria. After the composed replay, use its exact `l_out-1` as the entry
-   control for zero-based layer 2, the first attention and sparse-MoE
-   block in this GGUF. Prepare a fresh inert diagnostic that starts at its
-   weighted operator RMSNorm and advances only on a match. Any production
-   probe needs separate authorization and fresh admission. Replay the first
-   differing operands, capture a deterministic regression and integrate
-   the justified correction into the runtime.
+   criteria. After authorization and admission, verify the exact layer-2
+   entry before comparing the ordered checkpoints. Stop at the first
+   mismatch or failure. Replay the first differing operands, capture a
+   deterministic regression and integrate the justified correction into
+   the runtime.
    Bind a new inert packet to the reviewed candidate, a reference
    binary built from the continuation-reporting probe source, frozen inputs,
    original limits and four comparison commands. Keep the consumed packet and
@@ -80,4 +90,4 @@ the indexed CUDA path against the grouped implementation on identical weights.
 LFM3 GGUF, lower precision and the broader model family have separate gates.
 
 ---
-AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-review | change=select the composed layer-1 offline replay
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-recheck | change=bind layer-2 capture and diagnostic limits

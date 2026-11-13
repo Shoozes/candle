@@ -616,14 +616,23 @@ F32 residual addition matched all 75,776 values, including rows 16 and 36.
 The review checked the retained tensors against all eleven reference files
 and recomputed both F32 residual additions. [Final offline checkpoint](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-output-offline-20261113-8060130a/summary.json).
 
-The next [TODO](TODO.md) is one composed offline layer-1 replay from exact
-`l_out-0` before tracing zero-based layer 2, the first attention and sparse
-MoE block. Production still uses its existing arithmetic. The position-2
-teacher-forced failure and production qualification remain open.
+One composed offline replay at Candle `60ce38d4` verified the exact
+`l_out-0` entry and carried its own computed intermediates through all
+ten layer-1 checkpoints. All 75,776 `l_out-1` values matched pinned
+llama.cpp, including rows 16 and 36. Both admitted Windows Jobs exited
+and released their processes. The computed `l_out-1` is the entry control
+for the next [TODO](TODO.md), preparation of an inert layer-2 diagnostic.
+The recheck confirmed the retained bytes and terminal receipts. The frozen
+GGUF header confirms 32 query heads, 8 KV heads and top-four expert routing
+at layer 2. The packet needs typed, stride-aware captures and separate
+routing checkpoints to isolate the two engines' normalization rules.
+The position-2 teacher-forced failure and production qualification remain
+open. [Composed replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-composed-offline-20261113-60ce38d4/summary.json).
 
-The local fixture batch gives canonical channel-major weights precedence
-for square ShortConv kernels. The new nonsymmetric fixture reproduced the
-old failure and checks prefill and cached decode with exact expected values.
+The fixture batch published at `60ce38d4` gives canonical channel-major
+weights precedence for square ShortConv kernels. The nonsymmetric fixture
+reproduced the old failure and checks prefill and cached decode with exact
+expected values.
 The 24B checkpoint uses distinct channel and kernel dimensions. New MoE
 controls compare weighted top-K-four accumulation on identical quantized
 expert weights and compare 127/128/129-token prefill, irregular chunks,
@@ -636,9 +645,9 @@ LFM2 tests. The closeout reran both filters with CUDA enabled and passed
 The MoE example check and all 15 protocol tests passed.
 
 The packet inventory recheck found that `candle-examples/build.rs` and
-its inputs were outside the bound paths. The local repair adds the
-build script, download module and CUDA kernel directory to future
-packet inventories. Existing packet receipts remain historical.
+its inputs were outside the bound paths. The repair published at `72a53981`
+adds the build script, download module and CUDA kernel directory to
+future packet inventories. Existing packet receipts remain historical.
 
 The comparator and prefill isolation closeout is recorded in its
 [guarded publication receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-comparator-publish-20261111-95df99a0/summary.json).
@@ -656,4 +665,4 @@ implementation attempts remain in the original run record. Native lower-
 precision activation parity is not claimed by the CPU-F32 numerical gate.
 
 ---
-AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-review | change=reconcile the consumed trace and exact offline checkpoints
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-recheck | change=reconcile replay proof and layer-2 handoff

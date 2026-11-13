@@ -1,5 +1,14 @@
 # LFM2-MoE completed work
 
+## 2026-11-13 - Composed offline layer-1 CPU replay
+
+One isolated CPU run at Candle `60ce38d4` started from the exact retained
+`l_out-0` and computed each of the ten layer-1 checkpoints in order.
+The complete `l_out-1` matched all 75,776 reference values, including rows
+16 and 36. The source, executable, frozen weights and epsilon, stage
+hashes, and build and replay Job receipts are bound in the terminal record.
+[Composed replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-composed-offline-20261113-60ce38d4/summary.json).
+
 ## 2026-11-13 - Layer-1 CPU isolation and offline checkpoints
 
 The one-shot native packet `8060130a` at Candle `72a53981` matched all
@@ -326,4 +335,4 @@ owns packet review, separately granted finite production qualification, Edge
 acceptance and separately authorized publication/adoption. D1 stays closed.
 
 ---
-AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-review | change=record the native stop and completed offline checkpoints
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-compose | change=record the connected offline layer-1 replay

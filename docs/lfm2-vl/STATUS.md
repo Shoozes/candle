@@ -55,9 +55,10 @@ sampled logits had a maximum absolute delta of `1.313808`. The review
 rechecked the retained logits. Packet `8060130a` at published Candle
 `72a53981` consumed its native attempt after matching the layer-0
 entry and finding the first mismatch in layer-1 weighted RMSNorm.
-All ten layer-1 checkpoints now match in isolated offline replays,
-including the full `l_out-1`. The MoE overlay owns the composed replay
-and the local square ShortConv repair with CPU/RTX 4090 fixture coverage.
+One composed offline replay at `60ce38d4` matched all ten layer-1
+checkpoints, including the full `l_out-1`. The MoE overlay owns the next
+inert layer-2 diagnostic. Its square ShortConv repair and CPU/RTX 4090
+fixture coverage were published at `60ce38d4`.
 The production qualification inventory now binds the example
 package's build script and its local inputs.
 [MoE status](../lfm2-moe/STATUS.md).
@@ -368,4 +369,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-review | change=record the consumed trace and route the composed replay
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-compose | change=record composed layer-1 proof and route layer 2
