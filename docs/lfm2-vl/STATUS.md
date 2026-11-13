@@ -23,7 +23,22 @@ both dot-kernel and input-scale effects. Matched-residual FFN RMSNorm tied
 the seven row-16 scale changes to the ShortConv mixer output. The matched
 output replay reproduced both mixer tensors and isolated the peak row-16
 difference to the projection input. Dot differences also affected downstream
-scales. The MoE queue now separates the two F32 operands of that projection.
+scales. The crossed replay measured a larger channel-557 shift from the
+convolution on either C background. The shared-input convolution replay
+reproduced both controls and traced the larger row-16 channel-306 shift to
+the incoming `B × X` product. The completed input-projection replay matched
+all Q8_K operands and attributed that product drift to the dot kernels.
+The completed dot trace reproduced the six B/X values and localized the
+first differences to the F32 schedules in block 0. The arithmetic replay
+matched the reference witnesses with combined integer scale/min folding and
+separate F32 accumulation. The isolated candidate now matches all 36 GEMM
+rows and the final GEMV row bit for bit. The full mixer replay matched
+`B × X` and found the first remaining difference in convolution. The tap
+replay reproduced both F32 accumulation orders and the row-16 gate. The
+isolated output projection matched all 37 rows on the reference gate. The
+MoE queue next traces the corrected mixer into layer-0 FFN normalization.
+The composed probe passed input binding and stopped at admission because
+Cargo and Clippy were active.
 The local qualification comparator requires both engines to
 report the frozen continuation. The next packet needs a reference binary from
 the updated probe source.
@@ -331,4 +346,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-shortconv-out-replay | change=route the completed mixer replay and next operand check
+AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-layer0-composed-replay | change=route the composed replay admission outcome

@@ -23,21 +23,26 @@
 
 ## Remaining gates in order
 
-1. Separate the ShortConv C-slice and convolution contributions to the
-   output-projection input.
-   - What/why: The [matched output-projection replay](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-out-replay-20261112-42deff05-proof/summary.json)
-     attributed the row-16 channel-557 mixer gap to the incoming F32 input.
-     Both the input and the matched dot affected downstream FFN scales.
-   - Where/how: Cross the two retained middle projection slices with the
-     two retained convolution outputs in F32. Keep all 37 rows in order.
-     Reproduce both original products, then compare Q8_K scales and bytes at
-     row 16. Hold one verified dot kernel fixed when measuring the effect
-     of each crossed input at channel 557. Reuse the verified libraries and
-     witnesses. Preserve the frozen weight and original limits, and admit
-     any new native children separately.
-   - Done when: Reproduce the two original projection inputs and their
-     saved fixed-kernel outputs. Identify which C or convolution changes
-     account for the row-16 scale changes and channel-557 input effect.
+1. Trace the corrected ShortConv mixer into layer-0 FFN normalization.
+   - **Why** The [matched-gate replay](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-out-proj-schedule-20261112-5648414d/summary.json)
+     matched the entire output projection. The [matched-residual replay](D:/Compact_Evidence/candle/runs/lfm2-moe-ffn-norm-replay-20261112-42deff05/summary.json)
+     showed both engines agree on each shared FFN residual. The stock
+     mixer drift changed row-16 Q8_K scale blocks 0, 2, 3, 4, 5, 6 and 7.
+   - **How** In an isolated candidate, compose the proven input and output
+     Q4_K schedules with the reference three-tap accumulation on the same
+     37 rows. Bind the frozen operands and run from the retained normalized
+     input through the two projections and causal convolution. Use the
+     identical retained embedding, FFN RMSNorm weight and epsilon. Compare
+     the gate, mixer, residual, normalization and row-16 Q8_K blocks in
+     order. Any native replay needs fresh admission under the revised
+     component limits.
+   - **Done when** Reproduce the retained controls and compare the full
+     tensors through FFN RMSNorm. Report the first difference if present,
+     and which of the seven row-16 scales recover the reference bits.
+   - **Resume** The [prepared candidate](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-composed-replay-20261112-5648414d/summary.json)
+     passed input binding. The attempt stopped before compilation because
+     Cargo and Clippy were active. Reuse the bound source and controls in
+     the next fresh admission.
 2. Resolve the CPU mismatch under the existing [QUALIFICATION](QUALIFICATION.md)
    criteria. Bind a new inert packet to the reviewed candidate, a reference
    binary built from the continuation-reporting probe source, frozen inputs,
@@ -64,4 +69,4 @@ not close the remaining production/adoption criteria or authorize new work for
 completed D1. No mandatory package, installation or activation task is selected.
 
 ---
-AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-shortconv-out-replay | change=select the crossed ShortConv input operand replay
+AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-layer0-composed-replay | change=record the verified inputs and next admission step

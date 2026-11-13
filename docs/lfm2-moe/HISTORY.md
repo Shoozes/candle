@@ -1,5 +1,79 @@
 # LFM2-MoE completed work
 
+## 2026-11-12 - Qualification packet source binding
+
+The packet now binds the working-tree bytes of shared build sources and
+Cargo inputs alongside the MoE overlay. Regression coverage verifies local
+edits, new source files, deletions, and exclusion of unrelated scratch files.
+[QUALIFICATION](QUALIFICATION.md) records the source-binding contract.
+
+## 2026-11-12 - ShortConv output projection schedule
+
+Applied the proven GEMM and GEMV schedules to the retained reference
+gate. The isolated candidate matched all 37 output rows and the
+row-16 channel-557 witness. [STATUS](STATUS.md) links the comparison.
+
+## 2026-11-12 - ShortConv three-tap accumulation replay
+
+Matched the three tap products at row 2, channel 2. The two F32 reduction
+orders reproduced each native convolution across all 37 rows and its
+row-16 gate. [STATUS](STATUS.md) links the trace and both controls.
+
+## 2026-11-12 - Corrected ShortConv mixer replay
+
+Replayed the corrected projection on 37 frozen rows. The two engines
+matched at `B × X` and first differed in convolution. The fixed-input
+output projection confirmed the remaining dot-kernel contribution at
+row 16, channel 557. [STATUS](STATUS.md) links the measurements.
+
+## 2026-11-12 - ShortConv GEMV tail replay
+
+The isolated candidate applied the pinned block-level reduction on row 36
+and matched all 6,144 values. The 36 GEMM rows and the channel-306 witnesses
+still matched. [STATUS](STATUS.md) links the full-projection evidence.
+
+## 2026-11-12 - Combined ShortConv input projection
+
+The isolated Candle candidate matched the pinned llama.cpp projection on all
+36 GEMM rows and recovered every channel-306 witness. The comparison covered
+all 227,328 outputs and confined the remaining differences to the final GEMV
+row. [STATUS](STATUS.md) links the source-bound run.
+
+## 2026-11-12 - ShortConv accumulation replay
+
+Replayed integer scale/min folding and separate F32 accumulation on the
+matched operands. The combined schedule matched all reference B, X and
+`B × X` values at channel 306, rows 14–16. [STATUS](STATUS.md) links the
+four-way comparison.
+
+## 2026-11-12 - Matched Q4_K ShortConv dot trace
+
+Both native packed probes reproduced the retained projections. The
+reconstruction matched all six B/X values at channel 306 and localized the
+first differences to F32 accumulation in block 0. [STATUS](STATUS.md) links
+the detailed trace and the scoped CPU admission record.
+
+## 2026-11-12 - Matched-input ShortConv input projection replay
+
+Both engines reproduced their native projections on 37 normalized rows.
+Q8_K scales, bytes and sums agreed before the dot. Dot arithmetic reproduced
+the channel-306 `B × X` changes at rows 15 and 16, while row 14's product
+matched. [STATUS](STATUS.md) links the complete replay.
+
+## 2026-11-12 - Shared-input ShortConv convolution replay
+
+Reused the pinned llama.cpp probe and replayed both retained `B × X` tensors
+through llama.cpp and Candle. Both controls reproduced bit for bit. Incoming
+input drift accounted for the larger part of the row-16 channel-306 gap.
+[STATUS](STATUS.md) links the measurements and admission receipts.
+
+## 2026-11-12 - Crossed ShortConv input replay
+
+Crossed both C slices and convolution outputs through one pinned dot kernel.
+The convolution swap had the larger row-16 channel-557 effect on either
+background. Both swaps affected scale bits, and all four cases preserved
+row-16 quant bytes and block sums. [STATUS](STATUS.md) links the receipt.
+
 ## 2026-11-12 - Matched-input ShortConv output projection replay
 
 Both engines reproduced their retained mixer outputs. Q8_K matched on common
@@ -155,4 +229,4 @@ owns packet review, separately granted finite production qualification, Edge
 acceptance and separately authorized publication/adoption. D1 stays closed.
 
 ---
-AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-shortconv-out-replay | change=record the completed matched ShortConv output replay
+AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-closeout | change=record the packet source-binding fix and completed replays

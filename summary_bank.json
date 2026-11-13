@@ -978,6 +978,7 @@
         "tools/lfm2_moe/prepare_packet.py",
         "tools/lfm2_moe/prepare_qualification.py",
         "tools/lfm2_moe/test_compare_probes.py",
+        "tools/lfm2_moe/test_prepare_packet.py",
         "tools/lfm2_moe/verify_tokenizer.py"
       ]
     }

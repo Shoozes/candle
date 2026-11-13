@@ -41,6 +41,7 @@ release inventories, D1 proof and consumer pins remain unchanged.
 - `tools/lfm2_moe/prepare_packet.py`
 - `tools/lfm2_moe/prepare_qualification.py`
 - `tools/lfm2_moe/test_compare_probes.py`
+- `tools/lfm2_moe/test_prepare_packet.py`
 - `tools/lfm2_moe/verify_tokenizer.py`
 
 ## Shared hunk ownership
@@ -62,4 +63,4 @@ Only crate-private mixer reuse, model registry entries, byte-stable fixtures
 and current capability routing/ownership are changed on shared paths.
 
 ---
-AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe | change=register independent capability ownership and proof routes
+AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-review | change=register the qualification packet inventory regression test

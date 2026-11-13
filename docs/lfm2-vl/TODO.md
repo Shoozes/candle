@@ -28,7 +28,17 @@ threshold. The SwiGLU replay isolated the FFN up operand, and the matched
 up replay measured both dot-kernel and input-scale effects. The FFN RMSNorm
 replay isolated the latter to the incoming ShortConv residual. The matched
 output replay reproduced the mixer outputs and attributed the peak row-16 gap
-to the input. The MoE queue now crosses the retained C and convolution operands.
+to the input. The crossed replay measured a larger effect from the convolution.
+The shared-input convolution replay attributed the larger channel-306 shift
+to incoming `B × X`. The input-projection replay isolated the dot kernels
+on identical Q8_K operands. The matched-dot trace located the first F32
+differences in block 0. The isolated candidate recovered the reference
+witnesses and matched all 37 projection rows, including the final GEMV row.
+The mixer replay matched `B × X` and found the first remaining difference
+in convolution. The tap replay reproduced both F32 accumulation orders
+and the row-16 gate. The isolated output projection matched every value
+on the reference gate. The MoE queue next traces the corrected mixer
+into layer-0 FFN normalization.
 A successor production packet needs the continuation-reporting
 reference binary, separate review and admission. Builds, model runs,
 publication, packages and consumer adoption remain held.
@@ -404,4 +414,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-shortconv-out-replay | change=route the next ShortConv operand replay
+AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-shortconv-out-proj-schedule | change=route the corrected mixer propagation check

@@ -42,7 +42,10 @@ explicitly and retain binary/input identities and process receipts. Record any
 numerical disagreement as a qualification failure for investigation.
 
 Before review, bind the inert packet to the current dirty-source inventory and
-SHA-256 of both binaries. The task-local reference probe is built from locked
+SHA-256 of both binaries. The inventory includes the MoE overlay and local
+CPU/CUDA build sources, manifests, lockfile and toolchain configuration.
+It hashes working-tree bytes and records deleted source paths with a null
+hash. The task-local reference probe is built from locked
 llama.cpp `582eab71` and the continuation-reporting probe source, CPU-only,
 without modifying `C:/llamacpp`. Packet `00ab6c5e` predates the reference
 continuation fields. Its archived position-2 mismatch is replayed with the
@@ -64,4 +67,4 @@ remain outside the selected delivery. Native and other implemented storage
 types retain their deterministic fixture scope.
 
 ---
-AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-closeout | change=bind both reports to the frozen continuation and document archived replay
+AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-review | change=document shared build inputs in the inert packet inventory

@@ -308,9 +308,175 @@ matched Q8_K operands elsewhere, by up to `8.940696716308594e-8` at the tail.
 An offline four-way propagation reproduced both retained FFN RMSNorm and Q8_K
 controls bit for bit. Of the seven retained row-16 FFN scale changes, blocks
 0 and 5 respond only to the input switch. Blocks 2, 3, 4, 6 and 7 also
-respond to the dot switch on at least one input. This isolates the ShortConv
-output projection contribution. The next task in TODO separates the two
-F32 operands that formed the input. Production parity remains open.
+respond to the dot switch on at least one input. Production parity remains open.
+
+The [crossed ShortConv replay](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-crossed-inputs-20261112-5648414d/summary.json)
+reused one pinned llama.cpp `q4_K_8x8` kernel on all 37 rows. Both original
+F32 products, Q8_K buffers and fixed-kernel outputs reproduced bit for bit.
+Swapping C changed row-16 scale bits in blocks 0, 1, 2, 4 and 5 on either
+convolution background. Swapping the convolution changed blocks 0, 1, 3, 5,
+6 and 7 on either C background, plus block 2 with reference C. All four
+combinations kept identical row-16 quant bytes and block sums. The crossed
+reference-C/Candle-convolution input changed one quant byte at row 17,
+block 6, lane 110 (`3 → 2`).
+
+At channel 557, the C-only and convolution-only swaps from the reference
+control moved the output by `-1.4901161e-8` and `-4.4703484e-8`.
+Swapping both moved it by `-1.0430813e-7`, including a
+`-4.4703484e-8` interaction. The convolution swap moved the channel more
+on either background. All four bounded children passed fresh admission and
+released their processes.
+
+The [shared-input convolution attempt](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-common-bx-20261112-5648414d/summary.json)
+prepared both 37-row `B × X` tensors and the frozen F32 convolution weight.
+The pinned llama.cpp probe compiled and its Job released. Admission for the
+Candle build measured 39.57 GiB available RAM against the 40 GiB floor.
+That attempt stopped before either replay.
+
+The [resumed convolution replay](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-common-bx-20261112-5648414d-resume/summary.json)
+reused the reference probe, both inputs and the frozen three-tap F32 weight.
+Both native controls matched bit for bit with two leading causal zeros. On
+either shared input, the maximum operator difference across all 37 rows was
+`2.9802322e-8`. At row 16, channel 306, switching inputs in llama.cpp
+contributed `+2.0861626e-7` and switching to Candle on that input contributed
+`-2.9802322e-8`, reproducing the retained `+1.7881393e-7` gap. The retained
+row-14 input at channel 306 matched, while rows 15 and 16 differed. All three
+Jobs passed fresh admission and released their processes.
+
+The [ShortConv input-projection attempt](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-in-proj-20261112-5648414d/summary.json)
+verified that the two retained normalized `37 × 2048` inputs are identical
+bit for bit and bound the frozen Q4_K projection weight. Fresh admission
+found active CMake and Ninja workloads with 40.96 GiB available RAM and
+44.25 GiB commit headroom. The attempt stopped before either build. A
+[fresh recheck](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-in-proj-20261112-5648414d-resume/summary.json)
+found no competing model or build processes. Available RAM was 37.37 GiB
+and commit headroom was 38.31 GiB, both below the original 40 GiB floors.
+The recheck dispatched no native children.
+
+The [completed input-projection replay](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-in-proj-20261112-5648414d-recheck/summary.json)
+passed fresh admission for all six bounded jobs. Both native projection
+controls and their downstream `B × X` tensors matched the retained bytes.
+Before the dot, both engines produced identical Q8_K scales, quant bytes and
+block sums on all 37 rows. The Candle AVX-512 VNNI and llama.cpp `q4_K_8x8`
+dots on those matched operands differed by up to `1.4305115e-6` in the
+projection. At channel 306 the `B × X` products matched at row 14, differed
+by `-7.1525574e-7` at row 15 and by `-5.7220459e-6` at row 16 (Candle
+minus llama.cpp). At row 16, swapping either B or X from the reference
+control shifted the product by `-2.8610229e-6`. This attributes the incoming
+causal-window drift to dot arithmetic for these normalized inputs.
+
+The [matched-dot trace admission](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-dot-trace-20261112-5648414d/summary.json)
+verified the retained binaries and operands, then stopped before the first
+child. Available RAM was 37.85 GiB and commit headroom was 38.44 GiB against
+the original 40 GiB floors. No competing model or build process was found.
+The [fresh trace recheck](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-dot-trace-20261112-5648414d-recheck/summary.json)
+also stopped before dispatch. It measured 34.19 GiB available RAM and
+37.24 GiB commit headroom with no competing model or build processes.
+The [following trace recheck](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-dot-trace-20261112-5648414d-recheck2/summary.json)
+stopped with 38.87 GiB available RAM and active Cargo and Rust compiler
+processes. Commit headroom passed at 40.14 GiB. No native child ran.
+The [last recheck at the original admission floors](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-dot-trace-20261112-5648414d-recheck3/summary.json)
+found the model and build queues clear. It stopped before dispatch at
+37.74 GiB available RAM and 38.99 GiB commit headroom.
+
+The [completed matched-dot trace](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-dot-trace-20261112-5648414d-recheck4/summary.json)
+used the operator's relaxed 16 GiB RAM and commit floors for this retained
+CPU replay. Both probes passed the workload checks and retained the original
+grouping, job memory cap and time limits. Peak Job memory was under 20 MiB
+per probe and both processes exited cleanly.
+
+Both probes reproduced the complete retained projection tensors. The
+source-derived trace reproduced all six B/X values at channel 306,
+rows 14–16, bit for bit. The 384 reconstructed subblock integer dot products
+and sums agreed. llama.cpp applies the scale and minimum codes in integer
+space, then updates separate F32 accumulators per subblock pair and subtracts
+at the end. Candle applies each subblock's scale and minimum terms in one
+F32 accumulator. The first unequal net appears in block 0 for all six
+witnesses. At row 16, both final lanes shift by `+9.5367432e-7` (Candle minus
+llama.cpp). This proves the local arithmetic difference on the matched
+operands. End-to-end CPU/CUDA parity remains open.
+
+The [arithmetic replay](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-accumulation-replay-20261112-5648414d/summary.json)
+varied integer scale/min folding and separate F32 accumulation on the same
+retained operands. Both controls reproduced the retained B, X and product
+bits at channel 306, rows 14–16. Integer folding alone matched two of six
+reference lane values and two of three products. Separate F32 accumulation
+alone matched one lane and zero products. The combined schedule matched
+all six lane values and all three products. The single replay passed the
+revised 16 GiB RAM and commit floors and its Job exited cleanly.
+
+The [isolated combined-schedule candidate](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-combined-projection-20261112-5648414d/summary.json)
+reproduced the retained stock Candle projection and all Q8_K bytes. With
+Candle's original `4 × 16` tiling, it matched all 221,184 values in rows
+0–35 and all six B/X values and three products at channel 306, rows 14–16.
+The remaining 4,799 differences were confined to row 36, with maximum
+absolute error `4.7683716e-7` at column 1767. Stock Candle differed at 205,556
+values across the full projection. Both bounded Jobs passed the revised
+16 GiB RAM and commit floors and released their processes.
+
+Pinned llama.cpp dispatches row 36 to GEMV. That kernel sums all four
+integer pair terms within each 256-value block before the two F32 FMAs.
+The [isolated GEMV replay](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-gemv-tail-20261112-5648414d/summary.json)
+used that reduction only on row 36. All 6,144 tail values matched, and
+rows 0–35 matched both the previous candidate and pinned llama.cpp.
+The full projection matched all 227,328 values, including all six B/X
+values and three products at channel 306. The stock projection and Q8_K
+controls also reproduced. Both Jobs passed the revised 16 GiB RAM and
+commit floors and released their processes.
+
+The [corrected-projection mixer replay](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-mixer-replay-20261112-5648414d-recheck/summary.json)
+reproduced both retained mixer controls and compared all 75,776 values per
+stage. `B × X` matched bit for bit. Convolution first differed at row 2,
+channel 2 and had a maximum absolute gap of `2.9802322e-8` across 19,513
+values. The full output projection differed at 69,123 values, with a
+maximum absolute gap of `8.9406967e-8`.
+
+At row 16, channel 557, `B × X`, convolution and `C × conv` matched.
+Across that row, the changed convolution and gate moved the pinned
+output projection at channel 557 by `+1.4901161e-8`. Switching to Candle
+on that same gated tensor contributed `-4.4703484e-8`, for a net gap of
+`-2.9802322e-8` (Candle minus llama.cpp). The original stock gap at that
+coordinate was `-1.0430813e-7`. The first attempt stopped at a mistyped
+comparator hash before dispatch. The recheck verified the corrected
+binding, passed the revised admission and released all five Jobs.
+Production CPU/CUDA parity and adoption stay open.
+
+The [three-tap replay](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-tap-replay-20261112-5648414d/summary.json)
+ran both native convolutions on the same retained `B × X` with two causal
+zeros. At row 2, channel 2, the reconstructed tap products matched at
+`390a3ca3`, `3927934a` and `b934087a`. Candle's horizontal reduction added
+taps 0 and 2 first, then tap 1, yielding `38fb8ee6`. Pinned llama.cpp
+accumulated taps in order 0, 1, 2 with separate F32 multiply and add,
+yielding `38fb8ee4`. Candle was two ULPs higher (`+1.4551915e-11`).
+
+The reconstructed schedules matched all 75,776 convolution values and
+all 2,048 row-16 gate values for each engine. Across engines, the row-16
+gate differed at 509 channels, with maximum absolute difference
+`5.9604645e-8`. Channel 557 matched at `b88b2755`. All three Jobs passed
+fresh admission under the revised limits and released their processes.
+
+The [matched-gate output projection replay](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-out-proj-schedule-20261112-5648414d/summary.json)
+applied the proven Q4_K schedules to the retained reference gate. The
+isolated Candle candidate matched pinned llama.cpp on all 75,776 values,
+including 73,728 GEMM values in rows 0–35 and 2,048 GEMV values in row 36.
+Row 16, channel 557 matched at `3e522893`. The stock Candle control on
+that gate reproduced `3e522891` and differed from llama.cpp at 69,079
+values overall. Both engines' retained Q8_K bytes matched, and fresh
+Candle quantization reproduced them. The bounded build and replay passed
+the revised admission and released both Jobs.
+
+The qualification packet generator now hashes the shared local CPU/CUDA
+build inputs along with the MoE overlay. The inventory captures current
+working-tree bytes and deleted paths so a shared-kernel change is visible
+before packet review. The prior receipts remain the controls for the
+composed mixer and FFN normalization replay.
+
+The [composed layer-0 attempt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-composed-replay-20261112-5648414d/summary.json)
+bound the candidate, frozen operands, reference tensors and FFN controls.
+Fresh admission found active Cargo and Clippy processes with 36.38 GiB
+available RAM and 38.63 GiB commit headroom. The controller stopped before
+dispatching either child. The composed outputs and recovery of the seven
+row-16 scale blocks remain to be measured.
 
 The comparator and prefill isolation closeout is recorded in its
 [guarded publication receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-comparator-publish-20261111-95df99a0/summary.json).
@@ -328,4 +494,4 @@ implementation attempts remain in the original run record. Native lower-
 precision activation parity is not claimed by the CPU-F32 numerical gate.
 
 ---
-AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-shortconv-out-replay | change=record the native matched-operand result and downstream scale effects
+AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-layer0-composed-replay | change=record the composed candidate and admission outcome
