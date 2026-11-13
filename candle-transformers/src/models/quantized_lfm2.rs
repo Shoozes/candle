@@ -206,8 +206,8 @@ impl ShortConvLayer {
         let mut conv_weight = self.conv.clone();
         if conv_weight.dims().len() == 3 {
             conv_weight = conv_weight.squeeze(1)?;
-        } else if conv_weight.dims().len() == 2 && conv_weight.dims2()? == (self.l_cache, hidden) {
-            conv_weight = conv_weight.t()?.contiguous()?;
+        } else if hidden != self.l_cache && conv_weight.dims() == [self.l_cache, hidden] {
+            conv_weight = conv_weight.t()?;
         }
         let conv_weight = conv_weight.contiguous()?;
         let cached_state = if index_pos > 0 {
@@ -1409,6 +1409,35 @@ mod tests {
             )?;
         }
         Ok(())
+    }
+
+    #[test]
+    fn short_convolution_preserves_square_channel_major_weights() -> Result<()> {
+        let device = &Device::Cpu;
+        let identity = Tensor::new(&[[1f32, 0.], [0., 1.]], device)?;
+        let mut conv = ShortConvLayer {
+            in_proj: AdaptedLinear::new(
+                "in".into(),
+                QMatMul::Tensor(Tensor::cat(&[&identity, &identity, &identity], 0)?),
+            )?,
+            out_proj: AdaptedLinear::new("out".into(), QMatMul::Tensor(identity))?,
+            conv: Tensor::new(&[[2f32, 3.], [5., 7.]], device)?,
+            l_cache: 2,
+            cache: None,
+        };
+        let input = Tensor::new(&[[[1f32, 2.], [3., 4.], [5., 6.]]], device)?;
+        let expected = Tensor::new(&[[[3f32, 56.], [87., 528.], [465., 1992.]]], device)?;
+        assert_close(&conv.forward(&input, 0)?, &expected, 0.)?;
+        assert_close(
+            &conv.forward(&input.narrow(1, 0, 2)?, 0)?,
+            &expected.narrow(1, 0, 2)?,
+            0.,
+        )?;
+        assert_close(
+            &conv.forward(&input.narrow(1, 2, 1)?, 2)?,
+            &expected.narrow(1, 2, 1)?,
+            0.,
+        )
     }
 
     #[test]

@@ -413,3 +413,71 @@ impl ModelWeights {
         result
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn top_four_quantized_grouping_matches_individual_weighted_experts() -> Result<()> {
+        let device = &Device::Cpu;
+        let width = 256;
+        let slopes = [0.8f32, 0.6, 0.4, 0.2, -0.8, 0.];
+        let biases = [0f32, 0., 0., 0.25, 0., -1.];
+        let router = (Tensor::new(&slopes, device)?
+            .unsqueeze(1)?
+            .matmul(&Tensor::ones((1, width), DType::F32, device)?)?
+            / width as f64)?;
+        let bias = Tensor::new(&biases, device)?;
+        let identity = Tensor::eye(width, DType::F32, device)?;
+        let experts = (0..slopes.len())
+            .map(|i| {
+                Ok(Expert {
+                    gate: matrix(QTensor::quantize(&identity, GgmlDType::Q4K)?)?,
+                    up: matrix(QTensor::quantize(&identity, GgmlDType::Q4K)?)?,
+                    down: matrix(QTensor::quantize(
+                        &(&identity * (i + 1) as f64)?,
+                        GgmlDType::Q6K,
+                    )?)?,
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+        let signs = [1f32, -1., 1.];
+        let input = Tensor::new(&signs, device)?
+            .reshape((3, 1))?
+            .broadcast_as((3, width))?
+            .contiguous()?;
+        let expected_routes = [[3usize, 0, 1, 2], [3, 4, 2, 1], [3, 0, 1, 2]];
+        let (ids, _) = routing::route(&input.matmul(&router.t()?)?, Some(&bias), 4, true, 1.)?;
+        assert_eq!(
+            ids.to_vec2::<u32>()?,
+            expected_routes.map(|row| row.map(|i| i as u32))
+        );
+        let mut expected_rows = Vec::new();
+        for (row, route) in expected_routes.iter().enumerate() {
+            let token = input.narrow(0, row, 1)?;
+            let scores = route.map(|expert| (1. + (-signs[row] * slopes[expert]).exp()).recip());
+            let denom = scores.iter().sum::<f32>() + 1e-6;
+            let mut expected = token.zeros_like()?;
+            for (&expert, score) in route.iter().zip(scores) {
+                expected =
+                    (&expected + (experts[expert].forward(&token)? * (score / denom) as f64)?)?;
+            }
+            expected_rows.push(expected);
+        }
+        let expected = Tensor::stack(&expected_rows, 1)?;
+        let grouped = FeedForward::Sparse {
+            router,
+            bias,
+            experts,
+            topk: 4,
+        }
+        .forward(&input.reshape((1, 3, width))?)?;
+        let error = (&grouped - &expected)?
+            .abs()?
+            .max_all()?
+            .to_scalar::<f32>()?;
+        assert!(error.is_finite() && error <= 1e-5, "maximum error {error}");
+        Ok(())
+    }
+}

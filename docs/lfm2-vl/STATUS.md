@@ -52,9 +52,13 @@ frozen IDs matched all checked layer-0 stages and the full final output.
 A fresh full-model CPU prefill reproduced the verified layer-0 output
 and matched llama.cpp's final-position top token `207`. The nine
 sampled logits had a maximum absolute delta of `1.313808`. The review
-rechecked the retained logits. Inert packet `cbdfeb0f` is ready for
-review and starts with layer-1 weighted RMSNorm after an exact
-layer-0 output check. The packet inventory now binds the example
+rechecked the retained logits. Packet `8060130a` at published Candle
+`72a53981` consumed its native attempt after matching the layer-0
+entry and finding the first mismatch in layer-1 weighted RMSNorm.
+All ten layer-1 checkpoints now match in isolated offline replays,
+including the full `l_out-1`. The MoE overlay owns the composed replay
+and the local square ShortConv repair with CPU/RTX 4090 fixture coverage.
+The production qualification inventory now binds the example
 package's build script and its local inputs.
 [MoE status](../lfm2-moe/STATUS.md).
 The local qualification comparator requires both engines to
@@ -364,4 +368,4 @@ release remain open. Candle's
 published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
-AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-inert | change=route the prepared layer-1 CPU diagnostic
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-review | change=record the consumed trace and route the composed replay

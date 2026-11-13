@@ -12,6 +12,10 @@ const NATIVE: &[u8] =
 const CONFIG: &str = include_str!("../../../../tests/fixtures/lfm2_moe_tiny/quantized.json");
 
 fn fixture(mode: u8) -> Result<Vec<u8>> {
+    fixture_with_context(mode, None)
+}
+
+fn fixture_with_context(mode: u8, context: Option<usize>) -> Result<Vec<u8>> {
     let device = Device::Cpu;
     let cfg: lfm2_moe::Config = serde_json::from_str(CONFIG).map_err(candle::Error::wrap)?;
     let vb = VarBuilder::from_slice_safetensors(NATIVE, DType::F32, &device)?;
@@ -182,7 +186,10 @@ fn fixture(mode: u8) -> Result<Vec<u8>> {
             "lfm2moe.attention.head_count_kv",
             gguf_file::Value::Array(kv),
         ),
-        ("lfm2moe.context_length", u(cfg.max_position_embeddings)),
+        (
+            "lfm2moe.context_length",
+            u(context.unwrap_or(cfg.max_position_embeddings)),
+        ),
         ("lfm2moe.vocab_size", u(cfg.vocab_size)),
         ("lfm2moe.feed_forward_length", u(ff)),
         ("lfm2moe.expert_feed_forward_length", u(m)),
@@ -358,6 +365,38 @@ fn mixed_q4_q6_and_q8_preserve_cache_and_bounded_quantization_error() -> Result<
 }
 
 #[test]
+fn mixed_quantized_prefill_matches_decode_across_chunk_boundary() -> Result<()> {
+    let device = &Device::Cpu;
+    let ids = (0..130u32).map(|i| (i * 5 + i / 7) % 8).collect::<Vec<_>>();
+    let ids = Tensor::from_vec(ids, (1, 130), device)?;
+    let bytes = fixture_with_context(1, Some(130))?;
+    let mut model = load(&bytes, device)?;
+    let tokenwise = (0..130)
+        .map(|position| model.forward(&ids.narrow(1, position, 1)?, position))
+        .collect::<Result<Vec<_>>>()?;
+
+    for length in [127, 128, 129] {
+        let expected = &tokenwise[length - 1];
+        let next = ids.narrow(1, length, 1)?;
+        let expected_next = &tokenwise[length];
+        let prefix = ids.narrow(1, 0, length)?;
+        assert_close(&model.forward(&prefix, 0)?, expected, 1e-5)?;
+        assert_close(&model.forward(&next, length)?, expected_next, 1e-5)?;
+
+        let mut position = 0;
+        let embeds = model.embed_tokens(&prefix)?;
+        for chunk in [19, 1, 46, length - 66] {
+            let logits = model.forward_embeds(&embeds.narrow(1, position, chunk)?, position)?;
+            position += chunk;
+            assert_close(&logits, &tokenwise[position - 1], 1e-5)?;
+        }
+        assert_eq!(position, length);
+        assert_close(&model.forward(&next, length)?, expected_next, 1e-5)?;
+    }
+    Ok(())
+}
+
+#[test]
 fn malformed_metadata_and_payloads_fail_before_loading() -> Result<()> {
     let bytes = fixture(1)?;
     for case in 0..9 {
@@ -468,26 +507,25 @@ fn cuda_quantized_fixture_matches_cpu_and_recovers() -> Result<()> {
     for mode in [1, 2, 3, 4] {
         let bytes = fixture(mode)?;
         let ids = Tensor::new(&[[1u32, 4, 3, 5]], &Device::Cpu)?;
+        let decode = Tensor::new(&[[6u32]], &Device::Cpu)?;
         let mut cpu = load(&bytes, &Device::Cpu)?;
         let expected = cpu.forward(&ids, 0)?;
+        let expected_decode = cpu.forward(&decode, 4)?;
         let mut gpu = load(&bytes, &cuda)?;
         assert_eq!(
             gpu.quantized_expert_matrices(),
             if mode <= 2 { 6 } else { 0 }
         );
-        assert_close(
-            &gpu.forward(&ids.to_device(&cuda)?, 0)?
-                .to_device(&Device::Cpu)?,
-            &expected,
-            0.02,
-        )?;
-        assert!(gpu.forward(&Tensor::new(&[[999u32]], &cuda)?, 4).is_err());
-        assert_close(
-            &gpu.forward(&ids.to_device(&cuda)?, 0)?
-                .to_device(&Device::Cpu)?,
-            &expected,
-            0.02,
-        )?;
+        let ids = ids.to_device(&cuda)?;
+        let decode = decode.to_device(&cuda)?;
+        let prefill = gpu.forward(&ids, 0)?;
+        assert_close(&prefill.to_device(&Device::Cpu)?, &expected, 0.02)?;
+        let decoded = gpu.forward(&decode, 4)?;
+        assert_close(&decoded.to_device(&Device::Cpu)?, &expected_decode, 0.02)?;
+        assert!(gpu.forward(&Tensor::new(&[[999u32]], &cuda)?, 5).is_err());
+        assert!(gpu.forward(&decode, 5).is_err());
+        assert_close(&gpu.forward(&ids, 0)?, &prefill, 1e-5)?;
+        assert_close(&gpu.forward(&decode, 4)?, &decoded, 1e-5)?;
     }
     Ok(())
 }

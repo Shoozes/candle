@@ -1,12 +1,23 @@
 # LFM2-MoE completed work
 
+## 2026-11-13 - Layer-1 CPU isolation and offline checkpoints
+
+The one-shot native packet `8060130a` at Candle `72a53981` matched all
+37 layer-0 entry rows and stopped at layer-1 weighted RMSNorm. Stock Candle
+reproduced the row-0/channel-0 mismatch after two offline harness failures.
+The corrected RMSNorm and subsequent ShortConv and dense FFN replays matched
+the ten reference checkpoints. The final F32 sum matched `l_out-1`, including
+all values in rows 16 and 36. Production arithmetic was outside this batch.
+[Native terminal](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-inert-20261113-72a53981/terminal.json).
+[Final offline checkpoint](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-output-offline-20261113-8060130a/summary.json).
+
 ## 2026-11-13 - Layer-1 diagnostic preparation
 
 Packet `cbdfeb0f` binds Candle `bd3094dd` and the pinned CPU reference.
 Model-free checks verified its input hashes, diagnostic syntax and digest
 rejections. Qualification packet preparation now also binds the example
 build script, download module and CUDA kernel sources. The native layer-1
-trace remains in [TODO](TODO.md).
+trace ran under the successor packet recorded above.
 [Preparation receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-inert-20261113-bd3094dd/summary.json).
 
 ## 2026-11-13 - Full-model CPU prefill with verified layer 0
@@ -315,4 +326,4 @@ owns packet review, separately granted finite production qualification, Edge
 acceptance and separately authorized publication/adoption. D1 stays closed.
 
 ---
-AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-closeout | change=record layer-1 diagnostic preparation and inventory coverage
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-review | change=record the native stop and completed offline checkpoints

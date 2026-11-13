@@ -597,14 +597,43 @@ diagnostic used a separate layer-0 implementation and ran stock Candle
 from layer 1 through the output head. The production position-2
 comparison remains open.
 
-The layer-1 CPU diagnostic is prepared as inert packet `cbdfeb0f`.
-It binds Candle `bd3094dd`, the verified layer-0 bytes and the pinned llama.cpp graph. The
-reference captures eleven checkpoints in one prefill. Candle checks the
-entry and then each layer-1 checkpoint before proceeding. Rust metadata
-and pinned MSVC syntax checks passed. The native attempt is unconsumed,
-with the first differing stage still unmeasured.
-[Preparation receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-inert-20261113-bd3094dd/summary.json).
-[TODO](TODO.md) owns authorization and admission for the native trace.
+The layer-1 CPU packet `8060130a` at published Candle `72a53981` consumed
+its native attempt. All 75,776 layer-0 entry values matched pinned llama.cpp.
+The trace stopped at layer-1 weighted RMSNorm, row 0, channel 0
+(`0xbcbdce5d` versus `0xbcbdce5a`). All four Jobs released their processes.
+[Native terminal](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-inert-20261113-72a53981/terminal.json).
+
+The offline stock replay reproduced the first mismatch. Candle and llama.cpp
+formed identical F32 squares, then accumulated them in F32 and F64,
+respectively. Using llama.cpp's RMS with Candle's direct division still left
+one ULP at the witness. F64 accumulation and reciprocal multiplication
+matched all 37 rows. [Stock trace](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-rmsnorm-stock-20261113-8060130a/summary.json).
+[RMSNorm replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-rmsnorm-f64-reciprocal-20261113-8060130a/summary.json).
+
+The retained offline replays match all ten layer-1 checkpoints, from
+weighted RMSNorm through ShortConv, dense FFN and `l_out-1`. The final
+F32 residual addition matched all 75,776 values, including rows 16 and 36.
+The review checked the retained tensors against all eleven reference files
+and recomputed both F32 residual additions. [Final offline checkpoint](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-output-offline-20261113-8060130a/summary.json).
+
+The next [TODO](TODO.md) is one composed offline layer-1 replay from exact
+`l_out-0` before tracing zero-based layer 2, the first attention and sparse
+MoE block. Production still uses its existing arithmetic. The position-2
+teacher-forced failure and production qualification remain open.
+
+The local fixture batch gives canonical channel-major weights precedence
+for square ShortConv kernels. The new nonsymmetric fixture reproduced the
+old failure and checks prefill and cached decode with exact expected values.
+The 24B checkpoint uses distinct channel and kernel dimensions. New MoE
+controls compare weighted top-K-four accumulation on identical quantized
+expert weights and compare 127/128/129-token prefill, irregular chunks,
+tokenwise execution and their continuation. The RTX 4090 synthetic fixture
+now completes decode, rejects a stale continuation after invalid input
+and verifies prefill plus decode on recovery.
+The earlier Windows CPU fixture gate passed 11 MoE and 10 shared quantized
+LFM2 tests. The closeout reran both filters with CUDA enabled and passed
+13 MoE and 11 shared quantized LFM2 tests, including CUDA ShortConv history.
+The MoE example check and all 15 protocol tests passed.
 
 The packet inventory recheck found that `candle-examples/build.rs` and
 its inputs were outside the bound paths. The local repair adds the
@@ -627,4 +656,4 @@ implementation attempts remain in the original run record. Native lower-
 precision activation parity is not claimed by the CPU-F32 numerical gate.
 
 ---
-AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-closeout | change=identify the layer-1 packet source and retain its proof
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-review | change=reconcile the consumed trace and exact offline checkpoints

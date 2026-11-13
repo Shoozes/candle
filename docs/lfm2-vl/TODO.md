@@ -47,10 +47,11 @@ contribution. The isolated replay matched the full reference projection.
 The offline F32 residual addition matched all 37 rows of the reference
 layer-0 output. The isolated Candle replay matched every checked
 layer-0 stage from the frozen IDs. The full-model CPU prefill matched
-the final-position top token with measured logit drift. The MoE queue
-owns inert layer-1 packet `cbdfeb0f`. Its native trace starts with
-weighted RMSNorm after an exact layer-0 output check and requires
-fresh authorization and admission.
+the final-position top token with measured logit drift. Layer-1 packet
+`8060130a` consumed its native attempt at the weighted RMSNorm mismatch.
+Separate offline replays matched all checkpoints through `l_out-1`.
+The [MoE queue](../lfm2-moe/TODO.md) owns one composed offline layer-1
+replay before the first attention and sparse-MoE block.
 A successor production packet needs the continuation-reporting
 reference binary, separate review and admission. Builds, model runs,
 publication, packages and consumer adoption remain held.
@@ -426,4 +427,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-inert | change=route the prepared packet and pending native trace
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-review | change=route the composed offline replay

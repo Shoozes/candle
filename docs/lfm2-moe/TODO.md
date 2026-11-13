@@ -23,32 +23,33 @@
 
 ## Remaining gates in order
 
-1. Locate the first CPU difference in layer 1.
-   - **Why** Both engines chose token `207` after the 37-token prefill,
-     with a maximum sampled logit delta of `1.313808` despite exact layer-0
-     output. The GGUF uses ShortConv and dense FFN at zero-based layer 1.
-     [Full CPU prefill receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-full-cpu-prefill-20261113-bd3094dd-recheck/summary.json).
-   - **Ready for review** Packet `cbdfeb0f` binds 74 inputs, the same
-     37 frozen IDs and pinned llama.cpp `582eab71`. Rust metadata and
-     pinned MSVC syntax checks passed. A missing or wrong packet hash
-     rejected execution before dispatch. [Inert packet](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-inert-20261113-bd3094dd/packet.json).
-     The controller requires HEAD `bd3094dd`. On a successor commit,
-     verify the diagnostic build inputs are unchanged and bind a new
-     packet to that HEAD before requesting authorization.
-   - **How** After a fresh exact grant, require the layer-0 `l_out-0`
-     bytes to match before comparing layer 1. Start with weighted RMSNorm
-     (`model.layers.{}.operator_norm-1`), then compare the ShortConv and
-     FFN stages only while the preceding checkpoints match. The reference
-     graph labels its normalized FFN input `model.layers.{}.ffn_out-1`.
-     Admit each child under the revised component limits. The one
-     attempt allows two diagnostic builds and two CPU probes. Keep the
-     production CPU/CUDA packet and Edge adoption held.
-   - **Done when** The layer-0 entry control and all measured layer-1
-     stages through `l_out-1` agree bit for bit, or the trace stops at the
-     first mismatch and records its row, channel, values and operand
-     identities. The one-prompt prefill result leaves forced decode open.
+1. Compose the zero-based layer-1 CPU replay offline.
+   - **Why** Packet `8060130a` consumed its attempt and stopped at weighted
+     RMSNorm after an exact layer-0 entry check. All ten layer-1
+     checkpoints now match in separate offline runs. The composed replay
+     must prove that the candidate can carry its own intermediates through
+     layer 1. [Native terminal](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-inert-20261113-72a53981/terminal.json).
+     [Final offline checkpoint](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-output-offline-20261113-8060130a/summary.json).
+   - **How** Use the verified layer-0 output for the same 37 frozen IDs,
+     the frozen layer-1 weights and epsilon, and the existing isolated CPU
+     schedules. Verify the entry hash before executing. Feed each computed
+     tensor into the next operator and use pinned llama.cpp tensors as
+     comparison controls only. Allow one offline attempt and stop at the
+     first mismatch or failure. Keep production inference and adoption held.
+   - **Done when** The entry and all ten checkpoints through `l_out-1`
+     match bit for bit in one replay, including rows 16 and 36. Bind source,
+     executable, input and output hashes to the terminal receipt. If the
+     replay stops, retain the first mismatching row, channel, values and
+     available operands.
 2. Resolve the CPU mismatch under the existing [QUALIFICATION](QUALIFICATION.md)
-   criteria. Bind a new inert packet to the reviewed candidate, a reference
+   criteria. After the composed replay, use its exact `l_out-1` as the entry
+   control for zero-based layer 2, the first attention and sparse-MoE
+   block in this GGUF. Prepare a fresh inert diagnostic that starts at its
+   weighted operator RMSNorm and advances only on a match. Any production
+   probe needs separate authorization and fresh admission. Replay the first
+   differing operands, capture a deterministic regression and integrate
+   the justified correction into the runtime.
+   Bind a new inert packet to the reviewed candidate, a reference
    binary built from the continuation-reporting probe source, frozen inputs,
    original limits and four comparison commands. Keep the consumed packet and
    its receipts available for comparison.
@@ -72,5 +73,11 @@ current proof is in STATUS and the compact run record. Those local results do
 not close the remaining production/adoption criteria or authorize new work for
 completed D1. No mandatory package, installation or activation task is selected.
 
+Standalone LFM3 text starts with an independent numerical oracle and an
+offline runner. Shared ShortConv optimization follows the corresponding
+correctness baseline. Device-resident MoE execution follows validation of
+the indexed CUDA path against the grouped implementation on identical weights.
+LFM3 GGUF, lower precision and the broader model family have separate gates.
+
 ---
-AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-closeout | change=record the layer-1 packet source binding at publication
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-review | change=select the composed layer-1 offline replay
