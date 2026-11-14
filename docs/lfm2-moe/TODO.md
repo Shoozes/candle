@@ -23,29 +23,32 @@
 
 ## Remaining gates in order
 
-1. Once selected, replay layer-2 query and key RoPE offline.
-   - **Why** The per-head weighted RMSNorm outputs match pinned llama.cpp.
-     [Q/K replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-norm-20261114-9b0d5544/summary.json).
-     Packet `4ddbcf69` verified all 32 bindings. Admission stopped before
-     the build because Cargo, rustc and Python were active. The terminal
-     receipt records zero dispatches and an unconsumed attempt.
-     [Admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-rope-20261114-a2f11de3/summary.json).
-   - **Bound inputs** Reuse the matched normalized tensors, the original
-     rotary configuration, positions and limits, and the retained
-     `q_rope` and `k_rope` captures.
-   - **Execution** Seal a successor in a fresh evidence directory. Preserve
-     the prior terminal receipt because the controller uses a fixed terminal
-     path within each run. Recheck quiet/resource admission before dispatch.
-     Successor `a4279483` bound the published source and reused the retained
-     tensors in place. Cargo, cargo-clippy and Python stopped it before the
-     build. The single offline attempt remains unconsumed.
-     [Successor receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-rope-20261114-4ddbcf69/summary.json).
-     Run one offline attempt if admitted. Keep Edge repin and push held.
-   - **Verification and done when** Match all 75,776 query and 18,944 key
-     rotated values bit for bit with pinned llama.cpp.
-     Stop at the first mismatch or failure.
+1. Once selected, replay the layer-2 F32 router projection offline.
+   - **Why** Weighted FFN RMSNorm matched all 37 rows. The next retained
+     checkpoint is the router output before sigmoid.
+     [RMSNorm replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-ffn-norm-20261114-6dbeea9c/summary.json).
+   - **Bound inputs** Bind the matched 37×2,048 `ffn_norm.f32`, the frozen
+     64×2,048 F32 `blk.2.ffn_gate_inp.weight`, and the retained 37×64
+     `router_logits.f32` capture (`ffn_moe_logits-2`).
+     [Layer-2 trace packet](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-successor-20261113-4df21393/packet.json).
+   - **Execution** Bind the pinned trace's GGML CPU libraries and preserve
+     its two-thread F32 matmul dispatch, including the llamafile SGEMM
+     path. Keep row 36 in the full 37-row matrix. Check quiet before
+     sealing and require fresh admission under the original offline limits
+     for one attempt. Keep Edge repin and publication of the replay result
+     separately authorized. This host's local
+     [preparer](C:/DevStuff/candle/artifacts/lfm2-moe/offline-router-20261114-73fb1e0b.ps1)
+     verified the operands and toolchain. Host activity prevented sealing.
+     For the next selected replay, use `-Execute` to recheck admission,
+     seal against the current checkout, and dispatch once. The preparer
+     revalidates the probe source and pinned inputs before sealing.
+   - **Verification and done when** First reproduce the retained logits
+     with the pinned reference. Compare the isolated Candle projection
+     bit for bit on all 2,368 pre-sigmoid values, including all 64 in row
+     36. Stop at the first mismatch or failure and retain the row, expert
+     index and both value bits when available.
 2. Resolve the CPU mismatch under the existing [QUALIFICATION](QUALIFICATION.md)
-   criteria. Use the RoPE result to select the next diagnostic.
+   criteria. Use the router projection result to select the next diagnostic.
    Capture a deterministic regression and integrate only a justified correction.
    Bind a new inert packet to the reviewed candidate, a reference
    binary built from the continuation-reporting probe source, frozen inputs,
@@ -90,3 +93,10 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-recovery |
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-norm | change=queue the query and key RoPE replay
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-review | change=bind the RoPE handoff to the admission receipt and fresh run directory
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-successor | change=record the successor admission stop
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-replay | change=queue the causal attention values replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-values | change=queue the bounded attention output projection replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-output | change=queue post-mixer residual and weighted FFN RMSNorm
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-ffn-norm | change=queue the layer-2 F32 router projection replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-review | change=bind the router control, exact matrix shape, and CPU dispatch
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-work | change=record the verified unsealed router preparer and next admission
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-closeout | change=make the verified progress and local replay authority explicit

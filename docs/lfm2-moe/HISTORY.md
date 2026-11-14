@@ -1,5 +1,38 @@
 # LFM2-MoE completed work
 
+## 2026-11-14 - Layer-2 post-mixer residual and weighted FFN RMSNorm parity
+
+The offline probe added the matched mixer and layer-1 output in F32, then
+replayed weighted RMSNorm. All 75,776 normalized values matched pinned
+llama.cpp bit for bit, including all 2,048 in row 36. The build and replay
+passed fresh admission and released both Jobs.
+[Receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-ffn-norm-20261114-6dbeea9c/summary.json).
+
+## 2026-11-14 - Layer-2 Q4_K attention output projection parity
+
+One admitted offline replay matched the 296 Q8_K scales, 75,776 signed
+quant bytes and 4,736 integer sums before the dot. Both the pinned
+llama.cpp replay and isolated Candle matched all 75,776 retained
+`mixer.f32` values. Row 36 matched all 2,048 values through the GEMV
+schedule, with endpoint bits `0xb95b0980` and `0xba4507b0`. Both builds
+and the replay released their Jobs. [Receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attn-output-20261114-d62aa83b/summary.json).
+
+## 2026-11-14 - Layer-2 causal attention values parity
+
+One admitted offline replay matched all 75,776 values of
+`attn_values.f32` on the 37 matched Q/K/V rows, including all 2,048
+values in row 36. The probe used the pinned GGML CPU graph with 256
+padded KV slots. Both Jobs released their processes.
+[Receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attn-values-20261114-b67d23be/summary.json).
+
+## 2026-11-14 - Layer-2 query and key RoPE parity
+
+After the competing verifier and build cleared, preliminary admission passed
+before packet `b67d23be` was sealed. The build and offline replay each passed
+fresh admission and released their Jobs. All 94,720 rotated values matched
+the pinned captures at the 37 frozen positions.
+[Receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-rope-20261114-a4279483/summary.json).
+
 ## 2026-11-14 - Layer-2 query and key weighted RMSNorm parity
 
 One admitted offline replay matched all 94,720 pre-RoPE values on the
@@ -445,3 +478,7 @@ AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-key-replay | cha
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-replay | change=retain the compiler failure and zero-dispatch result
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-recovery | change=retain the corrected build and parity proof
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-norm | change=retain per-head weighted RMSNorm parity
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-replay | change=retain exact isolated rotary output proof
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-values | change=retain exact causal attention values proof
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-output | change=retain the exact projection and row-36 proof
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-ffn-norm | change=retain the exact FFN normalization parity proof

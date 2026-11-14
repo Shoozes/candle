@@ -54,8 +54,11 @@ One composed offline replay matched every layer-1 checkpoint through
 Successor `0e236955` consumed its CPU attempt at the first query projection
 mismatch after exact entry and RMSNorm. An offline replay isolated the
 query difference to F32 accumulation. The isolated GEMM/GEMV replays matched
-all 37 query and key rows bit for bit. The [MoE queue](../lfm2-moe/TODO.md)
-owns the query and key RoPE successor after the pre-dispatch admission stop.
+all 37 query and key rows bit for bit. The offline attention output
+projection matched pre-dot Q8_K and all mixer values. The post-mixer
+residual and weighted FFN RMSNorm replay matched all normalized values.
+The [MoE queue](../lfm2-moe/TODO.md) owns the F32 router projection
+checkpoint.
 A later production parity packet needs the continuation-reporting
 reference binary, separate review and admission.
 Production model runs, package builds and consumer adoption require separate
@@ -443,3 +446,7 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-replay | c
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-recovery | change=route the next normalization replay
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-norm | change=route the next rotary replay
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-closeout | change=route the retained RoPE admission stop
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-replay | change=route the next causal attention checkpoint
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-values | change=route the next attention output projection
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-output | change=route the next MoE normalization replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-ffn-norm | change=route the next MoE router projection replay

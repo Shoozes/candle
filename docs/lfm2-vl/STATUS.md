@@ -67,16 +67,22 @@ at replay admission. A later replay-only packet reused that executable
 and matched all 37 query rows bit for bit. The key projection replay also
 matched all 37 rows. The corrected Q6_K value probe matched all 37 rows
 bit for bit. The weighted RMSNorm replay also matched all query and key
-values before RoPE. The RoPE packet stopped at admission before dispatch.
-The [MoE queue](../lfm2-moe/TODO.md) owns the successor and offline replay.
+values before RoPE. After a quiet window opened, one offline RoPE replay
+matched all query and key values bit for bit. Offline replays matched
+the causal attention values and the Q4_K attention output projection on
+all 37 rows, including pre-dot Q8_K and the row-36 mixer output. Adding
+the layer-1 output and mixer in F32 and replaying weighted FFN RMSNorm
+matched all 37 normalized rows. The [MoE queue](../lfm2-moe/TODO.md) owns
+the F32 router projection checkpoint. Its offline preparer verified the
+inputs. Active workloads blocked sealing before any dispatch.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
 package's build script and its local inputs.
 [MoE status](../lfm2-moe/STATUS.md).
 The local qualification comparator requires both engines to
-report the frozen continuation. The next packet needs a reference binary from
-the updated probe source.
+report the frozen continuation. The later production qualification packet
+needs a reference binary from the updated probe source.
 Builds, further production model execution, deployment and consumer adoption
 remain held.
 
@@ -392,3 +398,9 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-replay | c
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-recovery | change=route verified value parity and the next normalization gate
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-norm | change=route pre-RoPE parity and the next rotary replay
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-closeout | change=route the pre-dispatch stop and successor
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-replay | change=route rotary parity and the next attention replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-values | change=route attention parity and the next output projection replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-output | change=route completed mixer proof to MoE ownership
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-ffn-norm | change=route completed FFN RMSNorm proof to MoE ownership
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-review | change=clarify which packet needs the production reference binary
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-work | change=route the unsealed router handoff to MoE

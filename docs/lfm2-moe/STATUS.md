@@ -702,22 +702,59 @@ values after per-head weighted RMSNorm and before RoPE. The isolated
 replay used frozen 64-channel weights and epsilon `0x3727c5ac`,
 F64 accumulation of F32 squares, and F32 reciprocal and weight
 multiplication. Both Jobs exited and released their processes.
-The [next task](TODO.md) is query and key RoPE on the matched outputs.
 [Q/K replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-norm-20261114-9b0d5544/summary.json).
 
 RoPE packet `4ddbcf69` stopped before the build because Cargo, rustc and
 Python were active. Available RAM and commit headroom cleared the original
 floors. The read-only recheck verified all 32 file bindings, the matched
-RMSNorm inputs, and zero dispatches. The [next task](TODO.md) uses a fresh
-run directory and retains the original admission and terminal receipts.
+RMSNorm inputs, and zero dispatches.
 [RoPE admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-rope-20261114-a2f11de3/summary.json).
 
 Successor `a4279483` verified 37 bindings at published `2acafc05`.
 The scoped implementation bytes match the prior packet. Cargo,
 cargo-clippy and Python blocked admission before the build. RAM and
 commit headroom cleared the original floors. The controller recorded zero
-dispatches and left the one offline attempt unconsumed.
+dispatches and left the offline attempt unconsumed at that stop.
 [Successor receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-rope-20261114-4ddbcf69/summary.json).
+
+Packet `b67d23be` used preliminary admission before sealing and fresh
+admission before both dispatches. The isolated build and one offline
+replay matched all 75,776 query and 18,944 key RoPE values bit for bit
+against pinned llama.cpp. It reused the matched inputs, frozen positions
+0–36 and the original NeoX rotary configuration. Both Jobs released
+their processes.
+[RoPE replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-rope-20261114-a4279483/summary.json).
+
+Offline packet `d62aa83b` replayed causal attention on the matched Q/K/V
+tensors. The isolated graph reused the pinned GGML CPU libraries, the F32
+non-flash cache layout, and 256 padded KV slots. All 75,776 values of
+`attn_values.f32` matched bit for bit, including all 2,048 in row 36.
+Preliminary admission passed before sealing, and both bounded Jobs passed
+their final censuses and released their processes.
+[Attention replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attn-values-20261114-b67d23be/summary.json).
+
+Offline packet `6dbeea9c` matched Q8_K scales, bytes and sums before the
+layer-2 Q4_K output dot. The pinned llama.cpp replay and isolated Candle
+matched the entire 37-row `mixer.f32`, including the row-36 GEMV tail.
+The host was quiet before sealing and each bounded child passed fresh
+admission and released its Job.
+[Output projection receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attn-output-20261114-d62aa83b/summary.json).
+
+Offline packet `73fb1e0b` added the matched mixer to the exact layer-1
+output in F32 and retained the resulting residual. Its weighted
+FFN RMSNorm matched pinned llama.cpp on all 75,776 values, including
+row 36. The probe used epsilon `0x3727c5ac`, F64 accumulation of
+F32 squares, and separate F32 reciprocal and weight multiplication.
+Quiet preflight preceded sealing. Both Jobs passed fresh admission and
+released their processes. The [next task](TODO.md) is the layer-2 F32
+router projection before sigmoid, keeping all 37 rows together to
+preserve the pinned CPU build's matmul dispatch.
+[RMSNorm replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-ffn-norm-20261114-6dbeea9c/summary.json).
+
+Router replay preparation verified the bound operands, original limits,
+and GGML build inputs. Active Python workloads blocked quiet admission
+before sealing. The offline attempt remains unused, with zero dispatches.
+[TODO](TODO.md) records the local preparer and the next admission step.
 
 The position-2 teacher-forced failure and production qualification remain
 open. Standalone LFM3 text proof and an LTS support contract remain later work.
@@ -770,3 +807,9 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-recovery |
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-norm | change=record exact pre-RoPE query and key outputs
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-review | change=record the verified pre-dispatch admission stop
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-successor | change=record current source binding and zero dispatches
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-replay | change=record admitted rotary replay and next attention checkpoint
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-values | change=record exact attention values and the output projection handoff
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-output | change=record mixer parity and bounded normalization handoff
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-ffn-norm | change=record weighted FFN RMSNorm parity and router handoff
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-review | change=clarify the full-batch F32 router handoff
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-work | change=record the verified router inputs and pre-seal quiet-host refusal
