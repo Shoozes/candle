@@ -72,12 +72,12 @@ matched all query and key values bit for bit. Offline replays matched
 the causal attention values and the Q4_K attention output projection on
 all 37 rows, including pre-dot Q8_K and the row-36 mixer output. Adding
 the layer-1 output and mixer in F32 and replaying weighted FFN RMSNorm
-matched all 37 normalized rows. The [MoE queue](../lfm2-moe/TODO.md) owns
-the F32 router projection checkpoint. Packet `a886d883` consumed its
-offline attempt in the reference adapter build. Host activity blocked
-the post-build quiet check. The linked MoE successor binds the verified
-reference object and this Candle commit for the pending isolated build
-and comparison.
+matched all 37 normalized rows. Offline packet `47f523cd` matched all
+2,368 layer-2 F32 router logits before sigmoid, including all 64 in row 36.
+Offline packets `996fe7b0` and `17d27ea3` also matched all 2,368 sigmoid
+probabilities and all 2,368 expert selection scores bit for bit. Both
+attempts released their Jobs. The [MoE queue](../lfm2-moe/TODO.md) now
+records the offline top-four expert selection replay.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
@@ -410,3 +410,6 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-work | change=ro
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-admission-stop | change=route the consumed router attempt to the MoE handoff
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-successor-review | change=route the verified router object to the MoE successor
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-successor | change=route the verified inert router successor to the MoE queue
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-replay | change=route the completed router projection and next sigmoid replay to MoE
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-sigmoid | change=route the proven sigmoid and next selection-bias step to MoE
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-bias | change=route verified bias addition and the next top-four replay to MoE

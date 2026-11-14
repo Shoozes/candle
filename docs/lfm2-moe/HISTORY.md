@@ -1,5 +1,36 @@
 # LFM2-MoE completed work
 
+## 2026-11-14 - Layer-2 F32 expert selection bias parity
+
+Packet `17d27ea3` used a verified 256-byte bias slice from the frozen GGUF
+and the exact 37×64 probabilities from `996fe7b0`. Both CPU engines matched
+all 2,368 scores, including row 36 with endpoint bits `0x3e3ae9bb` and
+`0x3e08647b`. Seven quiet/resource checks passed, all three Jobs released
+their processes, and the attempt used zero model loads and zero retries.
+[Comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-bias-20261114-996fe7b0/comparison.json)
+and [terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-bias-20261114-996fe7b0/terminal.json).
+
+## 2026-11-14 - Layer-2 F32 router sigmoid parity
+
+Packet `996fe7b0` replayed Candle's CPU sigmoid and the pinned llama.cpp
+CPU graph on the 37×64 exact logits from `47f523cd`. Both reproduced all
+2,368 retained probabilities, including row 36 with endpoint bits
+`0x3e16c884` and `0x3dec25cc`. Both isolated builds and the single replay
+passed their admission and cleanup checks. The packet used zero model
+loads and zero retries.
+[Comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-sigmoid-20261114-47f523cd/comparison.json)
+and [terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-sigmoid-20261114-47f523cd/terminal.json).
+
+## 2026-11-14 - Layer-2 F32 router projection parity
+
+Packet `47f523cd` reused the pinned llama.cpp adapter and built the isolated
+Candle probe once at `67e7cbc0`. Both engines reproduced every one of the
+2,368 pre-sigmoid logits, including the 64 row-36 values. The row-36 endpoint
+bits were `0xbfe0cfc2` and `0xc00268d2`. Both bounded Jobs released their
+processes and passed their final quiet/resource census.
+[Comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-closeout-20261114-d0075c3b/comparison.json)
+and [terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-closeout-20261114-d0075c3b/terminal.json).
+
 ## 2026-11-14 - Layer-2 post-mixer residual and weighted FFN RMSNorm parity
 
 The offline probe added the matched mixer and layer-1 output in F32, then
@@ -482,3 +513,6 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-replay | ch
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-values | change=retain exact causal attention values proof
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-output | change=retain the exact projection and row-36 proof
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-ffn-norm | change=retain the exact FFN normalization parity proof
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-replay | change=retain the consumed router packet and its exact comparison
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-sigmoid | change=retain the exact full-row router sigmoid proof
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-bias | change=retain the completed F32 expert bias replay

@@ -23,31 +23,29 @@
 
 ## Remaining gates in order
 
-1. Once selected, run the bound successor for the offline layer-2 F32
-   router replay.
-   - **Why** Weighted FFN RMSNorm matched all 37 rows. Packet `a886d883`
-     produced the reference adapter and stopped at the post-build quiet
-     check. The successor uses that adapter and has zero dispatches.
-     [Preparation receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-closeout-20261114-d0075c3b/summary.json).
-   - **Bound inputs** Use the matched 37×2,048 `ffn_norm.f32`, frozen
-     64×2,048 F32 `blk.2.ffn_gate_inp.weight`, and retained 37×64
-     `router_logits.f32` capture (`ffn_moe_logits-2`). The Rust candidate
-     links the retained `reference.obj` and the three pinned GGML libraries.
-     [Packet](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-closeout-20261114-d0075c3b/packet.json).
-   - **Execution when selected** Use the packet's full digest with the
-     bound controller. Require quiet before the execution seal and fresh
-     quiet/resource admission before each of its two children, the
-     isolated Rust build and one offline replay. Retain the post-child
-     censuses and keep the original limits. Preserve the two-thread F32
-     matmul dispatch over all 37 rows together. Edge repin and push
-     remain held.
-   - **Verification and done when** First reproduce the retained logits
-     with the pinned reference. Compare the isolated Candle projection
-     bit for bit on all 2,368 pre-sigmoid values, including all 64 in row
-     36. Stop at the first mismatch or failure and retain the row, expert
-     index and both value bits when available.
+1. Once selected, replay layer-2 top-four expert selection offline.
+   - **Why** Packet `17d27ea3` matched all 2,368 F32 selection scores.
+     The next checkpoint is the ordered expert IDs before gathering weights.
+     [Bias comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-bias-20261114-996fe7b0/comparison.json).
+   - **Bound inputs** Use the matched 37×64 F32 scores and the pinned
+     llama.cpp 37×4 `ffn_moe_topk-2` IDs. Verify both retained hashes.
+     [Scores](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-bias-20261114-996fe7b0/selection_scores.f32),
+     [reference IDs](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-successor-20261113-4df21393/reference/expert_ids.u32),
+     and [capture hashes](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-successor-20261113-4df21393/reference-captures.json).
+   - **Execution when selected** Preserve descending order and each engine's
+     native tie handling. Use a fresh finite packet. Check quiet before
+     sealing and require fresh admission for one offline attempt under the
+     [original limits](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-bias-20261114-996fe7b0/packet.json).
+     Keep Edge repin and push held during the replay.
+   - **Verification and done when** Reproduce the retained reference IDs,
+     then compare all 148 Candle IDs in order. Row 36 must match
+     `[54, 37, 30, 20]`. Stop at the first mismatch or failure. For a
+     mismatch retain the row, slot, both ordered lists, their score bits,
+     and any ties at the reference cutoff as specified in
+     [DECISIONS](DECISIONS.md#layer-2-routing-comparison).
 2. Resolve the CPU mismatch under the existing [QUALIFICATION](QUALIFICATION.md)
-   criteria. Use the router projection result to select the next diagnostic.
+   criteria. Use the ordered expert selection result to choose the next
+   diagnostic.
    Capture a deterministic regression and integrate only a justified correction.
    Bind a new inert packet to the reviewed candidate, a reference
    binary built from the continuation-reporting probe source, frozen inputs,
@@ -102,3 +100,8 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-closeout | chang
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-admission-stop | change=record the consumed attempt and replace the stale replay command
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-successor-review | change=bind the inert successor to the retained reference build and original gates
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-successor | change=queue execution of the exact inert router successor
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-replay | change=queue the layer-2 sigmoid replay on matched router logits
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-sigmoid | change=queue expert selection bias on matched probabilities
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-sigmoid-review | change=bind the expert-selection bias pass-down to the verified GGUF range and capture
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-bias | change=queue ordered top-four expert IDs on the matched scores
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-bias-closeout | change=bind the queued top-four replay to the original limits and row-36 witness

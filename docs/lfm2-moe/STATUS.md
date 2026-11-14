@@ -746,9 +746,8 @@ FFN RMSNorm matched pinned llama.cpp on all 75,776 values, including
 row 36. The probe used epsilon `0x3727c5ac`, F64 accumulation of
 F32 squares, and separate F32 reciprocal and weight multiplication.
 Quiet preflight preceded sealing. Both Jobs passed fresh admission and
-released their processes. The [next task](TODO.md) is the layer-2 F32
-router projection before sigmoid, keeping all 37 rows together to
-preserve the pinned CPU build's matmul dispatch.
+released their processes. These matched rows supplied the layer-2 F32
+router projection replay in packet `47f523cd`.
 [RMSNorm replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-ffn-norm-20261114-6dbeea9c/summary.json).
 
 Router packet `a886d883` passed the pre-seal quiet check and reference
@@ -760,12 +759,32 @@ reference object's digest, x64 COFF format, `router_reference` symbol,
 and link to the successful MSVC Job.
 [Stop receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-20261114-73fb1e0b/summary.json).
 
-Inert packet `d0075c3b` verified 212 bindings at Candle `431342b2`
-and remains unused. The successor for this handoff binds the same
-reference object, Rust candidate, and frozen 37-row inputs to the Candle
-commit that records this update. The [next task](TODO.md) is to admit its
-isolated Candle build and one 2,368-logit comparison.
-[Preparation receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-closeout-20261114-d0075c3b/summary.json).
+Offline successor `47f523cd` at Candle `67e7cbc0` passed quiet and
+resource admission and ran once on the frozen 37 rows. Isolated Candle
+and pinned llama.cpp both matched all 2,368 retained pre-sigmoid router
+logits bit for bit, including all 64 in row 36. Both Jobs released their
+processes and the final census was quiet. The attempt is consumed with zero
+model loads and zero retries.
+[Comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-closeout-20261114-d0075c3b/comparison.json)
+and [terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-closeout-20261114-d0075c3b/terminal.json).
+
+Offline sigmoid packet `996fe7b0` passed quiet and resource admission.
+Candle's F32 CPU sigmoid and pinned llama.cpp `582eab71` reproduced all
+2,368 retained `ffn_moe_probs-2` values bit for bit, including all 64
+in row 36. The two isolated builds and the single replay released their
+Jobs, and the final census was quiet.
+[Comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-sigmoid-20261114-47f523cd/comparison.json)
+and [terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-sigmoid-20261114-47f523cd/terminal.json).
+
+Offline packet `17d27ea3` added the frozen F32 expert bias to the 37 matched
+probability rows. Candle `broadcast_add` and pinned llama.cpp `ggml_add`
+both reproduced all 2,368 retained `ffn_moe_probs_biased-2` values bit
+for bit, including all 64 in row 36. Both builds and the single replay
+passed fresh admission and released their Jobs. The final census was
+quiet. The [next task](TODO.md) is to verify the ordered top-four expert
+IDs on the matched scores.
+[Comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-bias-20261114-996fe7b0/comparison.json)
+and [terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-bias-20261114-996fe7b0/terminal.json).
 
 The position-2 teacher-forced failure and production qualification remain
 open. Standalone LFM3 text proof and an LTS support contract remain later work.
@@ -827,3 +846,7 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-work | change=re
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-admission-stop | change=record the reference build and post-build admission stop
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-successor-review | change=record the verified reference object and successor
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-successor | change=record the verified inert router successor and pending comparison
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-replay | change=record verified layer-2 F32 router parity and terminal cleanup
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-sigmoid | change=record layer-2 router sigmoid parity and terminal cleanup
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-sigmoid-review | change=replace the stale router projection pointer after sigmoid review
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-bias | change=record the exact expert selection scores and clean terminal result
