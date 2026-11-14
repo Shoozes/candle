@@ -76,8 +76,11 @@ matched all 37 normalized rows. Offline packet `47f523cd` matched all
 2,368 layer-2 F32 router logits before sigmoid, including all 64 in row 36.
 Offline packets `996fe7b0` and `17d27ea3` also matched all 2,368 sigmoid
 probabilities and all 2,368 expert selection scores bit for bit. Both
-attempts released their Jobs. The [MoE queue](../lfm2-moe/TODO.md) now
-records the offline top-four expert selection replay.
+attempts released their Jobs. Offline packet `91a27e18` also matched
+all 148 ordered expert IDs, including row 36 `[54, 37, 30, 20]`.
+Packet `62ab7c06` then matched all 148 unbiased gathered weights, including
+row 36. The [MoE queue](../lfm2-moe/TODO.md) records the raw weight sum
+before normalization as the next checkpoint.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
@@ -413,3 +416,6 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-successor | chan
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-replay | change=route the completed router projection and next sigmoid replay to MoE
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-sigmoid | change=route the proven sigmoid and next selection-bias step to MoE
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-bias | change=route verified bias addition and the next top-four replay to MoE
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-top4 | change=route the verified top-four IDs and pending unbiased gather to MoE
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-gather | change=route the gather admission stop to the MoE queue
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-replay | change=route the completed gather and next raw sum to MoE

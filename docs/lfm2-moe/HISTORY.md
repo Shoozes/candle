@@ -1,5 +1,27 @@
 # LFM2-MoE completed work
 
+## 2026-11-14 - Layer-2 unbiased expert-weight gather parity
+
+Packet `62ab7c06` reused `996fe7b0` probabilities and `91a27e18` IDs.
+Both CPU engines reproduced all 148 retained unbiased weights bit for
+bit. For row 36, experts `[54, 37, 30, 20]` yielded `0x3eb91b2e`,
+`0x3ebc59e1`, `0x3eb410b2` and `0x3e17ff9c` in that order. Fresh
+admission passed and all three Jobs exited cleanly. The earlier
+pre-seal refusal is retained, and the single offline attempt used
+zero retries and zero model loads.
+[Comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-gather-20261114-91a27e18/comparison.json)
+and [terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-gather-20261114-91a27e18/terminal.json).
+
+## 2026-11-14 - Layer-2 ordered top-four expert parity
+
+Packet `91a27e18` ran the native Candle CPU sort and pinned llama.cpp
+`ggml_argsort_top_k` on the exact 37×64 selection scores from `17d27ea3`.
+Both reproduced all 148 IDs in order, including `[54, 37, 30, 20]` in
+row 36. The isolated builds and the one replay passed admission and
+released all three Jobs. The attempt used zero retries and zero model loads.
+[Comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-top4-20261114-17d27ea3/comparison.json)
+and [terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-top4-20261114-17d27ea3/terminal.json).
+
 ## 2026-11-14 - Layer-2 F32 expert selection bias parity
 
 Packet `17d27ea3` used a verified 256-byte bias slice from the frozen GGUF
@@ -516,3 +538,5 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-ffn-norm | chang
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-replay | change=retain the consumed router packet and its exact comparison
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-sigmoid | change=retain the exact full-row router sigmoid proof
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-bias | change=retain the completed F32 expert bias replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-top4 | change=retain the ordered top-four CPU parity and cleanup proof
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-replay | change=retain bitwise unbiased gather parity and the row-36 witness

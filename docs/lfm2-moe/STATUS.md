@@ -781,10 +781,31 @@ probability rows. Candle `broadcast_add` and pinned llama.cpp `ggml_add`
 both reproduced all 2,368 retained `ffn_moe_probs_biased-2` values bit
 for bit, including all 64 in row 36. Both builds and the single replay
 passed fresh admission and released their Jobs. The final census was
-quiet. The [next task](TODO.md) is to verify the ordered top-four expert
-IDs on the matched scores.
+quiet.
 [Comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-bias-20261114-996fe7b0/comparison.json)
 and [terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-bias-20261114-996fe7b0/terminal.json).
+
+Offline packet `91a27e18` replayed the native CPU top-four selections at
+Candle `53de1f7c`. Both engines reproduced all 148 ordered IDs across
+37 rows. Row 36 matched `[54, 37, 30, 20]`. All seven quiet and resource
+checks passed, and both builds and the replay released their Jobs.
+The attempt is consumed with zero retries and zero model loads. Those
+ordered IDs supplied the unbiased weight gather in packet `62ab7c06`.
+[Comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-top4-20261114-17d27ea3/comparison.json)
+and [terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-top4-20261114-17d27ea3/terminal.json).
+
+Offline gather packet `62ab7c06` initially stopped before sealing when
+the census found five Python processes. The earlier stop dispatched zero
+children. The read-only review revalidated all 218 bindings. At Candle
+`53de1f7c`, fresh admission passed and the original packet ran its one
+offline attempt. Candle `gather` and pinned llama.cpp `ggml_get_rows`
+matched all 148 unbiased F32 weights in order, including all four in
+row 36. All seven admission checks passed and all three Jobs exited
+cleanly. The attempt is consumed with zero retries and zero model loads.
+The [next task](TODO.md) is the 37 raw row sums before normalization.
+[Pre-dispatch stop](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-gather-20261114-91a27e18/summary.json),
+[comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-gather-20261114-91a27e18/comparison.json),
+and [terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-gather-20261114-91a27e18/terminal.json).
 
 The position-2 teacher-forced failure and production qualification remain
 open. Standalone LFM3 text proof and an LTS support contract remain later work.
@@ -850,3 +871,7 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-replay | 
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-sigmoid | change=record layer-2 router sigmoid parity and terminal cleanup
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-sigmoid-review | change=replace the stale router projection pointer after sigmoid review
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-bias | change=record the exact expert selection scores and clean terminal result
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-top4 | change=record the top-four replay and route the next unbiased gather
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-gather | change=record the unbiased gather admission stop and unused packet
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-review | change=record the read-only gather recheck and timestamped quiet census
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-replay | change=record successful gather admission, parity and cleanup after the prior refusal

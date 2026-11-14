@@ -943,7 +943,7 @@
       ]
     },
     "feature__lfm2_moe": {
-      "description": "Native and mixed quantized LFM2-MoE routing/loading, CPU/CUDA synthetic proof and local example; production qualification and Edge adoption stay separately gated. Expand feature__lfm2_text for shared mixer internals.",
+      "description": "Native and mixed quantized LFM2-MoE routing/loading, CPU/CUDA synthetic proof and local example; production qualification and Edge adoption stay separately gated. Expand feature__lfm2_text for shared mixer internals. Read docs/lfm2-moe/HISTORY.md for completed work.",
       "status": "active",
       "paths": [
         "candle-examples/examples/lfm2-moe/README.md",
@@ -959,7 +959,6 @@
         "candle-transformers/src/models/quantized_lfm2_moe/model.rs",
         "candle-transformers/src/models/quantized_lfm2_moe/tests.rs",
         "docs/lfm2-moe/DECISIONS.md",
-        "docs/lfm2-moe/HISTORY.md",
         "docs/lfm2-moe/MOD_MANIFEST.md",
         "docs/lfm2-moe/QUALIFICATION.md",
         "docs/lfm2-moe/SOURCES.md",

@@ -23,28 +23,28 @@
 
 ## Remaining gates in order
 
-1. Once selected, replay layer-2 top-four expert selection offline.
-   - **Why** Packet `17d27ea3` matched all 2,368 F32 selection scores.
-     The next checkpoint is the ordered expert IDs before gathering weights.
-     [Bias comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-bias-20261114-996fe7b0/comparison.json).
-   - **Bound inputs** Use the matched 37×64 F32 scores and the pinned
-     llama.cpp 37×4 `ffn_moe_topk-2` IDs. Verify both retained hashes.
-     [Scores](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-bias-20261114-996fe7b0/selection_scores.f32),
-     [reference IDs](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-successor-20261113-4df21393/reference/expert_ids.u32),
+1. Once selected, replay the layer-2 raw expert-weight sums offline.
+   - **Why** Packet `62ab7c06` matched all 148 unbiased gathered weights.
+     The raw sum is the next checkpoint before either engine applies its
+     normalization denominator.
+     [Gather comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-gather-20261114-91a27e18/comparison.json).
+   - **Bound inputs** Verify the matched 37×4 F32 weights and the pinned
+     llama.cpp `ffn_moe_weights_sum-2` capture of 37 raw F32 sums. Preserve
+     each row's four inputs in their verified slot order.
+     [Weights](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-gather-20261114-91a27e18/selected_weights.f32),
+     [reference sums](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-successor-20261113-4df21393/reference/weight_sum.f32),
      and [capture hashes](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-successor-20261113-4df21393/reference-captures.json).
-   - **Execution when selected** Preserve descending order and each engine's
-     native tie handling. Use a fresh finite packet. Check quiet before
-     sealing and require fresh admission for one offline attempt under the
-     [original limits](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-bias-20261114-996fe7b0/packet.json).
-     Keep Edge repin and push held during the replay.
-   - **Verification and done when** Reproduce the retained reference IDs,
-     then compare all 148 Candle IDs in order. Row 36 must match
-     `[54, 37, 30, 20]`. Stop at the first mismatch or failure. For a
-     mismatch retain the row, slot, both ordered lists, their score bits,
-     and any ties at the reference cutoff as specified in
-     [DECISIONS](DECISIONS.md#layer-2-routing-comparison).
+   - **Execution when selected** Compare the native CPU row sums in a
+     fresh finite packet. Check quiet before sealing and require fresh
+     admission under the [original limits](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-gather-20261114-91a27e18/packet.json)
+     for one offline attempt. Keep Edge repin and push held.
+   - **Verification and done when** Reproduce the 37 retained reference
+     sums and compare all 37 Candle sums bit for bit, including row 36
+     `0x3f9d6164`. Stop at the first mismatch or failure. For a mismatch,
+     retain the row, its four operand bit patterns and both sum bit
+     patterns before testing either denominator.
 2. Resolve the CPU mismatch under the existing [QUALIFICATION](QUALIFICATION.md)
-   criteria. Use the ordered expert selection result to choose the next
+   criteria. Use the raw expert-weight sum result to choose the next
    diagnostic.
    Capture a deterministic regression and integrate only a justified correction.
    Bind a new inert packet to the reviewed candidate, a reference
@@ -105,3 +105,7 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-sigmoid |
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-sigmoid-review | change=bind the expert-selection bias pass-down to the verified GGUF range and capture
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-bias | change=queue ordered top-four expert IDs on the matched scores
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-bias-closeout | change=bind the queued top-four replay to the original limits and row-36 witness
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-top4 | change=queue the unbiased expert-weight gather on the matched IDs
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-gather | change=route the next gather admission check to the verified unused packet
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-review | change=bind the next gather attempt to the verified checkout and controller
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-replay | change=queue raw expert-weight sums before normalization
