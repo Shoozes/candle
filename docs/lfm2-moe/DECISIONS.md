@@ -37,5 +37,24 @@ matmul tests compare against the same dequantized weights with a separately
 declared `0.02` absolute bound; they do not assert that Q4/Q8 equal unquantized
 weights. Production llama.cpp differential proof remains a separate gate.
 
+## Layer-2 routing comparison
+
+Pinned Transformers `ddb849ab` governs Candle routing. Candle divides the
+gathered unbiased weights by `sum + 1e-6`. The pinned llama.cpp `582eab71`
+LFM graph enables normalization and divides by `max(sum, 6.103515625e-5)`.
+The formulas can produce different F32 results even above the clamp threshold.
+
+The layer-2 diagnostic compares logits, sigmoid probabilities, biased selection
+scores, ordered integer IDs, unbiased gathered weights and raw sums before the
+denominator. An expert-order mismatch retains the two ordered lists, their
+scores and the ties at the reference cutoff. When the common inputs and sums
+match exactly, the probe classifies a denominator difference only if both
+observed values match their respective formulas. It records the first mismatch
+and stops, including for a classified reference difference. Normalized weights
+and later stages remain in the ordered contract. An unexplained difference
+requires operand isolation. Any production compatibility change needs a
+separate decision, and the production [qualification gate](QUALIFICATION.md)
+still applies.
+
 ---
-AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe | change=record native, quantized, device and consumer contracts
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-inert | change=record routing authority and first-difference classification

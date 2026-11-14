@@ -621,13 +621,39 @@ One composed offline replay at Candle `60ce38d4` verified the exact
 ten layer-1 checkpoints. All 75,776 `l_out-1` values matched pinned
 llama.cpp, including rows 16 and 36. Both admitted Windows Jobs exited
 and released their processes. The computed `l_out-1` is the entry control
-for the next [TODO](TODO.md), preparation of an inert layer-2 diagnostic.
-The recheck confirmed the retained bytes and terminal receipts. The frozen
-GGUF header confirms 32 query heads, 8 KV heads and top-four expert routing
-at layer 2. The packet needs typed, stride-aware captures and separate
-routing checkpoints to isolate the two engines' normalization rules.
+for the inert layer-2 diagnostic. The recheck confirmed the retained bytes
+and terminal receipts. [Composed replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-composed-offline-20261113-60ce38d4/summary.json).
+
+Layer-2 CPU packet `0c99a403` was prepared against `9cc7c853`. It binds the
+same 37 frozen IDs, exact entry, 13 weight ranges and 27 typed checkpoints.
+Model-free native checks passed for strided attention, ordered integer
+experts, invalid contracts, normalization, early stop and the signed KV head
+metadata in the frozen header. Six controller tests passed, including
+input/source drift and a synthetic admission refusal.
+[Preparation proof](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-inert-20261113-9cc7c853/summary.json).
+
+The review superseded `0c99a403` with packet `623dc38e`. It uses
+the same two probes, frozen inputs, checkpoint order and limits. The
+controller binds the run directory, holds read handles on the verified
+runtime files and captures through dispatch, and records a post-child
+census even when a launcher receipt is missing. Seven controller tests passed
+on synthetic inputs. [Review proof](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-controller-review-20261113-9cc7c853/summary.json).
+
+Packet `623dc38e` is consumed. The first owner census refused admission
+while Python and Cargo were active. After those processes cleared, the next
+owner census passed and the controller wrote the attempt marker. After model
+identity verification, two Python processes blocked reference admission. The
+census measured 40.75 GiB available RAM and 41.66 GiB of commit headroom.
+The terminal record shows zero dispatches and zero Jobs. Both probes are absent.
+[Admission](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-controller-review-20261113-9cc7c853/admission-reference.json)
+[Terminal](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-controller-review-20261113-9cc7c853/terminal.json).
+
+The next [TODO](TODO.md) is an inert successor that completes model identity
+verification and final reference admission before writing its one-shot marker.
+Layer-2 capture and comparison still need a model run.
+
 The position-2 teacher-forced failure and production qualification remain
-open. [Composed replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-composed-offline-20261113-60ce38d4/summary.json).
+open. Standalone LFM3 text proof and an LTS support contract remain later work.
 
 The fixture batch published at `60ce38d4` gives canonical channel-major
 weights precedence for square ShortConv kernels. The nonsymmetric fixture
@@ -665,4 +691,4 @@ implementation attempts remain in the original run record. Native lower-
 precision activation parity is not claimed by the CPU-F32 numerical gate.
 
 ---
-AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-recheck | change=reconcile replay proof and layer-2 handoff
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-attempt | change=record consumed packet and admission stop before dispatch

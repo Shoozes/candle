@@ -1,5 +1,27 @@
 # LFM2-MoE completed work
 
+## 2026-11-13 - Layer-2 CPU packet stopped before launch
+
+Packet `623dc38e` passed owner admission after an earlier refusal and
+verified the model identity. The controller had already recorded its one
+attempt when two Python processes blocked reference admission. It
+stopped with zero model dispatches and retained the marker and all
+admission results. [Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-controller-review-20261113-9cc7c853/terminal.json).
+
+## 2026-11-13 - Inert layer-2 CPU packet
+
+Prepared packet `0c99a403` from Candle `9cc7c853`, pinned llama.cpp `582eab71`
+and the verified 37-token `l_out-1` entry. The packet binds 27 typed checkpoints
+and all 13 layer-2 weight ranges. Native model-free controls exercised strided
+F32 and integer captures, wrong contracts, the two normalization formulas,
+first-failure stopping and the signed KV head metadata in the frozen header.
+The controller checks rejected source and input drift,
+an invalid grant, a consumed attempt and failed admission. Preparation stopped
+with zero model runs and the attempt unconsumed.
+[Verification](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-inert-20261113-9cc7c853/summary.json).
+Review superseded the original controller with packet `623dc38e` before
+either packet ran a model. [Review proof](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-controller-review-20261113-9cc7c853/summary.json).
+
 ## 2026-11-13 - Composed offline layer-1 CPU replay
 
 One isolated CPU run at Candle `60ce38d4` started from the exact retained
@@ -335,4 +357,4 @@ owns packet review, separately granted finite production qualification, Edge
 acceptance and separately authorized publication/adoption. D1 stays closed.
 
 ---
-AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-compose | change=record the connected offline layer-1 replay
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-attempt | change=record the layer-2 admission stop and zero dispatches

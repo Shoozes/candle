@@ -23,42 +23,36 @@
 
 ## Remaining gates in order
 
-1. Prepare a fresh inert zero-based layer-2 CPU diagnostic.
-   - **Why** One composed offline layer-1 replay matched all ten
-     checkpoints on the same 37 frozen IDs. Layer 2 is the first
-     attention and sparse-MoE block in this GGUF.
-     [Composed replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-composed-offline-20261113-60ce38d4/summary.json).
-   - **How** Bind the computed `l_out-1` entry, SHA-256
+1. Prepare an inert successor for the zero-based layer-2 CPU diagnostic.
+   - **Why** Packet `623dc38e` wrote its attempt marker after the initial
+     census. The final reference census found two Python processes and
+     blocked both probes before launch. [Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-controller-review-20261113-9cc7c853/terminal.json).
+   - **Bound inputs** Reuse the computed `l_out-1` entry, SHA-256
      `0df2dfda89526966365f5787f063ccb07e6f4ad250f0aab004fb23be63946462`,
-     the 37 frozen IDs, pinned llama.cpp, and exact layer-2 sources and
-     weights. Require exact entry before weighted operator RMSNorm. Compare
-     Q/K/V, Q/K normalization and RoPE, attention output, FFN RMSNorm,
-     routing, sparse FFN and final residual in execution order. Stop at
-     the first mismatch or failure.
-   - **Capture contract** Bind each checkpoint's label, dtype, shape and
-     axis order. Normalize attention tensors to token-first order using
-     their strides (32 query heads, 8 KV heads, width 64). Compare the
-     ordered top-four expert IDs as integers. Capture router logits,
-     selection scores and IDs, gathered unbiased weights and normalized
-     weights separately. Candle follows Transformers' `sum + 1e-6` rule.
-     Pinned llama.cpp clamps the sum to at least `6.103515625e-5`.
-   - **Limits** Carry forward the native layer-1 CPU diagnostic envelope
-     from [packet `8060130a`](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-inert-20261113-72a53981/packet.json).
-     Allow one attempt, zero retries, at most four children, 180 seconds
-     per child and 900 seconds total. Preserve the 4 GiB build and 32 GiB
-     model Job limits, 16 GiB floors for available RAM and commit headroom,
-     two CPU threads, 12,288 context tokens and 128-token prefill chunks.
-   - **Done when** A fresh inert packet binds these sources, inputs,
-     checkpoint contracts, stops and admission controls. Model-free checks
-     cover strided attention capture, integer expert order and the
-     first-mismatch stop. The attempt remains unconsumed. Execution requires
-     separate authorization and fresh admission.
+     the 37 frozen IDs, pinned llama.cpp, both probe binaries and 13 layer-2
+     tensor ranges from [packet `623dc38e`](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-controller-review-20261113-9cc7c853/packet.json).
+   - **How** Keep verified files locked through dispatch and preserve the
+     consumed packet. Finish model identity verification and the final
+     reference admission before writing the new attempt marker immediately
+     ahead of the bounded launch. Preserve per-probe admission, cleanup
+     evidence and the [routing comparison decision](DECISIONS.md#layer-2-routing-comparison).
+   - **Limits** Carry forward the native layer-1 CPU diagnostic envelope.
+     One attempt, zero retries and at most four children remain bound. The
+     two prebuilt probes are the execution children. The packet preserves
+     180 seconds per child, 900 seconds total, 4 GiB build and 32 GiB model
+     Job caps, 16 GiB RAM and commit floors, two CPU threads, 12,288 context
+     tokens and 128-token chunks.
+   - **Done when** A fresh packet binds the same 27 typed checkpoints and
+     two prebuilt probes. A synthetic census passes initially and refuses
+     the final reference admission, leaving zero launches and no attempt
+     marker. A synthetic admitted launch writes one marker and cannot be
+     repeated. End with the real packet inert for review.
 2. Resolve the CPU mismatch under the existing [QUALIFICATION](QUALIFICATION.md)
-   criteria. After authorization and admission, verify the exact layer-2
-   entry before comparing the ordered checkpoints. Stop at the first
-   mismatch or failure. Replay the first differing operands, capture a
-   deterministic regression and integrate the justified correction into
-   the runtime.
+   criteria. After exact authorization and fresh admission, execute the
+   reviewed layer-2 successor once. Require exact entry and stop on the
+   first mismatch or failure. Retain available operands, Job exits, cleanup
+   and post-run censuses. Use the terminal result to select an operand replay.
+   Capture a deterministic regression and integrate only a justified correction.
    Bind a new inert packet to the reviewed candidate, a reference
    binary built from the continuation-reporting probe source, frozen inputs,
    original limits and four comparison commands. Keep the consumed packet and
@@ -90,4 +84,4 @@ the indexed CUDA path against the grouped implementation on identical weights.
 LFM3 GGUF, lower precision and the broader model family have separate gates.
 
 ---
-AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-recheck | change=bind layer-2 capture and diagnostic limits
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-attempt | change=select inert successor with attempt marker after final reference admission

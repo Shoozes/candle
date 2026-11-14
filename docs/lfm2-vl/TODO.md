@@ -50,8 +50,8 @@ layer-0 stage from the frozen IDs. The full-model CPU prefill matched
 the final-position top token with measured logit drift. Layer-1 packet
 `8060130a` consumed its native attempt at the weighted RMSNorm mismatch.
 One composed offline replay matched every layer-1 checkpoint through
-`l_out-1`. The [MoE queue](../lfm2-moe/TODO.md) owns inert preparation
-for layer 2, the first attention and sparse-MoE block.
+`l_out-1`. Layer-2 CPU packet `623dc38e` is consumed with zero dispatches.
+The [MoE queue](../lfm2-moe/TODO.md) owns the inert successor.
 A successor production packet needs the continuation-reporting
 reference binary, separate review and admission. Builds, model runs,
 publication, packages and consumer adoption remain held.
@@ -427,4 +427,4 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 
 ---
-AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer1-compose | change=route inert layer-2 preparation
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-attempt | change=route inert successor preparation after admission stop
