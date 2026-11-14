@@ -73,8 +73,11 @@ the causal attention values and the Q4_K attention output projection on
 all 37 rows, including pre-dot Q8_K and the row-36 mixer output. Adding
 the layer-1 output and mixer in F32 and replaying weighted FFN RMSNorm
 matched all 37 normalized rows. The [MoE queue](../lfm2-moe/TODO.md) owns
-the F32 router projection checkpoint. Its offline preparer verified the
-inputs. Active workloads blocked sealing before any dispatch.
+the F32 router projection checkpoint. Packet `a886d883` consumed its
+offline attempt in the reference adapter build. Host activity blocked
+the post-build quiet check. The linked MoE successor binds the verified
+reference object and this Candle commit for the pending isolated build
+and comparison.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
@@ -404,3 +407,6 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-output | ch
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-ffn-norm | change=route completed FFN RMSNorm proof to MoE ownership
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-review | change=clarify which packet needs the production reference binary
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-work | change=route the unsealed router handoff to MoE
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-admission-stop | change=route the consumed router attempt to the MoE handoff
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-successor-review | change=route the verified router object to the MoE successor
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-successor | change=route the verified inert router successor to the MoE queue

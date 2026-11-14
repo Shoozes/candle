@@ -751,10 +751,21 @@ router projection before sigmoid, keeping all 37 rows together to
 preserve the pinned CPU build's matmul dispatch.
 [RMSNorm replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-ffn-norm-20261114-6dbeea9c/summary.json).
 
-Router replay preparation verified the bound operands, original limits,
-and GGML build inputs. Active Python workloads blocked quiet admission
-before sealing. The offline attempt remains unused, with zero dispatches.
-[TODO](TODO.md) records the local preparer and the next admission step.
+Router packet `a886d883` passed the pre-seal quiet check and reference
+build admission at Candle `431342b2`. MSVC built the adapter and its Job
+released the process. Python workloads appeared at the post-build quiet
+census, so the controller stopped with one dispatch and zero retries.
+The attempt is consumed. The read-only recheck verified the retained
+reference object's digest, x64 COFF format, `router_reference` symbol,
+and link to the successful MSVC Job.
+[Stop receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-20261114-73fb1e0b/summary.json).
+
+Inert packet `d0075c3b` verified 212 bindings at Candle `431342b2`
+and remains unused. The successor for this handoff binds the same
+reference object, Rust candidate, and frozen 37-row inputs to the Candle
+commit that records this update. The [next task](TODO.md) is to admit its
+isolated Candle build and one 2,368-logit comparison.
+[Preparation receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-closeout-20261114-d0075c3b/summary.json).
 
 The position-2 teacher-forced failure and production qualification remain
 open. Standalone LFM3 text proof and an LTS support contract remain later work.
@@ -813,3 +824,6 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-output | ch
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-ffn-norm | change=record weighted FFN RMSNorm parity and router handoff
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-review | change=clarify the full-batch F32 router handoff
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-work | change=record the verified router inputs and pre-seal quiet-host refusal
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-admission-stop | change=record the reference build and post-build admission stop
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-successor-review | change=record the verified reference object and successor
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-successor | change=record the verified inert router successor and pending comparison

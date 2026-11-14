@@ -23,25 +23,24 @@
 
 ## Remaining gates in order
 
-1. Once selected, replay the layer-2 F32 router projection offline.
-   - **Why** Weighted FFN RMSNorm matched all 37 rows. The next retained
-     checkpoint is the router output before sigmoid.
-     [RMSNorm replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-ffn-norm-20261114-6dbeea9c/summary.json).
-   - **Bound inputs** Bind the matched 37×2,048 `ffn_norm.f32`, the frozen
-     64×2,048 F32 `blk.2.ffn_gate_inp.weight`, and the retained 37×64
-     `router_logits.f32` capture (`ffn_moe_logits-2`).
-     [Layer-2 trace packet](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-successor-20261113-4df21393/packet.json).
-   - **Execution** Bind the pinned trace's GGML CPU libraries and preserve
-     its two-thread F32 matmul dispatch, including the llamafile SGEMM
-     path. Keep row 36 in the full 37-row matrix. Check quiet before
-     sealing and require fresh admission under the original offline limits
-     for one attempt. Keep Edge repin and publication of the replay result
-     separately authorized. This host's local
-     [preparer](C:/DevStuff/candle/artifacts/lfm2-moe/offline-router-20261114-73fb1e0b.ps1)
-     verified the operands and toolchain. Host activity prevented sealing.
-     For the next selected replay, use `-Execute` to recheck admission,
-     seal against the current checkout, and dispatch once. The preparer
-     revalidates the probe source and pinned inputs before sealing.
+1. Once selected, run the bound successor for the offline layer-2 F32
+   router replay.
+   - **Why** Weighted FFN RMSNorm matched all 37 rows. Packet `a886d883`
+     produced the reference adapter and stopped at the post-build quiet
+     check. The successor uses that adapter and has zero dispatches.
+     [Preparation receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-closeout-20261114-d0075c3b/summary.json).
+   - **Bound inputs** Use the matched 37×2,048 `ffn_norm.f32`, frozen
+     64×2,048 F32 `blk.2.ffn_gate_inp.weight`, and retained 37×64
+     `router_logits.f32` capture (`ffn_moe_logits-2`). The Rust candidate
+     links the retained `reference.obj` and the three pinned GGML libraries.
+     [Packet](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-closeout-20261114-d0075c3b/packet.json).
+   - **Execution when selected** Use the packet's full digest with the
+     bound controller. Require quiet before the execution seal and fresh
+     quiet/resource admission before each of its two children, the
+     isolated Rust build and one offline replay. Retain the post-child
+     censuses and keep the original limits. Preserve the two-thread F32
+     matmul dispatch over all 37 rows together. Edge repin and push
+     remain held.
    - **Verification and done when** First reproduce the retained logits
      with the pinned reference. Compare the isolated Candle projection
      bit for bit on all 2,368 pre-sigmoid values, including all 64 in row
@@ -100,3 +99,6 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-ffn-norm | chang
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-review | change=bind the router control, exact matrix shape, and CPU dispatch
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-work | change=record the verified unsealed router preparer and next admission
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-closeout | change=make the verified progress and local replay authority explicit
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-admission-stop | change=record the consumed attempt and replace the stale replay command
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-successor-review | change=bind the inert successor to the retained reference build and original gates
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-successor | change=queue execution of the exact inert router successor
