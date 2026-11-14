@@ -1,5 +1,17 @@
 # LFM2-MoE completed work
 
+## 2026-11-14 - Layer-2 raw expert-weight sum replay stopped at row 1
+
+Packet `6db2c79c` fed both native CPU reductions the matched weights
+from `62ab7c06`. Pinned GGML `ggml_sum_rows` reproduced all 37
+retained raw sums. Candle `sum_keepdim` matched row 0 and stopped at
+row 1 with `0x3fb72528` versus GGML's `0x3fb72527`. The four input
+bits were `0x3f171661`, `0x3ea27484`, `0x3e8ba988` and
+`0x3e8049ce`, in expert-slot order. All seven admission checks passed,
+and all three Jobs released their processes. The single attempt ended
+before normalization with zero retries and zero model loads.
+[First-difference receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-sum-20261114-62ab7c06/summary.json).
+
 ## 2026-11-14 - Layer-2 unbiased expert-weight gather parity
 
 Packet `62ab7c06` reused `996fe7b0` probabilities and `91a27e18` IDs.
@@ -540,3 +552,4 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-sigmoid |
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-bias | change=retain the completed F32 expert bias replay
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-top4 | change=retain the ordered top-four CPU parity and cleanup proof
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-replay | change=retain bitwise unbiased gather parity and the row-36 witness
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-raw-sum | change=retain the raw sum mismatch, exact operands and terminal cleanup

@@ -79,8 +79,10 @@ probabilities and all 2,368 expert selection scores bit for bit. Both
 attempts released their Jobs. Offline packet `91a27e18` also matched
 all 148 ordered expert IDs, including row 36 `[54, 37, 30, 20]`.
 Packet `62ab7c06` then matched all 148 unbiased gathered weights, including
-row 36. The [MoE queue](../lfm2-moe/TODO.md) records the raw weight sum
-before normalization as the next checkpoint.
+row 36. Raw-sum packet `6db2c79c` reproduced all 37 pinned GGML controls
+and stopped at Candle's first difference in row 1. The
+[MoE queue](../lfm2-moe/TODO.md) records the accumulation trace before
+normalization and keeps native Candle attention open for layer 2.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
@@ -419,3 +421,4 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-bias | ch
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-top4 | change=route the verified top-four IDs and pending unbiased gather to MoE
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-gather | change=route the gather admission stop to the MoE queue
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-replay | change=route the completed gather and next raw sum to MoE
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-raw-sum | change=route the raw sum mismatch and native attention proof to MoE

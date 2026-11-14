@@ -731,6 +731,10 @@ non-flash cache layout, and 256 padded KV slots. All 75,776 values of
 `attn_values.f32` matched bit for bit, including all 2,048 in row 36.
 Preliminary admission passed before sealing, and both bounded Jobs passed
 their final censuses and released their processes.
+This result establishes the reference attention control. Proof of
+Candle's native [quantized attention path](../../candle-transformers/src/models/quantized_lfm2.rs)
+on these operands remains open. The connected-layer gate must exercise
+Candle's own matmuls, scaling, causal mask, softmax and cache handling.
 [Attention replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attn-values-20261114-b67d23be/summary.json).
 
 Offline packet `6dbeea9c` matched Q8_K scales, bytes and sums before the
@@ -802,10 +806,20 @@ offline attempt. Candle `gather` and pinned llama.cpp `ggml_get_rows`
 matched all 148 unbiased F32 weights in order, including all four in
 row 36. All seven admission checks passed and all three Jobs exited
 cleanly. The attempt is consumed with zero retries and zero model loads.
-The [next task](TODO.md) is the 37 raw row sums before normalization.
 [Pre-dispatch stop](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-gather-20261114-91a27e18/summary.json),
 [comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-gather-20261114-91a27e18/comparison.json),
 and [terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-gather-20261114-91a27e18/terminal.json).
+
+Raw-sum packet `6db2c79c` at Candle `9be1b04d` passed quiet and
+resource admission and ran once offline under the original limits.
+Pinned GGML reproduced all 37 retained row sums, including row 36
+`0x3f9d6164`. Candle's F32 CPU `sum_keepdim` first differed at row 1
+with `0x3fb72528` versus GGML's `0x3fb72527`. All three Jobs released
+their processes. The attempt is consumed with zero retries and zero
+model loads. The [next task](TODO.md) is to trace the width-four F32
+and F64 accumulation paths on that witness. The denominator and normalized
+weights remain pending.
+[First-difference receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-sum-20261114-62ab7c06/summary.json).
 
 The position-2 teacher-forced failure and production qualification remain
 open. Standalone LFM3 text proof and an LTS support contract remain later work.
@@ -875,3 +889,4 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-top4 | ch
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-gather | change=record the unbiased gather admission stop and unused packet
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-review | change=record the read-only gather recheck and timestamped quiet census
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-replay | change=record successful gather admission, parity and cleanup after the prior refusal
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-raw-sum | change=record the raw sum stop and keep native Candle attention proof open
