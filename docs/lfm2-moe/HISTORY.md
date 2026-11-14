@@ -1,5 +1,83 @@
 # LFM2-MoE completed work
 
+## 2026-11-14 - Layer-2 query and key weighted RMSNorm parity
+
+One admitted offline replay matched all 94,720 pre-RoPE values on the
+37 frozen rows. At token 0, head 0, channel 0, query matched `0x40075525`
+and key matched `0x3d5c3210`. Both Jobs released their processes.
+[Receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-norm-20261114-9b0d5544/summary.json).
+
+## 2026-11-14 - Layer-2 Q6_K value projection parity
+
+The `IoError` correction passed the isolated build. One offline replay
+matched all 18,944 values across the 37 retained rows using the proven
+Q6_K F32 schedule. All 512 values in row 36 matched. Both Jobs released
+their processes. [Receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-replay-20261114-7432e492/summary.json).
+
+## 2026-11-14 - Layer-2 value replay build stop
+
+Packet `27fd6f53` passed admission, then stopped when the isolated probe
+failed to compile with `E0433`. The copied `require` helper refers to
+`io::Error`, while the probe imports that type as `IoError`. The build
+Job released the compiler. The attempt ended with zero replay dispatches.
+[Receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-replay-20261114-cdf58e7d/summary.json).
+
+## 2026-11-13 - Layer-2 key GEMM/GEMV parity
+
+Packet `cdf58e7d` built the isolated 512-wide probe and ran one offline replay
+on the retained 37 Q8_K rows. The replay reproduced all 296 Q8_K blocks and
+matched 18,432 GEMM values in rows 0–35 and 512 GEMV values in row 36 bit for
+bit with pinned llama.cpp. Token 0, head 0, channel 0 matched `0x3a3453bc`.
+Both Jobs released their processes. [Receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-key-replay-20261113-97dc98a2/summary.json).
+
+## 2026-11-13 - Layer-2 query GEMM/GEMV parity
+
+Packet `97dc98a2` reused the isolated Candle executable `0e2e0bb2` for one
+offline replay. The stock Candle control and all 296 matched Q8_K blocks
+reproduced. The corrected output matched pinned llama.cpp bit for bit across
+73,728 GEMM values in rows 0–35 and all 2,048 GEMV values in row 36. Token 0,
+head 0, channel 0 matched `0x3c2a4506`. Admission passed before and after
+the single Job, which released the probe. [Receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-query-replay-20261113-0e2e0bb2/summary.json).
+
+## 2026-11-13 - Layer-2 query schedule build and admission stop
+
+Packet `0e822a25` verified 187 bindings and built the isolated GEMM/GEMV
+probe. The build exited zero and its Job released the process. Four Python
+processes appeared before replay admission, so the attempt ended after the
+build with zero replay dispatches. The binary is retained for a separately
+selected replay-only packet. [Receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-query-schedule-20261113-031af7c7/summary.json).
+
+## 2026-11-13 - Offline layer-2 query replay
+
+Reproduced both native `blk.2.attn_q.weight` outputs on all 37 retained
+RMSNorm rows. Every Q8_K scale, signed byte and block sum agreed. The
+token-0, head-0, channel-0 dot trace reproduced both native outputs and
+localized the first F32 difference to the first subblock pair of block 0.
+Two bounded probe builds and one bounded component replay completed with
+zero model loads. [Replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-query-offline-20261113-0e236955/summary.json).
+
+## 2026-11-13 - Bounded layer-2 CPU trace
+
+Packet `0e236955` wrote its one-attempt marker after final reference
+admission. Pinned llama.cpp captured all 27 checkpoints and exited zero.
+Candle matched all 75,776 F32 values at each of entry and weighted RMSNorm,
+then exited one at the query projection. The first witness was token 0,
+head 0, channel 0, with Candle `0x3c2a4502` and llama.cpp `0x3c2a4506`.
+Both Jobs released their processes and their post-exit censuses passed.
+The reference captures and the mismatching Candle query tensor are retained.
+[Trace receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-successor-20261113-4df21393/trace-summary.json).
+
+## 2026-11-13 - Inert layer-2 CPU successor
+
+Sealed [packet `0e236955`](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-successor-20261113-4df21393/packet.json)
+at checkout `4df21393` with the original probe source scope at `9cc7c853`.
+The controller binds the consumed predecessor and its zero-dispatch terminal
+receipt. Preparation rechecked the GGUF header and all 13 selected tensor
+ranges, 27 checkpoint definitions and 259 file bindings. Eleven controller
+tests covered both admission stages, the model hash check, the one-shot marker,
+capture locks and cleanup after failure. The real packet remained unconsumed
+with zero dispatches. [Preparation receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-successor-20261113-4df21393/summary.json).
+
 ## 2026-11-13 - Layer-2 CPU packet stopped before launch
 
 Packet `623dc38e` passed owner admission after an earlier refusal and
@@ -358,3 +436,12 @@ acceptance and separately authorized publication/adoption. D1 stays closed.
 
 ---
 AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-attempt | change=record the layer-2 admission stop and zero dispatches
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-successor | change=retain preparation and controller proof
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-cpu-trace | change=retain the consumed attempt and query witness
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-offline | change=retain the matching pre-dot operands and query witness
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-schedule | change=retain the verified isolated build and replay admission stop
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-replay | change=retain full query GEMM and GEMV parity on matched operands
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-key-replay | change=retain full key GEMM and GEMV parity on matched operands
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-replay | change=retain the compiler failure and zero-dispatch result
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-recovery | change=retain the corrected build and parity proof
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-norm | change=retain per-head weighted RMSNorm parity

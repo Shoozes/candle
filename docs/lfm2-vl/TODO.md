@@ -51,10 +51,15 @@ the final-position top token with measured logit drift. Layer-1 packet
 `8060130a` consumed its native attempt at the weighted RMSNorm mismatch.
 One composed offline replay matched every layer-1 checkpoint through
 `l_out-1`. Layer-2 CPU packet `623dc38e` is consumed with zero dispatches.
-The [MoE queue](../lfm2-moe/TODO.md) owns the inert successor.
-A successor production packet needs the continuation-reporting
-reference binary, separate review and admission. Builds, model runs,
-publication, packages and consumer adoption remain held.
+Successor `0e236955` consumed its CPU attempt at the first query projection
+mismatch after exact entry and RMSNorm. An offline replay isolated the
+query difference to F32 accumulation. The isolated GEMM/GEMV replays matched
+all 37 query and key rows bit for bit. The [MoE queue](../lfm2-moe/TODO.md)
+owns the query and key RoPE successor after the pre-dispatch admission stop.
+A later production parity packet needs the continuation-reporting
+reference binary, separate review and admission.
+Production model runs, package builds and consumer adoption require separate
+authorization.
 
 The selected upstream sync is published at `5f094821`, including merge
 `311d267b` from official Candle 0.11.1 `cfcbd718`. [STATUS](STATUS.md) and
@@ -428,3 +433,13 @@ and [the consumer contract](D1_LOADING.md#geneye-consumer-qualification).
 
 ---
 AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-attempt | change=route inert successor preparation after admission stop
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-successor | change=route the held CPU trace to the prepared MoE packet
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-cpu-trace | change=route the offline query projection replay
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-offline | change=route the next query schedule replay
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-schedule | change=route the retained executable for the next replay-only packet
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-replay | change=route the pending key projection gate
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-key-replay | change=route the pending value projection gate
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-replay | change=route the value probe import correction and replay gate
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-recovery | change=route the next normalization replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-norm | change=route the next rotary replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-closeout | change=route the retained RoPE admission stop

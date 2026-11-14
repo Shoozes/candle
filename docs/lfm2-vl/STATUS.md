@@ -58,7 +58,17 @@ entry and finding the first mismatch in layer-1 weighted RMSNorm.
 One composed offline replay at `60ce38d4` matched all ten layer-1
 checkpoints, including the full `l_out-1`. Layer-2 packet `623dc38e`
 recorded its attempt and then stopped at reference admission before either
-probe launched. The MoE overlay owns preparation of an inert successor.
+probe launched. Successor `0e236955` passed admission and ran once on CPU.
+Both engines matched the entry and weighted RMSNorm bit for bit. Candle
+stopped at the first query projection value. The offline replay reproduced
+both outputs with matched Q8_K operands and found the first F32 difference
+in block 0. The isolated schedule probe built successfully, then stopped
+at replay admission. A later replay-only packet reused that executable
+and matched all 37 query rows bit for bit. The key projection replay also
+matched all 37 rows. The corrected Q6_K value probe matched all 37 rows
+bit for bit. The weighted RMSNorm replay also matched all query and key
+values before RoPE. The RoPE packet stopped at admission before dispatch.
+The [MoE queue](../lfm2-moe/TODO.md) owns the successor and offline replay.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
@@ -372,3 +382,13 @@ published ZIP repair and adopted consumer graphs do not need another repin.
 
 ---
 AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-attempt | change=route the layer-2 admission stop and successor to MoE ownership
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-successor | change=record the inert successor in the fork status
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-cpu-trace | change=route the layer-2 query mismatch to MoE ownership
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-offline | change=route the query arithmetic result to MoE ownership
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-schedule | change=route the compiled probe and remaining replay gate to MoE ownership
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-replay | change=route verified query parity and the next key projection gate
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-key-replay | change=route verified key parity and the next value projection gate
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-replay | change=route the offline value probe compile stop
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-recovery | change=route verified value parity and the next normalization gate
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-norm | change=route pre-RoPE parity and the next rotary replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-closeout | change=route the pre-dispatch stop and successor

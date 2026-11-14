@@ -23,35 +23,25 @@
 
 ## Remaining gates in order
 
-1. Prepare an inert successor for the zero-based layer-2 CPU diagnostic.
-   - **Why** Packet `623dc38e` wrote its attempt marker after the initial
-     census. The final reference census found two Python processes and
-     blocked both probes before launch. [Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-controller-review-20261113-9cc7c853/terminal.json).
-   - **Bound inputs** Reuse the computed `l_out-1` entry, SHA-256
-     `0df2dfda89526966365f5787f063ccb07e6f4ad250f0aab004fb23be63946462`,
-     the 37 frozen IDs, pinned llama.cpp, both probe binaries and 13 layer-2
-     tensor ranges from [packet `623dc38e`](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-controller-review-20261113-9cc7c853/packet.json).
-   - **How** Keep verified files locked through dispatch and preserve the
-     consumed packet. Finish model identity verification and the final
-     reference admission before writing the new attempt marker immediately
-     ahead of the bounded launch. Preserve per-probe admission, cleanup
-     evidence and the [routing comparison decision](DECISIONS.md#layer-2-routing-comparison).
-   - **Limits** Carry forward the native layer-1 CPU diagnostic envelope.
-     One attempt, zero retries and at most four children remain bound. The
-     two prebuilt probes are the execution children. The packet preserves
-     180 seconds per child, 900 seconds total, 4 GiB build and 32 GiB model
-     Job caps, 16 GiB RAM and commit floors, two CPU threads, 12,288 context
-     tokens and 128-token chunks.
-   - **Done when** A fresh packet binds the same 27 typed checkpoints and
-     two prebuilt probes. A synthetic census passes initially and refuses
-     the final reference admission, leaving zero launches and no attempt
-     marker. A synthetic admitted launch writes one marker and cannot be
-     repeated. End with the real packet inert for review.
+1. Once selected, replay layer-2 query and key RoPE offline.
+   - **Why** The per-head weighted RMSNorm outputs match pinned llama.cpp.
+     [Q/K replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-norm-20261114-9b0d5544/summary.json).
+     Packet `4ddbcf69` verified all 32 bindings. Admission stopped before
+     the build because Cargo, rustc and Python were active. The terminal
+     receipt records zero dispatches and an unconsumed attempt.
+     [Admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-rope-20261114-a2f11de3/summary.json).
+   - **Bound inputs** Reuse the matched normalized tensors, the original
+     rotary configuration, positions and limits, and the retained
+     `q_rope` and `k_rope` captures.
+   - **Execution** Seal a successor in a fresh evidence directory. Preserve
+     the prior terminal receipt because the controller uses a fixed terminal
+     path within each run. Recheck quiet/resource admission before dispatch.
+     Run one offline attempt if admitted. Keep Edge repin and push held.
+   - **Verification and done when** Match all 75,776 query and 18,944 key
+     rotated values bit for bit with pinned llama.cpp.
+     Stop at the first mismatch or failure.
 2. Resolve the CPU mismatch under the existing [QUALIFICATION](QUALIFICATION.md)
-   criteria. After exact authorization and fresh admission, execute the
-   reviewed layer-2 successor once. Require exact entry and stop on the
-   first mismatch or failure. Retain available operands, Job exits, cleanup
-   and post-run censuses. Use the terminal result to select an operand replay.
+   criteria. Use the RoPE result to select the next diagnostic.
    Capture a deterministic regression and integrate only a justified correction.
    Bind a new inert packet to the reviewed candidate, a reference
    binary built from the continuation-reporting probe source, frozen inputs,
@@ -85,3 +75,13 @@ LFM3 GGUF, lower precision and the broader model family have separate gates.
 
 ---
 AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-attempt | change=select inert successor with attempt marker after final reference admission
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-successor | change=route the held finite trace to the sealed successor
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-cpu-trace | change=queue the bounded query projection replay
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-offline | change=queue the isolated reference query schedules
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-schedule | change=bind the next replay-only packet to the existing build
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-replay | change=queue the bounded layer-2 key projection replay
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-key-replay | change=queue the bounded layer-2 value projection replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-replay | change=queue the import correction and new single-attempt value replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-recovery | change=queue the query and key normalization replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-norm | change=queue the query and key RoPE replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-review | change=bind the RoPE handoff to the admission receipt and fresh run directory

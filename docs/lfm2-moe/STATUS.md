@@ -648,9 +648,69 @@ The terminal record shows zero dispatches and zero Jobs. Both probes are absent.
 [Admission](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-controller-review-20261113-9cc7c853/admission-reference.json)
 [Terminal](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-controller-review-20261113-9cc7c853/terminal.json).
 
-The next [TODO](TODO.md) is an inert successor that completes model identity
-verification and final reference admission before writing its one-shot marker.
-Layer-2 capture and comparison still need a model run.
+Layer-2 successor `0e236955` passed fresh admission and consumed its one CPU
+attempt on the 37 frozen IDs. The layer-1 entry and layer-2 weighted RMSNorm
+each matched all 75,776 F32 values bit for bit. The first mismatch was the Q4_K
+query projection at token 0, head 0, channel 0. Candle produced `0x3c2a4502`
+and pinned llama.cpp produced `0x3c2a4506`, a difference of four F32 ULPs.
+The reference captured all 27 stages. Candle stopped at `q`, and both
+Windows Jobs released their processes. [Trace receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-successor-20261113-4df21393/trace-summary.json).
+
+One offline replay reproduced both engines' 75,776 query values on the
+37 matched RMSNorm rows. All 296 Q8_K scales, 75,776 signed quant bytes
+and 4,736 sums agreed before the dot. At token 0, head 0, channel 0, the
+integer products and scale/min folds agreed. The first F32 difference
+appeared after the first subblock pair of block 0. Candle accumulated
+scale and minimum contributions per subblock in one F32 accumulator.
+llama.cpp folded the integer terms by pair and accumulated the two F32
+terms separately. Reconstructing both schedules reproduced the native
+witnesses exactly. [Offline replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-query-offline-20261113-0e236955/summary.json).
+
+Isolated query packet `0e822a25` built the GEMM/GEMV candidate, then stopped
+before replay when four Python processes appeared. Admission showed 50.23 GiB
+available RAM and 52.82 GiB commit headroom. The build Job released its
+process. [Build and admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-query-schedule-20261113-031af7c7/summary.json).
+
+Replay-only packet `97dc98a2` passed fresh admission and ran executable
+`0e2e0bb2` once. The stock control and matched Q8_K bytes reproduced. The
+isolated schedules matched all 75,776 query values bit for bit, including
+73,728 GEMM values in rows 0–35 and all 2,048 GEMV values in row 36. Token 0,
+head 0, channel 0 matched `0x3c2a4506`. The Job released the probe and the
+post-run census passed. [Replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-query-replay-20261113-0e2e0bb2/summary.json).
+
+Layer-2 key replay `cdf58e7d` reused the query schedules with the frozen
+512-wide `blk.2.attn_k.weight` slice. All 296 Q8_K blocks reproduced and
+all 18,944 key values matched pinned llama.cpp bit for bit. Token 0, head 0,
+channel 0 matched `0x3a3453bc`, and all 512 values in the row-36 GEMV tail
+matched. Both bounded Jobs released their processes and passed their final
+censuses. [Key replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-key-replay-20261113-97dc98a2/summary.json).
+
+Layer-2 value packet `27fd6f53` passed admission, then stopped at the
+isolated probe build with Rust `E0433`. Its `require` helper uses `io::Error`
+where the file imports `IoError`. The compiler Job released its process.
+The packet consumed one attempt with zero replay dispatches.
+[Value build-stop receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-replay-20261114-cdf58e7d/summary.json).
+
+Corrected packet `9b0d5544` ran one offline replay. All 296 Q8_K blocks and
+all 18,944 value outputs matched pinned llama.cpp bit for bit, including
+token 0, head 0, channel 0 (`0x3c02a987`) and all 512 values in row 36.
+Both Jobs released their processes.
+[Value replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-replay-20261114-7432e492/summary.json).
+
+Offline packet `a2f11de3` matched all 75,776 query values and 18,944 key
+values after per-head weighted RMSNorm and before RoPE. The isolated
+replay used frozen 64-channel weights and epsilon `0x3727c5ac`,
+F64 accumulation of F32 squares, and F32 reciprocal and weight
+multiplication. Both Jobs exited and released their processes.
+The [next task](TODO.md) is query and key RoPE on the matched outputs.
+[Q/K replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-norm-20261114-9b0d5544/summary.json).
+
+RoPE packet `4ddbcf69` stopped before the build because Cargo, rustc and
+Python were active. Available RAM and commit headroom cleared the original
+floors. The read-only recheck verified all 32 file bindings, the matched
+RMSNorm inputs, and zero dispatches. The [next task](TODO.md) uses a fresh
+run directory and retains the original admission and terminal receipts.
+[RoPE admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-rope-20261114-a2f11de3/summary.json).
 
 The position-2 teacher-forced failure and production qualification remain
 open. Standalone LFM3 text proof and an LTS support contract remain later work.
@@ -692,3 +752,13 @@ precision activation parity is not claimed by the CPU-F32 numerical gate.
 
 ---
 AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-attempt | change=record consumed packet and admission stop before dispatch
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-successor | change=record inert successor and admission-order proof
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-cpu-trace | change=record the exact entry and first query projection mismatch
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-offline | change=record exact Q8_K operands and isolate F32 query accumulation
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-schedule | change=record build-only progress and the held replay
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-query-replay | change=record isolated query parity and the next key projection gate
+AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-key-replay | change=record isolated key parity and the next value projection gate
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-replay | change=record the value probe compile stop and bounded correction
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-recovery | change=record full value projection parity
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-norm | change=record exact pre-RoPE query and key outputs
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-review | change=record the verified pre-dispatch admission stop
