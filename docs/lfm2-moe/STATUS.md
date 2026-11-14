@@ -712,6 +712,13 @@ RMSNorm inputs, and zero dispatches. The [next task](TODO.md) uses a fresh
 run directory and retains the original admission and terminal receipts.
 [RoPE admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-rope-20261114-a2f11de3/summary.json).
 
+Successor `a4279483` verified 37 bindings at published `2acafc05`.
+The scoped implementation bytes match the prior packet. Cargo,
+cargo-clippy and Python blocked admission before the build. RAM and
+commit headroom cleared the original floors. The controller recorded zero
+dispatches and left the one offline attempt unconsumed.
+[Successor receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-rope-20261114-4ddbcf69/summary.json).
+
 The position-2 teacher-forced failure and production qualification remain
 open. Standalone LFM3 text proof and an LTS support contract remain later work.
 
@@ -762,3 +769,4 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-replay | c
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-recovery | change=record full value projection parity
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-norm | change=record exact pre-RoPE query and key outputs
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-review | change=record the verified pre-dispatch admission stop
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-successor | change=record current source binding and zero dispatches

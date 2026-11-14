@@ -36,6 +36,10 @@
    - **Execution** Seal a successor in a fresh evidence directory. Preserve
      the prior terminal receipt because the controller uses a fixed terminal
      path within each run. Recheck quiet/resource admission before dispatch.
+     Successor `a4279483` bound the published source and reused the retained
+     tensors in place. Cargo, cargo-clippy and Python stopped it before the
+     build. The single offline attempt remains unconsumed.
+     [Successor receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-rope-20261114-4ddbcf69/summary.json).
      Run one offline attempt if admitted. Keep Edge repin and push held.
    - **Verification and done when** Match all 75,776 query and 18,944 key
      rotated values bit for bit with pinned llama.cpp.
@@ -85,3 +89,4 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-replay | c
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-recovery | change=queue the query and key normalization replay
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-norm | change=queue the query and key RoPE replay
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-review | change=bind the RoPE handoff to the admission receipt and fresh run directory
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-rope-successor | change=record the successor admission stop
