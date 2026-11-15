@@ -31,14 +31,11 @@
      Reproduce all 75,776 retained llama.cpp values, including `0xbac911ed`
      at channel 8. Compare all 75,776 native values in each engine bit for
      bit against its own source-bound accumulation order.
-   - **Next bounded step** Prepare a fresh inert replay-only packet from
-     the two retained binaries and original operands. Bind the successful
-     build receipts and consumed attempt. Verify their bound source files
-     against the current checkout. After review and fresh admission,
-     one authorized attempt uses the original limits and stops on the first
-     unexplained value or failure. Preserve the entry-through-RoPE proof.
-     Keep production runs, Edge repin and push held.
-     [Retained builds](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-all-20261114-53d89669-resume/retained-builds.json).
+   - **Next bounded step** Review inert replay-only packet `96e27811`.
+     After exact authorization and fresh admission, run it once under the
+     original limits. Reuse both bound binaries and stop at the first
+     unexplained value or failure. Keep production runs, Edge repin and push held.
+     [Packet readiness](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-replay-only-20261115-851b5cc0-docs/readiness.json).
      [Connected attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-prep-20261114-53d89669/connected-attempt-20261114.json).
      [Full shared-score result](../../artifacts/lfm2-moe/layer2-attention-all-shared-20261114-53d89669-resume/result.json).
      [Channel-8 arithmetic receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-channel8-20261114-53d89669/summary.json).
@@ -51,10 +48,10 @@
      corrections in maintained code. Reuse bitwise operator proof when dtype,
      layout, width, group size and dispatch match. Preserve
      [both routing formulas](DECISIONS.md#layer-2-routing-comparison).
-   - **Connect** Start from the hash-bound layer-1 output and compare attention,
-     expert projections, weighting, merge and residual using Candle's computed
-     intermediates throughout. Account for the verified weighting and
-     addition-order effects.
+   - **Connect** After a passing full replay, close value-reduction
+     classification and resume from the hash-bound layer-1 output. Compare
+     attention, expert projections, weighting, merge and residual with
+     Candle-computed intermediates and account for the verified order effects.
    - **Done when** The connected layer passes its declared comparisons, the
      maintained candidate passes its relevant regressions and fixture gates,
      and a new inert packet binds its exact source and binaries, the
@@ -150,3 +147,4 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-all | change=link the prepared full-reduction successor
 AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-review | change=specify native control coverage and full accumulation gate
 AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-work | change=queue inert replay-only packet from retained builds
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-replay-only-prep | change=route the exact packet to review and authorization

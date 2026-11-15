@@ -105,7 +105,8 @@ full shared-score replay then matched 2,056 outputs and stopped at token 1,
 head 0, channel 8 with equal probabilities and rounded products. A
 follow-up reproduced both output bits with fused and separate accumulation.
 The full reduction attempt built both probes and stopped at the compiler
-admission check before replay. Both binaries are retained for the next packet.
+admission check before replay. The verified inert successor reuses both probes
+and awaits exact replay authorization in the [MoE queue](../lfm2-moe/TODO.md).
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
@@ -468,3 +469,4 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-channe
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-all-shared | change=record the first residual value reduction mismatch
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-channel8 | change=record the explained channel-8 difference
 AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-work | change=record the offline packet stop before replay
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-replay-only-prep | change=route the verified replay-only successor

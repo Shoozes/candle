@@ -1049,9 +1049,12 @@ retains the same probe sources and original limits.
 On November 15, all 90 successor bindings and initial admission passed.
 Both builds exited zero and released their Jobs. The post-reference-build
 check detected pinned compiler PID 16624 while both 16 GiB memory floors
-passed. The attempt stopped with zero replays and zero model loads. Next,
-prepare the inert replay-only packet using both exact retained binaries.
+passed. The attempt is consumed with zero replays and zero model loads.
 [Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-all-20261114-53d89669-resume/summary.json).
+
+Replay-only packet `96e27811` supersedes `fec9777e` and reuses both binaries.
+Its checkout guard accepts the scoped docs advance from `851b5cc0`.
+All 103 bindings passed with zero dispatches. [MoE TODO](TODO.md#remaining-gates-in-order).
 
 The position-2 teacher-forced failure and production qualification remain
 open. Standalone LFM3 text proof and an LTS support contract remain later work.
@@ -1154,3 +1157,5 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-all | change=compact the attention history while preserving its receipts
 AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-review | change=record read-only binding and admission recheck
 AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-work | change=record both builds and terminal admission refusal
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-replay-only-prep | change=record verified inert packet and original build identity
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-replay-closeout | change=bind successor across the documentation checkpoint

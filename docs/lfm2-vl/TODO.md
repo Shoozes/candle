@@ -65,8 +65,8 @@ attempt passed through Q/K RoPE and stopped at token 1, head 0, channel 1.
 That value matches with shared scores. The full downstream replay stopped
 at channel 8, where fused and separate accumulation reproduce both output
 bits. The [next MoE step](../lfm2-moe/TODO.md#remaining-gates-in-order)
-prepares a replay-only packet from the retained binaries for the full
-value reduction on identical probabilities and frozen V.
+reviews the inert packet for the full value reduction on identical
+probabilities and frozen V before authorizing either bound probe.
 A later production parity packet needs the continuation-reporting
 reference binary, separate review and admission.
 Production model runs, package builds and consumer adoption require separate
@@ -478,3 +478,4 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-channe
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-all-shared | change=route the remaining value accumulation trace to the MoE queue
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-channel8 | change=route the full value reduction to the MoE queue
 AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-work | change=route the replay-only handoff to the MoE queue
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-replay-only-prep | change=select review of the exact inert packet
