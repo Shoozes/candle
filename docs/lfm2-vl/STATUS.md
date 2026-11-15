@@ -115,8 +115,13 @@ using their corresponding shared F32 residuals. The
 connected attempt `e73f4816` passed that checkpoint and stopped at the
 first router logit difference. Both engines reproduced both router controls
 on shared inputs. Connected packet `a21893d2` passed those router
-controls and stopped at the first sigmoid probability mismatch. The
-[MoE queue](../lfm2-moe/TODO.md) selects a shared-input sigmoid replay.
+controls and stopped at the first sigmoid probability mismatch. Both
+engines reproduced both probability controls on shared inputs. The
+connected attempt `05899599` passed the sigmoid controls and stopped at
+the first expert selection-score difference. Both engines reproduced both
+score controls on shared inputs. The offline gather stopped before dispatch
+because the pinned compiler was busy. The [MoE queue](../lfm2-moe/TODO.md)
+requires an idle compiler check for the next bounded gather attempt.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
@@ -489,3 +494,8 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-router-cross | change=route 
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-prep | change=route the sealed router successor to review
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-review | change=route the reviewed packet to its held execution gate
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-sigmoid-stop | change=route the first connected sigmoid mismatch to the MoE queue
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-sigmoid-cross | change=route the verified sigmoid controls to connected preparation
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-sigmoid-dropin | change=link to the sealed inert sigmoid successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-bias-stop | change=route the selection-score stop to the MoE queue
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-selection-bias-cross | change=route the verified bias controls to connected preparation
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-bias-recheck | change=route the read-only gather witness to the MoE offline replay

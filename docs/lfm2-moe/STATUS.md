@@ -1,5 +1,36 @@
 # LFM2-MoE current state
 
+## Current checkpoint
+
+Consumed packet `05899599` passed revised admission and whole-model
+verification. It matched 686,720 values against the bound controls through
+sigmoid across 14 stages, then stopped at selection scores token 1/expert 3
+(`0x3e358d0e` versus `0x3e358d0f`). The Job released and the post-run census passed.
+[Connected attempt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-sigmoid-20261115-0be31b31/connected-attempt-20261115.json).
+
+Both engines reproduced all 2,368 selection scores on each shared
+37-row sigmoid input with the frozen bias. Switching inputs reproduced
+all 1,661 differences, including `0x3e358d0e` on Candle probabilities and
+`0x3e358d0f` on llama.cpp probabilities at token 1/expert 3. One offline
+attempt passed revised admission and both Jobs released.
+[Selection-bias replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-selection-bias-cross-20261115-0be31b31/result.json).
+
+Read-only ranking matched all 148 ordered IDs on both inputs. Direct
+gather found 110 differing weights, first at token 1/slot 1/expert 53
+(`0x3ea27487` vs `0x3ea27484`). The harness now checks each input against
+its own 148-weight control. Revised admission passed with 35.19 GiB
+physical and 36.13 GiB commit headroom. The launcher refused the shared
+`rustc.exe` already in use. The marker was consumed with zero dispatches.
+[Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-gather-cross-20261115-0be31b31/terminal.json).
+
+Connected `layer_out`, maintained integration, the production position-2
+failure and Edge acceptance remain open. Standalone LFM3 CPU/CUDA text
+qualification and the LTS support contract are separate remaining gates.
+[TODO](TODO.md) owns their order. [Production qualification](QUALIFICATION.md)
+binds two frozen cases and eight teacher-forced positions each.
+
+## Implementation and retained proof
+
 The November 10 capability was published as Candle
 `95df99a0bda2f6ac64dbeb8475850f826bd92ca9` from base `5f094821`.
 The first Q4 parity attempt stopped during CPU comparison. The comparator
@@ -55,18 +86,7 @@ still `38d90519`. GenEye's `81e1aa28`, other consumer pins, frozen releases and
 all original owner edits are preserved. The current publication covers Candle
 only; it does not grant Edge pin/lock adoption or production execution.
 
-The existing official Q4_K_M file remains at `C:/llamacpp/models/`, unchanged and
-unloaded. Header inspection admits all 428 tensors and estimates 16,035,996,672
-bytes at context 12,288/chunk 128. That is an estimate, not observed peak memory
-or runtime acceptance. The pinned llama.cpp CPU probe is built separately from
-`582eab71`; the installed `9df0b73c` runtime is untouched. Its no-model version
-probe passed and the bounded build Job released all children.
-
-Run record: `D:/Compact_Evidence/candle/runs/lfm2-moe-20261110-5f094821/summary.json`.
-[TODO](TODO.md) owns remaining Done When gates. [QUALIFICATION](QUALIFICATION.md)
-freezes two prompts/eight teacher-forced positions before testing. The prior inert
-packet `1e4449ab` at `inert-packet-final/packet.json` remains preserved as historical
-preparation. It no longer matches the reviewed source and is not admissible.
+[HISTORY](HISTORY.md) retains the initial model inspection and packet receipts.
 
 The review/recheck compared all 48 Candle and 16 Edge scoped source hashes with
 the retained final inventory at the unchanged Candle/Edge heads. Previous token,
@@ -79,35 +99,6 @@ inspector's checked EOS. Eleven model-free protocol tests and five quantized CPU
 tests pass, including EOS acceptance/refusal. Required checks/Clippy and their
 exact commands belong to the review receipt under the run's `review-20261110/`.
 The main run summary and all older proof remain unchanged.
-
-The model-free artifact refresh is complete. A fresh CUDA-enabled release binary
-was built locked/offline at
-`D:/CodexStorage/build/candle-lfm2-moe-refresh-20261110-5f094821/release/examples/lfm2-moe.exe`,
-SHA-256 `7ee3969b125feffd96d1df2b2b78f767dafca78cf4e978c73fb6f34a3e8a82e3`.
-All 788 build-input hashes stayed stable. Header inspection and four exact
-tokenizer cases passed without loading weight payloads, and the retained CPU
-reference reported its pinned revision. The original model's full size/hash was
-freshly reverified in place. The build emitted an LNK4098 library-conflict warning;
-the successful build and no-model checks do not prove production execution.
-
-The completed refresh's inert packet is
-`D:/Compact_Evidence/candle/runs/lfm2-moe-artifact-refresh-20261110-5f094821/packet/packet.json`.
-Its owning run's `summary.json`, `build-binding.json` and
-`binding-verification.json` bind the binary, stable build inputs, finalized
-candidate inventory and all four `--inputs`/`--case` comparisons. Original limits,
-old packet/binaries, frozen inputs and consumer pins are preserved. All bounded
-build/no-model children exited and released their Jobs. Production dispatches
-remain zero. [HISTORY](HISTORY.md) owns the completed refresh details. This
-`1717f529` packet remains immutable preparation for its pre-publication source.
-
-The source closeout's commit, exact clean-commit native gate and confirmed remote
-result belong to
-`D:/Compact_Evidence/candle/runs/lfm2-moe-publish-20261110-5f094821/summary.json`.
-Only the guarded helper's confirmed receipt establishes publication. Its
-`packet/packet.json` rebinds preparation to the final committed source inventory
-without rebuilding unchanged Rust inputs or changing the binary/model identity.
-Its `binding-verification.json` records the source bridge and original limits.
-No historical packet or binary is replaced.
 
 Packet `00ab6c5e` consumed its one attempt on November 11. Both CPU reference
 children and Candle's CPU arithmetic child exited successfully and released
@@ -1014,16 +1005,6 @@ Both engines matched all 2,368 logits on each shared norm input and
 reproduced all 1,723 input-dependent differences. Both Jobs released.
 [Router replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-cross-20261115-67b14101/result.json).
 
-Packet `a21893d2` passed revised admission and the whole-model hash.
-The sole connected CPU attempt matched 684,352 values through router
-logits and stopped at sigmoid token 1/expert 3 (`0x3e17402f` versus
-`0x3e174030`). The Job released and post-run admission passed.
-[Connected attempt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-router-20261115-67b14101/connected-attempt-20261115.json).
-
-Connected FFN and final residual proof, the position-2 teacher-forced
-failure and production qualification remain open. Standalone LFM3 text
-proof and an LTS support contract remain later work.
-
 The fixture batch published at `60ce38d4` gives canonical channel-major
 weights precedence for square ShortConv kernels. The nonsymmetric fixture
 reproduced the old failure and checks prefill and cached decode with exact
@@ -1136,3 +1117,8 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-router-cross | change=record
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-prep | change=record the sealed router successor and zero probe launches
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-review | change=record the inert recheck and held execution gate
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-sigmoid-stop | change=record the consumed router packet and the first sigmoid mismatch
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-sigmoid-cross | change=record the exact same-input sigmoid controls and explained witness
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-sigmoid-dropin | change=lead with the consumed checkpoint and inert successor; archive preparation detail
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-bias-stop | change=record the consumed sigmoid successor and selection score witness
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-selection-bias-cross | change=record exact same-input bias addition and the explained witness
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-bias-recheck | change=record the read-only rank and unbiased gather witnesses

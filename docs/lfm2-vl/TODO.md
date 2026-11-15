@@ -72,9 +72,13 @@ connected attempt `e73f4816` passed the bound RMSNorm comparison and
 stopped at the first differing router logit. A shared-input replay
 reproduced both router controls in both engines. The
 connected packet `a21893d2` passed the router controls and stopped at
-the first sigmoid probability mismatch. The
-[MoE queue](../lfm2-moe/TODO.md#remaining-gates-in-order) selects a
-shared-input sigmoid replay.
+the first sigmoid probability mismatch. The paired replay reproduced
+both controls. Connected attempt `05899599` passed the sigmoid stage and
+stopped at the first expert selection-score difference. The paired bias
+replay reproduced both controls. The
+[MoE queue](../lfm2-moe/TODO.md#remaining-gates-in-order) requires one
+fresh offline gather attempt after checking the pinned compiler is idle.
+Inert successor preparation follows exact gather proof.
 A later production parity packet needs the continuation-reporting
 reference binary, separate review and admission.
 Production model runs, package builds and consumer adoption require separate
@@ -496,3 +500,8 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-router-cross | change=route 
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-prep | change=select review of the sealed router successor
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-review | change=point to the reviewed packet and authorization gate
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-sigmoid-stop | change=hand off the shared-input sigmoid comparison
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-sigmoid-cross | change=route the inert successor with both sigmoid controls
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-sigmoid-dropin | change=route the sealed successor through review before dispatch
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-bias-stop | change=hand off the first selection-score difference
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-selection-bias-cross | change=route the next inert packet with both selection-score controls
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-bias-recheck | change=order native gather proof before connected preparation

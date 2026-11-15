@@ -1,5 +1,17 @@
 # LFM2-MoE completed work
 
+## 2026-11-15 - Layer-2 shared-input sigmoid proof
+
+Packet `a21893d2` matched 684,352 values through logits and stopped at
+sigmoid token 1/expert 3.
+[Connected attempt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-router-20261115-67b14101/connected-attempt-20261115.json).
+
+Both engines matched all 2,368 sigmoid probabilities per shared 37-row
+input. Switching inputs reproduced all 1,680 differences. The first was
+`0x3e17402f` on Candle logits and `0x3e174030` on llama.cpp logits at token
+1/expert 3. Both Jobs released.
+[Sigmoid replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-sigmoid-cross-20261115-0be31b31/result.json).
+
 ## 2026-11-15 - Layer-2 attention score and value witnesses
 
 The rebound trace at `53d89669` reproduced the channel-0 output controls
@@ -568,7 +580,9 @@ consumer dependency. [TODO](TODO.md) preserves those remaining gates.
 ## 2026-11-10 - Model-free qualification artifact refresh
 
 The reviewed comparator/EOS cleanup now has a fresh CUDA-enabled qualification
-binary in the separately owned D: build directory recorded in [STATUS](STATUS.md).
+binary in the separately owned D: build directory. The historical path was
+`D:/CodexStorage/build/candle-lfm2-moe-refresh-20261110-5f094821/release/examples/lfm2-moe.exe`
+with SHA-256 `7ee3969b125feffd96d1df2b2b78f767dafca78cf4e978c73fb6f34a3e8a82e3`.
 The locked/offline release build passed in 513 seconds. All 788 build inputs
 matched before and after compilation and at packet preparation. Its bounded
 Windows Job peaked at 3,390,283,776 bytes and released its children. An LNK4098
@@ -589,8 +603,15 @@ paths remain byte exact. No consumer pin, model, lock or release identity change
 Production dispatches, commits, pushes, package assembly, installation and
 activation are zero for this batch.
 
-Compact proof and exact commands:
-`D:/Compact_Evidence/candle/runs/lfm2-moe-artifact-refresh-20261110-5f094821/summary.json`.
+The initial [implementation receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-20261110-5f094821/summary.json)
+retains packet `1e4449ab`. It was superseded by the refresh. The model
+was inspected at `C:/llamacpp/models/` with a CPU probe built from `582eab71`
+apart from the installed `9df0b73c` runtime.
+
+The [refresh receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-artifact-refresh-20261110-5f094821/summary.json)
+and [inert packet](D:/Compact_Evidence/candle/runs/lfm2-moe-artifact-refresh-20261110-5f094821/packet/packet.json)
+retain the exact commands, binary/build bindings, and pre-publication packet
+`1717f529`. The subsequent source closeout binds the committed inventory.
 The shared catalog protects the D: build output while this packet depends on it;
 review its retention only after the packet is closed or replaced. [TODO](TODO.md)
 owns packet review, separately granted finite production qualification, Edge
@@ -619,3 +640,4 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-replay | 
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-raw-sum | change=retain the raw sum mismatch, exact operands and terminal cleanup
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-ffn-norm-cross | change=retain the completed layer-2 attention trace details
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-sigmoid-stop | change=archive completed value-reduction attempt details
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-sigmoid-dropin | change=retain the historical preparation paths and release evidence

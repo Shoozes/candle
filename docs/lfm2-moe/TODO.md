@@ -24,11 +24,15 @@
 ## Remaining gates in order
 
 1. Produce the maintained Candle candidate for connected layer-2 CPU correctness.
-   - **Next bounded step** Replay sigmoid offline in both engines on each
-     shared 37-row router-logit tensor. Reproduce both probability controls
-     at token 1/expert 3 and isolate any same-input difference. Preserve
-     revised admission, the original limits and the one-attempt stop rule.
-     [Connected attempt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-router-20261115-67b14101/connected-attempt-20261115.json).
+   - **Next bounded step.** For one fresh authorized gather attempt, check
+     that the pinned `rustc.exe` is idle before consuming the new attempt
+     marker. Keep the launcher's executable guard and revised resource
+     admission. Reuse the verified source and controls. Require both engines
+     to match all 148 weights bitwise on each of the two frozen inputs,
+     including token 1/slot 1 (expert 53), under the original limits.
+     [Control bindings](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-gather-cross-20261115-0be31b31/controls.json).
+   - **Then prepare.** Seal one inert successor with both score and gather
+     controls, exact ordered top-K and Candle tensors through `layer_out`.
    - **Then integrate** Use the connected proof through `layer_out` to
      select demonstrated corrections in maintained code. Reuse operator proof
      where dtype, layout, width, group size and dispatch match. Preserve
@@ -144,3 +148,8 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-router-cross | change=select
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-prep | change=select review of the sealed router successor
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-review | change=order the held connected attempt before maintained integration
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-sigmoid-stop | change=select shared-input sigmoid proof before resuming connected layer 2
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-sigmoid-cross | change=select an inert successor with both sigmoid controls
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-sigmoid-dropin | change=route the sealed sigmoid successor to review and its held execution gate
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-bias-stop | change=select the shared-input selection bias replay after the connected stop
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-selection-bias-cross | change=select an inert successor with both selection-score controls
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-bias-recheck | change=queue the shared-input native gather before the next connected successor
