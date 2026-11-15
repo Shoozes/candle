@@ -1,5 +1,62 @@
 # LFM2-MoE completed work
 
+## 2026-11-15 - Layer-2 Q6_K expert down on both input lanes
+
+The pinned GGML indexed graph used the ordinary CPU buffer with the tiled
+path for experts 30, 37 and 54 and plain AVX2 for the other 32 groups.
+On each verified SwiGLU input it matched Candle on all 888 pre-dot Q8_K
+blocks and 303,104 unweighted outputs. The reference lane also reproduced
+its archived Q8_K and down controls, including row 36.
+
+Changing the input lane changed 682 Q8_K blocks and 250,333 down values.
+The first output difference was token 1, slot 0, expert 37, channel 0
+(`0x3ba325b7` Candle, `0x3ba325b8` llama.cpp). The guarded Windows attempt
+built only the paired diagnostic and exercised the frozen weight range.
+All three Jobs released under the original limits. [Down replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-down-cross-20261115-62579e67/summary.json).
+
+## 2026-11-15 - Layer-2 SwiGLU controls on both input lanes
+
+Inert review of `078aa139` found that the next checkpoint compares
+SwiGLU directly with llama.cpp even when the sealed Candle up tensor
+differs. Reconstruction matched every pinned reference value and
+predicted 194,626 cross-input differences. The first is token 1, slot 0,
+expert 37, channel 1, with the same gate and an up difference of one ULP.
+[Review receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-up-20261115-cf15b2fc/review-swiglu.json).
+
+One bounded Windows CPU attempt reused the original binary for two
+sequential Jobs. All 227,328 outputs per lane matched their controls,
+including row 36. Both Jobs released after passing quiet/resource
+admission. The retained Candle tensor is verified for the next down
+replay. [SwiGLU receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-swiglu-cross-20261115-62579e67/summary.json).
+
+## 2026-11-15 - Inert gate-plus-up connected layer-2 packet
+
+Packet `078aa139` supersedes consumed `f007a0a9` and binds both frozen
+FFN norm lanes to the full gate and up controls. It keeps 26 comparisons
+from the parent and adds the exact Candle-side control at `expert_up`.
+The guarded build ran once after compiler contention cleared and released
+its Job. The seal passed inert verification, a wrong digest was rejected,
+and the attempt state was absent.
+[Readiness receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-up-20261115-cf15b2fc/readiness.json). [Preparation record](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-up-20261115-cf15b2fc/closeout-preparation.json).
+
+## 2026-11-15 - Layer-2 up-projection replay
+
+Packet `f007a0a9` passed fresh admission and the whole-model hash, then
+used its single connected attempt on 37 frozen rows. It passed the declared
+comparisons for 916,934 values across 21 stages through `expert_gate`,
+with exact layer-1 entry, Q/K RoPE and top-K. It stopped at `expert_up`,
+token 1, slot 0, expert 37, channel 1 (`0x3e0e29a6` vs `0x3e0e29a7`,
+one ULP). The Job released and the post-run census passed.
+[Attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gate-20261115-10448a6b/connected-attempt-20261115.json).
+
+The offline Q4_K up replay matched all pre-dot Q8_K operands and
+227,328 outputs per shared FFN norm in both engines across all 35 groups.
+Changing the norm reproduced all 170,062 connected differences, starting
+at expert 37's channel-1 witness. All Jobs released after one attempt
+under the original limits. This proof covers the indexed diagnostic
+schedule. Maintained CPU execution still uses `GenericTiled`.
+[Full up replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-up-cross-20261115-cf15b2fc/result.json).
+
 ## 2026-11-15 - Connected layer-2 whole-gate control
 
 Packet `f007a0a9` sealed both full gate controls with exact entry, Q/K RoPE
@@ -704,3 +761,6 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-raw-sum | change
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-ffn-norm-cross | change=retain the completed layer-2 attention trace details
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-sigmoid-stop | change=archive completed value-reduction attempt details
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-sigmoid-dropin | change=retain the historical preparation paths and release evidence
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-seal | change=retain build cleanup and inert successor proof
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-swiglu-cross | change=retain the native two-lane SwiGLU proof
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-cross | change=retain exact down controls and group dispatch proof

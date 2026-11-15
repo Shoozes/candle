@@ -2,27 +2,15 @@
 
 ## Current checkpoint
 
-The up-control successor sources are staged and both control lanes verified.
-The pinned compiler guard refused preparation before dispatch. The build
-can resume on a descendant of `cf15b2fc` with the same compiled source
-once the pinned compiler is idle.
-[Preparation record](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-up-20261115-cf15b2fc/closeout-preparation.json).
+Both verified SwiGLU lanes passed the Q6_K expert-down replay. Each
+matched all 888 Q8_K blocks before the dot and 303,104 unweighted
+outputs. The pinned reference control reproduced and all Jobs released.
+Changing lanes changed 682 Q8_K blocks and 250,333 down values.
+Packet `078aa139` remains inert and unused. [Down replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-down-cross-20261115-62579e67/summary.json).
 
-Packet `f007a0a9` passed fresh admission and the whole-model hash, then
-used its single connected attempt on 37 frozen rows. It passed the declared
-comparisons for 916,934 values across 21 stages through `expert_gate`,
-with exact layer-1 entry, Q/K RoPE and top-K. It stopped at `expert_up`,
-token 1, slot 0, expert 37, channel 1 (`0x3e0e29a6` vs `0x3e0e29a7`,
-one ULP). The Job released and the post-run census passed.
-[Attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gate-20261115-10448a6b/connected-attempt-20261115.json).
-
-The offline Q4_K up replay matched all pre-dot Q8_K operands and
-227,328 outputs per shared FFN norm in both engines across all 35 groups.
-Changing the norm reproduced all 170,062 connected differences, starting
-at expert 37's channel-1 witness. All Jobs released after one attempt
-under the original limits. This proof covers the indexed diagnostic
-schedule. Maintained CPU execution still uses `GenericTiled`.
-[Full up replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-up-cross-20261115-cf15b2fc/result.json).
+The [up-projection replay](HISTORY.md#2026-11-15---layer-2-up-projection-replay)
+explains the diagnostic difference in consumed packet `f007a0a9`.
+Maintained CPU execution uses `GenericTiled`.
 
 Connected `layer_out`, maintained integration, the production position-2
 failure and Edge acceptance remain open. Standalone LFM3 CPU/CUDA text
@@ -1123,3 +1111,7 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-sigmoid-dropin | change=lead
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-bias-stop | change=record the consumed sigmoid successor and selection score witness
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-selection-bias-cross | change=record exact same-input bias addition and the explained witness
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-bias-recheck | change=record the read-only rank and unbiased gather witnesses
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-seal | change=record the sealed gate-plus-up packet and zero dispatches
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-review | change=record the inert recheck and downstream input-lane finding
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-swiglu-cross | change=record both verified SwiGLU controls and cleanup
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-cross | change=record both expert-down controls and cleanup

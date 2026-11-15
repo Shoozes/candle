@@ -24,19 +24,15 @@
 ## Remaining gates in order
 
 1. Produce the maintained Candle candidate for connected layer-2 CPU correctness.
-   - **Next bounded step.** Seal one inert successor to consumed packet
-     `f007a0a9`. Bind the gate and up controls to their respective frozen
-     FFN norms. Preserve exact entry, Q/K RoPE, ordered top-K and original
-     limits. Feed Candle's computed gate and up tensors into SwiGLU, then
-     carry the computed path through `layer_out` with all downstream
-     comparisons intact.
-   - **Preparation done when** The inert verifier accepts the seal and
-     rejects a wrong digest with zero probe dispatches. Preserve the parent
-     receipt. Any later connected attempt needs separate authorization,
+   - **Next bounded step.** Seal an inert successor to unused `078aa139`
+     with the verified SwiGLU and down controls. Preserve all 37 rows,
+     groups, limits, exact entry, Q/K RoPE and top-K. Keep Candle's computed
+     path to `layer_out` and both engines' weighting, merge and residual checks.
+     Done when the seal verifies, a wrong digest fails, and cleanup is
+     proven with zero probe dispatches. [Down replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-down-cross-20261115-62579e67/summary.json).
+   - Connected execution needs exact authorization for the successor,
      fresh admission and the whole-model hash. Stop at the first
-     unexplained difference.
-     [Staged build and blocker](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-up-20261115-cf15b2fc/closeout-preparation.json).
-     [Full up controls](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-up-cross-20261115-cf15b2fc/result.json).
+     unexplained difference or failure.
    - **Then integrate** Use the connected proof through `layer_out` to
      select demonstrated corrections in maintained code. Reuse operator proof
      where dtype, layout, width, group size and dispatch match. Preserve
@@ -157,3 +153,7 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-sigmoid-dropin | change=rout
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-bias-stop | change=select the shared-input selection bias replay after the connected stop
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-selection-bias-cross | change=select an inert successor with both selection-score controls
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-bias-recheck | change=queue the shared-input native gather before the next connected successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-seal | change=route the sealed gate-plus-up packet to review and held execution
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-review | change=prioritize the offline SwiGLU control before dispatch
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-swiglu-cross | change=select the two-lane Q8_K and Q6_K expert down replay
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-cross | change=select one inert successor with both controls
