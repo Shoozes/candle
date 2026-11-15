@@ -23,49 +23,48 @@
 
 ## Remaining gates in order
 
-1. Once selected, trace the layer-2 raw expert-weight reduction at row 1.
-   - **Why** Packet `6db2c79c` matched the 37 retained GGML sums and
-     stopped at Candle's first difference. Candle produced `0x3fb72528`
-     where GGML produced `0x3fb72527`.
-     [First-difference receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-sum-20261114-62ab7c06/summary.json).
-   - **Bound inputs** Use the exact four row-1 weights in expert-slot
-     order, both native outputs and the pinned capture. The 37-row
-     raw-sum gate remains open. Its row-36 reference is `0x3f9d6164`.
-     [Weights](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-gather-20261114-91a27e18/selected_weights.f32),
-     [Candle sums](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-sum-20261114-62ab7c06/weight_sum.f32),
-     and [GGML control](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-successor-20261113-4df21393/reference/weight_sum.f32).
-   - **Execution when selected** Compare the native width-four F32
-     accumulation with the pinned GGML F64 accumulation and F32 cast.
-     Use a fresh finite packet with quiet before sealing and fresh
-     admission for one offline attempt under the [original limits](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-sum-20261114-62ab7c06/packet.json).
-     Stop on failure. Keep Edge repin and push held.
-   - **Verification and done when** Reproduce both row-1 sum bits
-     and identify the first arithmetic difference from the running
-     accumulations. Test any proposed diagnostic schedule on all 37
-     raw sums, including row 36, before moving to normalization.
-2. Resolve the CPU mismatch under the existing [QUALIFICATION](QUALIFICATION.md)
-   criteria. Use the raw expert-weight sum result to select the next
-   comparison. Classify the denominator according to [DECISIONS](DECISIONS.md#layer-2-routing-comparison)
-   before judging normalized weights or sparse expert output.
-   Compare Candle's own causal attention on the matched Q/K/V rows before
-   accepting a connected layer-2 replay. Reuse operator proof when the
-   dtype, layout, width and dispatch match. Isolate a distinct operation
-   or a demonstrated mismatch.
-   Capture a deterministic regression and integrate only a justified correction.
-   Bind a new inert packet to the reviewed candidate, a reference
-   binary built from the continuation-reporting probe source, frozen inputs,
-   original limits and four comparison commands. Keep the consumed packet and
-   its receipts available for comparison.
-3. After a new exact owner grant and fresh admission, run the reviewed finite
+1. Produce the maintained Candle candidate for connected layer-2 CPU correctness.
+   - **Start here** Trace post-RoPE attention at token 1, head 0, channel 0
+     on the frozen Q/K/V and positions. Preserve the prepared controller
+     at `c01376ed`. Rebind its probe sources, operands and tools to the
+     current checkpoint before sealing. Run one offline attempt after fresh
+     admission under the original limits. The pre-seal compiler refusal
+     consumed zero attempts.
+     [Prepared trace and admission record](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attention-first-term-20261114-c01376ed-resume/readiness.json).
+   - **Controls** Reproduce Candle `0x3b7aeaeb` and pinned llama.cpp
+     `0x3b7aeaed` at the witness before comparing intermediate values.
+     Keep all 37 queries and each engine's original layout. Candle uses 37
+     keys. The pinned GGML graph uses a masked 256-key cache view, original
+     strides, transposed V and the KQ precision hint.
+     [Candle attention replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-candle-attention-baseline-20261114-c01376ed-resume/summary.json). [Pinned GGML attention receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attn-values-20261114-b67d23be/summary.json).
+   - **Done when for this trace** Compare the two visible Q·K scores first.
+     If they match, compare scaling, masked softmax, then the value products
+     and reduction at channel 0. Stop at the first unexplained difference
+     or control failure. Record the stage, both operands and results in bits,
+     and the active kernel dispatch. Keep production runs, Edge repin and
+     push held.
+   - **Integrate** Reuse bitwise operator proof when dtype, layout, width, group
+     size and dispatch match. Integrate demonstrated corrections with focused
+     regressions and preserve [both routing formulas](DECISIONS.md#layer-2-routing-comparison).
+   - **Connect** Start from the hash-bound layer-1 output and compare attention,
+     expert projections, weighting, merge and residual using Candle's computed
+     intermediates throughout. Account for the verified weighting and
+     addition-order effects.
+   - **Done when** The connected layer passes its declared comparisons, the
+     maintained candidate passes its relevant regressions and fixture gates,
+     and a new inert packet binds its exact source and binaries, the
+     continuation-reporting reference binary, frozen inputs, original limits
+     and four comparison commands. Preserve the consumed packet and receipts.
+2. After a new exact owner grant and fresh admission, run the reviewed finite
    packet once under [QUALIFICATION](QUALIFICATION.md).
    - Done when: The pinned CPU reference, Candle CPU and RTX 4090 complete the
      two frozen cases with exact teacher-forced selections, four frozen-input
      comparisons, finite logit differences, observed peaks and terminal cleanup.
      Stop on any admission or execution failure without retry or relaxed limits.
-4. After supplier parity, explicitly select the bounded Edge qualification
+3. After supplier parity, explicitly select the bounded Edge qualification
    admission through its held candidate gate. Prove CLI/API chat, strict JSON,
    cancellation, unload/reload and a successful recovery request on both devices.
-5. After confirmed Candle source publication and separately authorized Edge
+4. After confirmed Candle source publication and separately authorized Edge
    adoption, reconcile only Edge's
    reviewed Candle pin and affected locks, rerun its selected graph/gates and
    record adoption. Other consumers retain their exact qualified identities.
@@ -115,3 +114,22 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-gather | 
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-review | change=bind the next gather attempt to the verified checkout and controller
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-replay | change=queue raw expert-weight sums before normalization
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-raw-sum | change=queue the raw sum witness and native attention before connected layer proof
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-maintained-reduction | change=record scoped CPU reduction and pending exact replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-replay | change=record exact raw sums and the classified denominator
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-normalized | change=record exact engine-specific normalization and queue expert projections
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-projection | change=record the consumed harness compile stop
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gate-witness | change=record the first grouped gate mismatch and queue the exact dot trace
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-expert0-gate-dot | change=record the compiler admission stop and retain the reference object
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-expert0-dot-resume | change=record exact Q8_K match and route the indexed reference discrepancy
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-expert0-indexed | change=record native CPU repack witness and matching Q8_K scratch
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-expert0-repack-arithmetic | change=queue a grouped expert projection replay with the traced schedule
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-gate-up-repack | change=select the bounded expert SwiGLU replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-swiglu | change=select the isolated Q6_K expert down replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-q6k-down | change=select the isolated per-expert weighting replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-weighting | change=select the isolated sparse expert merge
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-merge | change=select maintained Candle attention before connected layer-2 parity
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-candle-attention-baseline | change=retain the bound attention probe for a fresh attempt
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-candle-attention-resume | change=select the first causal attention mismatch trace
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-review | change=bind the attention trace to the failing layouts and output controls
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-first-term | change=route the selected trace to the prepared successor
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-closeout | change=require a new revision binding before the unused offline attempt

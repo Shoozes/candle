@@ -57,9 +57,9 @@ query difference to F32 accumulation. The isolated GEMM/GEMV replays matched
 all 37 query and key rows bit for bit. The offline attention output
 projection matched pre-dot Q8_K and all mixer values. The post-mixer
 residual and weighted FFN RMSNorm replay matched all normalized values.
-The [MoE queue](../lfm2-moe/TODO.md) selects the row-1 raw expert-weight
-accumulation trace as the next offline checkpoint. It also tracks
-the native Candle attention proof needed for a connected layer-2 replay.
+The [MoE queue](../lfm2-moe/TODO.md) records the exact expert projections
+and the verified sparse merge. It selects a trace of the first causal
+attention mismatch at token 1, head 0 before the connected layer-2 replay.
 A later production parity packet needs the continuation-reporting
 reference binary, separate review and admission.
 Production model runs, package builds and consumer adoption require separate
@@ -453,3 +453,12 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attn-output | ch
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-ffn-norm | change=route the next MoE router projection replay
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-closeout | change=route the next raw expert-weight sum replay
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-raw-sum | change=replace the raw sum replay pointer with the row-1 accumulation trace
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-maintained-reduction | change=record scoped CPU reduction and pending exact replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-replay | change=record exact raw sums and the classified denominator
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-normalized | change=record exact engine-specific normalization and queue expert projections
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-gate-up-repack | change=route the next isolated check to expert SwiGLU
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-swiglu | change=route the next isolated check to expert down
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-q6k-down | change=route the next isolated check to expert weighting
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-weighting | change=route the next isolated check to the expert merge
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-merge | change=route the next bounded work to maintained attention
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-review | change=replace the stale attention baseline task with the selected trace

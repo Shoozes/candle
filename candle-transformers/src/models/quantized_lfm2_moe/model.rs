@@ -72,7 +72,7 @@ impl FeedForward {
                 let (batch, length, hidden) = x.dims3()?;
                 let flat = x.reshape(((), hidden))?;
                 let logits = flat.matmul(&router.t()?)?;
-                let (ids, weights) = routing::route(&logits, Some(bias), *topk, true, 1.)?;
+                let (ids, weights) = routing::route_gguf(&logits, bias, *topk)?;
                 let weights = weights.flatten_all()?;
                 let mut output = flat.zeros_like()?;
                 for (expert, (tokens, slots)) in
@@ -448,7 +448,7 @@ mod tests {
             .broadcast_as((3, width))?
             .contiguous()?;
         let expected_routes = [[3usize, 0, 1, 2], [3, 4, 2, 1], [3, 0, 1, 2]];
-        let (ids, _) = routing::route(&input.matmul(&router.t()?)?, Some(&bias), 4, true, 1.)?;
+        let (ids, _) = routing::route_gguf(&input.matmul(&router.t()?)?, &bias, 4)?;
         assert_eq!(
             ids.to_vec2::<u32>()?,
             expected_routes.map(|row| row.map(|i| i as u32))

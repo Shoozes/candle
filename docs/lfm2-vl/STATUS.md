@@ -81,8 +81,18 @@ all 148 ordered expert IDs, including row 36 `[54, 37, 30, 20]`.
 Packet `62ab7c06` then matched all 148 unbiased gathered weights, including
 row 36. Raw-sum packet `6db2c79c` reproduced all 37 pinned GGML controls
 and stopped at Candle's first difference in row 1. The
-[MoE queue](../lfm2-moe/TODO.md) records the accumulation trace before
-normalization and keeps native Candle attention open for layer 2.
+[MoE status](../lfm2-moe/STATUS.md) records exact raw sums and all 148
+normalized weights verified against each engine's denominator formula.
+The offline expert replay matched all layer-2 gate and up values before
+weighting, all 227,328 split SwiGLU values and all 303,104 Q6_K expert down
+values. The isolated sparse expert merge now matches both accumulation
+controls. The maintained candidate starts with Candle causal attention on
+the matched Q/K/V and positions before connected layer 2.
+The first admitted Candle replay stopped at token 1, head 0, channel 0
+after matching all 2,048 values at token 0. Reproduce both output controls
+in their original layouts before tracing Q·K.
+The prepared paired trace needs a fresh revision binding and admission
+before its single offline attempt.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
@@ -422,3 +432,16 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-top4 | ch
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-gather | change=route the gather admission stop to the MoE queue
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-replay | change=route the completed gather and next raw sum to MoE
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-raw-sum | change=route the raw sum mismatch and native attention proof to MoE
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-maintained-reduction | change=record scoped CPU reduction and pending exact replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-replay | change=record exact raw sums and the classified denominator
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-normalized | change=record exact engine-specific normalization and queue expert projections
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-gate-up-repack | change=record exact expert projection parity
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-swiglu | change=record layer-2 SwiGLU parity and the next gate
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-q6k-down | change=record layer-2 expert down parity and the next gate
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-weighting | change=record exact weighted outputs and the next gate
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-merge | change=record the sparse FFN checkpoint and maintained attention gate
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-candle-attention-baseline | change=record the attention probe admission stop
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-candle-attention-resume | change=record the first admitted attention mismatch
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-review | change=route the attention witness to its original layouts
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-first-term | change=record the paired trace readiness
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-closeout | change=route verified reduction evidence and the trace binding requirement

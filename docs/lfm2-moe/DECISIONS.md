@@ -44,6 +44,11 @@ gathered unbiased weights by `sum + 1e-6`. The pinned llama.cpp `582eab71`
 LFM graph enables normalization and divides by `max(sum, 6.103515625e-5)`.
 The formulas can produce different F32 results even above the clamp threshold.
 
+The quantized CPU router accumulates selected weights in F64 and casts the
+raw sum back to the weight dtype before adding the existing epsilon.
+This addresses the observed F32 rounding difference on the frozen GGUF
+rows. The native safetensors and CUDA paths use their existing reductions.
+
 The layer-2 diagnostic compares logits, sigmoid probabilities, biased selection
 scores, ordered integer IDs, unbiased gathered weights and raw sums before the
 denominator. An expert-order mismatch retains the two ordered lists, their
@@ -58,3 +63,4 @@ still applies.
 
 ---
 AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-inert | change=record routing authority and first-difference classification
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-maintained-reduction | change=record scoped CPU reduction and pending exact replay

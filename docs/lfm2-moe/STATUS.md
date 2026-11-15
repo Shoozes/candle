@@ -816,10 +816,163 @@ Pinned GGML reproduced all 37 retained row sums, including row 36
 `0x3f9d6164`. Candle's F32 CPU `sum_keepdim` first differed at row 1
 with `0x3fb72528` versus GGML's `0x3fb72527`. All three Jobs released
 their processes. The attempt is consumed with zero retries and zero
-model loads. The [next task](TODO.md) is to trace the width-four F32
-and F64 accumulation paths on that witness. The denominator and normalized
-weights remain pending.
+model loads. The follow-up reconstruction matched both saved native outputs
+across all 37 rows. The engines differ on 11 rows. The rounded partial
+sums first diverge at the fourth addition of row 1.
+
+The local quantized CPU router now widens the reduction to F64 and rounds
+before adding the Transformers epsilon. The focused MoE gate passed
+12 tests, including an exact regression for the row-1 sum and denominator.
+Fresh admission for the maintained-source replay found Cargo, rustc and
+Python processes and stopped before sealing with zero dispatches.
+[Reconstruction and admission](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-reduction-20261114-c01376ed/summary.json).
+
+With the owner's authorization to allow concurrent build and Python
+workloads, the maintained CPU replay ran once under the original numeric
+limits. All 37 raw sums matched bit for bit, including row 36
+`0x3f9d6164`. The first denominator difference was row 0. The common
+raw sum was `0x3f87e358`, Candle's epsilon gave `0x3f87e360`, and
+GGML's clamp gave `0x3f87e358`. Both outputs matched their respective
+formulas. The replay stopped there and both Jobs released their processes.
+[Completion receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-reduction-20261114-c01376ed/completion.json).
 [First-difference receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-sum-20261114-62ab7c06/summary.json).
+
+One offline normalized-weight replay used the matched 37×4 inputs and
+the maintained Candle CPU reduction. Both engines matched all 148
+values under their own formulas, and GGML reproduced all 148 values in
+the pinned capture. The denominator formulas explain all 148
+cross-engine differences. The largest absolute delta was
+`5.066394806e-7`. Both builds and the replay released their Jobs.
+[Normalized-weight receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-router-normalized-20261114-c01376ed/summary.json).
+
+The first offline gate/up attempt verified the frozen FFN input, expert IDs
+and both Q4_K ranges. It stopped during the harness build with `E0599`.
+The harness used the GGUF spelling `Q4_K` for Candle's Rust enum variant
+`GgmlDType::Q4K`. The build Job released its process. The attempt is
+consumed with zero projection dispatches. Gate/up parity remains open.
+[Compile stop](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-expert-gate-up-20261114-c01376ed/summary.json).
+
+The corrected `GgmlDType::Q4K` harness built and ran once with the
+original grouping and numeric limits. Before weighting, the first gate
+mismatch in maintained dispatch was expert 0, token 28, slot 0,
+channel 0. The group had one row under `GenericTiled`. Candle returned
+`0x3ca52840` and pinned llama.cpp returned `0x3ca52844`. The attempt
+stopped there. Both Jobs released their processes. Up and weighting
+remain open. [First-difference receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-expert-gate-up-20261114-q4k/summary.json).
+
+The one-row expert-0 dot trace verified the frozen input and Q4_K
+operands and built the pinned GGML adapter. The bounded launcher refused
+the Candle build because the same pinned `rustc.exe` was already running.
+The reference Job released its process. The attempt is consumed with zero
+replay dispatches. The reference object remains bound for the successor.
+[Trace stop](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-expert0-gate-dot-20261114-q4k/summary.json).
+
+The successor reused the verified GGML object and froze the expert-0
+one-row trace before dispatch. The isolated native quantizers matched
+all eight Q8_K scales, 2,048 quantized bytes and 128 block sums. Candle's
+quad dot and GGML's direct dot both gave `0x3ca52840`. The direct GGML
+dot differed from the retained indexed projection `0x3ca52844`, so the
+probe stopped. Both Jobs released their processes. The actual indexed
+reference dispatch and its operands still need proof.
+[Trace receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-expert0-gate-dot-20261114-resume/summary.json).
+
+The pinned indexed `mul_mat_id` replay used the same frozen 37 FFN rows,
+ordered IDs and one-row expert-0 group. Its `CPU_REPACK` buffer selected
+`q4_K_8x8` and reproduced `0x3ca52844` at token 28, slot 0, channel 0.
+The plain CPU indexed buffer gave `0x3ca52840`, matching Candle's
+prior quad dot. Both indexed scratch buffers matched the retained
+Q8_K row in all 8 scales, 2,048 bytes and 128 sums. Both Jobs released
+their processes. The buffer and kernel choice account for the observed
+difference.
+[Indexed gate receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-expert0-indexed-20261114-c01376ed/summary.json).
+
+One bounded offline trace reproduced the packed GEMV output `0x3ca52844`
+and the plain AVX2 output `0x3ca52840`. The first difference is in the
+zero-index block 0 scale and signed minimum contributions. The packed and
+plain scale terms are `0x3ce80ddc` and `0x3ce80ddd`. Their minimum terms are
+`0xbcdf2299` and `0xbcdf229a`. Both kernels agree on the integer terms.
+The packed kernel folds the integer lanes before F32 fused accumulation.
+Plain AVX2 accumulates distinct F32 lanes before horizontal reduction.
+The combined prefix first differs after block 2 at `0xbc118958` versus
+`0xbc11895c`. All 48 native prefix checks passed and both Jobs released
+their processes.
+[Arithmetic trace receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-expert0-repack-arithmetic-20261114-c01376ed/summary.json).
+
+The isolated Candle replay preserved the 35 expert groups and all 148 ordered
+selections on the 37 frozen FFN rows. The pinned indexed path uses
+`q4_K_8x8` GEMV for each selected row, including multi-row groups.
+Integer folding and separate F32 fused scale and minimum accumulation matched
+all 227,328 gate and 227,328 up values bit for bit before weighting. Token 28
+expert-0 gate reproduced `0x3ca52844` with the captured Q8_K scales, bytes
+and sums. Row 36 matched in all four slots. One offline attempt passed under
+the original limits and both Jobs released their processes.
+[Expert gate/up receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-expert-gate-up-repack-20261114-c01376ed/summary.json).
+
+The isolated SwiGLU replay applied the verified AVX2/FMA SiLU arithmetic and
+Candle's F32 multiply to the matched gate and up tensors. All 227,328 values
+matched pinned llama.cpp bit for bit in token, slot and channel order.
+Token 28, slot 0, channel 0 gave `0xba6c8f0f`, and all four slots in row 36
+matched. Fresh admission passed, both Jobs released their processes, and the
+single offline attempt stayed within the original limits.
+[Expert SwiGLU receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-expert-swiglu-20261114-c01376ed/summary.json).
+
+The isolated Q6_K expert down replay preserved all 35 groups. The pinned
+native quantizer and Candle candidate matched the scales, quant bytes and
+sums in all 888 Q8_K blocks before the dot. Experts 30, 37 and 54 used the
+indexed tiled schedule. The remaining 32 groups used the plain AVX2 schedule.
+All 303,104 unweighted values matched pinned llama.cpp bit for bit, including
+all four slots in row 36. Token 28, slot 0, channel 0 gave `0x3a3c36f8`.
+The single attempt passed fresh admission under the original limits, and all
+four Jobs released their processes.
+[Expert down receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-expert-q6k-down-20261114-c01376ed/summary.json).
+
+The isolated expert weighting replay used the existing Candle F32 broadcast
+multiply in the original 35 groups. All 303,104 products with the pinned
+llama.cpp weights matched the reference. All 303,104 products with Candle's
+weights matched an independent F32 multiplication. Changing only the verified
+weights accounted for all output differences, with a maximum absolute delta
+of `1.043081283569e-7`. Both Jobs released their processes after one offline
+attempt under the original limits. The verified Candle tensor is retained
+for the sparse expert merge.
+[Expert weighting receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-expert-weighting-20261114-c01376ed/summary.json).
+
+The offline sparse expert merge closed the isolated layer-2 sparse FFN
+checkpoint. The llama.cpp slot-order replay matched all 75,776 pinned
+values. Candle's existing expert-order `index_add` matched 75,776
+independent F32 sums with each of the two verified weighted tensors.
+Holding the operands fixed, addition order changed the result by at most
+`7.4505806e-9`. Holding the order fixed, the verified weight difference
+changed it by at most `1.7881393e-7`. Both Jobs exited and released under
+the original limits. The Candle sparse FFN output is retained.
+
+The maintained candidate starts with Candle's own causal attention on the
+bound Q/K/V operands and positions. The earlier matching attention receipt
+used a pinned GGML graph. The merge receipt binds that comparison target and
+the layer-1 entry for the later connected layer-2 run.
+[Expert merge receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-expert-merge-20261114-c01376ed/summary.json).
+
+The source-bound Candle attention probe stopped at build admission when
+a concurrent llama-server appeared after the pre-seal check. Both memory
+floors passed. The run dispatched zero builds and zero replays.
+[Candle attention admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-candle-attention-baseline-20261114-c01376ed/summary.json).
+
+The successor reused the bound Candle post-RoPE probe and the same 37 Q/K/V
+rows after fresh admission. All 2,048 values at token 0 matched. The first
+mismatch was token 1, head 0, channel 0, where Candle gave `0x3b7aeaeb`
+and pinned llama.cpp gave `0x3b7aeaed`. The comparison stopped at this
+two-ULP difference, and both Jobs released under the original limits.
+The next trace reproduces both output controls in their original layouts
+before comparing the two visible Q·K scores at token 1, head 0.
+[Candle attention replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-candle-attention-baseline-20261114-c01376ed-resume/summary.json).
+
+The paired trace probes are prepared against the original Candle operations
+and pinned GGML graph. The pre-seal check found active compilers from the bound
+toolchain. Subsequent checks still found those compiler executables active.
+Both memory floors passed. No build or replay launched. The prepared
+controller binds `c01376ed` as both `HEAD` and `origin/main`. Preserve
+that controller and rebind the same probe sources and frozen inputs to
+the current checkpoint before sealing the single offline attempt.
+[Pre-seal refusal](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attention-first-term-20261114-c01376ed/summary.json). [Prepared trace and admission record](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attention-first-term-20261114-c01376ed-resume/readiness.json).
 
 The position-2 teacher-forced failure and production qualification remain
 open. Standalone LFM3 text proof and an LTS support contract remain later work.
@@ -890,3 +1043,22 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-gather | 
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-review | change=record the read-only gather recheck and timestamped quiet census
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-replay | change=record successful gather admission, parity and cleanup after the prior refusal
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-raw-sum | change=record the raw sum stop and keep native Candle attention proof open
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-maintained-reduction | change=record scoped CPU reduction and pending exact replay
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-replay | change=record exact raw sums and the classified denominator
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-router-normalized | change=record exact engine-specific normalization and queue expert projections
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-projection | change=record the consumed harness compile stop
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gate-witness | change=record the first grouped gate mismatch and queue the exact dot trace
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-expert0-gate-dot | change=record the compiler admission stop and retain the reference object
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-expert0-dot-resume | change=record exact Q8_K match and route the indexed reference discrepancy
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-expert0-indexed | change=record native CPU repack witness and matching Q8_K scratch
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-expert0-repack-arithmetic | change=record both native controls and the first rounded terms
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-gate-up-repack | change=record bitwise gate and up parity and terminal cleanup
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-swiglu | change=record exact split SwiGLU parity and terminal cleanup
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-q6k-down | change=record exact indexed quantization and unweighted down parity
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-weighting | change=record both exact product checks and their classified differences
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-merge | change=close the isolated sparse FFN checkpoint and bind the maintained attention inputs
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-candle-attention-baseline | change=record the pre-dispatch attention admission stop
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-candle-attention-resume | change=record the first Candle attention difference and cleanup
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-review | change=clarify the scope of the first attention mismatch trace
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-first-term | change=retain the staged trace and pre-seal compiler refusal
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-closeout | change=record the prepared controller's revision binding
