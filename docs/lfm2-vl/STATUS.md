@@ -89,10 +89,23 @@ values. The isolated sparse expert merge now matches both accumulation
 controls. The maintained candidate starts with Candle causal attention on
 the matched Q/K/V and positions before connected layer 2.
 The first admitted Candle replay stopped at token 1, head 0, channel 0
-after matching all 2,048 values at token 0. Reproduce both output controls
-in their original layouts before tracing Q·K.
-The prepared paired trace needs a fresh revision binding and admission
-before its single offline attempt.
+after matching all 2,048 values at token 0. The completed paired trace
+reproduced both output controls and located the first difference in the
+two visible raw F32 Q·K scores. A follow-up reproduced all four score bits
+and explained the difference by the native dot accumulation order. With
+common scores, both engines matched scaling, probabilities and the final
+attention value at the witness. Connected CPU packet `93cc154a` binds the
+isolated candidate to the hash-bound layer-1 output and the 27 retained
+comparison tensors. Model-free preparation and the whole-file hash passed.
+The admitted connected attempt matched all nine stages through Q/K RoPE
+and stopped at the first unexplained attention value at token 1, head 0,
+channel 1. The packet is consumed and the Job released its process. The
+channel-1 replay matched through value reduction on common scores. The
+full shared-score replay then matched 2,056 outputs and stopped at token 1,
+head 0, channel 8 with equal probabilities and rounded products. A
+follow-up reproduced both output bits with fused and separate accumulation.
+The full reduction attempt built both probes and stopped at the compiler
+admission check before replay. Both binaries are retained for the next packet.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
@@ -445,3 +458,13 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-candle-attention
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-review | change=route the attention witness to its original layouts
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-first-term | change=record the paired trace readiness
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-closeout | change=route verified reduction evidence and the trace binding requirement
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-qk | change=record the paired trace and raw dot comparison boundary
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-dot | change=record the classified dot order and downstream check
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-shared-scores | change=record the matched downstream witness and connected gate
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-connected-prep | change=route current status to the prepared connected packet
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-connected-admission | change=record identity success and pending connected admission
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-connected-attempt | change=record the connected attention stop and cleanup
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-channel1 | change=record the matched channel-1 shared-score witness
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-all-shared | change=record the first residual value reduction mismatch
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-channel8 | change=record the explained channel-8 difference
+AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-work | change=record the offline packet stop before replay

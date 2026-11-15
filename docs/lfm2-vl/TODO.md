@@ -58,8 +58,15 @@ all 37 query and key rows bit for bit. The offline attention output
 projection matched pre-dot Q8_K and all mixer values. The post-mixer
 residual and weighted FFN RMSNorm replay matched all normalized values.
 The [MoE queue](../lfm2-moe/TODO.md) records the exact expert projections
-and the verified sparse merge. It selects a trace of the first causal
-attention mismatch at token 1, head 0 before the connected layer-2 replay.
+and the verified sparse merge. The paired replay explained both raw F32
+Q·K score differences at token 1, head 0. The downstream replay matched
+the channel-0 attention witness with common scores. The connected CPU
+attempt passed through Q/K RoPE and stopped at token 1, head 0, channel 1.
+That value matches with shared scores. The full downstream replay stopped
+at channel 8, where fused and separate accumulation reproduce both output
+bits. The [next MoE step](../lfm2-moe/TODO.md#remaining-gates-in-order)
+prepares a replay-only packet from the retained binaries for the full
+value reduction on identical probabilities and frozen V.
 A later production parity packet needs the continuation-reporting
 reference binary, separate review and admission.
 Production model runs, package builds and consumer adoption require separate
@@ -462,3 +469,12 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-q6k-down 
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-weighting | change=route the next isolated check to the expert merge
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-expert-merge | change=route the next bounded work to maintained attention
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-review | change=replace the stale attention baseline task with the selected trace
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-qk | change=route the next step to the F32 dot schedule comparison
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-dot | change=route the next step to downstream attention with shared scores
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-shared-scores | change=route the next step to connected layer-2 preparation
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-connected-prep | change=select review of the inert connected CPU comparison
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-connected-attempt | change=route the first unexplained connected value to the MoE queue
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-channel1 | change=route the full attention comparison to the MoE queue
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-all-shared | change=route the remaining value accumulation trace to the MoE queue
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-channel8 | change=route the full value reduction to the MoE queue
+AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-work | change=route the replay-only handoff to the MoE queue

@@ -24,28 +24,33 @@
 ## Remaining gates in order
 
 1. Produce the maintained Candle candidate for connected layer-2 CPU correctness.
-   - **Start here** Trace post-RoPE attention at token 1, head 0, channel 0
-     on the frozen Q/K/V and positions. Preserve the prepared controller
-     at `c01376ed`. Rebind its probe sources, operands and tools to the
-     current checkpoint before sealing. Run one offline attempt after fresh
-     admission under the original limits. The pre-seal compiler refusal
-     consumed zero attempts.
-     [Prepared trace and admission record](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attention-first-term-20261114-c01376ed-resume/readiness.json).
-   - **Controls** Reproduce Candle `0x3b7aeaeb` and pinned llama.cpp
-     `0x3b7aeaed` at the witness before comparing intermediate values.
-     Keep all 37 queries and each engine's original layout. Candle uses 37
-     keys. The pinned GGML graph uses a masked 256-key cache view, original
-     strides, transposed V and the KQ precision hint.
-     [Candle attention replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-candle-attention-baseline-20261114-c01376ed-resume/summary.json). [Pinned GGML attention receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attn-values-20261114-b67d23be/summary.json).
-   - **Done when for this trace** Compare the two visible Q·K scores first.
-     If they match, compare scaling, masked softmax, then the value products
-     and reduction at channel 0. Stop at the first unexplained difference
-     or control failure. Record the stage, both operands and results in bits,
-     and the active kernel dispatch. Keep production runs, Edge repin and
-     push held.
-   - **Integrate** Reuse bitwise operator proof when dtype, layout, width, group
-     size and dispatch match. Integrate demonstrated corrections with focused
-     regressions and preserve [both routing formulas](DECISIONS.md#layer-2-routing-comparison).
+   - **Start here** Verify the full F32 value reduction on identical
+     probabilities and frozen V across all 37 rows. Keep Candle's 37-key
+     layout and llama.cpp's masked 256-key layout. Reproduce the retained
+     Candle prefix of 2,056 values and its channel-8 witness `0xbac911ee`.
+     Reproduce all 75,776 retained llama.cpp values, including `0xbac911ed`
+     at channel 8. Compare all 75,776 native values in each engine bit for
+     bit against its own source-bound accumulation order.
+   - **Next bounded step** Prepare a fresh inert replay-only packet from
+     the two retained binaries and original operands. Bind the successful
+     build receipts and consumed attempt. Verify their bound source files
+     against the current checkout. After review and fresh admission,
+     one authorized attempt uses the original limits and stops on the first
+     unexplained value or failure. Preserve the entry-through-RoPE proof.
+     Keep production runs, Edge repin and push held.
+     [Retained builds](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-all-20261114-53d89669-resume/retained-builds.json).
+     [Connected attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-prep-20261114-53d89669/connected-attempt-20261114.json).
+     [Full shared-score result](../../artifacts/lfm2-moe/layer2-attention-all-shared-20261114-53d89669-resume/result.json).
+     [Channel-8 arithmetic receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-channel8-20261114-53d89669/summary.json).
+   - **Attention evidence** At token 1, head 0, the native dot schedules
+     account for the attention-output differences at channels 0 and 1.
+     Both engines match at those witnesses through the final value
+     reduction on the same raw scores. The rest of the tensor remains open.
+     [Channel-0 receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attention-shared-scores-20261114-53d89669/summary.json). [Channel-1 receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attention-channel1-20261114-53d89669/summary.json).
+   - **Integrate** Use the isolated connected result to select demonstrated
+     corrections in maintained code. Reuse bitwise operator proof when dtype,
+     layout, width, group size and dispatch match. Preserve
+     [both routing formulas](DECISIONS.md#layer-2-routing-comparison).
    - **Connect** Start from the hash-bound layer-1 output and compare attention,
      expert projections, weighting, merge and residual using Candle's computed
      intermediates throughout. Account for the verified weighting and
@@ -133,3 +138,15 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-candle-attention
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-review | change=bind the attention trace to the failing layouts and output controls
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-first-term | change=route the selected trace to the prepared successor
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-closeout | change=require a new revision binding before the unused offline attempt
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-qk | change=queue the bounded F32 dot accumulation comparison
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-qk-dot | change=queue downstream attention on common raw scores
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-shared-scores | change=queue the connected comparison from exact layer entry
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-connected-prep | change=route the review to the inert connected CPU packet
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-connected-admission | change=retain the unused attempt and link its refused windows
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-connected-attempt | change=queue the first unexplained attention value on shared operands
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-channel1 | change=queue a shared-score comparison across the full attention tensor
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-all-shared | change=queue the first differing value accumulation on retained operands
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-channel8 | change=queue full value reduction proof on shared probabilities
+AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-all | change=link the prepared full-reduction successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-review | change=specify native control coverage and full accumulation gate
+AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-work | change=queue inert replay-only packet from retained builds
