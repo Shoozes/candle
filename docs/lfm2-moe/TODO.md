@@ -24,22 +24,15 @@
 ## Remaining gates in order
 
 1. Produce the maintained Candle candidate for connected layer-2 CPU correctness.
-   - **Next bounded step** Review inert packet `d6ebb030`. It binds exact
-     entry through Q/K RoPE, native attention, and both mixer controls.
-     Use Candle's computed mixer through FFN and residual. Hold probe runs
-     until an exact grant and fresh admission.
-     [Packet readiness](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-mixer-20261115-ab705d07/readiness.json).
-     [Consumed attempt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-successor-20261115-ab705d07/connected-attempt-20261115.json).
-     [Mixer replay result](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-mixer-cross-20261115-ab705d07-recheck-121900/cross-input-result.json).
-   - **Integrate** Use the isolated connected result to select demonstrated
-     corrections in maintained code. Reuse bitwise operator proof when dtype,
-     layout, width, group size and dispatch match. Preserve
+   - **Next bounded step** Replay sigmoid offline in both engines on each
+     shared 37-row router-logit tensor. Reproduce both probability controls
+     at token 1/expert 3 and isolate any same-input difference. Preserve
+     revised admission, the original limits and the one-attempt stop rule.
+     [Connected attempt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-router-20261115-67b14101/connected-attempt-20261115.json).
+   - **Then integrate** Use the connected proof through `layer_out` to
+     select demonstrated corrections in maintained code. Reuse operator proof
+     where dtype, layout, width, group size and dispatch match. Preserve
      [both routing formulas](DECISIONS.md#layer-2-routing-comparison).
-   - **Resume connected comparison** After exact authorization, check quiet
-     admission before hashing and before dispatch. Compare all 27 stages
-     through `layer_out` on Candle's own tensors and verify Job cleanup.
-     Retain the first unexplained difference or failure and stop. Keep the
-     original limits and holds on production runs, Edge repin and push.
    - **Done when** The connected layer passes its declared comparisons, the
      maintained candidate passes its relevant regressions and fixture gates,
      and a new inert packet binds its exact source and binaries, the
@@ -143,3 +136,11 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-attempt | change=s
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-mixer-replay | change=select connected successor with both verified mixer controls
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-mixer-review | change=record staged comparator and pending build
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-mixer-seal | change=select the inert successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-ffn-norm-stop | change=select matched-input FFN normalization replay
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-ffn-norm-cross | change=select inert connected packet with both normalization controls
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-norm-prep | change=select review of the sealed normalization successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-stop | change=queue a shared-input replay of the first router logit difference
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-router-cross | change=select an inert successor with both exact router controls
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-prep | change=select review of the sealed router successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-review | change=order the held connected attempt before maintained integration
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-sigmoid-stop | change=select shared-input sigmoid proof before resuming connected layer 2

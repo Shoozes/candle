@@ -1,5 +1,69 @@
 # LFM2-MoE completed work
 
+## 2026-11-15 - Layer-2 attention score and value witnesses
+
+The rebound trace at `53d89669` reproduced the channel-0 output controls
+on 37 rows and stopped at the two raw F32 Q·K scores. Candle gave
+`0x420f017a,0x423ebead` and llama.cpp gave `0x420f017b,0x423ebeac`.
+The receipt binds the operands, layouts and dispatches. All Jobs released
+after one offline attempt.
+[Paired attention trace receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attention-first-term-20261114-53d89669/summary.json).
+
+The 64-lane reconstruction reproduced both score pairs. Candle first
+uses a different FMA accumulator at channel 1. The first different rounded
+prefix is channel 1 for key 0 (`0x3dfac4dd` vs `0x3dfac4de`) and channel 2
+for key 1 (`0x3d35b375` vs `0x3d35b376`). Both replay Jobs released.
+[Q·K arithmetic receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qk-dot-20261114-53d89669/summary.json).
+
+At token 1, head 0, shared raw scores and frozen V matched through
+scaling, softmax, the two products and channel-0 output `0x3b7aeaed`.
+The raw score schedule explains this witness. All Jobs released.
+[Shared-score receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attention-shared-scores-20261114-53d89669/summary.json).
+
+Connected CPU packet `93cc154a` binds 37 rows, 13 GGUF ranges and 27
+captures at `53d89669`. Native self-tests and wrong-digest refusal passed.
+[Inert connected packet](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-prep-20261114-53d89669/packet.json).
+
+Two identity checks matched the whole-model hash, then build activity
+blocked final admission with zero dispatches and both memory floors met.
+[Admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-prep-20261114-53d89669/connected-admission-20261114.json).
+
+Packet `93cc154a` passed the whole-file hash and admission. Its sole
+attempt matched 454,656 values through Q/K RoPE and stopped at attention
+token 1/head 0/channel 1 (`0x3baac798` vs `0x3baac794`, four ULPs).
+The Job released, the post-run census passed, and the packet is consumed.
+[Connected attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-prep-20261114-53d89669/connected-attempt-20261114.json).
+
+The channel-1 replay reproduced both native values. Shared raw scores
+and frozen V matched through softmax, products and final `0x3baac794`.
+The upstream score difference explains the four ULPs. All Jobs released.
+[Channel-1 replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attention-channel1-20261114-53d89669/summary.json).
+
+The 37-row shared-score replay reproduced all 75,776 native values per
+engine. With 22,496 shared raw scores, Candle matched 2,056 reference
+values and stopped at token 1/head 0/channel 8 (`0xbac911ee` vs
+`0xbac911ed`). Probabilities and rounded products matched. All Jobs
+released. This receipt is in C: artifacts after a D: allocation failure.
+[Full replay receipt](../../artifacts/lfm2-moe/layer2-attention-all-shared-20261114-53d89669-resume/summary.json).
+
+At channel 8, the differing key-1 accumulation is fused in Candle and
+separately rounded in llama.cpp. The retained probabilities and V
+reproduced both bits. Both Jobs released with zero model loads.
+[Channel-8 arithmetic receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-channel8-20261114-53d89669/summary.json).
+
+The full value-reduction probes bind 22,496 probabilities and frozen V.
+A pre-seal compiler refusal consumed no attempt. Both memory floors passed.
+[Admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-all-20261114-53d89669/summary.json). [Prepared successor](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-all-20261114-53d89669-resume/readiness.json).
+
+Both builds passed and released their Jobs. Compiler PID 16624 blocked
+post-build admission. The attempt is consumed with zero replays.
+[Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-all-20261114-53d89669-resume/summary.json).
+
+Packet `96e27811` matched all 75,776 values per engine against its own
+order on shared probabilities and V. Both controls passed. Accumulation
+orders explain 46,278 cross-engine bit differences. Both Jobs released.
+[Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-replay-only-20261115-851b5cc0-docs/summary.json).
+
 ## 2026-11-14 - Layer-2 raw expert-weight sum replay stopped at row 1
 
 Packet `6db2c79c` fed both native CPU reductions the matched weights
@@ -553,3 +617,5 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-bias | ch
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-router-top4 | change=retain the ordered top-four CPU parity and cleanup proof
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-gather-replay | change=retain bitwise unbiased gather parity and the row-36 witness
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-raw-sum | change=retain the raw sum mismatch, exact operands and terminal cleanup
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-ffn-norm-cross | change=retain the completed layer-2 attention trace details
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-sigmoid-stop | change=archive completed value-reduction attempt details

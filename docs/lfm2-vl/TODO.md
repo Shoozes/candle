@@ -66,8 +66,15 @@ That value matches with shared scores. The full downstream replay stopped
 at channel 8, where fused and separate accumulation reproduce both output
 bits. The full reduction passed with identical probabilities and frozen V.
 The paired mixer replay reproduced the token-1 difference by changing
-the shared attention input. The [MoE queue](../lfm2-moe/TODO.md#remaining-gates-in-order)
-selects a connected successor with the verified mixer controls.
+the shared attention input. The paired FFN RMSNorm replay matched all
+37 rows on each shared residual in both engines. The
+connected attempt `e73f4816` passed the bound RMSNorm comparison and
+stopped at the first differing router logit. A shared-input replay
+reproduced both router controls in both engines. The
+connected packet `a21893d2` passed the router controls and stopped at
+the first sigmoid probability mismatch. The
+[MoE queue](../lfm2-moe/TODO.md#remaining-gates-in-order) selects a
+shared-input sigmoid replay.
 A later production parity packet needs the continuation-reporting
 reference binary, separate review and admission.
 Production model runs, package builds and consumer adoption require separate
@@ -482,3 +489,10 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-replay-only-prep | change=select review of the exact inert packet
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-value-replay | change=return the next MoE step to connected layer 2
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-prep | change=select review of the exact connected packet
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-ffn-norm-cross | change=route the next inert connected packet to the MoE queue
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-norm-prep | change=select review of the inert packet with both normalization controls
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-stop | change=route the first router logit difference to the MoE queue
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-router-cross | change=route the next inert packet with both verified router controls
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-prep | change=select review of the sealed router successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-review | change=point to the reviewed packet and authorization gate
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-sigmoid-stop | change=hand off the shared-input sigmoid comparison

@@ -109,7 +109,14 @@ probabilities and V. Both engines matched 75,776 values against their own
 orders and released their Jobs. The connected successor passed the ten
 stages through attention and stopped at the mixer. The paired replay
 reproduced both retained mixers in both engines on shared inputs. The
-[MoE queue](../lfm2-moe/TODO.md) records the sealed inert successor with both controls.
+next connected attempt passed the mixer and stopped at FFN RMSNorm.
+The paired offline replay reproduced both normalized tensors bit for bit
+using their corresponding shared F32 residuals. The
+connected attempt `e73f4816` passed that checkpoint and stopped at the
+first router logit difference. Both engines reproduced both router controls
+on shared inputs. Connected packet `a21893d2` passed those router
+controls and stopped at the first sigmoid probability mismatch. The
+[MoE queue](../lfm2-moe/TODO.md) selects a shared-input sigmoid replay.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
@@ -475,3 +482,10 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-replay-only-prep | change=route the verified replay-only successor
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-value-replay | change=record the isolated comparison pass
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-prep | change=route the verified inert successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-ffn-norm-cross | change=route verified cross-input FFN RMSNorm to the connected handoff
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-norm-prep | change=route the verified inert connected packet to review
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-stop | change=route the consumed connected packet to the router replay
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-router-cross | change=route the completed router comparison to an inert successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-prep | change=route the sealed router successor to review
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-router-review | change=route the reviewed packet to its held execution gate
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-sigmoid-stop | change=route the first connected sigmoid mismatch to the MoE queue
