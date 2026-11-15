@@ -104,9 +104,12 @@ channel-1 replay matched through value reduction on common scores. The
 full shared-score replay then matched 2,056 outputs and stopped at token 1,
 head 0, channel 8 with equal probabilities and rounded products. A
 follow-up reproduced both output bits with fused and separate accumulation.
-The full reduction attempt built both probes and stopped at the compiler
-admission check before replay. The verified inert successor reuses both probes
-and awaits exact replay authorization in the [MoE queue](../lfm2-moe/TODO.md).
+The replay-only successor closed isolated value reduction on identical
+probabilities and V. Both engines matched 75,776 values against their own
+orders and released their Jobs. The connected successor passed the ten
+stages through attention and stopped at the mixer. The paired replay
+reproduced both retained mixers in both engines on shared inputs. The
+[MoE queue](../lfm2-moe/TODO.md) records the sealed inert successor with both controls.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
@@ -470,3 +473,5 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-all-sh
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-channel8 | change=record the explained channel-8 difference
 AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-work | change=record the offline packet stop before replay
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-replay-only-prep | change=route the verified replay-only successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-value-replay | change=record the isolated comparison pass
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-prep | change=route the verified inert successor

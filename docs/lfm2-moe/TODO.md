@@ -24,34 +24,22 @@
 ## Remaining gates in order
 
 1. Produce the maintained Candle candidate for connected layer-2 CPU correctness.
-   - **Start here** Verify the full F32 value reduction on identical
-     probabilities and frozen V across all 37 rows. Keep Candle's 37-key
-     layout and llama.cpp's masked 256-key layout. Reproduce the retained
-     Candle prefix of 2,056 values and its channel-8 witness `0xbac911ee`.
-     Reproduce all 75,776 retained llama.cpp values, including `0xbac911ed`
-     at channel 8. Compare all 75,776 native values in each engine bit for
-     bit against its own source-bound accumulation order.
-   - **Next bounded step** Review inert replay-only packet `96e27811`.
-     After exact authorization and fresh admission, run it once under the
-     original limits. Reuse both bound binaries and stop at the first
-     unexplained value or failure. Keep production runs, Edge repin and push held.
-     [Packet readiness](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-replay-only-20261115-851b5cc0-docs/readiness.json).
-     [Connected attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-prep-20261114-53d89669/connected-attempt-20261114.json).
-     [Full shared-score result](../../artifacts/lfm2-moe/layer2-attention-all-shared-20261114-53d89669-resume/result.json).
-     [Channel-8 arithmetic receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-channel8-20261114-53d89669/summary.json).
-   - **Attention evidence** At token 1, head 0, the native dot schedules
-     account for the attention-output differences at channels 0 and 1.
-     Both engines match at those witnesses through the final value
-     reduction on the same raw scores. The rest of the tensor remains open.
-     [Channel-0 receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attention-shared-scores-20261114-53d89669/summary.json). [Channel-1 receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attention-channel1-20261114-53d89669/summary.json).
+   - **Next bounded step** Review inert packet `d6ebb030`. It binds exact
+     entry through Q/K RoPE, native attention, and both mixer controls.
+     Use Candle's computed mixer through FFN and residual. Hold probe runs
+     until an exact grant and fresh admission.
+     [Packet readiness](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-mixer-20261115-ab705d07/readiness.json).
+     [Consumed attempt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-successor-20261115-ab705d07/connected-attempt-20261115.json).
+     [Mixer replay result](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-mixer-cross-20261115-ab705d07-recheck-121900/cross-input-result.json).
    - **Integrate** Use the isolated connected result to select demonstrated
      corrections in maintained code. Reuse bitwise operator proof when dtype,
      layout, width, group size and dispatch match. Preserve
      [both routing formulas](DECISIONS.md#layer-2-routing-comparison).
-   - **Connect** After a passing full replay, close value-reduction
-     classification and resume from the hash-bound layer-1 output. Compare
-     attention, expert projections, weighting, merge and residual with
-     Candle-computed intermediates and account for the verified order effects.
+   - **Resume connected comparison** After exact authorization, check quiet
+     admission before hashing and before dispatch. Compare all 27 stages
+     through `layer_out` on Candle's own tensors and verify Job cleanup.
+     Retain the first unexplained difference or failure and stop. Keep the
+     original limits and holds on production runs, Edge repin and push.
    - **Done when** The connected layer passes its declared comparisons, the
      maintained candidate passes its relevant regressions and fixture gates,
      and a new inert packet binds its exact source and binaries, the
@@ -148,3 +136,10 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-
 AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-review | change=specify native control coverage and full accumulation gate
 AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-work | change=queue inert replay-only packet from retained builds
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-replay-only-prep | change=route the exact packet to review and authorization
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-value-replay | change=close the isolated comparison and select connected preparation
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-prep | change=select review of the inert successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-review | change=record local review and exact execution gate
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-attempt | change=select the first mixer mismatch
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-mixer-replay | change=select connected successor with both verified mixer controls
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-mixer-review | change=record staged comparator and pending build
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-mixer-seal | change=select the inert successor

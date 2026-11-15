@@ -981,69 +981,39 @@ scaling, softmax, the two products and channel-0 output `0x3b7aeaed`.
 The raw score schedule explains this witness. All Jobs released.
 [Shared-score receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attention-shared-scores-20261114-53d89669/summary.json).
 
-Connected CPU packet `93cc154a` binds the verified 37-row entry, 13 GGUF
-weight ranges, 27 captures and the isolated executable at `53d89669`.
-Its comparator checks the known attention witness and each engine's
-routing, merge and residual arithmetic. Native self-tests and the
-wrong-digest refusal passed.
+Connected CPU packet `93cc154a` binds 37 rows, 13 GGUF ranges and 27
+captures at `53d89669`. Native self-tests and wrong-digest refusal passed.
 [Inert connected packet](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-prep-20261114-53d89669/packet.json).
 
 Two identity checks matched the whole-model hash, then build activity
 blocked final admission with zero dispatches and both memory floors met.
 [Admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-prep-20261114-53d89669/connected-admission-20261114.json).
 
-Packet `93cc154a` later passed whole-file verification and fresh admission.
-Its single CPU attempt matched all 454,656 F32 values across the first
-nine stages on the 37 frozen rows, from exact layer entry through Q/K RoPE.
-After the known token-1/channel-0 attention difference, the comparator
-stopped at token 1, head 0, channel 1. Candle gave `0x3baac798` and pinned
-llama.cpp gave `0x3baac794`, four ULPs apart. The Job exited and released
-its process, and the post-run census passed. The packet is consumed with
-zero retries. The output projection, expert path and final residual remain
-open for the connected comparison.
+Packet `93cc154a` passed the whole-file hash and admission. Its sole
+attempt matched 454,656 values through Q/K RoPE and stopped at attention
+token 1/head 0/channel 1 (`0x3baac798` vs `0x3baac794`, four ULPs).
+The Job released, the post-run census passed, and the packet is consumed.
 [Connected attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-prep-20261114-53d89669/connected-attempt-20261114.json).
 
-One offline replay preserved all 37 query rows, the original layouts and
-frozen V. It reproduced the two native channel-1 values. With the two
-shared raw scores at token 1, head 0, the scaled scores, masked-softmax
-probabilities, rounded products and final value matched bitwise. Both
-fused accumulation and separately rounded products reduced to
-`0x3baac794` on the shared inputs. The upstream score difference explains
-all four ULPs at this witness. Both build Jobs and both replay Jobs
-released their processes. The broader connected attention comparison
-remains open.
+The channel-1 replay reproduced both native values. Shared raw scores
+and frozen V matched through softmax, products and final `0x3baac794`.
+The upstream score difference explains the four ULPs. All Jobs released.
 [Channel-1 replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-attention-channel1-20261114-53d89669/summary.json).
 
-One full shared-score replay reproduced all 75,776 native output values
-for each engine on the 37 frozen query rows. Candle then used the pinned
-GGML graph's 22,496 visible raw scores with the same frozen V and its
-original layout. It matched the first 2,056 reference outputs and stopped
-at token 1, head 0, channel 8. Candle gave `0xbac911ee` and llama.cpp gave
-`0xbac911ed`. The two visible probabilities and rounded value products
-matched exactly, isolating the next trace to F32 accumulation.
-Both builds and both replays released their Jobs under the original limits.
-The first pre-seal census had refused an active llama-server and consumed
-no attempt. The successful successor used Candle's ignored C: artifacts
-directory after a D: allocation failed. Frozen inputs remain on D:.
+The 37-row shared-score replay reproduced all 75,776 native values per
+engine. With 22,496 shared raw scores, Candle matched 2,056 reference
+values and stopped at token 1/head 0/channel 8 (`0xbac911ee` vs
+`0xbac911ed`). Probabilities and rounded products matched. All Jobs
+released. This receipt is in C: artifacts after a D: allocation failure.
 [Full replay receipt](../../artifacts/lfm2-moe/layer2-attention-all-shared-20261114-53d89669-resume/summary.json).
 
-One offline arithmetic attempt reproduced both channel-8 results from
-the retained probabilities and V. The shared first product was
-`0x3a2bf7ea` and the separately rounded second product was `0xbb0f86f1`.
-Fusing the second product into the first rounded product gave Candle's
-`0xbac911ee`. Adding both rounded products gave llama.cpp's `0xbac911ed`.
-The first difference occurs at key 1 with no operand or product mismatch.
-Fresh admission and both bounded Jobs passed with zero model loads. The
-classification covers this witness. The full value accumulation still
-needs comparison on identical probabilities over all 37 rows.
+At channel 8, the differing key-1 accumulation is fused in Candle and
+separately rounded in llama.cpp. The retained probabilities and V
+reproduced both bits. Both Jobs released with zero model loads.
 [Channel-8 arithmetic receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-channel8-20261114-53d89669/summary.json).
 
-The prepared full value-reduction probes bind the same 22,496 visible
-probabilities and frozen V for both engines. Candle retains 37 keys and
-GGML retains the masked 256-key view. The pre-seal census refused active
-pinned Rust compilers while both memory floors passed. That refusal
-consumed no attempt and launched no build or replay. The successor
-retains the same probe sources and original limits.
+The full value-reduction probes bind 22,496 probabilities and frozen V.
+A pre-seal compiler refusal consumed no attempt. Both memory floors passed.
 [Admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-all-20261114-53d89669/summary.json). [Prepared successor](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-all-20261114-53d89669-resume/readiness.json).
 
 On November 15, all 90 successor bindings and initial admission passed.
@@ -1052,9 +1022,34 @@ check detected pinned compiler PID 16624 while both 16 GiB memory floors
 passed. The attempt is consumed with zero replays and zero model loads.
 [Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-all-20261114-53d89669-resume/summary.json).
 
-Replay-only packet `96e27811` supersedes `fec9777e` and reuses both binaries.
-Its checkout guard accepts the scoped docs advance from `851b5cc0`.
-All 103 bindings passed with zero dispatches. [MoE TODO](TODO.md#remaining-gates-in-order).
+Packet `96e27811` reused both binaries and passed fresh admission once at
+`ab705d07`. On 37 rows with identical probabilities and V, both engines
+matched all 75,776 values against their own F32 accumulation orders.
+llama.cpp matched its full retained tensor. Candle matched its 2,056-value
+prefix and channel-8 witness. The two orders produced 46,278 cross-engine
+bit differences. Both Jobs exited zero and released their processes in a
+13.7-second attempt, with zero builds, model loads or retries. The packet
+is consumed.
+[Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-replay-only-20261115-851b5cc0-docs/summary.json).
+
+Connected packet `ab33318c` passed the whole-file hash and admission. One
+attempt matched 530,432 values through ten stages, including Candle's
+full native attention control. Mixer token 1/channel 0 stopped the run
+at `0xbc149902` versus `0xbc149906`. The Job released and temporary view
+was removed. The packet is consumed. FFN and residual proof remain open.
+[Attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-successor-20261115-ab705d07/connected-attempt-20261115.json).
+
+The paired mixer replay matched Q8_K and all 75,776 retained mixer values
+per input in both engines. Across native inputs, 226 scales, two quant bytes
+and two sums changed. Token 1 changed scales only, in blocks 1, 5, 6 and 7.
+Both engines reproduced `0xbc149902` on Candle input and `0xbc149906` on
+llama.cpp input at channel 0. Both Jobs released. The mixer gap follows
+the attention inputs on this fixture. Connected FFN and residual remain open.
+[Mixer replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-mixer-cross-20261115-ab705d07-recheck-121900/cross-input-result.json).
+
+Packet `d6ebb030` keeps Candle's mixer control separate from the llama.cpp
+residual operand. One bounded compile released its Job. All 94 bindings,
+13 GGUF ranges, and 75,776 retained reference residuals verified. No probe ran.
 
 The position-2 teacher-forced failure and production qualification remain
 open. Standalone LFM3 text proof and an LTS support contract remain later work.
@@ -1159,3 +1154,7 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-
 AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-work | change=record both builds and terminal admission refusal
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-replay-only-prep | change=record verified inert packet and original build identity
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-replay-closeout | change=bind successor across the documentation checkpoint
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-value-replay | change=record full bitwise comparisons and cleanup
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-prep | change=record connected successor and retained control
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-attempt | change=record exact attention and terminal mixer stop
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-mixer-replay | change=record same-input parity and pre-dot cross-input differences

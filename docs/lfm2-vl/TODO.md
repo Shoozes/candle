@@ -64,9 +64,10 @@ the channel-0 attention witness with common scores. The connected CPU
 attempt passed through Q/K RoPE and stopped at token 1, head 0, channel 1.
 That value matches with shared scores. The full downstream replay stopped
 at channel 8, where fused and separate accumulation reproduce both output
-bits. The [next MoE step](../lfm2-moe/TODO.md#remaining-gates-in-order)
-reviews the inert packet for the full value reduction on identical
-probabilities and frozen V before authorizing either bound probe.
+bits. The full reduction passed with identical probabilities and frozen V.
+The paired mixer replay reproduced the token-1 difference by changing
+the shared attention input. The [MoE queue](../lfm2-moe/TODO.md#remaining-gates-in-order)
+selects a connected successor with the verified mixer controls.
 A later production parity packet needs the continuation-reporting
 reference binary, separate review and admission.
 Production model runs, package builds and consumer adoption require separate
@@ -479,3 +480,5 @@ AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-attention-all-sh
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-channel8 | change=route the full value reduction to the MoE queue
 AI-edited: 2026-11-15 | agent=Codex/root | task=lfm2-moe-layer2-value-reduction-work | change=route the replay-only handoff to the MoE queue
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-replay-only-prep | change=select review of the exact inert packet
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-value-replay | change=return the next MoE step to connected layer 2
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-prep | change=select review of the exact connected packet
