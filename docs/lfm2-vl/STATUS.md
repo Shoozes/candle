@@ -123,8 +123,10 @@ score controls on shared inputs. Both engines then matched all 148 gather
 weights per frozen input. Connected packet `f7a9f73f` passed through
 normalized weights and stopped at expert 37's gate projection. The
 full shared-input replay matched all gate outputs on both inputs in both
-engines. The [MoE queue](../lfm2-moe/TODO.md) selects review of inert
-whole-gate successor `f007a0a9`. Connected execution remains held.
+engines. Connected packet `f007a0a9` matched its whole-gate control and
+stopped at expert 37's up projection. Both engines then matched the full
+up projection on both FFN norms. The successor sources are staged.
+The [MoE queue](../lfm2-moe/TODO.md) tracks its compiler admission and seal.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example

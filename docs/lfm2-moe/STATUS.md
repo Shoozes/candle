@@ -2,31 +2,27 @@
 
 ## Current checkpoint
 
-Packet `f007a0a9` is sealed and inert for 37 frozen rows. It binds a full
-gate control per FFN norm and preserves exact entry, Q/K RoPE and top-K
-order under the original limits. The trace is wired to pass Candle's
-computed gate into SwiGLU and carry its tensors through `layer_out`.
-Inert verification passed with zero probe runs.
-[Readiness receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gate-20261115-10448a6b/readiness.json).
+The up-control successor sources are staged and both control lanes verified.
+The pinned compiler guard refused preparation before dispatch. The build
+can resume on a descendant of `cf15b2fc` with the same compiled source
+once the pinned compiler is idle.
+[Preparation record](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-up-20261115-cf15b2fc/closeout-preparation.json).
 
-Packet `f7a9f73f` passed fresh admission and whole-model identity, then
-used its single connected attempt on 37 frozen rows. It accepted 689,606
-values across 20 stages through normalized weights, with exact layer-1
-entry, Q/K RoPE and top-K order. It stopped at `expert_gate`, token 1,
-slot 0, expert 37, channel 2 (`0xbc065340` vs `0xbc065330`, 16 ULPs).
-The Job released and post-run admission passed.
-[Attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gather-20261115-10448a6b/connected-attempt-20261115.json).
+Packet `f007a0a9` passed fresh admission and the whole-model hash, then
+used its single connected attempt on 37 frozen rows. It passed the declared
+comparisons for 916,934 values across 21 stages through `expert_gate`,
+with exact layer-1 entry, Q/K RoPE and top-K. It stopped at `expert_up`,
+token 1, slot 0, expert 37, channel 1 (`0x3e0e29a6` vs `0x3e0e29a7`,
+one ULP). The Job released and the post-run census passed.
+[Attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gate-20261115-10448a6b/connected-attempt-20261115.json).
 
-The full offline gate replay matched all 227,328 outputs and all pre-dot
-Q8_K fields per shared input in both engines, with 35 original expert
-groups. Changing FFN norms reproduced all 169,497 connected gate
-differences. The one attempt stayed within the original limits and
-released all Jobs.
-[Full gate replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-gate-cross-20261115-10448a6b/result.json).
-
-Both CPU engines matched all 148 unbiased gather weights per input.
-Switching inputs reproduced 110 differences, first at token 1/slot 1/expert 53.
-[Gather replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-gather-cross-20261115-10448a6b/result.json).
+The offline Q4_K up replay matched all pre-dot Q8_K operands and
+227,328 outputs per shared FFN norm in both engines across all 35 groups.
+Changing the norm reproduced all 170,062 connected differences, starting
+at expert 37's channel-1 witness. All Jobs released after one attempt
+under the original limits. This proof covers the indexed diagnostic
+schedule. Maintained CPU execution still uses `GenericTiled`.
+[Full up replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-up-cross-20261115-cf15b2fc/result.json).
 
 Connected `layer_out`, maintained integration, the production position-2
 failure and Edge acceptance remain open. Standalone LFM3 CPU/CUDA text

@@ -1,5 +1,17 @@
 # LFM2-MoE completed work
 
+## 2026-11-15 - Connected layer-2 whole-gate control
+
+Packet `f007a0a9` sealed both full gate controls with exact entry, Q/K RoPE
+and top-K order. Inert verification passed after one compiler contention
+refusal and a successful guarded retry.
+[Readiness receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gate-20261115-10448a6b/readiness.json).
+
+The connected trace computed gate and up from Candle's own FFN norm.
+All 227,328 connected gate values matched the bound Candle control.
+The first up-projection difference consumed the attempt.
+[Attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gate-20261115-10448a6b/connected-attempt-20261115.json).
+
 ## 2026-11-15 - Connected layer-2 score and gather controls
 
 Packet `05899599` passed revised admission and whole-model verification.
@@ -21,11 +33,23 @@ connected attempt validated all 37 raw sums per engine, including 28
 input-driven differences, and reached normalized weights before the gate stop.
 [Readiness receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gather-20261115-10448a6b/readiness.json).
 
+The single connected attempt accepted 689,606 values across 20 stages
+after fresh admission and whole-model identity verification. It stopped at
+expert 37's gate at token 1, slot 0, channel 2 (`0xbc065340` vs
+`0xbc065330`, 16 ULPs). The Job released and post-run admission passed.
+[Attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gather-20261115-10448a6b/connected-attempt-20261115.json).
+
 Expert 37's offline replay matched all Q8_K operands and 24,576 gate outputs
 per shared input in both engines. Changing FFN norms changed three Q8_K scales
 at token 1, with identical quantized bytes and sums, and reproduced both
 channel-2 values. All Jobs released.
 [Replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-expert37-gate-cross-20261115-10448a6b/result.json).
+
+The full offline gate replay matched all pre-dot Q8_K fields and 227,328
+outputs per shared FFN norm in both engines across the 35 original groups.
+Changing inputs reproduced all 169,497 connected gate differences. All
+Jobs released after one attempt under the original limits.
+[Full gate replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-gate-cross-20261115-10448a6b/result.json).
 
 ## 2026-11-15 - Layer-2 shared-input unbiased gather
 
@@ -36,6 +60,7 @@ active pinned compiler. Its marker was consumed with zero dispatches.
 The next attempt checked the bound compiler before marking the attempt,
 built one probe and ran one replay per frozen probability input. Both engines
 matched all 148 controls per input, and all three Jobs released.
+Switching inputs reproduced 110 differences, first at token 1/slot 1/expert 53.
 [Gather proof](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-gather-cross-20261115-10448a6b/result.json).
 
 ## 2026-11-15 - Layer-2 shared-input sigmoid proof

@@ -24,12 +24,19 @@
 ## Remaining gates in order
 
 1. Produce the maintained Candle candidate for connected layer-2 CPU correctness.
-   - **Next bounded step.** Review inert packet `f007a0a9`. Once
-     authorized for one connected run, require fresh admission and the
-     whole-model hash. Keep the original limits and exact entry, Q/K
-     RoPE and ordered top-K. Carry Candle tensors through `layer_out`
-     and stop at the first unexplained difference.
-     [Sealed packet](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gate-20261115-10448a6b/packet.json).
+   - **Next bounded step.** Seal one inert successor to consumed packet
+     `f007a0a9`. Bind the gate and up controls to their respective frozen
+     FFN norms. Preserve exact entry, Q/K RoPE, ordered top-K and original
+     limits. Feed Candle's computed gate and up tensors into SwiGLU, then
+     carry the computed path through `layer_out` with all downstream
+     comparisons intact.
+   - **Preparation done when** The inert verifier accepts the seal and
+     rejects a wrong digest with zero probe dispatches. Preserve the parent
+     receipt. Any later connected attempt needs separate authorization,
+     fresh admission and the whole-model hash. Stop at the first
+     unexplained difference.
+     [Staged build and blocker](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-up-20261115-cf15b2fc/closeout-preparation.json).
+     [Full up controls](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-up-cross-20261115-cf15b2fc/result.json).
    - **Then integrate** Use the connected proof through `layer_out` to
      select demonstrated corrections in maintained code. Reuse operator proof
      where dtype, layout, width, group size and dispatch match. Preserve

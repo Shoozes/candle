@@ -78,8 +78,10 @@ stopped at the first expert selection-score difference. The paired bias
 replay reproduced both controls. The offline gather matched both controls.
 Connected packet `f7a9f73f` passed through normalized weights and stopped
 at expert 37's gate projection. Both engines reproduced all 35 groups on
-both inputs. The [MoE queue](../lfm2-moe/TODO.md#remaining-gates-in-order)
-selects review of inert whole-gate successor `f007a0a9`.
+both inputs. Connected packet `f007a0a9` passed the gate and stopped at
+expert 37's up projection. The offline up replay matched both full controls.
+The [MoE queue](../lfm2-moe/TODO.md#remaining-gates-in-order) selects an inert
+successor that binds those controls.
 A later production parity packet needs the continuation-reporting
 reference binary, separate review and admission.
 Production model runs, package builds and consumer adoption require separate
