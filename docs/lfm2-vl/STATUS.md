@@ -119,9 +119,12 @@ controls and stopped at the first sigmoid probability mismatch. Both
 engines reproduced both probability controls on shared inputs. The
 connected attempt `05899599` passed the sigmoid controls and stopped at
 the first expert selection-score difference. Both engines reproduced both
-score controls on shared inputs. The offline gather stopped before dispatch
-because the pinned compiler was busy. The [MoE queue](../lfm2-moe/TODO.md)
-requires an idle compiler check for the next bounded gather attempt.
+score controls on shared inputs. Both engines then matched all 148 gather
+weights per frozen input. Connected packet `f7a9f73f` passed through
+normalized weights and stopped at expert 37's gate projection. The
+full shared-input replay matched all gate outputs on both inputs in both
+engines. The [MoE queue](../lfm2-moe/TODO.md) selects review of inert
+whole-gate successor `f007a0a9`. Connected execution remains held.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example

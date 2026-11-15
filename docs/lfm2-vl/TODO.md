@@ -75,10 +75,11 @@ connected packet `a21893d2` passed the router controls and stopped at
 the first sigmoid probability mismatch. The paired replay reproduced
 both controls. Connected attempt `05899599` passed the sigmoid stage and
 stopped at the first expert selection-score difference. The paired bias
-replay reproduced both controls. The
-[MoE queue](../lfm2-moe/TODO.md#remaining-gates-in-order) requires one
-fresh offline gather attempt after checking the pinned compiler is idle.
-Inert successor preparation follows exact gather proof.
+replay reproduced both controls. The offline gather matched both controls.
+Connected packet `f7a9f73f` passed through normalized weights and stopped
+at expert 37's gate projection. Both engines reproduced all 35 groups on
+both inputs. The [MoE queue](../lfm2-moe/TODO.md#remaining-gates-in-order)
+selects review of inert whole-gate successor `f007a0a9`.
 A later production parity packet needs the continuation-reporting
 reference binary, separate review and admission.
 Production model runs, package builds and consumer adoption require separate

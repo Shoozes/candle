@@ -1,5 +1,43 @@
 # LFM2-MoE completed work
 
+## 2026-11-15 - Connected layer-2 score and gather controls
+
+Packet `05899599` passed revised admission and whole-model verification.
+It matched 686,720 values against the bound controls through sigmoid across
+14 stages. The first selection-score discrepancy was token 1/expert 3.
+The Job released and the post-run census passed.
+[Connected attempt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-sigmoid-20261115-0be31b31/connected-attempt-20261115.json).
+
+Both engines matched all 2,368 selection scores per shared input. Switching
+inputs reproduced all 1,661 differences, starting with `0x3e358d0e` on Candle
+probabilities and `0x3e358d0f` on llama.cpp probabilities at token 1/expert 3.
+One offline attempt passed revised admission and both Jobs released.
+[Selection-bias replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-selection-bias-cross-20261115-0be31b31/result.json).
+
+Packet `f7a9f73f` bound both score and gather inputs and preserved exact
+entry, Q/K RoPE and expert order. The prepared comparator checks each
+engine's raw sum using F64 accumulation and one F32 rounding. Its
+connected attempt validated all 37 raw sums per engine, including 28
+input-driven differences, and reached normalized weights before the gate stop.
+[Readiness receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gather-20261115-10448a6b/readiness.json).
+
+Expert 37's offline replay matched all Q8_K operands and 24,576 gate outputs
+per shared input in both engines. Changing FFN norms changed three Q8_K scales
+at token 1, with identical quantized bytes and sums, and reproduced both
+channel-2 values. All Jobs released.
+[Replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-expert37-gate-cross-20261115-10448a6b/result.json).
+
+## 2026-11-15 - Layer-2 shared-input unbiased gather
+
+The first attempt passed the memory checks, then the launcher refused an
+active pinned compiler. Its marker was consumed with zero dispatches.
+[Compiler stop](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-gather-cross-20261115-0be31b31/terminal.json).
+
+The next attempt checked the bound compiler before marking the attempt,
+built one probe and ran one replay per frozen probability input. Both engines
+matched all 148 controls per input, and all three Jobs released.
+[Gather proof](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-gather-cross-20261115-10448a6b/result.json).
+
 ## 2026-11-15 - Layer-2 shared-input sigmoid proof
 
 Packet `a21893d2` matched 684,352 values through logits and stopped at

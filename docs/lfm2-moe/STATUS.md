@@ -2,26 +2,31 @@
 
 ## Current checkpoint
 
-Consumed packet `05899599` passed revised admission and whole-model
-verification. It matched 686,720 values against the bound controls through
-sigmoid across 14 stages, then stopped at selection scores token 1/expert 3
-(`0x3e358d0e` versus `0x3e358d0f`). The Job released and the post-run census passed.
-[Connected attempt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-sigmoid-20261115-0be31b31/connected-attempt-20261115.json).
+Packet `f007a0a9` is sealed and inert for 37 frozen rows. It binds a full
+gate control per FFN norm and preserves exact entry, Q/K RoPE and top-K
+order under the original limits. The trace is wired to pass Candle's
+computed gate into SwiGLU and carry its tensors through `layer_out`.
+Inert verification passed with zero probe runs.
+[Readiness receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gate-20261115-10448a6b/readiness.json).
 
-Both engines reproduced all 2,368 selection scores on each shared
-37-row sigmoid input with the frozen bias. Switching inputs reproduced
-all 1,661 differences, including `0x3e358d0e` on Candle probabilities and
-`0x3e358d0f` on llama.cpp probabilities at token 1/expert 3. One offline
-attempt passed revised admission and both Jobs released.
-[Selection-bias replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-selection-bias-cross-20261115-0be31b31/result.json).
+Packet `f7a9f73f` passed fresh admission and whole-model identity, then
+used its single connected attempt on 37 frozen rows. It accepted 689,606
+values across 20 stages through normalized weights, with exact layer-1
+entry, Q/K RoPE and top-K order. It stopped at `expert_gate`, token 1,
+slot 0, expert 37, channel 2 (`0xbc065340` vs `0xbc065330`, 16 ULPs).
+The Job released and post-run admission passed.
+[Attempt receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gather-20261115-10448a6b/connected-attempt-20261115.json).
 
-Read-only ranking matched all 148 ordered IDs on both inputs. Direct
-gather found 110 differing weights, first at token 1/slot 1/expert 53
-(`0x3ea27487` vs `0x3ea27484`). The harness now checks each input against
-its own 148-weight control. Revised admission passed with 35.19 GiB
-physical and 36.13 GiB commit headroom. The launcher refused the shared
-`rustc.exe` already in use. The marker was consumed with zero dispatches.
-[Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-gather-cross-20261115-0be31b31/terminal.json).
+The full offline gate replay matched all 227,328 outputs and all pre-dot
+Q8_K fields per shared input in both engines, with 35 original expert
+groups. Changing FFN norms reproduced all 169,497 connected gate
+differences. The one attempt stayed within the original limits and
+released all Jobs.
+[Full gate replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-gate-cross-20261115-10448a6b/result.json).
+
+Both CPU engines matched all 148 unbiased gather weights per input.
+Switching inputs reproduced 110 differences, first at token 1/slot 1/expert 53.
+[Gather replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-gather-cross-20261115-10448a6b/result.json).
 
 Connected `layer_out`, maintained integration, the production position-2
 failure and Edge acceptance remain open. Standalone LFM3 CPU/CUDA text

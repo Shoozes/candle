@@ -24,15 +24,12 @@
 ## Remaining gates in order
 
 1. Produce the maintained Candle candidate for connected layer-2 CPU correctness.
-   - **Next bounded step.** For one fresh authorized gather attempt, check
-     that the pinned `rustc.exe` is idle before consuming the new attempt
-     marker. Keep the launcher's executable guard and revised resource
-     admission. Reuse the verified source and controls. Require both engines
-     to match all 148 weights bitwise on each of the two frozen inputs,
-     including token 1/slot 1 (expert 53), under the original limits.
-     [Control bindings](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-gather-cross-20261115-0be31b31/controls.json).
-   - **Then prepare.** Seal one inert successor with both score and gather
-     controls, exact ordered top-K and Candle tensors through `layer_out`.
+   - **Next bounded step.** Review inert packet `f007a0a9`. Once
+     authorized for one connected run, require fresh admission and the
+     whole-model hash. Keep the original limits and exact entry, Q/K
+     RoPE and ordered top-K. Carry Candle tensors through `layer_out`
+     and stop at the first unexplained difference.
+     [Sealed packet](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-gate-20261115-10448a6b/packet.json).
    - **Then integrate** Use the connected proof through `layer_out` to
      select demonstrated corrections in maintained code. Reuse operator proof
      where dtype, layout, width, group size and dispatch match. Preserve
