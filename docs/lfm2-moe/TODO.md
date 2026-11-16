@@ -24,15 +24,11 @@
 ## Remaining gates in order
 
 1. Produce the maintained Candle candidate for connected layer-2 CPU correctness.
-   - **Next bounded step.** Seal an inert successor to unused `078aa139`
-     with the verified SwiGLU and down controls. Preserve all 37 rows,
-     groups, limits, exact entry, Q/K RoPE and top-K. Keep Candle's computed
-     path to `layer_out` and both engines' weighting, merge and residual checks.
-     Done when the seal verifies, a wrong digest fails, and cleanup is
-     proven with zero probe dispatches. [Down replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-down-cross-20261115-62579e67/summary.json).
-   - Connected execution needs exact authorization for the successor,
-     fresh admission and the whole-model hash. Stop at the first
-     unexplained difference or failure.
+   - **Next bounded step.** With exact authorization for `2a47477d`, pass
+     fresh admission and the whole-model hash, then run one connected CPU
+     attempt on 37 frozen rows. Keep the original limits. Require exact
+     entry, Q/K RoPE, top-K and all 27 comparisons through `layer_out`.
+     Stop at the first unexplained difference or failure. [Review receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-down-20261115-630691ed/review.json).
    - **Then integrate** Use the connected proof through `layer_out` to
      select demonstrated corrections in maintained code. Reuse operator proof
      where dtype, layout, width, group size and dispatch match. Preserve
@@ -157,3 +153,5 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-seal | change=r
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-review | change=prioritize the offline SwiGLU control before dispatch
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-swiglu-cross | change=select the two-lane Q8_K and Q6_K expert down replay
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-cross | change=select one inert successor with both controls
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-down-seal | change=route the new seal to review and held connected execution
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-seal-review | change=queue the exact connected attempt after inert review

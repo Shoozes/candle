@@ -1,5 +1,18 @@
 # LFM2-MoE completed work
 
+## 2026-11-15 - Inert SwiGLU and expert-down successor
+
+Packet `2a47477d` adds the exact Candle SwiGLU and down controls to unused
+parent `078aa139`. The other 25 comparisons, frozen inputs and limits
+carry forward. The source still computes Candle's gate, up, SwiGLU, down
+and residual. The offline audit reproduced pinned reference weighting,
+slot-order merge and final residual using its own captured operands.
+Candle's audit used its own norm-derived weights, expert order and mixer.
+
+The guarded compiler built once after the pinned executable cleared.
+Its Job released, the correct seal verified, a wrong digest failed,
+and both packets had zero probe dispatches. [Readiness receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-down-20261115-630691ed/readiness.json).
+
 ## 2026-11-15 - Layer-2 Q6_K expert down on both input lanes
 
 The pinned GGML indexed graph used the ordinary CPU buffer with the tiled
@@ -589,6 +602,11 @@ different forced sequence with the same length. The reference probe now emits
 the schedule, and the comparator requires both engines to match the frozen IDs.
 The original qualification record remains archived with its original format.
 
+Offline replay with comparator `42deff05` reproduced the position-2
+mismatch (`1113` vs `6986`). The production successor needs a newly
+bound reference binary. The 14 comparator tests and pinned VS 18 probe
+syntax check passed.
+
 ## 2026-11-12 - Matched-residual FFN RMSNorm replay
 
 Reconstructed both F32 post-mixer residuals and replayed the frozen weighted
@@ -764,3 +782,4 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-sigmoid-dropin | change=reta
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-seal | change=retain build cleanup and inert successor proof
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-swiglu-cross | change=retain the native two-lane SwiGLU proof
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-cross | change=retain exact down controls and group dispatch proof
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-down-seal | change=retain the seal, lane audit and build cleanup proof

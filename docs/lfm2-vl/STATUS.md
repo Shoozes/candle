@@ -125,9 +125,9 @@ normalized weights and stopped at expert 37's gate projection. The
 full shared-input replay matched all gate outputs on both inputs in both
 engines. Connected packet `f007a0a9` matched its whole-gate control and
 stopped at expert 37's up projection. Both engines then matched the full
-up projection on both FFN norms. Both input lanes passed SwiGLU and
-Q6_K expert down. Inert successor `078aa139` remains unused. The
-[MoE queue](../lfm2-moe/TODO.md) selects sealing both new controls.
+up projection on both FFN norms. Inert successor `2a47477d` binds the
+verified SwiGLU and Q6_K down controls and passed inert review. The
+[MoE queue](../lfm2-moe/TODO.md) tracks its held connected attempt.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
@@ -509,3 +509,5 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-seal | change=r
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-review | change=route the reviewed SwiGLU comparison to MoE
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-swiglu-cross | change=route the verified SwiGLU controls to expert down
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-cross | change=route both layer-2 controls to successor preparation
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-down-seal | change=route the sealed SwiGLU and down successor to review
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-seal-review | change=route the reviewed packet to the held connected attempt

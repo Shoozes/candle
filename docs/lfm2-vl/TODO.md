@@ -80,9 +80,9 @@ Connected packet `f7a9f73f` passed through normalized weights and stopped
 at expert 37's gate projection. Both engines reproduced all 35 groups on
 both inputs. Connected packet `f007a0a9` passed the gate and stopped at
 expert 37's up projection. The offline up replay matched both full controls.
-Inert successor `078aa139` remains unused. The
-[MoE queue](../lfm2-moe/TODO.md#remaining-gates-in-order) selects sealing
-the verified SwiGLU and down controls together before connected execution.
+Inert successor `2a47477d` passed review. The
+[MoE queue](../lfm2-moe/TODO.md#remaining-gates-in-order) tracks its
+separately authorized connected execution.
 A later production parity packet needs the continuation-reporting
 reference binary, separate review and admission.
 Production model runs, package builds and consumer adoption require separate
@@ -513,3 +513,5 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-seal | change=p
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-review | change=select the held two-lane SwiGLU verification
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-swiglu-cross | change=point to the two-lane expert-down replay
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-cross | change=point to the inert SwiGLU and down successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-down-seal | change=point to review of the sealed SwiGLU and down successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-seal-review | change=route held execution of the exact reviewed successor

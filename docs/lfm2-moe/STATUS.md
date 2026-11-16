@@ -2,11 +2,9 @@
 
 ## Current checkpoint
 
-Both verified SwiGLU lanes passed the Q6_K expert-down replay. Each
-matched all 888 Q8_K blocks before the dot and 303,104 unweighted
-outputs. The pinned reference control reproduced and all Jobs released.
-Changing lanes changed 682 Q8_K blocks and 250,333 down values.
-Packet `078aa139` remains inert and unused. [Down replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-down-cross-20261115-62579e67/summary.json).
+The inert review of `2a47477d` confirmed 486 bindings and the 27
+checkpoint definitions, including the new SwiGLU and down controls.
+The packet and its parent remain unused. [Review receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-down-20261115-630691ed/review.json).
 
 The [up-projection replay](HISTORY.md#2026-11-15---layer-2-up-projection-replay)
 explains the diagnostic difference in consumed packet `f007a0a9`.
@@ -26,12 +24,9 @@ The first Q4 parity attempt stopped during CPU comparison. The comparator
 repair exposes a remaining CPU numerical disagreement. Edge qualification and
 adoption follow supplier parity. D1 stays closed.
 
-The review reproduced an acceptance gap in the comparator at `42deff05`.
-A reference record with a wrong same-length forced continuation could pass.
-The comparator requires the exact frozen schedule from both engines. The
-archived CPU result still reproduces at position 2 (`1113` vs `6986`) using the
-comparator from `42deff05`. A successor packet needs a newly bound reference
-binary. The 14 comparator tests and pinned VS 18 probe syntax check passed.
+The [frozen continuation check](HISTORY.md#2026-11-12---frozen-reference-continuation-check)
+records the position-2 failure (`1113` vs `6986`) and the requirement
+for a newly bound reference binary.
 
 Native `models::lfm2_moe::{Config, Model, Cache}` loads the official per-expert
 safetensors layout and exposes token/embedding forward, hidden states, logits
@@ -1115,3 +1110,5 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-seal | change=r
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-up-review | change=record the inert recheck and downstream input-lane finding
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-swiglu-cross | change=record both verified SwiGLU controls and cleanup
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-cross | change=record both expert-down controls and cleanup
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-down-seal | change=record the verified inert SwiGLU and down successor
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-seal-review | change=record the inert recheck and remaining execution grant
