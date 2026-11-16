@@ -25,7 +25,7 @@ unused.
 [Successor review](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-checkout-20261115-ca2a29b7/review.json).
 
 For the clean MoE/LFM3 snapshot, use the rebound packet identified in the
-[snapshot receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-clean-snapshot-20261115/summary.json).
+[snapshot receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-published-snapshot-20261115/summary.json).
 The snapshot preserves the LFM3 test additions and the prior inert packet.
 
 The [up-projection replay](HISTORY.md#2026-11-15---layer-2-up-projection-replay)

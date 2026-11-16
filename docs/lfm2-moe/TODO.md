@@ -33,7 +33,7 @@
      comparisons and limits. The predecessor `2a47477d` remains unused and
      its verifier rejects the current checkout. Preserve its receipts.
      [Prior successor review](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-checkout-20261115-ca2a29b7/review.json).
-     [Snapshot binding](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-clean-snapshot-20261115/summary.json).
+     [Snapshot binding](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-published-snapshot-20261115/summary.json).
    - **Then integrate** Use the connected proof through `layer_out` to
      select demonstrated corrections in maintained code. Reuse operator proof
      where dtype, layout, width, group size and dispatch match. Preserve

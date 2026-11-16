@@ -86,7 +86,7 @@ on the probed logits. No production run occurred.
 [Checkpoint binding](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/standalone-checkpoint-binding.json).
 [Inert qualification packet](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/standalone-production-packet.json)
 SHA-256 `f243359f37bc3b58d0157386586897eaeeb3792f9a7c0a99b013af94d149eb06`.
-The prior packet remains preserved. The [snapshot receipt](D:/Compact_Evidence/candle/runs/lfm3-standalone-clean-snapshot-20261115/summary.json)
+The prior packet remains preserved. The [snapshot receipt](D:/Compact_Evidence/candle/runs/lfm3-standalone-published-snapshot-20261115/summary.json)
 identifies the active inert packet bound to the clean MoE/LFM3 snapshot.
 The read-only verifier checked the full checkpoint, 24 draft bindings,
 3,457 runtime files, extractor identity, canonical HEAD and absence of

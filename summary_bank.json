@@ -945,7 +945,7 @@
       ]
     },
     "feature__lfm2_moe": {
-      "description": "Native and mixed quantized LFM2-MoE routing/loading, CPU/CUDA synthetic proof and local example; production qualification and Edge adoption stay separately gated. Expand feature__lfm2_text for shared mixer internals. Read docs/lfm2-moe/HISTORY.md for completed work.",
+      "description": "Native and mixed quantized LFM2-MoE routing/loading, CPU/CUDA synthetic proof and local example. Expand feature__lfm2_text for shared mixers and workflow__lfm2_moe_qualification for the production protocol. Read docs/lfm2-moe/HISTORY.md for completed work.",
       "status": "active",
       "paths": [
         "candle-examples/examples/lfm2-moe/README.md",
@@ -962,25 +962,31 @@
         "candle-transformers/src/models/quantized_lfm2_moe/tests.rs",
         "docs/lfm2-moe/DECISIONS.md",
         "docs/lfm2-moe/MOD_MANIFEST.md",
-        "docs/lfm2-moe/QUALIFICATION.md",
         "docs/lfm2-moe/SOURCES.md",
         "docs/lfm2-moe/STATUS.md",
         "docs/lfm2-moe/TODO.md",
         "docs/lfm2-moe/source-lock.json",
         "tests/fixtures/lfm2_moe_tiny/README.md",
         "tests/fixtures/lfm2_moe_tiny/manifest.json",
-        "tests/fixtures/lfm2_moe_tiny/qualification_inputs.json",
         "tests/fixtures/lfm2_moe_tiny/tokenizer_reference.json",
-        "tools/lfm2_moe/CMakeLists.txt",
-        "tools/lfm2_moe/compare_probes.py",
         "tools/lfm2_moe/export_fixture.py",
         "tools/lfm2_moe/export_tokenizer_fixture.py",
-        "tools/lfm2_moe/llama_probe.cpp",
         "tools/lfm2_moe/prepare_packet.py",
-        "tools/lfm2_moe/prepare_qualification.py",
-        "tools/lfm2_moe/test_compare_probes.py",
         "tools/lfm2_moe/test_prepare_packet.py",
         "tools/lfm2_moe/verify_tokenizer.py"
+      ]
+    },
+    "workflow__lfm2_moe_qualification": {
+      "description": "Frozen production cases, pinned llama.cpp probe and Candle parity comparison for Windows CPU and RTX 4090. Read feature__lfm2_moe for implementation and current status.",
+      "status": "active",
+      "paths": [
+        "docs/lfm2-moe/QUALIFICATION.md",
+        "tests/fixtures/lfm2_moe_tiny/qualification_inputs.json",
+        "tools/lfm2_moe/CMakeLists.txt",
+        "tools/lfm2_moe/compare_probes.py",
+        "tools/lfm2_moe/llama_probe.cpp",
+        "tools/lfm2_moe/prepare_qualification.py",
+        "tools/lfm2_moe/test_compare_probes.py"
       ]
     }
   },
