@@ -2,15 +2,14 @@
 
 ## Current checkpoint
 
-Production packet `d91a095a` consumed its attempt on the CPU arithmetic
-comparison. The sampled prefill logits differed by up to 1.402465. The
-first differing top token followed forced IDs `49, 1252` at position 2
-(`1113` reference, `5141` Candle). CUDA was never reached.
-[Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-maintained-layer2-20261115-30e48252/qualification/summary.json).
+Production packet `88c5952f` passed all eight CPU arithmetic selections,
+then stopped at Unicode position 2 after forced IDs `597, 4695` (`10966`
+reference, `355` Candle). All four Jobs released their processes. CUDA was
+never reached. [Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-todo-rebind-20261116/qualification/summary.json).
 
-On the same 37 frozen rows, retained embeddings and reconstructed maintained
-RMSNorm matched bitwise. An offline `GenericTiled` replay located two layer-0
-ShortConv `in_proj` differences. Row 0, channel 2 diverged in the Q4_K dot
+For the earlier `d91a095a` arithmetic failure, retained embeddings and
+reconstructed RMSNorm matched bitwise. An offline `GenericTiled` replay located
+two layer-0 ShortConv `in_proj` differences. Row 0, channel 2 diverged in the Q4_K dot
 on identical Q8_K operands. The first activation rounding witness was row 2,
 block 2, lane 119 (`-38.5` scaled, `-39` Candle, `-38` reference). Ties-to-even
 reproduced all pinned Q8_K bytes, including the five changed sums. The production
@@ -84,9 +83,8 @@ The [up-projection replay](HISTORY.md#2026-11-15---layer-2-up-projection-replay)
 explains the diagnostic difference in consumed packet `f007a0a9`.
 The generic quantized fallback uses `GenericTiled`.
 
-The production position-2 failure and Edge acceptance remain open. The
-reviewed inert successor uses the `50b81e4b` binaries. It preserves prior
-receipts and checks each probe log against its Job receipt before comparison.
+Production parity and Edge acceptance remain open. The retained Unicode
+failure is the next bounded investigation.
 Standalone LFM3 CPU/CUDA text
 qualification and the LTS support contract are separate remaining gates.
 [TODO](TODO.md) owns their order. [Production qualification](QUALIFICATION.md)

@@ -1,5 +1,14 @@
 # LFM2-MoE completed work
 
+## 2026-11-16 - Production successor stopped on CPU Unicode
+
+Packet `88c5952f` passed fresh admission and whole GGUF identity, then ran
+both reference and both Candle CPU children. Arithmetic matched all eight
+selections, with maximum sampled logit delta `1.145143`. Unicode stopped
+at position 2 after forced IDs `597, 4695` (`10966` reference, `355` Candle).
+All four Jobs released their processes. CUDA was unreached.
+[Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-todo-rebind-20261116/qualification/summary.json).
+
 ## 2026-11-16 - Production packet review
 
 The inert successor binds both frozen cases, the `50b81e4b` binaries,

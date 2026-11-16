@@ -80,13 +80,11 @@ Connected packet `f7a9f73f` passed through normalized weights and stopped
 at expert 37's gate projection. Both engines reproduced all 35 groups on
 both inputs. Connected packet `f007a0a9` passed the gate and stopped at
 expert 37's up projection. The offline up replay matched both full controls.
-Inert successor `2a47477d` passed review. The
-[MoE queue](../lfm2-moe/TODO.md#remaining-gates-in-order) tracks its
-separately authorized connected execution.
-A later production parity packet needs the continuation-reporting
-reference binary, separate review and admission.
-Production model runs, package builds and consumer adoption require separate
-authorization.
+The connected and maintained layer-2 investigations are complete.
+[MoE HISTORY](../lfm2-moe/HISTORY.md) holds the completed diagnostics. The
+[MoE queue](../lfm2-moe/TODO.md#remaining-gates-in-order) owns the retained
+CPU Unicode failure from consumed production packet `88c5952f`. Production
+replays, package builds and consumer adoption require separate authorization.
 
 The selected upstream sync is published at `5f094821`, including merge
 `311d267b` from official Candle 0.11.1 `cfcbd718`. [STATUS](STATUS.md) and

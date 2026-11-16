@@ -137,8 +137,9 @@ CPU replay stopped at ShortConv convolution. The maintained tap-order port
 then matched convolution bitwise. With tiled F32 dense Q6_K down, the
 source-bound replay matched all 37 rows through layer-0 `layer_out`. The
 maintained layer-1 replay also passed through `layer_out`. Maintained
-layer-2 packet `2aa2ed81` passed all 27 offline checks. The MoE queue owns
-the reviewed CPU/RTX 4090 successor built from `50b81e4b`. Production is held.
+layer-2 packet `2aa2ed81` passed all 27 offline checks. Production packet
+`88c5952f` passed CPU arithmetic and stopped at CPU Unicode position 2.
+The MoE queue owns the retained-evidence follow-up.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example

@@ -23,18 +23,21 @@
 
 ## Remaining gates in order
 
-1. **Next bounded step.** Separately authorize the [reviewed production successor](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-published-20261116/qualification/packet.json)
-   for one attempt after fresh quiet admission and whole-model
-   hash verification under the [original limits](QUALIFICATION.md). The
-   packet binds `2aa2ed81`, both frozen cases and the exact binaries.
+1. **Next bounded step.** Inspect the retained Unicode evidence from
+   [consumed packet `88c5952f`](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-todo-rebind-20261116/qualification/summary.json).
+   Start with position 2 after forced IDs `597, 4695`, with reference `10966`
+   and Candle `355`. Keep the frozen inputs. Use retained logits and receipts
+   to narrow the first unexplained difference or identify the smallest
+   missing observation. Any new probe requires a separate grant.
+2. Production qualification remains open under the [original limits](QUALIFICATION.md).
    - Done when: The pinned CPU reference, Candle CPU and RTX 4090 complete the
      two frozen cases with exact teacher-forced selections, four frozen-input
      comparisons, finite logit differences, observed peaks and terminal cleanup.
      Stop on any admission or execution failure without retry or relaxed limits.
-2. After supplier parity, explicitly select the bounded Edge qualification
+3. After supplier parity, explicitly select the bounded Edge qualification
    admission through its held candidate gate. Prove CLI/API chat, strict JSON,
    cancellation, unload/reload and a successful recovery request on both devices.
-3. After confirmed Candle source publication and separately authorized Edge
+4. After confirmed Candle source publication and separately authorized Edge
    adoption, reconcile only Edge's
    reviewed Candle pin and affected locks, rerun its selected graph/gates and
    record adoption. Other consumers retain their exact qualified identities.
