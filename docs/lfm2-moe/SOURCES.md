@@ -26,6 +26,12 @@ small probe is fresh code using llama.cpp's public API; its MIT reference and
 the bundled nlohmann JSON dependency retain their upstream notices in that
 external tree. It is a qualification tool, not a Candle production dependency.
 
+The maintained quantized CPU schedules use the connected `9c8006a5`
+diagnostic as their arithmetic authority. The normal-range SiLU polynomial
+adapts `ggml/src/ggml-cpu/vec.h` at `582eab71` with its MIT notice in
+`quantized_lfm2_moe/cpu.rs`. Packed scales are decoded with the already
+workspace-pinned `half` dependency. GGUF weights remain quantized.
+
 The verified external file is
 `C:/llamacpp/models/LFM2.5-24B-A2B-Q4_K_M.gguf`, 14,526,258,464 bytes, SHA-256
 `d3334405b96228eb9908cdebb5c6194908f2da64282bda852afc3a3910c64e7d`.

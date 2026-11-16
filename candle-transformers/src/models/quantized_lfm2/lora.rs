@@ -94,7 +94,17 @@ impl AdaptedLinear {
 
 impl Module for AdaptedLinear {
     fn forward(&self, xs: &Tensor) -> Result<Tensor> {
-        let base = self.base.forward(xs)?;
+        self.forward_with(xs, QMatMul::forward)
+    }
+}
+
+impl AdaptedLinear {
+    pub(super) fn forward_with(
+        &self,
+        xs: &Tensor,
+        project: impl FnOnce(&QMatMul, &Tensor) -> Result<Tensor>,
+    ) -> Result<Tensor> {
+        let base = project(&self.base, xs)?;
         let Some(pair) = &self.active else {
             return Ok(base);
         };

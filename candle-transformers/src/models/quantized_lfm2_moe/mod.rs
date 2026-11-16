@@ -1,4 +1,5 @@
 //! Quantized LFM2-MoE with retained per-expert GGUF weights on CPU or CUDA.
+pub(crate) mod cpu;
 mod metadata;
 mod model;
 

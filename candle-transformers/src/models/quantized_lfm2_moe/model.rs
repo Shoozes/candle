@@ -1,4 +1,4 @@
-use super::{inspect_gguf_metadata, Lfm2MoeGgufMetadata};
+use super::{cpu, inspect_gguf_metadata, Lfm2MoeGgufMetadata};
 use crate::models::{lfm2_moe::routing, quantized_lfm2::mixer::Mixer};
 use candle::{
     quantized::{gguf_file, GgmlDType, QMatMul, QTensor},
@@ -29,6 +29,18 @@ fn forward_matrix(weight: &QMatMul, x: &Tensor) -> Result<Tensor> {
     )
 }
 
+fn forward_dense_gate_up(weight: &QMatMul, x: &Tensor) -> Result<Tensor> {
+    cpu::project_q4_gemm_gemv(weight, x, forward_matrix)
+}
+
+fn forward_dense_down(weight: &QMatMul, x: &Tensor) -> Result<Tensor> {
+    if x.device().is_cpu() && matches!(weight, QMatMul::QTensor(q) if q.dtype() == GgmlDType::Q6K) {
+        cpu::project(weight, x, cpu::Projection::Dense)
+    } else {
+        forward_matrix(weight, x)
+    }
+}
+
 struct Expert {
     gate: QMatMul,
     up: QMatMul,
@@ -42,11 +54,34 @@ impl Expert {
             .count()
     }
     fn forward(&self, x: &Tensor) -> Result<Tensor> {
-        forward_matrix(
+        self.forward_with(x, forward_matrix, candle_nn::ops::silu, forward_matrix)
+    }
+
+    fn forward_with(
+        &self,
+        x: &Tensor,
+        project_gate_up: impl Fn(&QMatMul, &Tensor) -> Result<Tensor>,
+        activate: impl FnOnce(&Tensor) -> Result<Tensor>,
+        project_down: impl FnOnce(&QMatMul, &Tensor) -> Result<Tensor>,
+    ) -> Result<Tensor> {
+        project_down(
             &self.down,
-            &(candle_nn::ops::silu(&forward_matrix(&self.gate, x)?)?
-                * forward_matrix(&self.up, x)?)?,
+            &(activate(&project_gate_up(&self.gate, x)?)? * project_gate_up(&self.up, x)?)?,
         )
+    }
+
+    fn forward_indexed(&self, x: &Tensor) -> Result<Tensor> {
+        let scheduled = [&self.gate, &self.up, &self.down]
+            .into_iter()
+            .zip([GgmlDType::Q4K, GgmlDType::Q4K, GgmlDType::Q6K])
+            .all(|(w, dtype)| matches!(w, QMatMul::QTensor(q) if q.dtype() == dtype));
+        if !x.device().is_cpu() || !scheduled {
+            return self.forward(x);
+        }
+        let project = |weight, input| cpu::project(weight, input, cpu::Projection::Indexed);
+        let gate = project(&self.gate, x)?;
+        let up = project(&self.up, x)?;
+        project(&self.down, &(cpu::silu(&gate)? * up)?)
     }
 }
 
@@ -62,7 +97,9 @@ enum FeedForward {
 impl FeedForward {
     fn forward(&self, x: &Tensor) -> Result<Tensor> {
         match self {
-            Self::Dense(expert) => expert.forward(x),
+            Self::Dense(expert) => {
+                expert.forward_with(x, forward_dense_gate_up, cpu::silu, forward_dense_down)
+            }
             Self::Sparse {
                 router,
                 bias,
@@ -71,7 +108,7 @@ impl FeedForward {
             } => {
                 let (batch, length, hidden) = x.dims3()?;
                 let flat = x.reshape(((), hidden))?;
-                let logits = flat.matmul(&router.t()?)?;
+                let logits = cpu::router(&flat, router)?;
                 let (ids, weights) = routing::route_gguf(&logits, bias, *topk)?;
                 let weights = weights.flatten_all()?;
                 let mut output = flat.zeros_like()?;
@@ -83,7 +120,7 @@ impl FeedForward {
                     }
                     let tokens = Tensor::new(tokens.as_slice(), x.device())?;
                     let slots = Tensor::new(slots.as_slice(), x.device())?;
-                    let values = expert.forward(&flat.index_select(&tokens, 0)?)?;
+                    let values = expert.forward_indexed(&flat.index_select(&tokens, 0)?)?;
                     let weighted =
                         values.broadcast_mul(&weights.index_select(&slots, 0)?.unsqueeze(1)?)?;
                     output = output.index_add(&tokens, &weighted, 0)?;
@@ -182,21 +219,29 @@ impl ModelWeights {
         }
         let h = metadata.embedding_length;
         let head_dim = h / metadata.shared.head_count;
-        let theta = (0..head_dim)
-            .step_by(2)
-            .map(|i| {
-                1f32 / metadata
-                    .shared
-                    .rope_freq_base
-                    .powf(i as f32 / head_dim as f32)
-            })
-            .collect::<Vec<_>>();
-        let theta = Tensor::new(theta.as_slice(), device)?.reshape((1, head_dim / 2))?;
-        let positions = Tensor::arange(0u32, metadata.context_length as u32, device)?
-            .to_dtype(DType::F32)?
-            .reshape((metadata.context_length, 1))?;
-        let freqs = positions.matmul(&theta)?;
-        let rotary = (freqs.cos()?, freqs.sin()?);
+        let rotary = if device.is_cpu() {
+            cpu::rotary(
+                metadata.context_length,
+                head_dim,
+                metadata.shared.rope_freq_base,
+            )?
+        } else {
+            let theta = (0..head_dim)
+                .step_by(2)
+                .map(|i| {
+                    1f32 / metadata
+                        .shared
+                        .rope_freq_base
+                        .powf(i as f32 / head_dim as f32)
+                })
+                .collect::<Vec<_>>();
+            let theta = Tensor::new(theta.as_slice(), device)?.reshape((1, head_dim / 2))?;
+            let positions = Tensor::arange(0u32, metadata.context_length as u32, device)?
+                .to_dtype(DType::F32)?
+                .reshape((metadata.context_length, 1))?;
+            let freqs = positions.matmul(&theta)?;
+            (freqs.cos()?, freqs.sin()?)
+        };
         let embeddings = Arc::new(ct.tensor(reader, "token_embd.weight", device)?);
         let head = if metadata.shared.tied_output {
             match embeddings.dtype() {
@@ -347,10 +392,12 @@ impl ModelWeights {
         let mut x = embeds.clone();
         for layer in &mut self.layers {
             x = (&x
-                + layer
-                    .mixer
-                    .forward(&layer.norm.forward(&x)?, mask.as_ref(), position)?)?;
-            x = (&x + layer.ff.forward(&layer.ffn_norm.forward(&x)?)?)?;
+                + layer.mixer.forward(
+                    &forward_norm(&layer.norm, &x)?,
+                    mask.as_ref(),
+                    position,
+                )?)?;
+            x = (&x + layer.ff.forward(&forward_norm(&layer.ffn_norm, &x)?)?)?;
         }
         let hidden = self
             .norm
@@ -411,6 +458,14 @@ impl ModelWeights {
             self.clear_cache();
         }
         result
+    }
+}
+
+fn forward_norm(norm: &RmsNorm, x: &Tensor) -> Result<Tensor> {
+    if x.device().is_cpu() {
+        cpu::rms_norm(x, norm.weight(), norm.eps() as f32)
+    } else {
+        norm.forward(x)
     }
 }
 

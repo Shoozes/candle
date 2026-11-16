@@ -13,6 +13,7 @@ release inventories, D1 proof and consumer pins remain unchanged.
 - `candle-transformers/src/models/lfm2_moe/routing.rs`
 - `candle-transformers/src/models/lfm2_moe/tests.rs`
 - `candle-transformers/src/models/quantized_lfm2/mixer.rs`
+- `candle-transformers/src/models/quantized_lfm2_moe/cpu.rs`
 - `candle-transformers/src/models/quantized_lfm2_moe/metadata.rs`
 - `candle-transformers/src/models/quantized_lfm2_moe/mod.rs`
 - `candle-transformers/src/models/quantized_lfm2_moe/model.rs`
@@ -46,10 +47,15 @@ release inventories, D1 proof and consumer pins remain unchanged.
 
 ## Shared hunk ownership
 
+- `Cargo.lock`
+- `candle-transformers/Cargo.toml`
 - `.gitignore`
 - `.gitattributes`
 - `candle-transformers/src/models/lfm2/layers.rs`
 - `candle-transformers/src/models/quantized_lfm2.rs`
+- `candle-transformers/src/models/quantized_lfm2/lora.rs`
+- `candle-transformers/src/models/quantized_lfm2/shortconv.rs`
+- `candle-transformers/src/quantized_nn.rs`
 - `candle-transformers/src/models/mod.rs`
 - `docs/FORK_OVERLAYS.md`
 - `docs/lfm2-vl/STATUS.md`
@@ -59,8 +65,11 @@ release inventories, D1 proof and consumer pins remain unchanged.
 - `scripts/tests/test-verify-fork-overlays.sh`
 - `summary_bank.json`
 
-Only crate-private mixer reuse, model registry entries, byte-stable fixtures
-and current capability routing/ownership are changed on shared paths.
+Shared paths carry the model registry, byte-stable fixtures, crate-private
+mixer callbacks and read-only norm parameters, and the direct dependency
+edge to the workspace-pinned `half` package for packed CPU weight scales.
+MoE owns the CPU ordered ShortConv dispatch and +0 seed. LFM2-VL owns the
+shared causal helper and its CUDA path.
 
 ---
 AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-review | change=register the qualification packet inventory regression test

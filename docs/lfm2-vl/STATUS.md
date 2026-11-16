@@ -129,7 +129,14 @@ up projection on both FFN norms. Inert successor `2a47477d` binds the
 verified SwiGLU and Q6_K down controls and passed inert review. Successor
 `cc7662ea` retains those controls and passed local review with the exact
 LFM3 test additions bound and the full GGUF SHA-256 verified. The
-[MoE queue](../lfm2-moe/TODO.md) tracks its held connected attempt.
+[MoE queue](../lfm2-moe/TODO.md) records the connected pass of rebound packet
+`9c8006a5` through all 27 comparisons. Production packet `d91a095a`
+stopped on the arithmetic CPU top token at position 2. The maintained
+ShortConv input projection and B × X matched on all 37 rows. The connected
+CPU replay stopped at ShortConv convolution. The maintained tap-order port
+then matched convolution bitwise. With tiled F32 dense Q6_K down, the
+source-bound replay matched all 37 rows through layer-0 `layer_out`. The MoE
+queue owns the unused layer-1 replay, held at build admission by an active build.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example

@@ -23,28 +23,19 @@
 
 ## Remaining gates in order
 
-1. Produce the maintained Candle candidate for connected layer-2 CPU correctness.
-   - **Next bounded step.** With exact authorization for the packet rebound
-     to the clean MoE/LFM3 snapshot, pass fresh admission and the whole-model hash,
-     then make one connected CPU attempt on 37 frozen rows under the original
-     limits. Require exact entry, Q/K RoPE, ordered top-K and all 27
-     comparisons through `layer_out`. Stop at the first unexplained difference
-     or failure. The local review confirmed the same binary, frozen inputs,
-     comparisons and limits. The predecessor `2a47477d` remains unused and
-     its verifier rejects the current checkout. Preserve its receipts.
-     [Prior successor review](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-checkout-20261115-ca2a29b7/review.json).
-     [Snapshot binding](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-published-snapshot-20261115/summary.json).
-   - **Then integrate** Use the connected proof through `layer_out` to
-     select demonstrated corrections in maintained code. Reuse operator proof
-     where dtype, layout, width, group size and dispatch match. Preserve
-     [both routing formulas](DECISIONS.md#layer-2-routing-comparison).
-   - **Done when** The connected layer passes its declared comparisons, the
-     maintained candidate passes its relevant regressions and fixture gates,
-     and a new inert packet binds its exact source and binaries, the
-     continuation-reporting reference binary, frozen inputs, original limits
-     and four comparison commands. Preserve the consumed packet and receipts.
-2. After a new exact owner grant and fresh admission, run the reviewed finite
-   packet once under [QUALIFICATION](QUALIFICATION.md).
+1. **Next bounded step.** After fresh quiet admission and both 16 GiB floors,
+   use the [checkpoint-bound packet](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-committed-20261116/inputs.json)
+   for the unused layer-1 attempt. Its predecessor stopped before build.
+   Keep the exact layer-0 `layer_out`, 37 frozen rows and packet limits. Stop
+   at the first mismatch or failure. Done when all 16 bound checks pass through
+   bitwise `layer_out` and the build and replay Jobs release their processes.
+2. Reconcile the maintained layer-2 path against the exact layer-1 output
+   and the 27 controls from `9c8006a5`. Preserve
+   [both routing formulas](DECISIONS.md#layer-2-routing-comparison) and retain
+   the classified differences. After the relevant regressions and fixture
+   gates pass, bind a successor [qualification packet](QUALIFICATION.md) to
+   exact source, binaries, frozen inputs, original limits and all four
+   comparisons. Production execution requires a separate grant and admission.
    - Done when: The pinned CPU reference, Candle CPU and RTX 4090 complete the
      two frozen cases with exact teacher-forced selections, four frozen-input
      comparisons, finite logit differences, observed peaks and terminal cleanup.
@@ -71,6 +62,9 @@ the indexed CUDA path against the grouped implementation on identical weights.
 LFM3 GGUF, lower precision and the broader model family have separate gates.
 
 ---
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-d91a095a-trace | change=queue the offline ShortConv projection repair after the consumed CPU failure
+AI-edited: 2026-11-15 | agent=Codex/root | task=moe-shortconv-in-proj | change=advance the CPU queue to the layer-0 residual after projection parity
+AI-edited: 2026-11-16 | agent=Codex/root | task=moe-connected-layer0 | change=record the first convolution mismatch and select the tap-order port
 AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-attempt | change=select inert successor with attempt marker after final reference admission
 AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-successor | change=route the held finite trace to the sealed successor
 AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-cpu-trace | change=queue the bounded query projection replay

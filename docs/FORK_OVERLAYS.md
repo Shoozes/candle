@@ -146,6 +146,8 @@ it. Every change to such a path must state which overlay owns each hunk and
 must pass both affected focused gates plus the repository-wide overlay gate.
 
 <!-- shared-paths:start -->
+- `candle-transformers/src/models/quantized_lfm2/lora.rs`
+- `candle-transformers/src/models/quantized_lfm2/shortconv.rs`
 - `candle-transformers/src/models/lfm2/layers.rs`
 - `candle-transformers/src/models/quantized_lfm2.rs`
 - `candle-transformers/src/models/lfm2.rs`

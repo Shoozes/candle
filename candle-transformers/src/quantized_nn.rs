@@ -116,6 +116,10 @@ impl RmsNorm {
         let weight = weight.dequantize(&weight.device())?;
         Ok(Self { weight, eps, span })
     }
+
+    pub(crate) fn weight_and_epsilon(&self) -> (&Tensor, f32) {
+        (&self.weight, self.eps as f32)
+    }
 }
 
 impl Module for RmsNorm {

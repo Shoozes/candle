@@ -1,5 +1,28 @@
 # LFM2-MoE completed work
 
+## 2026-11-16 - Maintained CPU layer-0 checkpoint
+
+On the 37 frozen rows, the maintained CPU schedules passed all 19 offline
+comparisons, including 75,776 bitwise matches each for dense Q6_K FFN down
+and the F32 `layer_out`. Both Jobs released their processes. The layer-1
+packet binds the exact output and still needs its one admitted attempt.
+[Layer-0 receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-dense-ffn-down-ordered-20261116/summary.json).
+
+## 2026-11-15 - Connected layer-2 CPU diagnostic
+
+On published `30e48252`, packet `9c8006a5` passed fresh admission and the
+whole-model SHA-256, then ran the verified binary once. The run covered
+all 37 frozen rows and 27 declared stages. The nine entry-through-RoPE
+stages and ordered top-K matched exactly. Candle's downstream controls
+and both engines' weighting, merge and residual formulas passed. The
+303,104-byte connected output has SHA-256
+`f6345e1826cac7895ec15d0deb9093a502f66549c84917159209efdd2df21241`.
+The Job recorded 51.7 MiB peak job memory, exit code 0 and PID cleanup.
+The post-run census passed. The diagnostic is complete. Maintained
+integration and production qualification follow in TODO.
+[Job receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-published-snapshot-20261115/connected-job.json).
+[Comparison log](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-published-snapshot-20261115/connected.log).
+
 ## 2026-11-15 - Inert SwiGLU and expert-down successor
 
 Packet `2a47477d` adds the exact Candle SwiGLU and down controls to unused
@@ -12,6 +35,24 @@ Candle's audit used its own norm-derived weights, expert order and mixer.
 The guarded compiler built once after the pinned executable cleared.
 Its Job released, the correct seal verified, a wrong digest failed,
 and both packets had zero probe dispatches. [Readiness receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-down-20261115-630691ed/readiness.json).
+
+The inert review of `2a47477d` confirmed 486 bindings and 27 checkpoint
+definitions. [Review receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-down-20261115-630691ed/review.json).
+
+Inert successor `cc7662ea` resolved the local checkout binding for review.
+Within the diagnostic scope, the canonical HEAD had no committed delta from
+the compiled source. The two dirty LFM3 files appended test functions only.
+The successor bound those exact bytes, preserved the predecessor's 486
+bindings, and passed read-only verification of 492 bindings, 27 stages and
+13 GGUF ranges. The review created no attempt marker or computed output.
+[Successor verification](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-checkout-20261115-ca2a29b7/summary.json).
+
+The local review of `cc7662ea` confirmed the inherited executable, arguments,
+comparison definitions, environment and limits. The `2a47477d` verifier
+rejected the checkout. The successor's full 14,526,258,464-byte model SHA-256
+matched, and the host census cleared the unchanged conditions. Both attempts
+were unused at review. Execution required an exact grant and fresh checks.
+[Successor review](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-checkout-20261115-ca2a29b7/review.json).
 
 ## 2026-11-15 - Layer-2 Q6_K expert down on both input lanes
 

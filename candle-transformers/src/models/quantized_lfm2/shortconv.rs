@@ -29,8 +29,12 @@ pub(super) fn causal_depthwise(input: &Tensor, weights: &Tensor) -> Result<Tenso
             .narrow(2, tap, length)?
             .broadcast_mul(&weights.narrow(1, tap, 1)?.unsqueeze(0)?)?;
         output = Some(match output {
-            None => value,
             Some(previous) => (previous + value)?,
+            // Match the CPU reference's +0 seed, including signed zero.
+            None if input.device().is_cpu() => {
+                Tensor::new(0.0_f32, input.device())?.broadcast_add(&value)?
+            }
+            None => value,
         });
     }
     output.ok_or_else(|| candle::Error::Msg("causal convolution has no taps".into()))
@@ -93,6 +97,28 @@ mod tests {
     #[test]
     fn causal_depthwise_cpu_matches_grouped_reference() -> Result<()> {
         compare(&Device::Cpu)
+    }
+
+    #[test]
+    fn causal_depthwise_cpu_adds_taps_in_order_from_positive_zero() -> Result<()> {
+        let device = &Device::Cpu;
+        let input = Tensor::new(
+            &[[[0x390a3ca3, 0x3927934a, 0xb934087a].map(f32::from_bits)]],
+            device,
+        )?;
+        let taps = Tensor::ones((1, 3), DType::F32, device)?;
+        let values = causal_depthwise(&input, &taps)?
+            .flatten_all()?
+            .to_vec1::<f32>()?;
+        assert_eq!(values[2].to_bits(), 0x38fb8ee4);
+
+        let input = Tensor::new(&[[[-0.0_f32]]], device)?;
+        let tap = Tensor::ones((1, 1), DType::F32, device)?;
+        let value = causal_depthwise(&input, &tap)?
+            .flatten_all()?
+            .to_vec1::<f32>()?;
+        assert_eq!(value[0].to_bits(), 0);
+        Ok(())
     }
 
     #[cfg(feature = "cuda")]

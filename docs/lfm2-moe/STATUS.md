@@ -2,27 +2,74 @@
 
 ## Current checkpoint
 
-The inert review of `2a47477d` confirmed 486 bindings and the 27
-checkpoint definitions, including the new SwiGLU and down controls.
-The packet and its parent remain unused. [Review receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-down-20261115-630691ed/review.json).
+Production packet `d91a095a` consumed its attempt on the CPU arithmetic
+comparison. The sampled prefill logits differed by up to 1.402465. The
+first differing top token followed forced IDs `49, 1252` at position 2
+(`1113` reference, `5141` Candle). CUDA was never reached.
+[Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-maintained-layer2-20261115-30e48252/qualification/summary.json).
 
-Inert successor `cc7662ea` resolved the local checkout binding for review.
-The canonical HEAD has no committed delta from the compiled source within
-the diagnostic scope. The two dirty LFM3 files append test functions only.
-The successor binds those exact bytes, preserves the predecessor's 486
-bindings, and passed read-only verification of 492 bindings, 27 stages and
-13 GGUF ranges. The whole-model SHA-256 and fresh admission remain execution
-prerequisites. No attempt marker or computed output was created.
-[Successor verification](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-checkout-20261115-ca2a29b7/summary.json).
+On the same 37 frozen rows, retained embeddings and reconstructed maintained
+RMSNorm matched bitwise. An offline `GenericTiled` replay located two layer-0
+ShortConv `in_proj` differences. Row 0, channel 2 diverged in the Q4_K dot
+on identical Q8_K operands. The first activation rounding witness was row 2,
+block 2, lane 119 (`-38.5` scaled, `-39` Candle, `-38` reference). Ties-to-even
+reproduced all pinned Q8_K bytes, including the five changed sums. The production
+logs contain no checkpoints or logits for `1113` and `5141`, so the path from
+these local differences to the top-token flip remains open.
+[Offline trace](D:/Compact_Evidence/candle/runs/lfm2-moe-d91a095a-retained-trace-20261115/trace.json).
 
-The local review of `cc7662ea` confirmed the inherited executable, input
-arguments, comparison definitions, environment and limits. The original
-verifier for `2a47477d` still rejects the checkout. The successor's full
-14,526,258,464-byte model SHA-256 matched during the read-only review, and
-the observed host census cleared the unchanged conditions. Execution still
-requires the exact successor grant and fresh checks. Both attempts remain
-unused.
-[Successor review](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-checkout-20261115-ca2a29b7/review.json).
+The maintained MoE CPU Q4_K ShortConv input projection now matches all 296
+Q8_K blocks and 227,328 F32 outputs on the 37 frozen rows. Rounding and dot
+schedule controls were run separately. Both changes are needed for bitwise
+parity. [Projection receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-shortconv-in-proj-maintained-20261115/summary.json).
+
+The single offline connected replay under the original limits matched
+embeddings, RMSNorm, input Q8_K, `in_proj` and B × X. It stopped at the first
+convolution mismatch, row 2, channel 2 (`38fb8ee6` Candle, `38fb8ee4` llama.cpp).
+The retained three-tap proof explains those same bits. The Job released its
+PID. The maintained CPU tap-order port then matched all 75,776 convolution
+values from Candle's B × X in one offline attempt with the authorized 16 GiB
+RAM and commit floors. Its Job released the PID. [Convolution receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-ordered-shortconv-20261116/summary.json).
+
+The maintained CPU layer-0 path matches through dense FFN gate/up on 37 rows.
+Pre-dot Q8_K and all 435,712 values in each projection matched bitwise.
+[Ordered replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-dense-ffn-gate-up-ordered-20261116/summary.json).
+
+The dense CPU SiLU port matched all 435,712 SiLU values and SwiGLU products
+on 37 rows. All 496,984 bytes of FFN-down Q8_K matched.
+[SwiGLU receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-dense-swiglu-ordered-20261116/summary.json).
+The [prior dense Q6_K replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-dense-ffn-down-20261116/completion.json)
+stopped at row 0, channel 0. With the tiled F32 schedule, the source-bound
+offline replay passed all 19 stages on the 37 rows, including 75,776 bitwise
+matches each for dense FFN down and `layer_out`. Both Jobs released their PIDs.
+[Layer-0 receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-dense-ffn-down-ordered-20261116/summary.json).
+
+The maintained layer-1 packet binds that exact output and 16 checks. An
+active Cargo build stopped admission before dispatch. The attempt is unused.
+[Admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-maintained-20261116/summary.json).
+
+Packet `9c8006a5` consumed its one authorized connected CPU attempt under
+the original limits. Fresh admission and the whole GGUF hash passed. The
+37 frozen rows passed all 27 declared comparisons through `layer_out`.
+Entry through Q/K RoPE and ordered top-K were bit-exact. Downstream stages
+passed the declared controls and per-engine formulas. `layer_out` has
+72,211 classified cross-engine differences among its 75,776 values.
+The Job exited with code 0, the probe PID was absent, and the post-run
+census passed. [Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-published-snapshot-20261115/terminal.json).
+
+Earlier inert packet reviews are recorded in [HISTORY](HISTORY.md#2026-11-15---inert-swiglu-and-expert-down-successor).
+
+The maintained GGUF CPU candidate applies the connected diagnostic's
+RMSNorm and RoPE arithmetic, Q4_K/Q6_K attention projections, F32 router
+projection, and the indexed Q4_K gate/up and Q6_K down schedules with
+reference-order SiLU. Its grouped weighting and expert-order accumulation
+reuse the existing implementations. Native and GGUF routing retain their
+separate normalization formulas. CUDA, dense LFM2 and other expert dtype
+mixes keep their existing dispatch. CPU dense Q6_K down uses the tiled F32
+schedule.
+Focused synthetic and retained-operand checks cover the maintained CPU
+operators. A connected layer-1 replay is next in [TODO](TODO.md).
+[Inert candidate evidence](D:/Compact_Evidence/candle/runs/lfm2-moe-maintained-layer2-20261115-30e48252/summary.json).
 
 For the clean MoE/LFM3 snapshot, use the rebound packet identified in the
 [snapshot receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-published-snapshot-20261115/summary.json).
@@ -30,10 +77,10 @@ The snapshot preserves the LFM3 test additions and the prior inert packet.
 
 The [up-projection replay](HISTORY.md#2026-11-15---layer-2-up-projection-replay)
 explains the diagnostic difference in consumed packet `f007a0a9`.
-Maintained CPU execution uses `GenericTiled`.
+The generic quantized fallback uses `GenericTiled`.
 
-Connected `layer_out`, maintained integration, the production position-2
-failure and Edge acceptance remain open. Standalone LFM3 CPU/CUDA text
+Maintained integration, the production position-2 failure and Edge
+acceptance remain open. Standalone LFM3 CPU/CUDA text
 qualification and the LTS support contract are separate remaining gates.
 [TODO](TODO.md) owns their order. [Production qualification](QUALIFICATION.md)
 binds two frozen cases and eight teacher-forced positions each.

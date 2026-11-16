@@ -136,12 +136,23 @@ impl AttentionLayer {
     }
 
     fn forward(&mut self, xs: &Tensor, mask: Option<&Tensor>, index_pos: usize) -> Result<Tensor> {
+        self.forward_with(xs, mask, index_pos, QMatMul::forward, RmsNorm::forward)
+    }
+
+    fn forward_with(
+        &mut self,
+        xs: &Tensor,
+        mask: Option<&Tensor>,
+        index_pos: usize,
+        project: impl Fn(&QMatMul, &Tensor) -> Result<Tensor> + Copy,
+        norm: impl Fn(&RmsNorm, &Tensor) -> Result<Tensor>,
+    ) -> Result<Tensor> {
         let _enter = self.span_attn.enter();
         let (b_sz, seq_len, n_embd) = xs.dims3()?;
 
-        let q = self.wq.forward(xs)?;
-        let k = self.wk.forward(xs)?;
-        let v = self.wv.forward(xs)?;
+        let q = self.wq.forward_with(xs, project)?;
+        let k = self.wk.forward_with(xs, project)?;
+        let v = self.wv.forward_with(xs, project)?;
 
         let q = q
             .reshape((b_sz, seq_len, self.n_head, self.head_dim))?
@@ -154,8 +165,8 @@ impl AttentionLayer {
             .transpose(1, 2)?
             .contiguous()?;
 
-        let q = self.q_norm.forward(&q.contiguous()?)?;
-        let k = self.k_norm.forward(&k.contiguous()?)?;
+        let q = norm(&self.q_norm, &q.contiguous()?)?;
+        let k = norm(&self.k_norm, &k.contiguous()?)?;
 
         let q = self.apply_rotary_emb(&q, index_pos)?;
         let k = self.apply_rotary_emb(&k, index_pos)?;
@@ -189,14 +200,25 @@ impl AttentionLayer {
         let y = att.matmul(&v.contiguous()?)?;
 
         let y = y.transpose(1, 2)?.reshape(&[b_sz, seq_len, n_embd])?;
-        self.wo.forward(&y)
+        self.wo.forward_with(&y, project)
     }
 }
 
 impl ShortConvLayer {
     fn forward(&mut self, xs: &Tensor, index_pos: usize) -> Result<Tensor> {
+        self.forward_with(xs, index_pos, QMatMul::forward, false)
+    }
+
+    fn forward_with(
+        &mut self,
+        xs: &Tensor,
+        index_pos: usize,
+        project: impl Fn(&QMatMul, &Tensor) -> Result<Tensor> + Copy,
+        ordered_cpu_taps: bool,
+    ) -> Result<Tensor> {
         let (b_sz, seq_len, hidden) = xs.dims3()?;
-        let bcx = self.in_proj.forward(xs)?.transpose(1, 2)?;
+        let ordered_cpu_taps = ordered_cpu_taps && xs.device().is_cpu() && xs.dtype() == DType::F32;
+        let bcx = self.in_proj.forward_with(xs, project)?.transpose(1, 2)?;
         let b = bcx.narrow(1, 0, hidden)?;
         let c = bcx.narrow(1, hidden, hidden)?;
         let x = bcx.narrow(1, 2 * hidden, hidden)?;
@@ -216,7 +238,7 @@ impl ShortConvLayer {
             None
         };
 
-        let mut conv_out = if seq_len == 1 {
+        let mut conv_out = if seq_len == 1 && !ordered_cpu_taps {
             let mut state = if let Some(cache) = cached_state {
                 cache
             } else {
@@ -253,7 +275,9 @@ impl ShortConvLayer {
                     ..Default::default()
                 },
             );
-            let out = if conv_input.device().is_cuda() && conv_input.dtype() == DType::F32 {
+            let out = if ordered_cpu_taps
+                || (conv_input.device().is_cuda() && conv_input.dtype() == DType::F32)
+            {
                 shortconv::causal_depthwise(&conv_input, &conv_weight)?
             } else {
                 conv.forward(&conv_input.contiguous()?)?
@@ -278,7 +302,7 @@ impl ShortConvLayer {
 
         conv_out = (c * &conv_out)?;
         let conv_out = conv_out.transpose(1, 2)?.contiguous()?;
-        self.out_proj.forward(&conv_out)
+        self.out_proj.forward_with(&conv_out, project)
     }
 }
 
