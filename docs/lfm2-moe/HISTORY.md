@@ -1,11 +1,32 @@
 # LFM2-MoE completed work
 
+## 2026-11-16 - Production packet review
+
+The inert successor binds both frozen cases, the `50b81e4b` binaries,
+and the maintained CPU layer-2 proof. The runner preserves prior receipts
+and verifies Job command and log identity before comparison. Model-free
+checks passed. Production parity remains open. [Review receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-reviewed-20261116-50b81e4b/review.json).
+
+## 2026-11-16 - Maintained CPU layer-2 checkpoint
+
+At `50b81e4b`, packet `2aa2ed81` verified the whole GGUF hash and passed
+all 27 checks on the 37 frozen rows. Entry through RoPE and the 148 ordered
+expert IDs matched exactly. The other stages matched the retained controls
+or each engine's formula. The final Candle output reproduced `9c8006a5`
+bitwise. Both Jobs released their PIDs. [Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-maintained-20261116-50b81e4b/terminal.json).
+
+## 2026-11-16 - Maintained CPU layer-1 checkpoint
+
+The single admitted offline replay at `50b81e4b` used the exact layer-0
+output and passed all 16 checks, including 75,776 bitwise `layer_out` values.
+Both Jobs released their processes. [Layer-1 receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-committed-20261116/completion.json).
+
 ## 2026-11-16 - Maintained CPU layer-0 checkpoint
 
 On the 37 frozen rows, the maintained CPU schedules passed all 19 offline
 comparisons, including 75,776 bitwise matches each for dense Q6_K FFN down
-and the F32 `layer_out`. Both Jobs released their processes. The layer-1
-packet binds the exact output and still needs its one admitted attempt.
+and the F32 `layer_out`. Both Jobs released their processes. This output
+became the exact entry for the maintained layer-1 replay.
 [Layer-0 receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-dense-ffn-down-ordered-20261116/summary.json).
 
 ## 2026-11-15 - Connected layer-2 CPU diagnostic

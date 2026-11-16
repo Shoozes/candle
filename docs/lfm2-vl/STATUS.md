@@ -135,8 +135,10 @@ stopped on the arithmetic CPU top token at position 2. The maintained
 ShortConv input projection and B × X matched on all 37 rows. The connected
 CPU replay stopped at ShortConv convolution. The maintained tap-order port
 then matched convolution bitwise. With tiled F32 dense Q6_K down, the
-source-bound replay matched all 37 rows through layer-0 `layer_out`. The MoE
-queue owns the unused layer-1 replay, held at build admission by an active build.
+source-bound replay matched all 37 rows through layer-0 `layer_out`. The
+maintained layer-1 replay also passed through `layer_out`. Maintained
+layer-2 packet `2aa2ed81` passed all 27 offline checks. The MoE queue owns
+the reviewed CPU/RTX 4090 successor built from `50b81e4b`. Production is held.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example

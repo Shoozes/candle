@@ -44,9 +44,10 @@ offline replay passed all 19 stages on the 37 rows, including 75,776 bitwise
 matches each for dense FFN down and `layer_out`. Both Jobs released their PIDs.
 [Layer-0 receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-dense-ffn-down-ordered-20261116/summary.json).
 
-The maintained layer-1 packet binds that exact output and 16 checks. An
-active Cargo build stopped admission before dispatch. The attempt is unused.
-[Admission receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-maintained-20261116/summary.json).
+At `50b81e4b`, the maintained layer-1 offline replay passed all 16 checks
+on the 37 frozen rows from that exact output, including all 75,776
+`layer_out` values. Both Jobs released their PIDs.
+[Layer-1 receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-committed-20261116/completion.json).
 
 Packet `9c8006a5` consumed its one authorized connected CPU attempt under
 the original limits. Fresh admission and the whole GGUF hash passed. The
@@ -68,7 +69,11 @@ separate normalization formulas. CUDA, dense LFM2 and other expert dtype
 mixes keep their existing dispatch. CPU dense Q6_K down uses the tiled F32
 schedule.
 Focused synthetic and retained-operand checks cover the maintained CPU
-operators. A connected layer-1 replay is next in [TODO](TODO.md).
+operators. The maintained packet `2aa2ed81` passed the whole GGUF hash,
+fresh 16 GiB floor admission and all 27 checks from exact layer-1 entry. Its
+`layer_out` matched the prior Candle control bitwise and retained 72,211
+classified differences from llama.cpp. Both Jobs released their processes.
+[Maintained receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-maintained-20261116-50b81e4b/terminal.json).
 [Inert candidate evidence](D:/Compact_Evidence/candle/runs/lfm2-moe-maintained-layer2-20261115-30e48252/summary.json).
 
 For the clean MoE/LFM3 snapshot, use the rebound packet identified in the
@@ -79,8 +84,10 @@ The [up-projection replay](HISTORY.md#2026-11-15---layer-2-up-projection-replay)
 explains the diagnostic difference in consumed packet `f007a0a9`.
 The generic quantized fallback uses `GenericTiled`.
 
-Maintained integration, the production position-2 failure and Edge
-acceptance remain open. Standalone LFM3 CPU/CUDA text
+The production position-2 failure and Edge acceptance remain open. The
+reviewed inert successor uses the `50b81e4b` binaries. It preserves prior
+receipts and checks each probe log against its Job receipt before comparison.
+Standalone LFM3 CPU/CUDA text
 qualification and the LTS support contract are separate remaining gates.
 [TODO](TODO.md) owns their order. [Production qualification](QUALIFICATION.md)
 binds two frozen cases and eight teacher-forced positions each.

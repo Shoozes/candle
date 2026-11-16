@@ -23,27 +23,18 @@
 
 ## Remaining gates in order
 
-1. **Next bounded step.** After fresh quiet admission and both 16 GiB floors,
-   use the [checkpoint-bound packet](D:/Compact_Evidence/candle/runs/lfm2-moe-layer1-committed-20261116/inputs.json)
-   for the unused layer-1 attempt. Its predecessor stopped before build.
-   Keep the exact layer-0 `layer_out`, 37 frozen rows and packet limits. Stop
-   at the first mismatch or failure. Done when all 16 bound checks pass through
-   bitwise `layer_out` and the build and replay Jobs release their processes.
-2. Reconcile the maintained layer-2 path against the exact layer-1 output
-   and the 27 controls from `9c8006a5`. Preserve
-   [both routing formulas](DECISIONS.md#layer-2-routing-comparison) and retain
-   the classified differences. After the relevant regressions and fixture
-   gates pass, bind a successor [qualification packet](QUALIFICATION.md) to
-   exact source, binaries, frozen inputs, original limits and all four
-   comparisons. Production execution requires a separate grant and admission.
+1. **Next bounded step.** Separately authorize the [reviewed production successor](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-published-20261116/qualification/packet.json)
+   for one attempt after fresh quiet admission and whole-model
+   hash verification under the [original limits](QUALIFICATION.md). The
+   packet binds `2aa2ed81`, both frozen cases and the exact binaries.
    - Done when: The pinned CPU reference, Candle CPU and RTX 4090 complete the
      two frozen cases with exact teacher-forced selections, four frozen-input
      comparisons, finite logit differences, observed peaks and terminal cleanup.
      Stop on any admission or execution failure without retry or relaxed limits.
-3. After supplier parity, explicitly select the bounded Edge qualification
+2. After supplier parity, explicitly select the bounded Edge qualification
    admission through its held candidate gate. Prove CLI/API chat, strict JSON,
    cancellation, unload/reload and a successful recovery request on both devices.
-4. After confirmed Candle source publication and separately authorized Edge
+3. After confirmed Candle source publication and separately authorized Edge
    adoption, reconcile only Edge's
    reviewed Candle pin and affected locks, rerun its selected graph/gates and
    record adoption. Other consumers retain their exact qualified identities.
