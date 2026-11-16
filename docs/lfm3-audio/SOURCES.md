@@ -1,5 +1,65 @@
 # LFM3-Audio source authority
 
+## Standalone text qualification candidate
+
+The selected standalone text checkpoint is
+[LiquidAI/LFM3-1.7B](https://huggingface.co/LiquidAI/LFM3-1.7B/tree/1da06bec6a819da10b54c67e5c90972b46d81871)
+at `1da06bec6a819da10b54c67e5c90972b46d81871`. Public Hub metadata and
+pinned source inspection identify the following inputs:
+
+| File | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `model.safetensors` | 3,457,635,448 | `135922caef64e81e52af88ede8b7c3ddaa9d6da220a9737fb3065275dbfb4330` |
+| `tokenizer.json` | 17,908,635 | `7e226e34bface23ccf6e495d157bf77186c1c30a7659880e1a8994db528c3701` |
+| `config.json` | 1,454 | `8c6ae8b8f6d88c87cfb98cf4b5e34e943d0ee07e24215c4121b3159a46e1399d` |
+
+The released config declares BF16 and tied embeddings. Qualification calls
+for F32 execution on both CPU and RTX 4090 from the same native weights.
+The model, config-class and convolution Python sources match the retained
+audio snapshot's corresponding source files byte for byte. Standalone
+weights and tokenizer keep their independent identities.
+
+Two HTTP range reads acquired the 32,376-byte safetensors header, including
+its length prefix. All 286 BF16 tensor names and shapes matched the Candle
+loader schema and the released Python model instantiated on the meta device.
+Tensor offsets were contiguous and reconciled with the published file size.
+The F32 parameters total 6,915,206,144 bytes before cache, scratch and loading
+overhead. The range reads did not include tensor payloads.
+[Header audit](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/standalone-header-audit.json).
+
+[Transformers e7200cd9](https://github.com/huggingface/transformers/tree/e7200cd9a98f0c874edcdf8f7263b7d19530b403)
+is a reference environment candidate. Its pinned source contains the
+initialization, kernel fallback, accelerate hooks, and recurrent mask APIs
+required by the model source. The offline import stopped before reaching the
+model code: the local `huggingface-hub` 1.5.0 lacks `ResolvedRevision` and
+the pin declares `huggingface-hub>=1.31.0,<3.0`. Local `tokenizers` 0.22.2
+also falls below the declared `>=0.23.1,<0.24.0` range. The next reference
+gate is a compatible isolated environment, followed by a tiny synthetic
+prefill and cached-decode comparison using the released standalone source.
+No weight payload was downloaded for this source intake.
+[Pinned archive receipt](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/source.json).
+
+PyPI metadata identifies four compatible Windows wheels for the local
+CPython 3.13 AMD64 interpreter: `huggingface-hub` 1.31.0, `tokenizers`
+0.23.1, `click` 8.4.2 and `hf-xet` 1.5.2. Declared wheel dependencies were
+checked against these pins and the existing Python environment. The intake
+records filenames, URLs, sizes and SHA-256 digests. The four downloaded
+wheels matched those digests and were extracted into a process-local
+`PYTHONPATH` directory. The system Python installation was untouched.
+[Wheel intake](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/reference-wheel-intake.json).
+
+The standalone source files were fetched at the model revision above and
+matched the three previously recorded source hashes. The offline tiny replay
+verified those hashes and the BF16 fixture inputs. Its full comparison pairs
+95 F32 logits and five top IDs per lane for one-shot and cached prefill with
+the retained Candle CPU reports. With the isolated wheels, the pinned
+Transformers import and both comparisons passed. The fixture uses
+special-token IDs within its 19-token vocabulary. Published source and
+checkpoint configuration bytes were preserved. Transformers emitted cache
+API deprecation and docstring diagnostics during the successful run.
+[Tiny replay](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/replay_tiny.py).
+[Replay log](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/tiny-replay-result.log).
+
 The implementation follows the original
 [LiquidAI/LFM3-Audio-2B snapshot](https://huggingface.co/LiquidAI/LFM3-Audio-2B/tree/9d49701c372d6011d900f6abb40c6b296fb706dd),
 revision `9d49701c372d6011d900f6abb40c6b296fb706dd`.

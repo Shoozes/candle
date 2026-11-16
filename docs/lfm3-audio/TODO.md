@@ -16,6 +16,21 @@ The portable receipt/catalog reconciliation is closed. [HISTORY](HISTORY.md)
 records the verified registration and ownership resolution. No Candle
 implementation, catalog repair or qualification packet remains in this slice.
 
+## Standalone LFM3 text qualification
+
+- Next bounded Candle step: obtain exact authorization for the inert packet
+  identified in the [snapshot receipt](D:/Compact_Evidence/candle/runs/lfm3-standalone-clean-snapshot-20261115/summary.json),
+  reverify its bindings and whole checkpoint, then perform
+  fresh admission before the one finite attempt. The CPU and RTX 4090
+  controller rehearsal used synthetic BF16 weights. Production is pending.
+- Done when: all six bounded stages and four comparisons pass on the two
+  frozen cases. Require exact top-token IDs and absolute probe-logit error
+  at most `0.001`. Retain resource observations and clean terminal receipts.
+  Stop on the first admission, execution, cleanup or comparison failure.
+- Scope: standalone LFM3-1.7B native BF16 storage with F32 execution on
+  Windows CPU and RTX 4090. Consumer pins and publication remain held.
+  [Qualification packet and evidence](STATUS.md).
+
 ## Next bounded consumer step: voice gap/source-matrix review; not dispatched
 
 - What/why: Reconcile the voice-specific Edge return, when available, with the

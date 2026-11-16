@@ -1,5 +1,142 @@
 # LFM3-Audio implementation
 
+The shared LFM3 backbone has an independent CPU F32 ShortConv fixture.
+PyTorch generated 18 outputs for biased, width-seven causal convolution.
+Candle matched them across cached chunks of 4, 4, and 1 tokens within 1e-7.
+An independent PyTorch F32 attention fixture also checks all 80 sliding
+and full attention outputs across cached chunks within 2e-7. Standalone
+text has a 95-logit PyTorch F32 fixture covering full prefill, irregular
+chunks, single-token decode, and cache reset within 2e-6. Actual checkpoint
+qualification on CPU and RTX 4090 remains open.
+
+The offline `lfm3-text` example accepts explicit local config and safetensors
+paths, input IDs and probe IDs. It reports ordered top IDs and probe logits
+for teacher-forced execution. The diagnostic limits are 4,096 context
+tokens, 128 tokens per chunk and 64 probe columns. For actual checkpoint
+qualification, bind the files and binary to the run record and invoke the
+example through the bounded host launcher.
+The Windows CPU smoke test loaded a synthetic safetensors checkpoint.
+Full versus chunked prefill matched all five top IDs and 15 probe logits
+within 6.1e-8. An over-budget chunk was rejected.
+
+The retained Windows CPU probe also loaded a synthetic BF16 safetensors
+checkpoint and ran in F32. All 95 logits matched exactly against an F32
+checkpoint made by widening the same BF16 values. Chunked BF16-input
+execution retained all five top IDs and stayed within 6.1e-8 of one-shot
+prefill. [Storage conversion receipt](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/bf16-storage-smoke/summary.json).
+
+The same probe parsed and validated the released standalone config after its
+size and SHA-256 matched the pinned source record. An oversized chunk was
+rejected before weight access. [Config preflight receipt](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/standalone-config-smoke.json).
+
+The published standalone Python implementation ran offline on the same tiny
+BF16 fixture in F32. All five top IDs matched in both lanes. Across 95
+logits per lane, maximum absolute error was `2.24e-7` for one-shot prefill
+and `1.79e-7` for cached chunks of 2, 2 and 1. The actual standalone
+checkpoint remains to be qualified on Windows CPU and RTX 4090.
+[Reference replay](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/tiny-replay-result.log).
+
+The parameterized offline CPU reference probe reads BF16 safetensors one
+tensor at a time into the F32 model. It takes a frozen case and emits one
+JSON report compatible with the Candle comparator. With the tiny fixture
+and cached chunks it matched five top IDs and 95 logits within `1.76e-7`.
+The report was checked with `tools/lfm3/compare_probes.py`.
+[Reference probe](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/reference_probe.py).
+[Comparison receipt](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/reference-probe-smoke/comparison.json).
+
+The Candle text probe releases its source tensor map after model
+construction and device synchronization, before prefill. This shortens the
+lifetime of the BF16 source tensors but retains the construction-time peak.
+A fresh locked/offline Windows build matched the same five top IDs and all
+95 synthetic logits within `1.76e-7` of the pinned CPU reference.
+[Rebuilt probe comparison](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/reference-probe-smoke/comparison-release-map.json).
+
+Locked, offline native Windows CUDA check and build passed for `lfm3-text`.
+The linker emitted `LNK4098` for `LIBCMT`. The RTX 4090 tiny BF16 fixture
+matched all five top IDs and 95 F32 logits against the pinned CPU reference
+within `2.21e-7`. No probe process remained. The tested binary SHA-256 was
+`1215e8935dedefc71f95751835668bb9fca2b584731c0cdb93ef866be57194d5`.
+[CUDA fixture comparison](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/reference-probe-smoke/comparison-cuda.json).
+
+The released standalone tokenizer was size- and SHA-256-verified. The inert
+case inventory freezes a 33-token prompt and a 354-token prompt that crosses
+the 256-token sliding window, with 11 probe columns per position. Both
+candidate devices use the same IDs and probe columns, 16-token chunks and
+a 384-token context. The proposed absolute logit tolerance is `0.001` and
+needs review before execution. The tokenizer exposes 125,033 token IDs
+within the checkpoint's 128,000 embedding rows. All four case files passed
+the comparator's schema and token bounds checks.
+[Frozen case inventory](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/standalone-frozen-cases/inventory.json).
+
+The inert standalone qualification draft binds the tested CUDA-enabled
+probe, pinned reference sources, launch/preflight tools, comparator and four
+case files. It specifies six serial model invocations and four comparisons
+with one attempt and no retries. The exact checkpoint is now present on D:.
+Its full SHA-256, size and safetensors header matched the pinned records.
+The checkpoint binding includes the runtime inventory and the six verified
+extractor commands. The review packet is sealed and inert. It requires the
+exact owner grant, whole-checkpoint re-verification and fresh quiet/resource
+admission before execution. Admission floors are 24 GiB available physical
+memory and commit headroom, plus 14 GiB free dedicated memory for RTX 4090
+stages. They give margin over the 9.66 GiB of simultaneous BF16 and F32
+parameter storage during Candle load. Production peaks remain unmeasured.
+Acceptance requires exact top IDs and a fixed `0.001` absolute error ceiling
+on the probed logits. No production run occurred.
+[Qualification draft](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/standalone-production-draft.json).
+[Checkpoint binding](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/standalone-checkpoint-binding.json).
+[Inert qualification packet](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/standalone-production-packet.json)
+SHA-256 `f243359f37bc3b58d0157386586897eaeeb3792f9a7c0a99b013af94d149eb06`.
+The prior packet remains preserved. The [snapshot receipt](D:/Compact_Evidence/candle/runs/lfm3-standalone-clean-snapshot-20261115/summary.json)
+identifies the active inert packet bound to the clean MoE/LFM3 snapshot.
+The read-only verifier checked the full checkpoint, 24 draft bindings,
+3,457 runtime files, extractor identity, canonical HEAD and absence of
+the production output directory. It rejected an incorrect packet digest.
+[Verifier](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/verify_standalone_packet.py).
+[Verification receipt](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/standalone-packet-verification.json).
+
+The packet controller defaults to read-only verification and left the
+production output path absent in that mode. Its held execution path applies
+the per-stage quiet and resource gates, aggregate deadline, bounded launcher,
+GPU sampling, report extraction and stop-on-failure comparisons. The
+controller's production execution path has not run.
+[Controller](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/invoke_standalone_packet.ps1)
+SHA-256 `422d18b312f7cb42a006371913679672fcf8cdca77c155be63a57f1957371586`.
+The same controller bytes passed a separate three-stage synthetic packet
+on the reference CPU, Candle CPU and RTX 4090. It captured a GPU memory
+sample, recorded a passing terminal receipt, and rejected reuse of the
+consumed fixture packet. The production output path remained absent.
+[Controller fixture receipt](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/controller-tiny-smoke/results/terminal.json).
+
+The reference runtime inventory binds the Python executable, the isolated
+wheel files, the extracted Transformers source tree, and version and
+`RECORD` identities for nine Python distributions. Base package `RECORD`
+hashes identify their installed manifests. The inventory records individual
+file hashes for the isolated wheels and Transformers tree.
+[Runtime inventory](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/standalone-reference-runtime.json).
+
+The Windows Job launcher ran both CPU probes against the tiny BF16 fixture.
+The extractor verified the combined-log hash, successful job exit and PID
+cleanup before validating and writing each report. The comparator matched
+five top IDs and 95 logits within `1.76e-7`. The extractor rejected duplicate
+reports and a receipt without confirmed PID cleanup.
+[Extractor](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/extract_bounded_report.py).
+[Bounded comparison](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/bounded-report-smoke/comparison.json).
+
+The same Windows Job launcher and extractor passed the RTX 4090 tiny
+fixture with the packet-bound executable. The job exited and its PID was
+absent after cleanup. All five top IDs matched the bounded CPU reference,
+with a maximum absolute difference of `2.21e-7` across 95 logits.
+[Bounded CUDA comparison](D:/Compact_Evidence/candle/runs/lfm3-reference-e7200cd9/bounded-cuda-smoke/comparison.json).
+
+Use `tools/lfm3/compare_probes.py --case CASE --reference REF --candidate GOT`
+for frozen report comparison. The case fixes `vocab_size`, `context`,
+ordered `tokens` and `probes`, `max_abs`, and each side's `device` and
+`chunk`. Each report must match the runner's F32 JSON fields. The
+comparator requires exact top IDs, checks every selected logit, and reports
+max absolute and RMS differences with the three input hashes.
+The retained Transformers 5.12.1 tree cannot import the pinned LFM3 module
+because it lacks `use_kernel_func_from_hub_with_fallback`.
+
 The selected outcome is reusable native Rust/Candle LFM3-Audio inference,
 starting with finite TTS, then audio input/ASR. Baseline is
 `87e1304638344bb4644d35ab20284824fa826c77`. Source publication and runtime

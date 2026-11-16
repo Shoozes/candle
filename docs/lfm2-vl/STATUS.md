@@ -126,7 +126,9 @@ full shared-input replay matched all gate outputs on both inputs in both
 engines. Connected packet `f007a0a9` matched its whole-gate control and
 stopped at expert 37's up projection. Both engines then matched the full
 up projection on both FFN norms. Inert successor `2a47477d` binds the
-verified SwiGLU and Q6_K down controls and passed inert review. The
+verified SwiGLU and Q6_K down controls and passed inert review. Successor
+`cc7662ea` retains those controls and passed local review with the exact
+LFM3 test additions bound and the full GGUF SHA-256 verified. The
 [MoE queue](../lfm2-moe/TODO.md) tracks its held connected attempt.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.

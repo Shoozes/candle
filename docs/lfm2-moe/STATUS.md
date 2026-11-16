@@ -6,6 +6,28 @@ The inert review of `2a47477d` confirmed 486 bindings and the 27
 checkpoint definitions, including the new SwiGLU and down controls.
 The packet and its parent remain unused. [Review receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-down-20261115-630691ed/review.json).
 
+Inert successor `cc7662ea` resolved the local checkout binding for review.
+The canonical HEAD has no committed delta from the compiled source within
+the diagnostic scope. The two dirty LFM3 files append test functions only.
+The successor binds those exact bytes, preserves the predecessor's 486
+bindings, and passed read-only verification of 492 bindings, 27 stages and
+13 GGUF ranges. The whole-model SHA-256 and fresh admission remain execution
+prerequisites. No attempt marker or computed output was created.
+[Successor verification](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-checkout-20261115-ca2a29b7/summary.json).
+
+The local review of `cc7662ea` confirmed the inherited executable, input
+arguments, comparison definitions, environment and limits. The original
+verifier for `2a47477d` still rejects the checkout. The successor's full
+14,526,258,464-byte model SHA-256 matched during the read-only review, and
+the observed host census cleared the unchanged conditions. Execution still
+requires the exact successor grant and fresh checks. Both attempts remain
+unused.
+[Successor review](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-checkout-20261115-ca2a29b7/review.json).
+
+For the clean MoE/LFM3 snapshot, use the rebound packet identified in the
+[snapshot receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-clean-snapshot-20261115/summary.json).
+The snapshot preserves the LFM3 test additions and the prior inert packet.
+
 The [up-projection replay](HISTORY.md#2026-11-15---layer-2-up-projection-replay)
 explains the diagnostic difference in consumed packet `f007a0a9`.
 Maintained CPU execution uses `GenericTiled`.

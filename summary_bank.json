@@ -40,6 +40,8 @@
         "candle-transformers/src/models/liquid_codec/signal.rs",
         "candle-transformers/src/models/liquid_codec/stream.rs",
         "candle-examples/examples/lfm3-audio/main.rs",
+        "candle-examples/examples/lfm3-text.rs",
+        "tools/lfm3/compare_probes.py",
         "candle-examples/examples/lfm3-audio/asr.rs",
         "candle-examples/examples/lfm3-audio/README.md"
       ]

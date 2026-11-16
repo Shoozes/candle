@@ -24,11 +24,16 @@
 ## Remaining gates in order
 
 1. Produce the maintained Candle candidate for connected layer-2 CPU correctness.
-   - **Next bounded step.** With exact authorization for `2a47477d`, pass
-     fresh admission and the whole-model hash, then run one connected CPU
-     attempt on 37 frozen rows. Keep the original limits. Require exact
-     entry, Q/K RoPE, top-K and all 27 comparisons through `layer_out`.
-     Stop at the first unexplained difference or failure. [Review receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-connected-down-20261115-630691ed/review.json).
+   - **Next bounded step.** With exact authorization for the packet rebound
+     to the clean MoE/LFM3 snapshot, pass fresh admission and the whole-model hash,
+     then make one connected CPU attempt on 37 frozen rows under the original
+     limits. Require exact entry, Q/K RoPE, ordered top-K and all 27
+     comparisons through `layer_out`. Stop at the first unexplained difference
+     or failure. The local review confirmed the same binary, frozen inputs,
+     comparisons and limits. The predecessor `2a47477d` remains unused and
+     its verifier rejects the current checkout. Preserve its receipts.
+     [Prior successor review](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-checkout-20261115-ca2a29b7/review.json).
+     [Snapshot binding](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-clean-snapshot-20261115/summary.json).
    - **Then integrate** Use the connected proof through `layer_out` to
      select demonstrated corrections in maintained code. Reuse operator proof
      where dtype, layout, width, group size and dispatch match. Preserve
@@ -58,8 +63,9 @@ current proof is in STATUS and the compact run record. Those local results do
 not close the remaining production/adoption criteria or authorize new work for
 completed D1. No mandatory package, installation or activation task is selected.
 
-Standalone LFM3 text starts with an independent numerical oracle and an
-offline runner. Shared ShortConv optimization follows the corresponding
+Standalone LFM3 text has tiny fixtures and an offline runner. See the
+[standalone qualification gate](../lfm3-audio/TODO.md#standalone-lfm3-text-qualification)
+for pinned checkpoint proof. Shared ShortConv optimization follows the corresponding
 correctness baseline. Device-resident MoE execution follows validation of
 the indexed CUDA path against the grouped implementation on identical weights.
 LFM3 GGUF, lower precision and the broader model family have separate gates.
