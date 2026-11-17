@@ -23,14 +23,14 @@
 
 ## Remaining gates in order
 
-1. **Next bounded step.** Review build-bound Unicode layer-2 packet `f7ef7c65`.
-   After exact run authorization, fresh quiet/resource admission and a stable
-   whole-model SHA-256 check, run one connected CPU trace on all 32 frozen rows.
-   Require exact layer-1 entry and Q/K RoPE, the maintained attention route,
-   all 27 ordered comparisons with both routing formulas, and a Candle-computed
-   `layer_out`. Stop on the first failure or unexplained difference. Keep the
-   original limits and holds.
-   [Packet and build proof](HISTORY.md#2026-11-16---bound-maintained-unicode-layer-2-cpu-probe).
+1. **Next bounded step.** Review the packet rebound to this documentation
+   snapshot and obtain exact run authorization for its digest. The Candle
+   executable comes from `e9015f91`. After authorization, verify the whole-model
+   SHA-256 and run one CPU/RTX 4090 attempt under fresh quiet/resource
+   admission. Preserve both frozen cases, six serial children, four
+   comparisons and the original limits. Stop on the first failure.
+   [Current qualification packet](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-binary-docs-publish-20261117/qualification/packet.json).
+   [Build proof](HISTORY.md#2026-11-17---binary-bound-unicode-production-successor).
 2. Production qualification remains open under the [original limits](QUALIFICATION.md).
    - Done when: The pinned CPU reference, Candle CPU and RTX 4090 complete the
      two frozen cases with exact teacher-forced selections, four frozen-input

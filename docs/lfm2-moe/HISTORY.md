@@ -1,5 +1,60 @@
 # LFM2-MoE completed work
 
+## 2026-11-17 - Binary-bound Unicode production successor
+
+Packet `a9fafed1` binds the Windows CPU/RTX 4090 Candle probe built at
+published `e9015f91` and the retained llama.cpp CPU reference. The Candle
+executable SHA-256 is
+`f6f9c8d2e7eb771844c1e02f66dcabe6721764465f4111650bbe11347c4e77f1`.
+Both frozen cases, all four comparison commands, the 27-check Unicode
+receipt and the original production limits carry forward from `e725408b`.
+
+The first CUDA build stopped when nvcc could not resolve `cl.exe`. A
+model-free kernel compile verified the pinned host compiler with a reduced
+process-local `PATH`. The corrected locked-offline build passed in 349.5
+seconds, with all 530 source bindings verified before and after. PE imports
+resolved to the bound CUDA/MSVC DLLs. The model-free `--help` check passed,
+all owned Jobs released their processes, and the runner refused dispatch
+without a grant. The production attempt is unused.
+[Binary-bound packet](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-unicode-successor-inert-20261117-e9015f91/future-qualification/packet.json).
+[Build and guard proof](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-unicode-successor-inert-20261117-e9015f91/future-build/verification.json).
+
+## 2026-11-17 - Inert Unicode production successor
+
+Packet `e725408b` supersedes consumed production packet `88c5952f` at
+published Candle `e9015f91`. It binds the `f7ef7c65` 27-check layer-2
+receipt, both frozen prompts and continuations, the pinned llama.cpp
+CPU binary, and the locked-offline build handoff for one Candle executable
+shared by the CPU and RTX 4090 lanes.
+
+The packet preserves six serial children, four comparisons and the original
+40 GiB host and commit floors, 18 GiB CUDA floor, 32 GiB Job cap,
+180-second child and 900-second wall limits. Preparation validated both cases
+and rejected six invalid packet variants. The Candle binary is pending
+separate build authorization. Builds and production dispatches are zero.
+[Inert successor](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-unicode-successor-inert-20261117-e9015f91/packet.json).
+
+## 2026-11-17 - Connected maintained Unicode layer-2 CPU trace
+
+Packet `f7ef7c65` consumed its one CPU attempt at published source
+`e9015f91`. Both pre-dispatch admissions passed under the original 16 GiB
+physical and commit floors. The whole-file Q4_K_M SHA-256 matched the
+frozen artifact. The probe used exact retained layer-1 input and pinned
+llama.cpp captures on all 32 Unicode rows.
+
+All 27 ordered checks passed through Candle-computed `layer_out`.
+Twenty-two checkpoints were bitwise equal, including Q/K RoPE, attention
+values, mixer, ordered expert IDs, raw weight sums and unweighted expert
+down. The two normalization stages, weighted experts, sparse merge and
+layer output passed each engine's own formulas. The final output differed
+from llama.cpp at 61,824 of 65,536 values under those checks.
+
+The Windows Job exited 0 in 1,009 ms, peaked at 339,132,416 bytes and
+released the child. The first post-run sample detected foreign Cargo
+activity, with 43.15 GiB available and 43.64 GiB of commit headroom.
+No second dispatch occurred. Production parity and Edge adoption remain open.
+[Terminal and stage results](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-maintained-attempt-20261116/terminal.json).
+
 ## 2026-11-16 - Bound maintained Unicode layer-2 CPU probe
 
 Successor `f7ef7c65` binds the isolated Windows CPU executable with SHA-256

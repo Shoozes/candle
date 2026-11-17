@@ -141,9 +141,10 @@ layer-2 packet `2aa2ed81` passed all 27 offline checks. Production packet
 `88c5952f` passed CPU arithmetic and stopped at CPU Unicode position 2.
 Unicode CPU packet `aa71f36b` matched through layer-2 Q/K RoPE. The maintained
 MoE CPU attention kernel matched the frozen score, softmax and value controls.
-The isolated CPU executable is bound in packet `f7ef7c65`. The
-[MoE queue](../lfm2-moe/TODO.md) owns packet review and the unused connected
-32-row trace after run authorization.
+Connected CPU packet `f7ef7c65` passed all 27 checks through `layer_out` on
+32 Unicode rows, including the two independent routing formulas. The
+[MoE queue](../lfm2-moe/TODO.md) owns the binary-bound CPU/RTX 4090 packet
+for this checkout and its held one-shot attempt.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example
