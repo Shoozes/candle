@@ -23,14 +23,14 @@
 
 ## Remaining gates in order
 
-1. **Next bounded step.** Review the packet rebound to this documentation
-   snapshot and obtain exact run authorization for its digest. The Candle
-   executable comes from `e9015f91`. After authorization, verify the whole-model
-   SHA-256 and run one CPU/RTX 4090 attempt under fresh quiet/resource
-   admission. Preserve both frozen cases, six serial children, four
-   comparisons and the original limits. Stop on the first failure.
-   [Current qualification packet](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-binary-docs-publish-20261117/qualification/packet.json).
-   [Build proof](HISTORY.md#2026-11-17---binary-bound-unicode-production-successor).
+1. **Next bounded step.** Review the paired arithmetic prefill packet for
+   this checkout. After exact run authorization, fresh quiet/resource
+   admission and whole-model SHA-256 verification, capture one prefill per
+   device on the same 37 frozen IDs, with zero decode steps. Require both
+   position-0 controls before comparing all 43 ordered checkpoints for the
+   first difference. Preserve the original limits. Hold Edge repin and push.
+   [Current paired packet](D:/Compact_Evidence/candle/runs/lfm2-moe-rtx-arithmetic-prefill-publish-20261117/packet.json).
+   [Bound trace proof](HISTORY.md#2026-11-17---bound-rtx-4090-arithmetic-prefill-probe).
 2. Production qualification remains open under the [original limits](QUALIFICATION.md).
    - Done when: The pinned CPU reference, Candle CPU and RTX 4090 complete the
      two frozen cases with exact teacher-forced selections, four frozen-input

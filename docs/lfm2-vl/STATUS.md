@@ -142,9 +142,10 @@ layer-2 packet `2aa2ed81` passed all 27 offline checks. Production packet
 Unicode CPU packet `aa71f36b` matched through layer-2 Q/K RoPE. The maintained
 MoE CPU attention kernel matched the frozen score, softmax and value controls.
 Connected CPU packet `f7ef7c65` passed all 27 checks through `layer_out` on
-32 Unicode rows, including the two independent routing formulas. The
-[MoE queue](../lfm2-moe/TODO.md) owns the binary-bound CPU/RTX 4090 packet
-for this checkout and its held one-shot attempt.
+32 Unicode rows, including the two independent routing formulas. Production
+packet `18e27010` passed both CPU cases and stopped on RTX 4090 arithmetic
+at position 2. The [MoE queue](../lfm2-moe/TODO.md) owns the bound paired
+trace for the first CUDA arithmetic divergence.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example

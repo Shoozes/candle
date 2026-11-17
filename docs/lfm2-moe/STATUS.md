@@ -2,7 +2,14 @@
 
 ## Current checkpoint
 
-Production packet `88c5952f` passed all eight CPU arithmetic selections,
+Production packet `18e27010` at `47e68166` passed all eight CPU selections
+on both frozen cases. RTX 4090 arithmetic stopped at position 2 after
+forced IDs `49, 1252` (`1113` reference and Candle CPU, `5141` RTX 4090).
+The CUDA Unicode lane was unreached. All five Jobs released their
+processes, and the single attempt is consumed.
+[Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-binary-docs-publish-20261117/qualification/summary.json).
+
+The preceding packet `88c5952f` passed all eight CPU arithmetic selections,
 then stopped at Unicode position 2 after forced IDs `597, 4695` (`10966`
 reference, `355` Candle). All four Jobs released their processes. CUDA was
 never reached. [Terminal receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-todo-rebind-20261116/qualification/summary.json).
@@ -97,10 +104,15 @@ Binary-bound successor `a9fafed1` carries that proof and the original
 CPU/RTX 4090 qualification protocol at `e9015f91`. The locked-offline
 Candle build, DLL inspection, model-free smoke and run-grant refusal passed.
 Packet review reverified the source and binary bindings, both frozen cases,
-all six child commands and all four comparisons. The documentation snapshot
-has its own checkout binding for the same unused production attempt. Obtain
-exact run authorization for the rebound packet before dispatch.
-[Current qualification packet](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-binary-docs-publish-20261117/qualification/packet.json).
+all six child commands and all four comparisons. Rebound packet `18e27010`
+used those binaries for the consumed attempt above. The retained CPU and
+RTX 4090 arithmetic logits differ at all seven sampled values at prefill
+position 0. The isolated trace executable is bound in `95d7534e` and
+passed the model-free checks. The rebound packet carries the same
+executable and unused attempt at the documentation checkout. Review and
+exact run authorization remain pending.
+[Current paired packet](D:/Compact_Evidence/candle/runs/lfm2-moe-rtx-arithmetic-prefill-publish-20261117/packet.json).
+[Bound trace proof](HISTORY.md#2026-11-17---bound-rtx-4090-arithmetic-prefill-probe).
 [Build and packet proof](HISTORY.md#2026-11-17---binary-bound-unicode-production-successor).
 Production parity and Edge acceptance remain open.
 Standalone LFM3 CPU/CUDA text

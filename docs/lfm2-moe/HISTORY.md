@@ -1,5 +1,63 @@
 # LFM2-MoE completed work
 
+## 2026-11-17 - Bound RTX 4090 arithmetic prefill probe
+
+Packet `95d7534e` binds one CUDA-enabled Candle executable for both trace
+lanes at `e9015f91`. The executable SHA-256 is
+`bd0f3837e9f6807b7674753e2e74838b514814b43724cc5b6e2f20dfee613858`.
+The isolated source was verified against 1,516 exact Git blobs before
+the three-path patch. The locked-offline build passed, and all 1,517
+patched source files matched before and after the build.
+
+The binary's CUDA/MSVC imports resolved to the pinned runtime. The
+model-free help and missing-grant checks passed and released their Jobs.
+The packet preserves 37 frozen IDs, both position-0 controls, 43
+checkpoints per lane, zero decode steps and the original resource limits.
+The single paired trace remains unused.
+[Bound trace](D:/Compact_Evidence/candle/runs/lfm2-moe-rtx-arithmetic-prefill-inert-20261117/future-build/bound/packet.json).
+
+## 2026-11-17 - RTX 4090 arithmetic prefill evidence and inert trace
+
+The three retained arithmetic logs from `18e27010` bind the same 37
+prompt IDs, seven probe IDs and eight forced IDs. All three choose `207`
+at position 0. All seven Candle CPU and RTX 4090 sampled logits differ
+there, before decode. For token `207`, Candle CPU records `0x41d5e5c8`,
+RTX 4090 records `0x41e5bf6e`, and pinned llama.cpp records `0x41d61660`.
+The first top-token difference is at position 2 after `49, 1252`. Neither
+`1113` nor `5141` is in the retained logit sample. The retained result
+localizes the first observable drift to the prefill endpoint.
+
+Inert packet `b61f6e19` binds both endpoint controls, the original production
+inputs and a diagnostic-only patch at `e9015f91`. A future isolated
+CUDA-enabled Candle executable will capture one prefill per device.
+Each endpoint must reproduce its own retained control. The offline
+comparison scans all 37 embedding and layer rows, then the last-token
+normalization and head, and stops at the first differing checkpoint.
+There are 43 checkpoints per lane and no decode steps. Patch applicability,
+Rust syntax and model-free comparison controls passed. Builds and runs
+remain held.
+[Paired inert trace and retained witnesses](D:/Compact_Evidence/candle/runs/lfm2-moe-rtx-arithmetic-prefill-inert-20261117/packet.json).
+
+## 2026-11-17 - Production attempt stopped on RTX 4090 arithmetic
+
+Packet `18e27010` consumed its one attempt at checkout `47e68166` with the
+Candle probe built from `e9015f91`. Fresh admission and the stable full GGUF
+SHA-256 passed. Candle CPU matched all eight teacher-forced selections on
+both frozen cases. Maximum sampled CPU logit deltas were 0.898526 for
+arithmetic and 0.916007 for Unicode.
+
+RTX 4090 arithmetic stopped the packet at position 2 after forced IDs
+`49, 1252`. Pinned llama.cpp and Candle CPU selected `1113`; RTX 4090
+selected `5141`. The retained Candle CPU and RTX 4090 logs already differ
+at position 0, with a 1.981274 sampled logit delta at token `207`. The first
+divergent layer or operation remains open.
+
+All five child Jobs exited 0 and verified process release. The RTX 4090
+lane peaked at 15,990,063,104 Job bytes and 15,106 MiB device-wide GPU usage
+in the samples. The post-run check was quiet with 23,397 MiB GPU free.
+The stop left the CUDA Unicode lane unreached.
+[Terminal receipt and comparison results](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-binary-docs-publish-20261117/qualification/summary.json).
+
 ## 2026-11-17 - Binary-bound Unicode production successor
 
 Packet `a9fafed1` binds the Windows CPU/RTX 4090 Candle probe built at
