@@ -83,8 +83,16 @@ The [up-projection replay](HISTORY.md#2026-11-15---layer-2-up-projection-replay)
 explains the diagnostic difference in consumed packet `f007a0a9`.
 The generic quantized fallback uses `GenericTiled`.
 
-Production parity and Edge acceptance remain open. The retained Unicode
-failure is the next bounded investigation.
+All seven retained Unicode logits drift at position 0 after 32 tokens. Both
+engines select 207. Token 3843 has the largest delta (2.304444 vs 1.319762).
+[Retained trace](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-unicode-retained-trace-20261116/summary.json).
+Unicode CPU aa71f36b matched through Q/K RoPE. Offline e5a8555b reproduced
+both controls, and the Q/K dot trace reproduced three score pairs.
+Isolated AVX2/FMA softmax matched all 16,896 probabilities. The maintained
+mixer uses stock softmax. Shared-input value reduction matched 2,056 values
+then drifted at token 1/head 0/channel 8 (fused vs separate F32).
+[Replay](HISTORY.md#2026-11-16---unicode-cpu-value-reduction).
+Production parity and Edge acceptance remain open.
 Standalone LFM3 CPU/CUDA text
 qualification and the LTS support contract are separate remaining gates.
 [TODO](TODO.md) owns their order. [Production qualification](QUALIFICATION.md)

@@ -139,7 +139,11 @@ source-bound replay matched all 37 rows through layer-0 `layer_out`. The
 maintained layer-1 replay also passed through `layer_out`. Maintained
 layer-2 packet `2aa2ed81` passed all 27 offline checks. Production packet
 `88c5952f` passed CPU arithmetic and stopped at CPU Unicode position 2.
-The MoE queue owns the retained-evidence follow-up.
+Unicode CPU packet `aa71f36b` matched through layer-2 Q/K RoPE. On shared
+scores, the offline replay stopped at softmax token 2/head 0/key 0.
+The isolated full CPU softmax schedule matched all 16,896 probabilities.
+Shared-input value reduction first drifted at token 1/head 0/channel 8.
+The [MoE queue](../lfm2-moe/TODO.md) owns the reference-order replay.
 The square ShortConv repair and CPU/RTX 4090 fixture coverage were
 published at `60ce38d4`.
 The production qualification inventory now binds the example

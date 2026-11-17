@@ -23,12 +23,11 @@
 
 ## Remaining gates in order
 
-1. **Next bounded step.** Inspect the retained Unicode evidence from
-   [consumed packet `88c5952f`](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-todo-rebind-20261116/qualification/summary.json).
-   Start with position 2 after forced IDs `597, 4695`, with reference `10966`
-   and Candle `355`. Keep the frozen inputs. Use retained logits and receipts
-   to narrow the first unexplained difference or identify the smallest
-   missing observation. Any new probe requires a separate grant.
+1. **Next bounded step.** After fresh authorization and admission, replay
+   the `96e27811` reference accumulation order once on the matched 32-row
+   probabilities and frozen V. Match all 65,536 llama.cpp values, including
+   channel 8, or stop at first drift. Keep mask, layouts and limits.
+   [Bindings and witness](HISTORY.md#2026-11-16---unicode-cpu-value-reduction).
 2. Production qualification remains open under the [original limits](QUALIFICATION.md).
    - Done when: The pinned CPU reference, Candle CPU and RTX 4090 complete the
      two frozen cases with exact teacher-forced selections, four frozen-input

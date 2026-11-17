@@ -1,5 +1,45 @@
 # LFM2-MoE completed work
 
+## 2026-11-16 - Unicode CPU value reduction
+
+One admitted Candle replay reproduced all 65,536 native control values.
+With matched probabilities and frozen V, the first 2,056 outputs matched
+llama.cpp, including token 1/channel 0 at `0x3b7aeaed`. The next output
+at token 1/head 0/channel 8 differed by one ULP (`0xbac911ee` Candle,
+`0xbac911ed` llama.cpp). The probe stopped there and released its Job.
+[Comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-value-reduction-20261116/comparison.json).
+[Terminal](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-value-reduction-20261116/terminal.json).
+
+Both probability words and both V words match the earlier channel-8 trace
+bitwise. That trace reproduced these bits with fused accumulation in
+Candle and separate F32 multiplication and addition at key 1 in llama.cpp.
+Packet `96e27811` proved the full reference order on the 37-row case.
+Full 32-row parity remains open. The next replay uses the same probabilities,
+frozen V, native layouts and limits.
+[Consumed replay inputs](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-value-reduction-20261116/inputs.json).
+[Channel-8 trace](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-channel8-20261114-53d89669/result.json).
+[Reference order proof](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-replay-only-20261115-851b5cc0-docs/result.json).
+
+## 2026-11-16 - Unicode CPU softmax replay
+
+The isolated replay used Candle `50b81e4b` and pinned llama.cpp `582eab71`.
+Stock Candle reproduced its native control. Reciprocal-only matched token
+2/head 0/key 0 at `0x3db318f2` and differed at 10,399 visible values.
+The AVX2/FMA exponent, reduction and reciprocal schedule matched all 16,896
+reference probabilities bitwise. All masked and padded lanes stayed zero.
+One admitted offline child exited and released its Job.
+[Comparison](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-softmax-schedule-run-20261116/comparison.json).
+[Terminal](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-softmax-schedule-run-20261116/terminal.json).
+
+The shared-score manifest binds the reference probabilities, frozen V and
+the 65,536-value reference reduction that already matched on those inputs.
+Its Candle lane stopped at softmax. Use the native attention packet's Candle
+probabilities and Candle value output together for that engine's control.
+The shared-score replay keeps the causal mask, Candle's 32-key layout,
+llama.cpp's 256-key padded layout and the 16 GiB RAM/commit floors.
+[Shared-score manifest](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-shared-scores-20261116/inputs.json).
+[Original controls and layouts](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-attention-build-20261116/packet.json).
+
 ## 2026-11-16 - Production successor stopped on CPU Unicode
 
 Packet `88c5952f` passed fresh admission and whole GGUF identity, then ran
