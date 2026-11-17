@@ -1,6 +1,6 @@
 //! Crate-private reuse of the existing quantized LFM2 token operators.
 use super::*;
-use crate::models::quantized_lfm2_moe::cpu;
+use crate::models::quantized_lfm2_moe::{cpu, cpu_attention};
 
 pub(crate) struct Mixer(LayerKind);
 
@@ -95,6 +95,7 @@ impl Mixer {
                     let (weight, epsilon) = norm.weight_and_epsilon();
                     cpu::rms_norm(input, weight, epsilon)
                 },
+                cpu_attention::forward,
             ),
             LayerKind::Attention(op) => op.forward(x, mask, position),
             LayerKind::ShortConv(op) => op.forward_with(

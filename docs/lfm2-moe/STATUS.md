@@ -86,12 +86,13 @@ The generic quantized fallback uses `GenericTiled`.
 All seven retained Unicode logits drift at position 0 after 32 tokens. Both
 engines select 207. Token 3843 has the largest delta (2.304444 vs 1.319762).
 [Retained trace](D:/Compact_Evidence/candle/runs/lfm2-moe-prod-unicode-retained-trace-20261116/summary.json).
-Unicode CPU aa71f36b matched through Q/K RoPE. Offline e5a8555b reproduced
-both controls, and the Q/K dot trace reproduced three score pairs.
-Isolated AVX2/FMA softmax matched all 16,896 probabilities. The maintained
-mixer uses stock softmax. Shared-input value reduction matched 2,056 values
-then drifted at token 1/head 0/channel 8 (fused vs separate F32).
-[Replay](HISTORY.md#2026-11-16---unicode-cpu-value-reduction).
+Unicode CPU aa71f36b matched through Q/K RoPE. The maintained MoE CPU
+attention kernel matched 16,896 scores, 16,896 probabilities and 65,536
+values on frozen inputs. The isolated CPU probe for `d7be3780` is built and
+bound as `f7ef7c65`. The version and unguarded-trace refusal checks passed.
+The connected 32-row attempt remains unused and awaits packet review and run
+authorization.
+[Packet and build proof](HISTORY.md#2026-11-16---bound-maintained-unicode-layer-2-cpu-probe).
 Production parity and Edge acceptance remain open.
 Standalone LFM3 CPU/CUDA text
 qualification and the LTS support contract are separate remaining gates.

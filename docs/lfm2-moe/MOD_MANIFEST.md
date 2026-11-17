@@ -14,6 +14,7 @@ release inventories, D1 proof and consumer pins remain unchanged.
 - `candle-transformers/src/models/lfm2_moe/tests.rs`
 - `candle-transformers/src/models/quantized_lfm2/mixer.rs`
 - `candle-transformers/src/models/quantized_lfm2_moe/cpu.rs`
+- `candle-transformers/src/models/quantized_lfm2_moe/cpu_attention.rs`
 - `candle-transformers/src/models/quantized_lfm2_moe/metadata.rs`
 - `candle-transformers/src/models/quantized_lfm2_moe/mod.rs`
 - `candle-transformers/src/models/quantized_lfm2_moe/model.rs`

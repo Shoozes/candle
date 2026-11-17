@@ -23,11 +23,14 @@
 
 ## Remaining gates in order
 
-1. **Next bounded step.** After fresh authorization and admission, replay
-   the `96e27811` reference accumulation order once on the matched 32-row
-   probabilities and frozen V. Match all 65,536 llama.cpp values, including
-   channel 8, or stop at first drift. Keep mask, layouts and limits.
-   [Bindings and witness](HISTORY.md#2026-11-16---unicode-cpu-value-reduction).
+1. **Next bounded step.** Review build-bound Unicode layer-2 packet `f7ef7c65`.
+   After exact run authorization, fresh quiet/resource admission and a stable
+   whole-model SHA-256 check, run one connected CPU trace on all 32 frozen rows.
+   Require exact layer-1 entry and Q/K RoPE, the maintained attention route,
+   all 27 ordered comparisons with both routing formulas, and a Candle-computed
+   `layer_out`. Stop on the first failure or unexplained difference. Keep the
+   original limits and holds.
+   [Packet and build proof](HISTORY.md#2026-11-16---bound-maintained-unicode-layer-2-cpu-probe).
 2. Production qualification remains open under the [original limits](QUALIFICATION.md).
    - Done when: The pinned CPU reference, Candle CPU and RTX 4090 complete the
      two frozen cases with exact teacher-forced selections, four frozen-input

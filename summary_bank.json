@@ -945,7 +945,7 @@
       ]
     },
     "feature__lfm2_moe": {
-      "description": "Native and mixed quantized LFM2-MoE routing/loading, CPU/CUDA synthetic proof and local example. Expand feature__lfm2_text for shared mixers and workflow__lfm2_moe_qualification for the production protocol. Read docs/lfm2-moe/HISTORY.md for completed work.",
+      "description": "Native and mixed quantized LFM2-MoE routing/loading, CPU/CUDA synthetic proof and local example. Expand feature__lfm2_moe_cpu_schedules for CPU arithmetic, feature__lfm2_text for shared mixers, and workflow__lfm2_moe_qualification for production. Read docs/lfm2-moe/HISTORY.md for completed work.",
       "status": "active",
       "paths": [
         "candle-examples/examples/lfm2-moe/README.md",
@@ -956,7 +956,6 @@
         "candle-transformers/src/models/lfm2_moe/routing.rs",
         "candle-transformers/src/models/lfm2_moe/tests.rs",
         "candle-transformers/src/models/quantized_lfm2/mixer.rs",
-        "candle-transformers/src/models/quantized_lfm2_moe/cpu.rs",
         "candle-transformers/src/models/quantized_lfm2_moe/metadata.rs",
         "candle-transformers/src/models/quantized_lfm2_moe/mod.rs",
         "candle-transformers/src/models/quantized_lfm2_moe/model.rs",
@@ -975,6 +974,17 @@
         "tools/lfm2_moe/prepare_packet.py",
         "tools/lfm2_moe/test_prepare_packet.py",
         "tools/lfm2_moe/verify_tokenizer.py"
+      ]
+    },
+    "feature__lfm2_moe_cpu_schedules": {
+      "description": "Quantized LFM2-MoE CPU projections, reference-order attention, and the frozen attention regression. Expand feature__lfm2_text for the shared attention layer and feature__lfm2_moe for the full model.",
+      "status": "active",
+      "paths": [
+        "candle-transformers/src/models/quantized_lfm2/mixer.rs",
+        "candle-transformers/src/models/quantized_lfm2_moe/cpu.rs",
+        "candle-transformers/src/models/quantized_lfm2_moe/cpu_attention.rs",
+        "docs/lfm2-moe/DECISIONS.md",
+        "docs/lfm2-moe/SOURCES.md"
       ]
     },
     "workflow__lfm2_moe_qualification": {

@@ -1,5 +1,108 @@
 # LFM2-MoE completed work
 
+## 2026-11-16 - Bound maintained Unicode layer-2 CPU probe
+
+Successor `f7ef7c65` binds the isolated Windows CPU executable with SHA-256
+`c0fca5b20ed284aec7917d5984f6e347839407db46509f99e1f291e3d41e4adb`
+to inert packet `d7be3780`. The parent recheck validated 77 bindings, the
+order of 27 comparison stages and four rejection controls. The successor
+preserves the 32 Unicode IDs, exact entry and reference captures, both routing
+formulas and the original limits. Its compiler arguments differ only in the
+output path.
+
+Pinned `rustc.exe` and MSVC linked the probe in a bounded Windows Job.
+The build emitted linker warning `LNK4098`. The executable reported the
+expected version and refused an unguarded trace with sentinel paths before
+opening inputs. All three children exited and released their PIDs.
+The model dispatch and attempt counts are zero.
+[Bound packet and Job receipts](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-maintained-build-20261116/packet.json).
+
+## 2026-11-16 - Inert maintained Unicode layer-2 packet
+
+Packet `d7be3780` binds the exact 32-row layer-1 entry, 27 ordered
+reference captures, maintained mixer sources and original limits. Its
+trace adapter uses the maintained CPU attention route and feeds its
+computed tensors through the final residual. Each engine's routing
+formulas are checked independently. The pre-change Candle layer_out
+remains historical evidence. The comparator writes the computed output.
+
+Preparation verified 77 bindings and parsed seven Rust sources. Four
+negative controls rejected execution enablement, a lower memory floor,
+a missing attention binding and legacy Candle output acceptance.
+Builds, model dispatches and attempt consumption are zero. The next
+gate reviews the inert packet and builds and binds its isolated CPU
+binary under separate authorization.
+[Packet](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-maintained-inert-20261116/packet.json).
+[Preparation checks](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-maintained-inert-20261116/preparation.json).
+
+## 2026-11-16 - Maintained quantized MoE CPU attention
+
+The private quantized MoE mixer now selects reference-order F32 attention
+for supported AVX2/FMA inputs. RoPE, cache assembly and output projection
+remain in the shared layer. Dense LFM2, CUDA and other CPU inputs use the
+stock path. Routing formulas are unchanged.
+
+The maintained kernel matched 16,896 raw scores, 16,896 probabilities
+and 65,536 values on the bound 32-row Unicode regression. It verified the
+input and control hashes. The neighboring 28 tests passed, covering dense
+decode, batched GQA, rectangular prefill, cached decode and recovery.
+Library and example checks, Clippy, formatting and overlay checks passed.
+[Source-bound verification](D:/Compact_Evidence/candle/runs/lfm2-moe-maintained-cpu-attention-20261116/summary.json).
+
+The next gate starts from exact retained layer-1 output. The maintained
+layer must compute its own layer-2 Q/K/V, attention and residual. Bind
+the pinned and retained controls and preserve both routing formulas.
+Production Unicode selection and CPU/RTX 4090 qualification are open.
+
+## 2026-11-16 - Unicode connected CPU attention
+
+The value-order pass-down was already satisfied by the 32-row reference
+replay. The successor connected the three proven schedules. One admitted
+offline probe started from frozen Q/K/V and carried its computed scores
+and probabilities forward. It matched 16,896 visible raw Q·K scores,
+16,896 probabilities and 65,536 values bitwise. The Job exited 0 and
+released. Channel 8 matched `0xbac911ed`.
+[Replay receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-attention-connected-20261116/terminal.json).
+[Inputs and layouts](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-attention-connected-20261116/inputs.json).
+
+This supports a private reference-order implementation for supported
+quantized MoE CPU F32 attention. The shared AttentionLayer should keep
+the existing cache, projection and rotary flow. Its MoE CPU caller should
+select the proven score, softmax and value schedules after projection
+and RoPE. Derive mask, grouping and lengths from the caller. Keep the
+existing dense, CUDA and unsupported CPU paths. Prove the maintained
+route with the frozen attention regression and neighboring prefill,
+cached decode and reset checks before the connected Unicode layer trace.
+CPU/CUDA production selection, standalone LFM3, Edge acceptance and the
+LTS contract remain open.
+
+## 2026-11-16 - Unicode CPU reference QK order
+
+One admitted standalone replay applied the pinned llama.cpp AVX2/FMA dot
+order on the exact matched Q/K RoPE inputs. It kept the causal mask and
+the original 32-key Candle and 256-key GGML score layouts. All 16,896
+visible raw F32 scores matched, including the three earlier witnesses.
+The score capture is byte-identical to the pinned control. The Job released.
+[Q·K replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-qk-reference-order-20261116/terminal.json).
+
+The subsequent connected replay used the same frozen Q/K/V. The isolated
+controls and replay inputs are bound below.
+[Q·K inputs and layouts](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-qk-reference-order-20261116/inputs.json).
+[Value inputs and control](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-value-reference-order-20261116/inputs.json).
+
+## 2026-11-16 - Unicode CPU reference value order
+
+One admitted standalone F32 replay used the `96e27811` eight-lane FMA and
+horizontal sum order on all 32 rows. It kept the causal mask, the 32-key
+Candle and 256-key padded GGML score layouts, and the 12,288-stride V cache.
+All 65,536 outputs matched pinned llama.cpp bitwise, including token 1,
+head 0, channel 8 at `0xbac911ed`. The Job released after exit 0.
+[Replay and bindings](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-value-reference-order-20261116/terminal.json).
+
+The Q·K dot trace reproduced three scores on the retained Q/K RoPE inputs.
+The subsequent full Q·K replay extended that proof to all visible scores.
+[Q·K trace](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-qk-dot-20261116/result.json).
+
 ## 2026-11-16 - Unicode CPU value reduction
 
 One admitted Candle replay reproduced all 65,536 native control values.
@@ -14,8 +117,8 @@ Both probability words and both V words match the earlier channel-8 trace
 bitwise. That trace reproduced these bits with fused accumulation in
 Candle and separate F32 multiplication and addition at key 1 in llama.cpp.
 Packet `96e27811` proved the full reference order on the 37-row case.
-Full 32-row parity remains open. The next replay uses the same probabilities,
-frozen V, native layouts and limits.
+The reference-order successor kept the same probabilities, frozen V, native
+layouts and limits.
 [Consumed replay inputs](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-unicode-value-reduction-20261116/inputs.json).
 [Channel-8 trace](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-channel8-20261114-53d89669/result.json).
 [Reference order proof](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-value-reduction-replay-only-20261115-851b5cc0-docs/result.json).

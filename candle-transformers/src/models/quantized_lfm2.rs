@@ -136,7 +136,14 @@ impl AttentionLayer {
     }
 
     fn forward(&mut self, xs: &Tensor, mask: Option<&Tensor>, index_pos: usize) -> Result<Tensor> {
-        self.forward_with(xs, mask, index_pos, QMatMul::forward, RmsNorm::forward)
+        self.forward_with(
+            xs,
+            mask,
+            index_pos,
+            QMatMul::forward,
+            RmsNorm::forward,
+            |_, _, _, _| Ok(None),
+        )
     }
 
     fn forward_with(
@@ -146,6 +153,7 @@ impl AttentionLayer {
         index_pos: usize,
         project: impl Fn(&QMatMul, &Tensor) -> Result<Tensor> + Copy,
         norm: impl Fn(&RmsNorm, &Tensor) -> Result<Tensor>,
+        attend: impl Fn(&Tensor, &Tensor, &Tensor, Option<&Tensor>) -> Result<Option<Tensor>>,
     ) -> Result<Tensor> {
         let _enter = self.span_attn.enter();
         let (b_sz, seq_len, n_embd) = xs.dims3()?;
@@ -185,6 +193,21 @@ impl AttentionLayer {
         };
         self.kv_cache = Some((k.clone(), v.clone()));
 
+        let y = match attend(&q, &k, &v, mask)? {
+            Some(y) => y,
+            None => self.stock_attention(&q, k, v, mask)?,
+        };
+        let y = y.transpose(1, 2)?.reshape(&[b_sz, seq_len, n_embd])?;
+        self.wo.forward_with(&y, project)
+    }
+
+    fn stock_attention(
+        &self,
+        q: &Tensor,
+        k: Tensor,
+        v: Tensor,
+        mask: Option<&Tensor>,
+    ) -> Result<Tensor> {
         let k = repeat_kv(k, self.n_head / self.n_kv_head)?;
         let v = repeat_kv(v, self.n_head / self.n_kv_head)?;
 
@@ -197,10 +220,7 @@ impl AttentionLayer {
             }
         };
         let att = candle_nn::ops::softmax_last_dim(&att)?;
-        let y = att.matmul(&v.contiguous()?)?;
-
-        let y = y.transpose(1, 2)?.reshape(&[b_sz, seq_len, n_embd])?;
-        self.wo.forward_with(&y, project)
+        att.matmul(&v.contiguous()?)
     }
 }
 

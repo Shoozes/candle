@@ -32,6 +32,12 @@ adapts `ggml/src/ggml-cpu/vec.h` at `582eab71` with its MIT notice in
 `quantized_lfm2_moe/cpu.rs`. Packed scales are decoded with the already
 workspace-pinned `half` dependency. GGUF weights remain quantized.
 
+The quantized MoE CPU attention order comes from pinned llama.cpp `582eab71`.
+The reference uses `ggml/src/ggml-cpu/vec.cpp` and `simd-mappings.h` for Q·K,
+`vec.cpp` and `vec.h` for softmax, and `llamafile/sgemm.cpp` under the same CPU
+directory for value reduction. The adapted exponent retains the ggml MIT
+notice and Arm attribution in `quantized_lfm2_moe/cpu_attention.rs`.
+
 The verified external file is
 `C:/llamacpp/models/LFM2.5-24B-A2B-Q4_K_M.gguf`, 14,526,258,464 bytes, SHA-256
 `d3334405b96228eb9908cdebb5c6194908f2da64282bda852afc3a3910c64e7d`.

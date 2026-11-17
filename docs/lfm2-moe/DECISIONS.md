@@ -61,6 +61,16 @@ requires operand isolation. Any production compatibility change needs a
 separate decision, and the production [qualification gate](QUALIFICATION.md)
 still applies.
 
+## Quantized MoE CPU attention
+
+The private MoE mixer selects the pinned F32 attention order on x86-64 with
+AVX2/FMA and a head width divisible by 32. Scores follow the four-vector Q·K
+fold, softmax uses the pinned exponent and F32 group/F64 sum, and value
+reduction uses eight FMA lanes per channel. The implementation uses the
+model's causal mask and grouped KV heads. Zero-only padded groups are implicit.
+The shared attention layer owns RoPE, KV caching and output projection. Its
+stock path serves dense models, CUDA and other CPU configurations.
+
 ---
 AI-edited: 2026-11-13 | agent=Codex/root | task=lfm2-moe-layer2-inert | change=record routing authority and first-difference classification
 AI-edited: 2026-11-14 | agent=Codex/root | task=lfm2-moe-maintained-reduction | change=record scoped CPU reduction and pending exact replay
