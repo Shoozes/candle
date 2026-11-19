@@ -205,11 +205,13 @@ fn dot_plain_avx2(weights: &[WeightBlock], activations: &[Q8Block]) -> f32 {
 }
 
 /// Dense attention uses the paired sub-block fold with a one-row GEMV tail.
+/// Dense Q6_K single-row projections use the plain dot for one input row.
 /// Dense GEMM/GEMV uses GEMV for every row outside a complete group of four.
 /// Indexed gate/up use the full integer fold. Indexed down selects its dot
 /// from the number of rows routed to that expert.
 pub(crate) enum Projection {
     Dense,
+    DenseQ6KSingleRow,
     Indexed,
     DenseGemmGemv,
 }
@@ -218,25 +220,13 @@ impl Projection {
     fn q4_gemv(&self, row: usize, rows_per_sequence: usize) -> bool {
         let row = row % rows_per_sequence;
         match self {
-            Self::Dense => rows_per_sequence % 4 == 1 && row == rows_per_sequence - 1,
+            Self::Dense | Self::DenseQ6KSingleRow => {
+                rows_per_sequence % 4 == 1 && row == rows_per_sequence - 1
+            }
             Self::Indexed => true,
             // The pinned repack scheduler sends every remaining row to GEMV.
             Self::DenseGemmGemv => row >= rows_per_sequence - rows_per_sequence % 4,
         }
-    }
-}
-
-pub(crate) fn project_q4_gemm_gemv(
-    weight: &QMatMul,
-    input: &Tensor,
-    fallback: impl FnOnce(&QMatMul, &Tensor) -> Result<Tensor>,
-) -> Result<Tensor> {
-    if input.device().is_cpu()
-        && matches!(weight, QMatMul::QTensor(q) if q.dtype() == GgmlDType::Q4K)
-    {
-        project(weight, input, Projection::DenseGemmGemv)
-    } else {
-        fallback(weight, input)
     }
 }
 
@@ -293,7 +283,9 @@ pub(crate) fn project(weight: &QMatMul, input: &Tensor, mode: Projection) -> Res
             }
             GgmlDType::Q6K => {
                 let decoded: Vec<_> = raw.chunks_exact(Q6_BYTES).map(decode_weight).collect();
-                let dot = if matches!(mode, Projection::Indexed) && rows < 8 {
+                let dot = if matches!(mode, Projection::DenseQ6KSingleRow) && rows == 1
+                    || matches!(mode, Projection::Indexed) && rows < 8
+                {
                     dot_plain_avx2
                 } else {
                     dot_tiled
@@ -338,6 +330,18 @@ pub(crate) fn rms_norm(input: &Tensor, weight: &Tensor, epsilon: f32) -> Result<
 pub(crate) fn router(input: &Tensor, weight: &Tensor) -> Result<Tensor> {
     let (rows, width) = input.dims2()?;
     let (experts, weight_width) = weight.dims2()?;
+    #[cfg(feature = "cuda")]
+    if input.device().is_cuda()
+        && input.dtype() == DType::F32
+        && weight.dtype() == DType::F32
+        && rows > 0
+        && experts > 0
+        && width > 0
+        && width == weight_width
+        && width.is_multiple_of(8)
+    {
+        return super::cuda::router(input, weight);
+    }
     if !input.device().is_cpu() || !width.is_multiple_of(8) {
         return input.matmul(&weight.t()?);
     }
@@ -346,6 +350,14 @@ pub(crate) fn router(input: &Tensor, weight: &Tensor) -> Result<Tensor> {
     }
     let values = input.flatten_all()?.to_vec1::<f32>()?;
     let weights = weight.flatten_all()?.to_vec1::<f32>()?;
+    if rows == 1 && width.is_multiple_of(32) {
+        // The pinned router uses ggml_vec_dot_f32 for a single activation row.
+        let logits = weights
+            .par_chunks_exact(width)
+            .map(|weights| plain_router_dot(&values, weights))
+            .collect::<Vec<_>>();
+        return Tensor::from_vec(logits, (rows, experts), input.device());
+    }
     let mut logits = vec![
         0.0_f32;
         rows.checked_mul(experts).ok_or_else(|| {
@@ -367,6 +379,23 @@ pub(crate) fn router(input: &Tensor, weight: &Tensor) -> Result<Tensor> {
             }
         });
     Tensor::from_vec(logits, (rows, experts), input.device())
+}
+
+fn plain_router_dot(input: &[f32], weights: &[f32]) -> f32 {
+    let mut accum = [[0.0f32; 8]; 4];
+    for (row, weights) in input.chunks_exact(32).zip(weights.chunks_exact(32)) {
+        for (group, lanes) in accum.iter_mut().enumerate() {
+            for (lane, sum) in lanes.iter_mut().enumerate() {
+                let index = group * 8 + lane;
+                *sum = weights[index].mul_add(row[index], *sum);
+            }
+        }
+    }
+    let group: [f32; 8] = std::array::from_fn(|lane| {
+        (accum[0][lane] + accum[2][lane]) + (accum[1][lane] + accum[3][lane])
+    });
+    let pair: [f32; 4] = std::array::from_fn(|lane| group[lane] + group[lane + 4]);
+    (pair[0] + pair[1]) + (pair[2] + pair[3])
 }
 
 pub(crate) fn rotary(context: usize, width: usize, base: f32) -> Result<(Tensor, Tensor)> {

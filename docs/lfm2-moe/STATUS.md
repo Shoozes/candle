@@ -2,6 +2,233 @@
 
 ## Current checkpoint
 
+Candle passed the frozen Q4_K_M production gate at working-tree base
+`a6dc22718451176b48fb8fee8cae82cea84c96fa`. Packet `c8157131` on Windows CPU
+and packet `4d2b97b1` on RTX 4090 used the same source-bound executable.
+All 32 selections matched pinned llama.cpp CPU, including position 2
+(`10966` for Unicode and `1113` for arithmetic). All four candidate Jobs
+released. Peak Job memory was 13.95 GiB on CPU. Peak sampled VRAM was
+15,356 MiB for Unicode and 15,362 MiB for arithmetic. The audit binds all
+four comparisons, both retained pinned CPU Jobs and the post-exit scans.
+[Production qualification](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/qualification-audit.json).
+
+The Windows release build, 43 focused tests, CPU example and four-crate
+checks passed. The optional Codex-Compat WSL replay stopped before Cargo
+because its VHDX path was missing (`HCS/ERROR_PATH_NOT_FOUND`).
+[Windows checks](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/candidate-with-router) ·
+[WSL receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/candidate-with-router/wsl-moe.result.json) ·
+[Remaining gates](TODO.md#remaining-gates-in-order).
+
+Exact packet `8f796dc3` passed the complete isolated Windows CPU and RTX
+4090 CLI/API qualification. Both devices passed authenticated chat, strict
+JSON, cancellation during active execution, model release and reload, and
+a successful recovery reply. The final Job had no active children and
+the post-exit census found no model processes. The published supplier
+source and consumer pin/lock reconciliation remain the next gate.
+[Edge terminal audit](D:/Compact_Evidence/edgesymbio/runs/lfm2-moe-frozen-candle-20261118-strict-prefill/terminal-audit.json).
+
+The qualified candidate extends indexed Q8_K dispatch to Q4_K expert down
+weights. With the arithmetic prefill inputs held fixed, layer 5 matched all
+75,776 pinned outputs under the diagnostic clamp and slot-order controls.
+At both forced decode steps, single-row Q6_K V and the pinned attention
+value fold restored layer-2 attention on CPU and RTX 4090. The single-row
+router fold matched all 128 pinned logits and the full sparse FFN matched
+4,096 values under the same diagnostic controls. The production candidate
+still uses the maintained epsilon and expert-ID accumulation order.
+[Compiled attention and expert proof](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/compiled-boundaries/compiled-boundary-proof.json) ·
+[Compiled router and sparse FFN replay](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/compiled-boundaries/ffn/final/replay.log) ·
+[Pinned CPU trace](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/pinned-decode-views/attempt/terminal.json).
+
+Exact-grant packet `5568f52b` ran both frozen RTX 4090 cases on the same
+ordered-attention and indexed-expert binary. Unicode passed all eight
+positions and selected `10966` at position 2. Arithmetic matched seven
+positions, selecting `6986` at position 2 against pinned CPU `1113`.
+Both Jobs released. Peaks were 15,225 MiB for Unicode and 15,258 MiB for
+arithmetic. This was the predecessor candidate.
+[Terminal audit](D:/Compact_Evidence/candle/runs/lfm2-moe-ordered-attention-repair-20261118/production/terminal-audit.json).
+
+The CUDA GGUF MoE path now uses the pinned Q·K, softmax and value orders.
+The frozen 32-row Unicode test matched 16,896 scores, 16,896 probabilities
+and 65,536 context values bitwise. The connected replay restored the
+layer-2 attention residual and the pinned FFN norm, router logits, IDs and
+selected probabilities. Wide accumulation matched all 32 raw weight sums,
+and the maintained Transformers epsilon remains part of normalization.
+CUDA indexed expert projections use the verified Q8_K folds. The
+compiled replay matched all gate, up, SwiGLU and down values for the
+34 routed Unicode experts and 35 routed arithmetic experts. The crossed
+arithmetic replay matched layers 0 and 1 at all three checkpoints and
+the layer-2 prefill attention residual and raw route sums. The first
+remaining prefill difference was the denominator. A diagnostic replay
+using the pinned clamp and slot-order addition matched all 75,776
+arithmetic sparse-FFN outputs. Full-model ablation with clamp only, slot
+order only, and both together left RTX 4090 position 2 selecting `6986`.
+Both controls together restored prefill through layer 4 and exposed the
+layer-5 Q4_K expert down dispatch. The retained decode trace first differed
+in layer-2 attention.
+[Four-control audit](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/ablation-audit.json).
+[Frozen attention proof](D:/Compact_Evidence/candle/runs/lfm2-moe-ordered-attention-repair-20261118/frozen-cuda-attention.result.json) ·
+[Crossed case proof](D:/Compact_Evidence/candle/runs/lfm2-moe-ordered-attention-repair-20261118/crossed-cases-proof.json) ·
+[Pitfalls F-0054 through F-0056](../lfm2-vl/FAILURE_LOG.md#f-0054-matching-qkv-does-not-prove-attention-parity).
+
+The native locked/offline CUDA build, frozen attention regression, 20
+MoE tests, two routing tests, 20 shared LFM2 tests and native CPU example
+check passed.
+[Verification receipts](D:/Compact_Evidence/candle/runs/lfm2-moe-ordered-attention-repair-20261118/candidate/moe-cuda-tests.result.json).
+
+Unicode trace `27a95a5e` reproduced both position-2 rankings after forced
+IDs `597, 4695`. The pinned and CUDA output heads gave the same ranking
+when evaluated on the same final hidden state. The first decode difference
+was the one-row dense Q6_K FFN down fold in layer 0. The plain CPU dot fold
+now runs on CPU and CUDA for a single dense FFN row. The compiled replay
+matched all 4,096 pinned layer-0 decode values and all 65,536 prefill values.
+On the same inputs, the next layer matched across devices.
+
+Exact-grant replay `f3d564fa` checked all eight Unicode positions on the
+RTX 4090. Seven matched. Position 2 remained `355` on CUDA and `10966` on
+pinned CPU. The Job released its PID after sampling 15,282 MiB peak VRAM.
+On shared layer-2 probabilities and the exact route, stock F32 summation
+differed on eight prefill rows, while F64 matched all 34 sums. Both forced
+decode rows matched with either sum. The next gate is to cross the layer-2
+prefill attention residual and sparse FFN on common inputs before attributing
+the remaining token flip to the sum.
+[Operator proof](D:/Compact_Evidence/candle/runs/lfm2-moe-unicode-position2-20261118/operator-proof.json) ·
+[Unicode terminal audit](D:/Compact_Evidence/candle/runs/lfm2-moe-unicode-position2-20261118/production/terminal-audit.json).
+
+The Windows locked/offline CUDA release build, 19 MoE tests and 20
+shared quantized LFM2 tests passed. The native CPU example check passed.
+[MoE test receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-unicode-position2-20261118/candidate/moe-cuda-tests.result.json) ·
+[Shared test receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-unicode-position2-20261118/candidate/lfm2-shared-cuda-tests.result.json).
+
+Layer-2 shared-logit replay isolated CUDA sigmoid drift to F32
+exponentiation. The GGUF repair widens the exponent and rounds it to
+F32 before the add and reciprocal. It matched all 2,496 retained
+probabilities, 156 selected probabilities and the exact route. On
+shared probabilities, F32 weight summation differed on 11 rows and
+F64 summation matched. Exact-grant packet `2f1ea476` passed all eight
+RTX 4090 arithmetic positions, including `1113` at position 2. The
+Job released its PID. Unicode packet `d12d407f` reused that exact
+binary and matched seven of eight. At position 2, CUDA selected `355`
+and pinned CPU selected `10966`. The Unicode Job released its PID.
+[Unicode audit](D:/Compact_Evidence/candle/runs/lfm2-moe-sigmoid-unicode-ram34-commit36-20261118/terminal-audit.json).
+[Terminal audit](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-sigmoid-cuda-20261118/production-verified/terminal-audit.json) · [Replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-sigmoid-cuda-20261118/replay-summary.json).
+
+Layer-2 sparse FFN crosses held the normalized residual and route fixed.
+The first difference was the CUDA router dot on identical operands.
+The CUDA repair uses the reference eight-lane FMA and reduction order.
+Expert 37 packed Q8_K bitwise on both devices; the indexed whole-block
+fold reproduced its Q4_K gate and up projections. The compiled router
+matched all 2,496 retained logits bitwise. Packet `7521a633` checked
+eight arithmetic positions and matched seven. Position 2 chose
+`6986` versus pinned CPU `1113`. The Job released its PID.
+[Kernel proof](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-sparse-20261118/router-proof/summary.json) ·
+[Terminal audit](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-sparse-20261118/production-verified/terminal-audit.json) · [Isolation](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-sparse-20261118/isolation.json).
+
+Post-SiLU layers 0 and 1 supplied identical inputs through both decode steps.
+The first shared-input difference was layer-2 RoPE. The CUDA repair uploads
+the CPU-order tables and rounds the two products separately before the
+add/subtract. Common-input sparse routing kept the expert IDs, while expert
+projections and the FFN output still differed. Packet `4e3addd8` matched
+seven of eight. Position 2 still selected `6986` versus pinned CPU `1113`,
+and the Job released its PID. [Terminal audit](D:/Compact_Evidence/candle/runs/lfm2-moe-post-silu-layer2-20261118/production/terminal-audit.json).
+[Crossed replay](D:/Compact_Evidence/candle/runs/lfm2-moe-post-silu-layer2-20261118/crossed-summary.json).
+
+Connected trace `0d24096f` reproduced both endpoints and released both
+Jobs. The prefill replay isolated CUDA dense SiLU before a layer-1 Q8_K
+half-tie. The CPU-order CUDA SiLU matched 918,528 retained gate values
+bitwise. [CUDA replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qkv-dropin-20261118/silu-candidate/silu-proof/summary.json).
+Packet `d744a493` matched seven of eight. Position 2 remains `6986` versus
+`1113`, and the Job released. [Terminal audit](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qkv-dropin-20261118/silu-candidate/production/terminal-audit.json).
+[Trace and replay](HISTORY.md#2026-11-18---connected-cache-and-dense-silu).
+
+The layer-2 CUDA Q/K/V replay matched the earlier stock CPU and RTX 4090
+captures on identical block-normalized inputs. Stock CUDA used the generic
+quantized activation/dot path. The existing Q8_K pack-and-fold paths
+matched all 119,808 CPU values bitwise across prefill and both decode
+inputs. The repair selects those paths for MoE CUDA Q/K/V Q4_K and Q6_K
+weights. Packet `515de8df` matched seven of eight full-model arithmetic
+positions. Position 2 still selected `6986` versus `1113`; the Job released its
+PID. Retained shared-input controls then verified ordered CUDA Q/K RMSNorm
+and Q4_K attention output projection bitwise. The revised dispatch uses
+those paths. RoPE retains a small difference even with common tables.
+Packet `d37538ce` tested all three repairs and still matched seven of eight.
+Position 2 selected `6986` versus `1113`. The Job released its PID.
+[Terminal audit](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qkv-dropin-20261118/attention-candidate/production/terminal-audit.json).
+[Packet audit](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qkv-dropin-20261118/production/terminal-audit.json)
+and [downstream controls](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qkv-dropin-20261118/shared-rope-output/summary.json).
+[Shared-input replay](D:/Compact_Evidence/candle/runs/lfm2-moe-layer2-qkv-dropin-20261118/summary.json).
+
+The ordered CUDA block RMSNorm matched CPU bitwise on 78 crossed
+layer-1 rows and restored the shared-input ShortConv cache through
+both decode steps. Layer-2 attention cache appends preserved the
+prefix. Its context difference shrank to 1.49e-8 on identical Q/K/V.
+
+Exact-grant packet `128a69e7` checked all eight frozen RTX 4090
+arithmetic positions and released its Job. Seven matched. Position 2
+remains `6986` versus pinned CPU's `1113`.
+[Crossed replay](HISTORY.md#2026-11-17---crossed-layer-1-cache-and-ordered-cuda-rmsnorm) ·
+[Terminal audit](C:/Compact_Evidence/candle/runs/lfm2-moe-layer1-crossed-20261117/production/terminal-audit.json).
+
+Dense Q6_K down now uses the shared CUDA Q8_K activation packer and
+the pinned tiled fold. The rebuilt dispatch matched all 75,776 retained
+CPU projection values on shared SwiGLU rows. The isolated layer-0 replay
+carried the prefill cache through both decode tokens and reduced the
+position-2 layer-output gap against pinned CPU to 1.49e-8.
+
+Exact-grant packet `293dbe4c` checked all eight frozen RTX 4090
+arithmetic positions and released its Job. Seven matched. Position 2
+remains `6986` on CUDA versus the reference's `1113`.
+[Dense Q6_K replay](HISTORY.md#2026-11-17---dense-q6_k-ffn-down-on-shared-swiglu-rows) ·
+[Qualification audit](D:/Compact_Evidence/candle/runs/lfm2-moe-dense-q6k-down-20261117/production/terminal-audit.json).
+
+The dense layer-0 Q4_K gate and up now use the same pinned Q8_K
+group/tail projection as ShortConv. Both projections matched all
+435,712 retained CPU values on shared normalized input. The Q6_K down
+projection still differs with identical CPU SwiGLU input.
+
+Qualification packet `9de6a1be` checked all eight frozen RTX 4090
+arithmetic positions and released its Job. Seven matched. Position 2
+remains `6986` on CUDA versus the pinned CPU reference's `1113`.
+[Dense replay](HISTORY.md#2026-11-17---dense-q4_k-ffn-gate-and-up-on-shared-inputs) ·
+[Qualification audit](D:/Compact_Evidence/candle/runs/lfm2-moe-dense-gate-up-20261117/production/terminal-audit.json).
+
+Paired trace `d786c8e7` reproduced all three retained observations for
+the pinned CPU and prior corrected RTX 4090 on the frozen prefix.
+Crossed final-normalized operands showed that the `1113`/`6986`
+ranking follows the hidden state. The first captured divergence was
+layer 0 with bitwise equal embeddings.
+
+The MoE CUDA ShortConv Q4_K projections now use the pinned Q8_K
+activation and group/tail fold. The same-input witness reproduced all
+227,328 CPU input-projection values bitwise. The rebuilt prefill
+replay matched every checkpoint through the ShortConv residual.
+The remaining difference first appeared after the dense FFN.
+Qualification packet
+`094fb136` checked all eight RTX 4090 arithmetic positions. Seven
+matched. Position 2 still selected `6986` versus `1113`, with finite
+logits and clean Job cleanup. The arithmetic gate remains open.
+[Paired trace](HISTORY.md#2026-11-17---corrected-cuda-position-2-trace) ·
+[Qualification audit](D:/Compact_Evidence/candle/runs/lfm2-moe-corrected-position2-20261117/candidate/production/terminal-audit.json).
+
+On local baseline `a6dc2271`, the fast Q4_K MMQ DS4 replay reproduced all
+227,328 retained stock CUDA ShortConv projection values bitwise on shared
+RMSNorm inputs. The corrected DS4 launch matched the independent reference
+for all 2,368 scaled signed-byte sums. Quantized bytes and scale bits
+matched the stock launch. The largest projection gap against CPU fell
+from 0.03963518 to 0.01320948. The release dispatch matched the corrected
+projection bitwise and reduced the maximum layer-output gap to 0.00242137.
+The native CUDA release build, targeted Q8_1 test, MoE fixtures and
+four-crate CPU check passed.
+[Kernel proof](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-shortconv-crossed-20261117/fast-ds4/ds4-proof.json).
+
+Resource-gated packet `7e691897` ran all eight RTX 4090 arithmetic positions
+and released its Windows Job. Seven selections matched the pinned CPU
+reference. At zero-based position 2, the corrected replay selected `6986`
+and the reference selected `1113`. Stock CUDA selected `5141`.
+All 56 sampled logits were finite. The arithmetic gate remains open.
+Candle CUDA, the pinned CPU reference, and the existing CPU captures are
+the active comparison lanes. [Terminal audit](D:/Compact_Evidence/candle/runs/lfm2-moe-layer0-shortconv-crossed-20261117/fast-ds4/production-verified/terminal-audit.json).
+The [MoE queue](TODO.md#remaining-gates-in-order) owns the next diagnostic.
+
 Production packet `18e27010` at `47e68166` passed all eight CPU selections
 on both frozen cases. RTX 4090 arithmetic stopped at position 2 after
 forced IDs `49, 1252` (`1113` reference and Candle CPU, `5141` RTX 4090).
@@ -108,25 +335,26 @@ all six child commands and all four comparisons. Rebound packet `18e27010`
 used those binaries for the consumed attempt above. The retained CPU and
 RTX 4090 arithmetic logits differ at all seven sampled values at prefill
 position 0. The isolated trace executable is bound in `95d7534e` and
-passed the model-free checks. The rebound packet carries the same
-executable and unused attempt at the documentation checkout. Review and
-exact run authorization remain pending.
-[Current paired packet](D:/Compact_Evidence/candle/runs/lfm2-moe-rtx-arithmetic-prefill-publish-20261117/packet.json).
-[Bound trace proof](HISTORY.md#2026-11-17---bound-rtx-4090-arithmetic-prefill-probe).
+passed the model-free checks. The authorized successor `529909b3`
+consumed its one attempt at `a6dc2271`. Both position-0 controls
+reproduced, all 43 checkpoints were captured per lane and both Jobs
+released their processes. The embeddings matched bitwise. Layer 0
+output first differs at row 0, channel 0 (CPU `0xba418b90`, RTX 4090
+`0xba2b612c`). [Capture audit](D:/Compact_Evidence/candle/runs/lfm2-moe-rtx-arithmetic-prefill-publish-20261117/attempt/capture-audit.json).
+[Trace history](HISTORY.md#2026-11-17---completed-cpu-and-rtx-4090-arithmetic-prefill-trace).
+The next task at that checkpoint was to isolate the layer-0 operation using common inputs.
 [Build and packet proof](HISTORY.md#2026-11-17---binary-bound-unicode-production-successor).
-Production parity and Edge acceptance remain open.
-Standalone LFM3 CPU/CUDA text
-qualification and the LTS support contract are separate remaining gates.
-[TODO](TODO.md) owns their order. [Production qualification](QUALIFICATION.md)
+Production parity and Edge acceptance were open at that checkpoint.
+[TODO](TODO.md) owns the remaining MoE gates. [Production qualification](QUALIFICATION.md)
 binds two frozen cases and eight teacher-forced positions each.
 
 ## Implementation and retained proof
 
 The November 10 capability was published as Candle
 `95df99a0bda2f6ac64dbeb8475850f826bd92ca9` from base `5f094821`.
-The first Q4 parity attempt stopped during CPU comparison. The comparator
-repair exposes a remaining CPU numerical disagreement. Edge qualification and
-adoption follow supplier parity. D1 stays closed.
+Historical CPU comparison failures and their repairs are recorded in
+[HISTORY](HISTORY.md). Edge qualification and adoption follow supplier parity.
+D1 stays closed.
 
 The [frozen continuation check](HISTORY.md#2026-11-12---frozen-reference-continuation-check)
 records the position-2 failure (`1113` vs `6986`) and the requirement
@@ -149,9 +377,10 @@ prefill scratch and KV/convolution cache. No silent device fallback is used.
 Retained implementation proof includes eight CPU MoE tests and ten with CUDA enabled,
 covering the pinned F32 oracle, routing, native untied output/missing experts,
 chunking/decode/reset, malformed GGUF, lower-precision storage, retained quantized
-matrices and recovery. CUDA production weights have not been loaded. Native
-F32 tolerance is `atol=1e-5`, `rtol=1e-4`; quantized tolerance is separately
-recorded in [DECISIONS](DECISIONS.md).
+matrices and recovery. Production Q4_K_M GGUF weights loaded on RTX 4090.
+Arithmetic ran and failed the position-2 comparison. CUDA Unicode was
+unreached. Native F32 tolerance is `atol=1e-5`, `rtol=1e-4`. Quantized
+tolerance is recorded in [DECISIONS](DECISIONS.md).
 
 The preceding implementation gate passed 617 Rust tests with 14 ignored,
 197 release assertions on each PowerShell host, library/example checks,
@@ -1216,3 +1445,12 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-swiglu-cross | change=record
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-cross | change=record both expert-down controls and cleanup
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-down-seal | change=record the verified inert SwiGLU and down successor
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-seal-review | change=record the inert recheck and remaining execution grant
+AI-edited: 2026-11-17 | agent=Codex/root | task=lfm3-moe-qualification | change=record LFM3 admission and the completed MoE trace
+AI-edited: 2026-11-17 | agent=Codex/root | task=lfm3-resource-gated-qualification | change=link the completed standalone qualification
+AI-edited: 2026-11-17 | agent=Codex/root | task=moe-cuda-shortconv | change=bind the crossed replay and Q4_K activation sum correction
+AI-edited: 2026-11-17 | agent=Codex/root | task=moe-resource-replay | change=record the consumed arithmetic comparison and remaining gate
+AI-edited: 2026-11-18 | agent=Codex/root | task=portfolio-dropin | change=record matched-input proof and pending full-model acceptance
+AI-edited: 2026-11-18 | agent=Codex/root | task=moe-unicode-position2 | change=record dense Q6_K proof and the remaining Unicode mismatch
+AI-edited: 2026-11-18 | agent=Codex/root | task=moe-ordered-attention | change=record the same-binary Unicode pass, arithmetic mismatch and operator controls
+AI-edited: 2026-11-18 | agent=Codex/root | task=moe-frozen-qualification | change=record the four passing Candle comparisons and release receipts
+AI-edited: 2026-11-18 | agent=Codex/root | task=moe-edge-qualification | change=record the Edge CPU and RTX 4090 qualification

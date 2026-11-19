@@ -917,6 +917,295 @@ SOFTMAX_OP(float, float, softmax_f32)
 SOFTMAX_OP(double, double, softmax_f64)
 RMSNORM_OP(float, rmsnorm_f32)
 RMSNORM_OP(double, rmsnorm_f64)
+
+static __device__ __forceinline__ float lfm2_moe_plain_dot_fold(
+    const float (&accum)[4], unsigned int mask
+) {
+    const unsigned int group = 0xffu << ((threadIdx.y % 4) * 8);
+    float sum = __fadd_rn(__fadd_rn(accum[0], accum[2]), __fadd_rn(accum[1], accum[3]));
+    sum = __fadd_rn(sum, __shfl_xor_sync(mask & group, sum, 4, 8));
+    sum = __fadd_rn(sum, __shfl_xor_sync(mask & group, sum, 1, 8));
+    return __fadd_rn(sum, __shfl_xor_sync(mask & group, sum, 2, 8));
+}
+
+static __device__ __forceinline__ float lfm2_moe_plain_dot(
+    const float *left, const float *right, unsigned int width, unsigned int mask
+) {
+    float accum[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    for (unsigned int col = threadIdx.x; col < width; col += 32) {
+#pragma unroll
+        for (int i = 0; i < 4; ++i) {
+            const unsigned int index = col + i * 8;
+            accum[i] = __fmaf_rn(left[index], right[index], accum[i]);
+        }
+    }
+    return lfm2_moe_plain_dot_fold(accum, mask);
+}
+
+extern "C" __global__ void lfm2_moe_router_f32(
+    const float *input, const float *weights, float *output,
+    unsigned int cells, unsigned int experts, unsigned int width
+) {
+    const unsigned int cell = blockIdx.x * blockDim.y + threadIdx.y;
+    const unsigned int mask = __ballot_sync(0xffffffff, cell < cells);
+    if (cell >= cells) return;
+
+    const float *x = input + size_t(cell / experts) * width;
+    const float *w = weights + size_t(cell % experts) * width;
+    const unsigned int lane = threadIdx.x;
+    float sum = 0.0f;
+    for (unsigned int i = lane; i < width; i += 8) {
+        sum = __fmaf_rn(w[i], x[i], sum);
+    }
+
+    // The CPU router folds eight FMA lanes in this order.
+    sum = __fadd_rn(sum, __shfl_xor_sync(mask, sum, 4, 8));
+    sum = __fadd_rn(sum, __shfl_xor_sync(mask, sum, 2, 8));
+    sum = __fadd_rn(sum, __shfl_xor_sync(mask, sum, 1, 8));
+    if (lane == 0) output[cell] = sum;
+}
+
+extern "C" __global__ void lfm2_moe_router_decode_f32(
+    const float *input, const float *weights, float *output,
+    unsigned int cells, unsigned int experts, unsigned int width
+) {
+    const unsigned int cell = blockIdx.x * blockDim.y + threadIdx.y;
+    const unsigned int mask = __ballot_sync(0xffffffff, cell < cells);
+    if (cell >= cells) return;
+    const float *x = input + size_t(cell / experts) * width;
+    const float *w = weights + size_t(cell % experts) * width;
+    const float sum = lfm2_moe_plain_dot(w, x, width, mask);
+    if (threadIdx.x == 0) output[cell] = sum;
+}
+
+extern "C" __global__ void lfm2_moe_rope_f32(
+    const float *input, const float *cos, const float *sin, float *output,
+    unsigned int pairs, unsigned int tokens, unsigned int half
+) {
+    const unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= pairs) return;
+
+    const unsigned int row = i / half;
+    const unsigned int lane = i % half;
+    const unsigned int coeff = (row % tokens) * half + lane;
+    const unsigned int first = row * (2 * half) + lane;
+    const unsigned int second = first + half;
+    const float a = input[first];
+    const float b = input[second];
+    const float c = cos[coeff];
+    const float s = sin[coeff];
+    output[first] = __fsub_rn(__fmul_rn(a, c), __fmul_rn(b, s));
+    output[second] = __fadd_rn(__fmul_rn(a, s), __fmul_rn(b, c));
+}
+
+extern "C" __global__ void lfm2_moe_attention_scores_f32(
+    const float *q, const float *k, const uint8_t *mask, float *scores,
+    unsigned int cells, unsigned int queries, unsigned int keys,
+    unsigned int width, unsigned int heads_per_kv, unsigned int masked
+) {
+    const unsigned int cell = blockIdx.x * blockDim.y + threadIdx.y;
+    const unsigned int active = __ballot_sync(0xffffffff, cell < cells);
+    if (cell >= cells) return;
+
+    const unsigned int row = cell / keys;
+    const unsigned int key = cell % keys;
+    const unsigned int lane = threadIdx.x;
+    if (masked && mask[size_t(row % queries) * keys + key] != 0) {
+        if (lane == 0) scores[cell] = -INFINITY;
+        return;
+    }
+    const unsigned int kv_head = (row / queries) / heads_per_kv;
+    const float *query = q + size_t(row) * width;
+    const float *key_row = k + (size_t(kv_head) * keys + key) * width;
+    const float sum = lfm2_moe_plain_dot(query, key_row, width, active);
+    if (lane == 0) scores[cell] = sum;
+}
+
+// Port of the MIT-licensed ggml exponent and Arm polynomial recorded in
+// quantized_lfm2_moe/cpu_attention.rs. Keep the exceptional exponent split.
+static __device__ __forceinline__ float lfm2_moe_attention_exp(float x) {
+    const float shift = __uint_as_float(0x4b400000);
+    const float z = __fmaf_rn(x, __uint_as_float(0x3fb8aa3b), shift);
+    const float n = __fsub_rn(z, shift);
+    const float b = __fmaf_rn(-n, __uint_as_float(0x35bfbe8e),
+                              __fmaf_rn(-n, __uint_as_float(0x3f317200), x));
+    const float u = __fmul_rn(b, b);
+    const float high = __fmaf_rn(__uint_as_float(0x3c072010), b, __uint_as_float(0x3d2b9f17));
+    const float low = __fmaf_rn(__uint_as_float(0x3e2aaf33), b, __uint_as_float(0x3efffedb));
+    const float j = __fmaf_rn(__fmaf_rn(high, u, low), u, __fmul_rn(__uint_as_float(0x3f7ffff6), b));
+    const unsigned int e = __float_as_uint(z) << 23;
+    if (fabsf(n) > 126.0f) {
+        const unsigned int g = n <= 0.0f ? 0x82000000u : 0;
+        const float s1 = __uint_as_float(g + 0x7f000000u);
+        const float s2 = __uint_as_float(e - g);
+        return fabsf(n) > 192.0f ? __fmul_rn(s1, s1) : __fmul_rn(__fmaf_rn(s2, j, s2), s1);
+    }
+    const float scale = __uint_as_float(e + 0x3f800000u);
+    return __fmaf_rn(j, scale, scale);
+}
+
+extern "C" __global__ void lfm2_moe_attention_softmax_f32(
+    float *scores, unsigned int keys, float scale
+) {
+    float *row = scores + size_t(blockIdx.x) * keys;
+    const unsigned int lane = threadIdx.x;
+    __shared__ float maxima[128];
+    __shared__ float inverse;
+
+    float max_score = -INFINITY;
+    for (unsigned int key = lane; key < keys; key += blockDim.x) {
+        const float score = __fadd_rn(__fmul_rn(row[key], scale), 0.0f);
+        row[key] = score;
+        max_score = fmaxf(max_score, score);
+    }
+    maxima[lane] = max_score;
+    __syncthreads();
+    for (unsigned int stride = blockDim.x / 2; stride != 0; stride /= 2) {
+        if (lane < stride) maxima[lane] = fmaxf(maxima[lane], maxima[lane + stride]);
+        __syncthreads();
+    }
+    for (unsigned int key = lane; key < keys; key += blockDim.x) {
+        row[key] = lfm2_moe_attention_exp(__fsub_rn(row[key], maxima[0]));
+    }
+    __syncthreads();
+    if (lane == 0) {
+        double sum = 0.0;
+        // Four pair sums and two cross-lane adds round before the F64 row fold.
+        for (unsigned int key = 0; key < keys; key += 8) {
+            float pair[4];
+#pragma unroll
+            for (int i = 0; i < 4; ++i) {
+                const float a = key + i < keys ? row[key + i] : 0.0f;
+                const float b = key + i + 4 < keys ? row[key + i + 4] : 0.0f;
+                pair[i] = __fadd_rn(a, b);
+            }
+            const float fold = __fadd_rn(__fadd_rn(pair[0], pair[2]), __fadd_rn(pair[1], pair[3]));
+            sum = __dadd_rn(sum, double(fold));
+        }
+        inverse = __double2float_rn(__ddiv_rn(1.0, sum));
+    }
+    __syncthreads();
+    for (unsigned int key = lane; key < keys; key += blockDim.x) {
+        row[key] = __fmul_rn(row[key], inverse);
+    }
+}
+
+extern "C" __global__ void lfm2_moe_attention_values_f32(
+    const float *probabilities, const float *v, float *output,
+    unsigned int elements, unsigned int queries, unsigned int keys,
+    unsigned int width, unsigned int heads_per_kv
+) {
+    const unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index >= elements) return;
+    const unsigned int row = index / width;
+    const unsigned int kv_head = (row / queries) / heads_per_kv;
+    const float *prob = probabilities + size_t(row) * keys;
+    const float *val = v + size_t(kv_head) * keys * width + index % width;
+    float accum[8] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    const unsigned int full = keys - keys % 8;
+    for (unsigned int key = 0; key < full; key += 8) {
+#pragma unroll
+        for (int lane = 0; lane < 8; ++lane) {
+            const unsigned int at = key + lane;
+            accum[lane] = __fmaf_rn(prob[at], val[size_t(at) * width], accum[lane]);
+        }
+    }
+    for (unsigned int key = full; key < keys; ++key) {
+        accum[key % 8] = __fmaf_rn(prob[key], val[size_t(key) * width], accum[key % 8]);
+    }
+    // Pinned llamafile sees a zero-padded 256-key block, including signed-zero effects.
+    const unsigned int padding = min((256u - keys % 256u) % 256u, 8u);
+    for (unsigned int lane = 0; lane < padding; ++lane) {
+        const unsigned int i = (keys + lane) % 8;
+        accum[i] = __fadd_rn(accum[i], 0.0f);
+    }
+    const float a = __fadd_rn(accum[4], accum[0]);
+    const float b = __fadd_rn(accum[5], accum[1]);
+    const float c = __fadd_rn(accum[6], accum[2]);
+    const float d = __fadd_rn(accum[7], accum[3]);
+    output[index] = __fadd_rn(__fadd_rn(a, c), __fadd_rn(b, d));
+}
+
+extern "C" __global__ void lfm2_moe_attention_decode_values_f32(
+    const float *probabilities, const float *v, float *output,
+    unsigned int elements, unsigned int queries, unsigned int keys,
+    unsigned int width, unsigned int heads_per_kv
+) {
+    const unsigned int index = blockIdx.x * blockDim.y + threadIdx.y;
+    const unsigned int active = __ballot_sync(0xffffffff, index < elements);
+    if (index >= elements) return;
+    const unsigned int row = index / width;
+    const unsigned int lane = threadIdx.x;
+    const unsigned int kv_head = (row / queries) / heads_per_kv;
+    const float *prob = probabilities + size_t(row) * keys;
+    const float *val = v + size_t(kv_head) * keys * width + index % width;
+    float accum[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    for (unsigned int base = lane; base < keys; base += 32) {
+#pragma unroll
+        for (unsigned int group = 0; group < 4; ++group) {
+            const unsigned int key = base + group * 8;
+            if (key < keys) accum[group] = __fmaf_rn(prob[key], val[size_t(key) * width], accum[group]);
+        }
+    }
+    const unsigned int padding = min((256u - keys % 256u) % 256u, 32u);
+#pragma unroll
+    for (unsigned int group = 0; group < 4; ++group) {
+        const unsigned int slot = group * 8 + lane;
+        if ((slot + 32 - keys % 32) % 32 < padding) accum[group] = __fadd_rn(accum[group], 0.0f);
+    }
+    // ggml_vec_dot_f32 combines the vector halves, then adds adjacent pairs.
+    const float sum = lfm2_moe_plain_dot_fold(accum, active);
+    if (lane == 0) output[index] = sum;
+}
+
+// Port of the MIT-licensed ggml SiLU schedule recorded in quantized_lfm2_moe/cpu.rs.
+extern "C" __global__ void lfm2_moe_silu_f32(
+    const float *input, float *output, unsigned int count
+) {
+    const unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index >= count) return;
+
+    const float x = input[index];
+    const float negative = __fsub_rn(0.0f, x);
+    const float shift = __uint_as_float(0x4b400000);
+    const float reduced = __fmaf_rn(negative, __uint_as_float(0x3fb8aa3b), shift);
+    const float n = __fsub_rn(reduced, shift);
+    if (!isfinite(n) || fabsf(n) > 126.0f) {
+        output[index] = __fdiv_rn(x, __fadd_rn(1.0f, expf(negative)));
+        return;
+    }
+    const float high = __fmaf_rn(-n, __uint_as_float(0x3f317200), negative);
+    const float b = __fmaf_rn(-n, __uint_as_float(0x35bfbe8e), high);
+    const float u = __fmul_rn(b, b);
+    const float lower = __fmaf_rn(__uint_as_float(0x3e2aaf33), b, __uint_as_float(0x3efffedb));
+    const float upper = __fmaf_rn(__uint_as_float(0x3c072010), b, __uint_as_float(0x3d2b9f17));
+    const float j = __fmaf_rn(
+        __fmaf_rn(upper, u, lower), u, __fmul_rn(__uint_as_float(0x3f7ffff6), b)
+    );
+    const float scale = __uint_as_float((__float_as_uint(reduced) << 23) + 0x3f800000U);
+    output[index] = __fdiv_rn(x, __fadd_rn(1.0f, __fmaf_rn(j, scale, scale)));
+}
+
+extern "C" __global__ void rmsnorm_f32_ggml_cpu_order(
+        const float * input, float * output, const float * weight, unsigned int width, float eps) {
+    const size_t offset = size_t(blockIdx.x) * width;
+    __shared__ float reciprocal;
+    if (threadIdx.x == 0) {
+        // Keep the CPU fold order and round each square to F32 before accumulating.
+        double sum = 0.0;
+        for (unsigned int col = 0; col < width; ++col) {
+            const float value = input[offset + col];
+            sum = __dadd_rn(sum, double(__fmul_rn(value, value)));
+        }
+        const float mean = __double2float_rn(__ddiv_rn(sum, double(width)));
+        reciprocal = __fdiv_rn(1.0f, __fsqrt_rn(__fadd_rn(mean, eps)));
+    }
+    __syncthreads();
+    for (size_t col = threadIdx.x; col < width; col += blockDim.x) {
+        const float normed = __fmul_rn(input[offset + col], reciprocal);
+        output[offset + col] = __fmul_rn(normed, weight[col]);
+    }
+}
 LAYERNORM_OP(float, layernorm_f32)
 LAYERNORM_OP(double, layernorm_f64)
 ROPE_OP(float, rope_f32, rope_i_f32, rope_thd_f32)

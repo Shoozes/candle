@@ -51,6 +51,7 @@ fn qk_for(dtype: GgmlDType) -> usize {
 enum DsLayout {
     D4,
     DS4,
+    DS4QuantizedSum,
     D2S6,
 }
 
@@ -62,7 +63,8 @@ fn ds_layout_for(dtype: GgmlDType) -> DsLayout {
         GgmlDType::Q8_0 => DsLayout::D4,
         GgmlDType::Q2K => DsLayout::D2S6,
         GgmlDType::Q3K => DsLayout::D4,
-        GgmlDType::Q4K | GgmlDType::Q5K => DsLayout::DS4,
+        GgmlDType::Q4K => DsLayout::DS4QuantizedSum,
+        GgmlDType::Q5K => DsLayout::DS4,
         GgmlDType::Q6K => DsLayout::D4,
         _ => unreachable!(),
     }
@@ -89,6 +91,7 @@ fn quantize_launcher(layout: DsLayout) -> QuantizeLauncher {
     match layout {
         DsLayout::D4 => ffi::launch_mmq_quantize_q8_1_D4,
         DsLayout::DS4 => ffi::launch_mmq_quantize_q8_1_DS4,
+        DsLayout::DS4QuantizedSum => ffi::launch_mmq_quantize_q8_1_DS4_q4_k,
         DsLayout::D2S6 => ffi::launch_mmq_quantize_q8_1_D2S6,
     }
 }

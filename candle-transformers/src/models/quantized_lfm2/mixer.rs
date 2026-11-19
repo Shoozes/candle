@@ -1,6 +1,8 @@
 //! Crate-private reuse of the existing quantized LFM2 token operators.
 use super::*;
-use crate::models::quantized_lfm2_moe::{cpu, cpu_attention};
+#[cfg(feature = "cuda")]
+use crate::models::quantized_lfm2_moe::cuda;
+use crate::models::quantized_lfm2_moe::{cpu, cpu_attention, project_q4_gemm_gemv};
 
 pub(crate) struct Mixer(LayerKind);
 
@@ -86,22 +88,50 @@ impl Mixer {
         position: usize,
     ) -> Result<Tensor> {
         match &mut self.0 {
-            LayerKind::Attention(op) if x.device().is_cpu() => op.forward_with(
+            LayerKind::Attention(op) if x.device().is_cpu() => {
+                let project = |weight: &QMatMul, input: &Tensor| {
+                    cpu::project(weight, input, cpu::Projection::Dense)
+                };
+                let project_qkv = |weight: &QMatMul, input: &Tensor| {
+                    cpu::project(weight, input, cpu::Projection::DenseQ6KSingleRow)
+                };
+                op.forward_with(
+                    x,
+                    mask,
+                    position,
+                    (project_qkv, project),
+                    (
+                        |norm: &RmsNorm, input: &Tensor| {
+                            let (weight, epsilon) = norm.weight_and_epsilon();
+                            cpu::rms_norm(input, weight, epsilon)
+                        },
+                        candle_nn::rotary_emb::rope,
+                    ),
+                    cpu_attention::forward,
+                )
+            }
+            #[cfg(feature = "cuda")]
+            LayerKind::Attention(op) if x.device().is_cuda() => op.forward_with(
                 x,
                 mask,
                 position,
-                |weight, input| cpu::project(weight, input, cpu::Projection::Dense),
-                |norm, input| {
-                    let (weight, epsilon) = norm.weight_and_epsilon();
-                    cpu::rms_norm(input, weight, epsilon)
-                },
-                cpu_attention::forward,
+                (cuda::project_qkv, |weight, input| {
+                    project_q4_gemm_gemv(weight, input, QMatMul::forward)
+                }),
+                (
+                    |norm: &RmsNorm, input: &Tensor| {
+                        let (weight, epsilon) = norm.weight_and_epsilon();
+                        cuda::rms_norm(input, weight, epsilon)
+                    },
+                    cuda::rope,
+                ),
+                crate::models::quantized_lfm2_moe::cuda_attention::forward,
             ),
             LayerKind::Attention(op) => op.forward(x, mask, position),
             LayerKind::ShortConv(op) => op.forward_with(
                 x,
                 position,
-                |weight, input| cpu::project_q4_gemm_gemv(weight, input, QMatMul::forward),
+                |weight, input| project_q4_gemm_gemv(weight, input, QMatMul::forward),
                 true,
             ),
         }

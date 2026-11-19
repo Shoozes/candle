@@ -1,4 +1,4 @@
-use super::{cpu, inspect_gguf_metadata, Lfm2MoeGgufMetadata};
+use super::{cpu, inspect_gguf_metadata, project_q4_gemm_gemv, Lfm2MoeGgufMetadata};
 use crate::models::{lfm2_moe::routing, quantized_lfm2::mixer::Mixer};
 use candle::{
     quantized::{gguf_file, GgmlDType, QMatMul, QTensor},
@@ -30,15 +30,28 @@ fn forward_matrix(weight: &QMatMul, x: &Tensor) -> Result<Tensor> {
 }
 
 fn forward_dense_gate_up(weight: &QMatMul, x: &Tensor) -> Result<Tensor> {
-    cpu::project_q4_gemm_gemv(weight, x, forward_matrix)
+    project_q4_gemm_gemv(weight, x, forward_matrix)
+}
+
+fn forward_dense_silu(gate: &Tensor) -> Result<Tensor> {
+    #[cfg(feature = "cuda")]
+    if gate.device().is_cuda() {
+        return super::cuda::silu(gate);
+    }
+    cpu::silu(gate)
 }
 
 fn forward_dense_down(weight: &QMatMul, x: &Tensor) -> Result<Tensor> {
-    if x.device().is_cpu() && matches!(weight, QMatMul::QTensor(q) if q.dtype() == GgmlDType::Q6K) {
-        cpu::project(weight, x, cpu::Projection::Dense)
-    } else {
-        forward_matrix(weight, x)
+    if matches!(weight, QMatMul::QTensor(q) if q.dtype() == GgmlDType::Q6K) {
+        if x.device().is_cpu() {
+            return cpu::project(weight, x, cpu::Projection::DenseQ6KSingleRow);
+        }
+        #[cfg(feature = "cuda")]
+        if x.device().is_cuda() {
+            return weight.forward_cuda_q6k_q8k_dense(&x.contiguous()?);
+        }
     }
+    forward_matrix(weight, x)
 }
 
 struct Expert {
@@ -71,17 +84,28 @@ impl Expert {
     }
 
     fn forward_indexed(&self, x: &Tensor) -> Result<Tensor> {
-        let scheduled = [&self.gate, &self.up, &self.down]
+        let scheduled = [&self.gate, &self.up]
             .into_iter()
-            .zip([GgmlDType::Q4K, GgmlDType::Q4K, GgmlDType::Q6K])
-            .all(|(w, dtype)| matches!(w, QMatMul::QTensor(q) if q.dtype() == dtype));
-        if !x.device().is_cpu() || !scheduled {
+            .all(|w| matches!(w, QMatMul::QTensor(q) if q.dtype() == GgmlDType::Q4K))
+            && matches!(&self.down, QMatMul::QTensor(q)
+                if matches!(q.dtype(), GgmlDType::Q4K | GgmlDType::Q6K));
+        if !scheduled {
             return self.forward(x);
         }
-        let project = |weight, input| cpu::project(weight, input, cpu::Projection::Indexed);
-        let gate = project(&self.gate, x)?;
-        let up = project(&self.up, x)?;
-        project(&self.down, &(cpu::silu(&gate)? * up)?)
+        if x.device().is_cpu() {
+            let project = |weight: &QMatMul, input: &Tensor| {
+                cpu::project(weight, input, cpu::Projection::Indexed)
+            };
+            return self.forward_with(x, project, cpu::silu, project);
+        }
+        #[cfg(feature = "cuda")]
+        if x.device().is_cuda() {
+            let project = |weight: &QMatMul, input: &Tensor| {
+                weight.forward_cuda_indexed_q8k(&input.contiguous()?)
+            };
+            return self.forward_with(x, project, super::cuda::silu, project);
+        }
+        self.forward(x)
     }
 }
 
@@ -97,9 +121,12 @@ enum FeedForward {
 impl FeedForward {
     fn forward(&self, x: &Tensor) -> Result<Tensor> {
         match self {
-            Self::Dense(expert) => {
-                expert.forward_with(x, forward_dense_gate_up, cpu::silu, forward_dense_down)
-            }
+            Self::Dense(expert) => expert.forward_with(
+                x,
+                forward_dense_gate_up,
+                forward_dense_silu,
+                forward_dense_down,
+            ),
             Self::Sparse {
                 router,
                 bias,
@@ -219,12 +246,13 @@ impl ModelWeights {
         }
         let h = metadata.embedding_length;
         let head_dim = h / metadata.shared.head_count;
-        let rotary = if device.is_cpu() {
-            cpu::rotary(
+        let rotary = if device.is_cpu() || device.is_cuda() {
+            let (cos, sin) = cpu::rotary(
                 metadata.context_length,
                 head_dim,
                 metadata.shared.rope_freq_base,
-            )?
+            )?;
+            (cos.to_device(device)?, sin.to_device(device)?)
         } else {
             let theta = (0..head_dim)
                 .step_by(2)
@@ -462,6 +490,10 @@ impl ModelWeights {
 }
 
 fn forward_norm(norm: &RmsNorm, x: &Tensor) -> Result<Tensor> {
+    #[cfg(feature = "cuda")]
+    if x.device().is_cuda() {
+        return super::cuda::rms_norm(x, norm.weight(), norm.eps() as f32);
+    }
     if x.device().is_cpu() {
         cpu::rms_norm(x, norm.weight(), norm.eps() as f32)
     } else {
@@ -472,6 +504,116 @@ fn forward_norm(norm: &RmsNorm, x: &Tensor) -> Result<Tensor> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(feature = "cuda")]
+    #[test]
+    fn cuda_dense_q6k_down_matches_cpu_tiled_fold() -> Result<()> {
+        let host = Device::Cpu;
+        let device = Device::new_cuda(0)?;
+        let (width, columns) = (768, 7);
+        let weights = Tensor::from_vec(
+            (0..columns * width)
+                .map(|i| ((i * 37 % 131) as f32 - 65.) / 73.)
+                .collect::<Vec<_>>(),
+            (columns, width),
+            &host,
+        )?;
+        let packed = QTensor::quantize(&weights, GgmlDType::Q6K)?;
+        let gpu = matrix(candle::quantized::ggml_file::qtensor_from_ggml(
+            GgmlDType::Q6K,
+            &packed.data()?,
+            vec![columns, width],
+            &device,
+        )?)?;
+        let cpu = matrix(packed)?;
+        let bits = |t: Tensor| -> Result<Vec<u32>> {
+            Ok(t.flatten_all()?
+                .to_vec1::<f32>()?
+                .into_iter()
+                .map(f32::to_bits)
+                .collect())
+        };
+        for (batch, rows) in [(1, 1), (2, 5)] {
+            let input = Tensor::from_vec(
+                (0..batch * rows * width)
+                    .map(|i| {
+                        if i % width < 256 {
+                            0.
+                        } else {
+                            ((i * 29 % 269) as f32 - 134.) / 83.
+                        }
+                    })
+                    .collect::<Vec<_>>(),
+                (batch, rows, width),
+                &host,
+            )?;
+            let expected = forward_dense_down(&cpu, &input)?;
+            let actual = forward_dense_down(&gpu, &input.to_device(&device)?)?;
+            assert_eq!(actual.dims(), [batch, rows, columns]);
+            assert_eq!(bits(actual)?, bits(expected)?);
+        }
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "cuda")]
+    fn cuda_grouped_expert_matches_cpu_indexed_schedules() -> Result<()> {
+        let cpu = Device::Cpu;
+        let cuda = Device::new_cuda(0)?;
+        let tensor = |rows, width, seed| {
+            Tensor::from_vec(
+                (0..rows * width)
+                    .map(|i| ((i * 29 + seed) % 251) as f32 / 251.0 - 0.5)
+                    .collect::<Vec<_>>(),
+                (rows, width),
+                &cpu,
+            )
+        };
+        let quant = |rows, width, seed, dtype| -> Result<(QMatMul, QMatMul)> {
+            let host = QTensor::quantize(&tensor(rows, width, seed)?, dtype)?;
+            let device = candle::quantized::ggml_file::qtensor_from_ggml(
+                dtype,
+                &host.data()?,
+                vec![rows, width],
+                &cuda,
+            )?;
+            Ok((matrix(host)?, matrix(device)?))
+        };
+        let (cg, gg) = quant(256, 512, 7, GgmlDType::Q4K)?;
+        let (cu, gu) = quant(256, 512, 13, GgmlDType::Q4K)?;
+        let bits = |x: Tensor| -> Result<Vec<u32>> {
+            Ok(x.flatten_all()?
+                .to_vec1::<f32>()?
+                .into_iter()
+                .map(f32::to_bits)
+                .collect())
+        };
+        let indexed = |weight: &QMatMul, input: &Tensor| {
+            super::cpu::project(weight, input, super::cpu::Projection::Indexed)
+        };
+        for dtype in [GgmlDType::Q4K, GgmlDType::Q6K] {
+            let (cd, gd) = quant(512, 256, 17, dtype)?;
+            let host = Expert {
+                gate: cg.clone(),
+                up: cu.clone(),
+                down: cd,
+            };
+            let device = Expert {
+                gate: gg.clone(),
+                up: gu.clone(),
+                down: gd,
+            };
+            for rows in [1, 7, 8, 16] {
+                let x = tensor(rows, 512, 23)?;
+                let expected = bits(host.forward_with(&x, indexed, cpu::silu, indexed)?)?;
+                assert_eq!(bits(host.forward_indexed(&x)?)?, expected);
+                let observed = device.forward_indexed(&x.to_device(&cuda)?)?;
+                assert_eq!(observed.dims(), [rows, 512]);
+                assert_eq!(bits(observed)?, expected, "{dtype:?}, gathered rows {rows}");
+            }
+        }
+        Ok(())
+    }
 
     #[test]
     fn top_four_quantized_grouping_matches_individual_weighted_experts() -> Result<()> {

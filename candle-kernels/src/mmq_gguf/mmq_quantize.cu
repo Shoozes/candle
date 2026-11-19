@@ -8,7 +8,7 @@
 
 static_assert(MATRIX_ROW_PADDING % (4*CUDA_QUANTIZE_BLOCK_SIZE_MMQ) == 0, "Risk of out-of-bounds access.");
 
-template <mmq_q8_1_ds_layout ds_layout>
+template <mmq_q8_1_ds_layout ds_layout, bool quantized_sum = false>
 static __global__ void quantize_mmq_q8_1(
         const float * __restrict__ x, const int32_t * __restrict__ ids, void * __restrict__ vy,
         const int64_t ne00, const int64_t s01, const int64_t s02, const int64_t s03,
@@ -53,8 +53,8 @@ static __global__ void quantize_mmq_q8_1(
         amax = fmaxf(amax, __shfl_xor_sync(0xFFFFFFFF, amax, offset, WARP_SIZE));
     }
 
-    float sum;
-    if (ds_layout != MMQ_Q8_1_DS_LAYOUT_D4) {
+    float sum = 0.0f;
+    if constexpr (ds_layout != MMQ_Q8_1_DS_LAYOUT_D4 && !quantized_sum) {
         sum = xi.x + xi.y + xi.z + xi.w;
 
         // Calculate sums across vals_per_sum/4 threads.
@@ -70,6 +70,17 @@ static __global__ void quantize_mmq_q8_1(
     q.y = roundf(xi.y*d_inv);
     q.z = roundf(xi.z*d_inv);
     q.w = roundf(xi.w*d_inv);
+
+    if constexpr (quantized_sum) {
+        static_assert(ds_layout == MMQ_Q8_1_DS_LAYOUT_DS4);
+        // Q4_K's minimum correction uses the sum of the quantized activations.
+        int sum_q = q.x + q.y + q.z + q.w;
+#pragma unroll
+        for (int offset = vals_per_sum/8; offset > 0; offset >>= 1) {
+            sum_q += __shfl_xor_sync(0xFFFFFFFF, sum_q, offset, WARP_SIZE);
+        }
+        sum = (1.0f / d_inv) * sum_q;
+    }
 
     // Write back 4 int8 values as a single 32 bit value for better memory bandwidth:
     char4 * yqs4 = (char4 *) y[ib].qs;
@@ -120,16 +131,31 @@ extern "C" void launch_mmq_quantize_q8_1_D4(
             (const float *)x_f32, ids, vy, ne00, s01, s02, s03, ne0, ne1, ne2);
 }
 
-extern "C" void launch_mmq_quantize_q8_1_DS4(
-    const void *x_f32, const int32_t *ids, void *vy, int type_x,
+template <bool quantized_sum>
+static void launch_mmq_quantize_ds4(
+    const void *x_f32, const int32_t *ids, void *vy,
     int64_t ne00, int64_t s01, int64_t s02, int64_t s03,
     int64_t ne0, int64_t ne1, int64_t ne2, int64_t ne3, void *stream) {
     const int64_t block_num_y = (ne0 + 4*CUDA_QUANTIZE_BLOCK_SIZE_MMQ - 1) / (4*CUDA_QUANTIZE_BLOCK_SIZE_MMQ);
     const dim3 num_blocks(ne1, block_num_y, ne2*ne3);
     const dim3 block_size(CUDA_QUANTIZE_BLOCK_SIZE_MMQ, 1, 1);
-    quantize_mmq_q8_1<MMQ_Q8_1_DS_LAYOUT_DS4>
+    quantize_mmq_q8_1<MMQ_Q8_1_DS_LAYOUT_DS4, quantized_sum>
         <<<num_blocks, block_size, 0, (cudaStream_t)stream>>>(
             (const float *)x_f32, ids, vy, ne00, s01, s02, s03, ne0, ne1, ne2);
+}
+
+extern "C" void launch_mmq_quantize_q8_1_DS4(
+    const void *x_f32, const int32_t *ids, void *vy, int type_x,
+    int64_t ne00, int64_t s01, int64_t s02, int64_t s03,
+    int64_t ne0, int64_t ne1, int64_t ne2, int64_t ne3, void *stream) {
+    launch_mmq_quantize_ds4<false>(x_f32, ids, vy, ne00, s01, s02, s03, ne0, ne1, ne2, ne3, stream);
+}
+
+extern "C" void launch_mmq_quantize_q8_1_DS4_q4_k(
+    const void *x_f32, const int32_t *ids, void *vy, int type_x,
+    int64_t ne00, int64_t s01, int64_t s02, int64_t s03,
+    int64_t ne0, int64_t ne1, int64_t ne2, int64_t ne3, void *stream) {
+    launch_mmq_quantize_ds4<true>(x_f32, ids, vy, ne00, s01, s02, s03, ne0, ne1, ne2, ne3, stream);
 }
 
 extern "C" void launch_mmq_quantize_q8_1_D2S6(

@@ -133,7 +133,11 @@ mod x86 {
                         *score *= inverse;
                     }
                     observe(Stage::Probabilities, row, scores)?;
-                    unsafe { reduce_values(&scores[..keys], v, dst) };
+                    if queries == 1 {
+                        unsafe { reduce_decode_values(&scores[..keys], v, dst) };
+                    } else {
+                        unsafe { reduce_values(&scores[..keys], v, dst) };
+                    }
                     Ok(())
                 },
             )?;
@@ -215,6 +219,49 @@ mod x86 {
             _mm256_storeu_ps(
                 out.as_mut_ptr(),
                 _mm256_add_ps(_mm256_add_ps(a, c), _mm256_add_ps(b, d)),
+            );
+        }
+    }
+
+    // A single query uses ggml_vec_dot_f32, with four vector accumulators
+    // instead of the prompt GEMM's key-modulo-eight fold.
+    #[target_feature(enable = "avx2,fma")]
+    unsafe fn reduce_decode_values(probabilities: &[f32], values: &[f32], output: &mut [f32]) {
+        let width = output.len();
+        let keys = probabilities.len();
+        let zero = _mm256_setzero_ps();
+        let virtual_zeros = ((REFERENCE_KEY_BLOCK - keys % REFERENCE_KEY_BLOCK)
+            % REFERENCE_KEY_BLOCK)
+            .min(DOT_STEP);
+        for (block, out) in output.chunks_exact_mut(LANES).enumerate() {
+            let mut accum = [[zero; LANES]; 4];
+            for (key, (&prob, value)) in probabilities
+                .iter()
+                .zip(values.chunks_exact(width))
+                .enumerate()
+            {
+                let lane = &mut accum[(key % DOT_STEP) / LANES][key % LANES];
+                let value = _mm256_loadu_ps(value.as_ptr().add(block * LANES));
+                *lane = _mm256_fmadd_ps(_mm256_set1_ps(prob), value, *lane);
+            }
+            for key in keys..keys + virtual_zeros {
+                let lane = &mut accum[(key % DOT_STEP) / LANES][key % LANES];
+                *lane = _mm256_add_ps(*lane, zero);
+            }
+            let merged: [__m256; LANES] = std::array::from_fn(|lane| {
+                _mm256_add_ps(
+                    _mm256_add_ps(accum[0][lane], accum[2][lane]),
+                    _mm256_add_ps(accum[1][lane], accum[3][lane]),
+                )
+            });
+            let pair: [__m256; 4] =
+                std::array::from_fn(|lane| _mm256_add_ps(merged[lane], merged[lane + 4]));
+            _mm256_storeu_ps(
+                out.as_mut_ptr(),
+                _mm256_add_ps(
+                    _mm256_add_ps(pair[0], pair[1]),
+                    _mm256_add_ps(pair[2], pair[3]),
+                ),
             );
         }
     }
@@ -336,7 +383,33 @@ mod x86 {
             let chunk = forward(&q.narrow(2, 3, 2)?, &k, &v, Some(&chunk_mask))?.unwrap();
             assert_eq!(bits(&chunk)?, bits(&full.narrow(2, 3, 2)?)?);
             let decode = forward(&q.narrow(2, 4, 1)?, &k, &v, None)?.unwrap();
-            assert_eq!(bits(&decode)?, bits(&full.narrow(2, 4, 1)?)?);
+            let expected = full.narrow(2, 4, 1)?.contiguous()?.flatten_all()?;
+            let actual = decode.flatten_all()?;
+            assert!(actual
+                .to_vec1::<f32>()?
+                .iter()
+                .zip(expected.to_vec1::<f32>()?)
+                .all(|(a, b)| (a - b).abs() <= 1e-6));
+
+            #[cfg(feature = "cuda")]
+            {
+                use crate::models::quantized_lfm2_moe::cuda_attention;
+                let cuda = Device::new_cuda(0)?;
+                let q = q.to_device(&cuda)?;
+                let k = k.to_device(&cuda)?;
+                let v = v.to_device(&cuda)?;
+                let full_mask = full_mask.to_device(&cuda)?;
+                let chunk_mask = chunk_mask.to_device(&cuda)?;
+                for (input, mask, expected) in [
+                    (q.clone(), Some(&full_mask), full),
+                    (q.narrow(2, 3, 2)?, Some(&chunk_mask), chunk),
+                    (q.narrow(2, 4, 1)?, None, decode),
+                ] {
+                    let got = cuda_attention::forward(&input, &k, &v, mask)?
+                        .expect("F32 grouped causal attention must use the ordered CUDA path");
+                    assert_eq!(bits(&got)?, bits(&expected)?);
+                }
+            }
 
             let masked = Tensor::from_vec(vec![1u8; 25], (5, 5), &device)?;
             assert!(forward(&q, &k, &v, Some(&masked)).is_err());
@@ -407,6 +480,40 @@ mod x86 {
             let actual = bits(&out.transpose(1, 2)?.contiguous()?)?;
             assert_eq!(actual, read("values", 65536)?);
             assert_eq!(actual[2048 + 8], 0xbac911ed);
+            #[cfg(feature = "cuda")]
+            {
+                use crate::models::quantized_lfm2_moe::cuda_attention::{self, Stage};
+                let cuda = Device::new_cuda(0)?;
+                let (q, k, v) = (
+                    q.to_device(&cuda)?,
+                    k.to_device(&cuda)?,
+                    v.to_device(&cuda)?,
+                );
+                let mask = mask.to_device(&cuda)?;
+                for (stage, reference) in [
+                    (Stage::Scores, &scores),
+                    (Stage::Probabilities, &probabilities),
+                ] {
+                    let rows = cuda_attention::forward_stage(&q, &k, &v, Some(&mask), stage)?
+                        .expect("frozen Unicode prefill must use the ordered CUDA path");
+                    let rows = bits(&rows)?;
+                    let mut visible = Vec::with_capacity(reference.len());
+                    for (row, words) in rows.chunks_exact(32).enumerate() {
+                        let last_key = row % 32;
+                        visible.extend_from_slice(&words[..=last_key]);
+                        let masked = match stage {
+                            Stage::Scores => f32::NEG_INFINITY.to_bits(),
+                            Stage::Probabilities => 0,
+                            Stage::Values => unreachable!(),
+                        };
+                        assert!(words[last_key + 1..].iter().all(|&word| word == masked));
+                    }
+                    assert_eq!(&visible, reference);
+                }
+                let output = cuda_attention::forward(&q, &k, &v, Some(&mask))?
+                    .expect("frozen Unicode prefill must use the ordered CUDA path");
+                assert_eq!(bits(&output.transpose(1, 2)?)?, actual);
+            }
             Ok(())
         }
     }

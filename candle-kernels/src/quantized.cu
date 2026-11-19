@@ -433,6 +433,165 @@ typedef struct {
 } block_q8_K;
 static_assert(sizeof(block_q8_K) == sizeof(float) + QK_K + QK_K/16*sizeof(int16_t), "wrong q8_K block size/padding");
 
+extern "C" __global__ void quantize_q8_k_activation(
+    const float * __restrict__ input, void * __restrict__ output, unsigned int blocks) {
+    const unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index >= blocks) return;
+    const float * row = input + size_t(index) * QK_K;
+    block_q8_K & block = static_cast<block_q8_K *>(output)[index];
+
+    float peak = 0.0f;
+    for (int i = 0; i < QK_K; ++i) {
+        if (fabsf(row[i]) > fabsf(peak)) peak = row[i];
+    }
+    const float inverse = peak == 0.0f ? 0.0f : __fdiv_rn(-127.0f, peak);
+    block.d = inverse == 0.0f ? 0.0f : __fdiv_rn(1.0f, inverse);
+    for (int group = 0; group < QK_K / 16; ++group) {
+        int sum = 0;
+#pragma unroll
+        for (int i = 0; i < 16; ++i) {
+            const int offset = group * 16 + i;
+            const float scaled = fminf(127.0f, __fmul_rn(inverse, row[offset]));
+            const int q = max(-128, __float2int_rn(scaled));
+            block.qs[offset] = static_cast<int8_t>(q);
+            sum += q;
+        }
+        block.bsums[group] = static_cast<int16_t>(sum);
+    }
+}
+
+extern "C" __global__ void matmul_q4_k_q8_k_activation(
+    const void * __restrict__ weights, const void * __restrict__ activation,
+    float * __restrict__ output, unsigned int cells, unsigned int columns,
+    unsigned int blocks, unsigned int sequence_rows) {
+    const unsigned int index = blockIdx.x * blockDim.y + threadIdx.y;
+    if (index >= cells) return;
+    const unsigned int row = index / columns;
+    const unsigned int column = index % columns;
+    const unsigned int lane = threadIdx.x;
+    const unsigned int group = lane / 4;
+    const unsigned int within = lane % 4;
+    const bool gemv = row % sequence_rows >= sequence_rows - sequence_rows % 4;
+    const auto * w = static_cast<const block_q4_K *>(weights) + size_t(column) * blocks;
+    const auto * a = static_cast<const block_q8_K *>(activation) + size_t(row) * blocks;
+
+    float scale_acc = 0.0f;
+    float min_acc = 0.0f;
+    for (unsigned int block = 0; block < blocks; ++block) {
+        const auto * q4 = reinterpret_cast<const int *>(w[block].qs + (group / 2) * 32);
+        const auto * q8 = reinterpret_cast<const int *>(a[block].qs + group * 32);
+        const int shift = (group % 2) * 4;
+        const int pack0 = (q4[2 * within] >> shift) & 0x0F0F0F0F;
+        const int pack1 = (q4[2 * within + 1] >> shift) & 0x0F0F0F0F;
+        int product = ggml_cuda_dp4a(pack0, q8[2 * within], 0);
+        product = ggml_cuda_dp4a(pack1, q8[2 * within + 1], product);
+        product += __shfl_xor_sync(0xffffffff, product, 1);
+        product += __shfl_xor_sync(0xffffffff, product, 2);
+
+        const auto * scales = w[block].scales;
+        const int scale = group < 4 ? scales[group] & 63 :
+            (scales[group + 4] & 15) | ((scales[group - 4] >> 6) << 4);
+        const int minimum = group < 4 ? scales[group + 4] & 63 :
+            (scales[group + 4] >> 4) | ((scales[group] >> 6) << 4);
+        int scale_term = scale * product;
+        int min_term = minimum * (a[block].bsums[2 * group] + a[block].bsums[2 * group + 1]);
+        scale_term += __shfl_xor_sync(0xffffffff, scale_term, 4);
+        min_term += __shfl_xor_sync(0xffffffff, min_term, 4);
+
+        const float d = __fmul_rn(__low2float(w[block].dm), a[block].d);
+        const float dm = __fmul_rn(__high2float(w[block].dm), a[block].d);
+        if (gemv) {
+            scale_term += __shfl_xor_sync(0xffffffff, scale_term, 8);
+            scale_term += __shfl_xor_sync(0xffffffff, scale_term, 16);
+            min_term += __shfl_xor_sync(0xffffffff, min_term, 8);
+            min_term += __shfl_xor_sync(0xffffffff, min_term, 16);
+            scale_acc = __fmaf_rn(float(scale_term), d, scale_acc);
+            min_acc = __fmaf_rn(float(min_term), dm, min_acc);
+        } else {
+#pragma unroll
+            for (int pair = 0; pair < QK_K / 64; ++pair) {
+                const int s = __shfl_sync(0xffffffff, scale_term, pair * 8);
+                const int m = __shfl_sync(0xffffffff, min_term, pair * 8);
+                scale_acc = __fmaf_rn(float(s), d, scale_acc);
+                min_acc = __fmaf_rn(float(m), dm, min_acc);
+            }
+        }
+    }
+    if (lane == 0) output[index] = __fsub_rn(scale_acc, min_acc);
+}
+
+template <bool plain>
+static __device__ __forceinline__ void matmul_q6_k_q8_k_activation_impl(
+    const void * __restrict__ weights, const void * __restrict__ activation,
+    float * __restrict__ output, unsigned int cells, unsigned int columns,
+    unsigned int blocks) {
+    const unsigned int index = blockIdx.x * blockDim.y + threadIdx.y;
+    if (index >= cells) return;
+    const unsigned int row = index / columns;
+    const unsigned int column = index % columns;
+    const unsigned int lane = threadIdx.x;
+    const unsigned int group = lane / 8;
+    const unsigned int fold_lane = lane % 8;
+    const unsigned int slot = fold_lane * 4;
+    const auto * w = static_cast<const block_q6_K *>(weights) + size_t(column) * blocks;
+    const auto * a = static_cast<const block_q8_K *>(activation) + size_t(row) * blocks;
+    float sum = 0.0f;
+    for (unsigned int block = 0; block < blocks; ++block) {
+        int dot = 0;
+#pragma unroll
+        for (int half = 0; half < 2; ++half) {
+            int partial = 0;
+#pragma unroll
+            for (int i = 0; i < 4; ++i) {
+                const unsigned int low = w[block].ql[half * 64 + (group % 2) * 32 + slot + i];
+                const unsigned int high = w[block].qh[half * 32 + slot + i];
+                const int q = int(((low >> (4 * (group / 2))) & 15) |
+                                  (((high >> (2 * group)) & 3) << 4)) - (plain ? 0 : 32);
+                partial += q * a[block].qs[half * 128 + group * 32 + slot + i];
+            }
+            dot += partial * w[block].scales[half * 8 + lane / 4];
+        }
+        const float d = __half2float(w[block].d);
+        if (plain) {
+            dot += __shfl_xor_sync(0xffffffff, dot, 16);
+            dot += __shfl_xor_sync(0xffffffff, dot, 8);
+            // The plain dot accumulates eight FMA lanes with offsets from the Q8_K block sums.
+            const int offset = w[block].scales[2 * fold_lane] * a[block].bsums[2 * fold_lane]
+                             + w[block].scales[2 * fold_lane + 1] * a[block].bsums[2 * fold_lane + 1];
+            sum = __fmaf_rn(__fmul_rn(d, a[block].d), float(dot - 32 * offset), sum);
+        } else {
+#pragma unroll
+            for (int offset = 16; offset > 0; offset >>= 1) {
+                dot += __shfl_xor_sync(0xffffffff, dot, offset);
+            }
+            if (lane == 0) {
+                // The tiled dot rounds two products before the add.
+                const float weighted = __fmul_rn(d, float(dot));
+                sum = __fadd_rn(sum, __fmul_rn(weighted, a[block].d));
+            }
+        }
+    }
+    if (plain) {
+        sum = __fadd_rn(sum, __shfl_xor_sync(0xffffffff, sum, 4));
+        sum = __fadd_rn(sum, __shfl_xor_sync(0xffffffff, sum, 2));
+        sum = __fadd_rn(sum, __shfl_xor_sync(0xffffffff, sum, 1));
+    }
+    if (lane == 0) output[index] = sum;
+}
+
+extern "C" __global__ void matmul_q6_k_q8_k_activation(
+    const void * __restrict__ weights, const void * __restrict__ activation,
+    float * __restrict__ output, unsigned int cells, unsigned int columns,
+    unsigned int blocks) {
+    matmul_q6_k_q8_k_activation_impl<false>(weights, activation, output, cells, columns, blocks);
+}
+
+extern "C" __global__ void matmul_q6_k_q8_k_plain_activation(
+    const void * __restrict__ weights, const void * __restrict__ activation,
+    float * __restrict__ output, unsigned int cells, unsigned int columns,
+    unsigned int blocks) {
+    matmul_q6_k_q8_k_activation_impl<true>(weights, activation, output, cells, columns, blocks);
+}
 
 template <int qk, int qr, int qi, bool need_sum, typename block_q_t, int mmq_x, int mmq_y, int nwarps,
               allocate_tiles_cuda_t allocate_tiles, load_tiles_cuda_t load_tiles, int vdr, vec_dot_q_mul_mat_cuda_t vec_dot>
@@ -3653,7 +3812,7 @@ extern "C" __global__ void mul_mat_vec_q6_K_q8_1_cuda8(
         (vx, vy, dst, ncols_x, nrows_x, nrows_y, nrows_dst);
 }
 
-extern "C" __global__ void quantize_q8_1(const float * __restrict__ x, void * __restrict__ vy, const int kx, const int kx_padded) {
+extern "C" __global__ void quantize_q8_1(const float * __restrict__ x, void * __restrict__ vy, const int kx, const int kx_padded, const int quantized_sum) {
     const int ix = blockDim.x*blockIdx.x + threadIdx.x;
 
     if (ix >= kx_padded) {
@@ -3671,13 +3830,16 @@ extern "C" __global__ void quantize_q8_1(const float * __restrict__ x, void * __
 
     const float xi = ix < kx ? x[iy*kx + ix] : 0.0f;
     float amax = fabsf(xi);
-    float sum = xi;
 
     amax = warp_reduce_max(amax);
-    sum = warp_reduce_sum(sum);
 
     const float d = amax / 127;
     const int8_t q = amax == 0.0f ? 0 : roundf(xi / d);
+    // Q4_K MMQ subtracts the weight minimum against the quantized activation.
+    float sum = warp_reduce_sum(quantized_sum ? static_cast<float>(q) : xi);
+    if (quantized_sum) {
+        sum *= d;
+    }
 
     y[ib].qs[iqs] = q;
 

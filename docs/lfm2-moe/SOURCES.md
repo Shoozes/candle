@@ -29,7 +29,8 @@ external tree. It is a qualification tool, not a Candle production dependency.
 The maintained quantized CPU schedules use the connected `9c8006a5`
 diagnostic as their arithmetic authority. The normal-range SiLU polynomial
 adapts `ggml/src/ggml-cpu/vec.h` at `582eab71` with its MIT notice in
-`quantized_lfm2_moe/cpu.rs`. Packed scales are decoded with the already
+`quantized_lfm2_moe/cpu.rs`. The dense CUDA port in `candle-kernels/src/reduce.cu`
+uses the same arithmetic and source notice. Packed scales are decoded with the already
 workspace-pinned `half` dependency. GGUF weights remain quantized.
 
 The quantized MoE CPU attention order comes from pinned llama.cpp `582eab71`.
@@ -37,6 +38,24 @@ The reference uses `ggml/src/ggml-cpu/vec.cpp` and `simd-mappings.h` for Q·K,
 `vec.cpp` and `vec.h` for softmax, and `llamafile/sgemm.cpp` under the same CPU
 directory for value reduction. The adapted exponent retains the ggml MIT
 notice and Arm attribution in `quantized_lfm2_moe/cpu_attention.rs`.
+The GGUF MoE CUDA attention kernels in `candle-kernels/src/reduce.cu`
+port those same documented AVX2 folds and exceptional exponent split.
+
+The single-row dense Q6_K FFN fold follows the existing Candle CPU
+plain dot. Its reference is pinned llama.cpp `582eab71`, MIT, in
+`ggml/src/ggml-cpu/arch/x86/quants.c` (`ggml_vec_dot_q6_K_q8_K`) and
+`ggml/src/ggml-cpu/llamafile/sgemm.cpp` (the single-row dispatch).
+
+The Q4_K CUDA matrix-matrix Q8_1 sum follows the quantized-byte sum
+in pinned llama.cpp's MIT-licensed
+[ggml/src/ggml-cuda/quantize.cu](https://github.com/ggml-org/llama.cpp/blob/582eab718608b99792286729890aac1675547c29/ggml/src/ggml-cuda/quantize.cu#L459-L477).
+The Candle kernel retains its existing grouping and uses this source for
+the sum formula.
+
+The explicit MoE ShortConv CUDA projection follows the maintained
+MoE CPU Q8_K activation and Q4_K GEMM/GEMV schedule. Its verification
+uses the same pinned CPU reference and retained 37-row projection
+operands from the layer-0 comparison.
 
 The verified external file is
 `C:/llamacpp/models/LFM2.5-24B-A2B-Q4_K_M.gguf`, 14,526,258,464 bytes, SHA-256
@@ -48,3 +67,5 @@ model assets; production weights and upstream Python source are not committed.
 
 ---
 AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe | change=pin numerical, checkpoint, tokenizer and GGUF authorities
+AI-edited: 2026-11-17 | agent=Codex/root | task=moe-cuda-shortconv | change=bind the crossed replay and Q4_K activation sum correction
+AI-edited: 2026-11-18 | agent=Codex/root | task=moe-unicode-position2 | change=attribute the dense Q6_K decode fold and dispatch

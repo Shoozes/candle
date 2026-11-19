@@ -50,6 +50,7 @@ fn quantize_q8_1(
     dst: &mut CudaSlice<u8>,
     k: usize,
     ky: usize,
+    quantized_sum: bool,
     dev: &CudaDevice,
 ) -> Result<()> {
     let kx_padded = pad(k, MATRIX_ROW_PADDING);
@@ -93,7 +94,12 @@ fn quantize_q8_1(
         let mut builder = func.builder();
         builder.arg(&src_chunk);
         builder.arg(&dst_chunk);
-        barg!(builder, k as i32, kx_padded as i32);
+        barg!(
+            builder,
+            k as i32,
+            kx_padded as i32,
+            i32::from(quantized_sum)
+        );
         unsafe { builder.launch(cfg) }.w()?;
 
         rows_processed += rows_in_chunk;
@@ -385,7 +391,7 @@ fn mul_mat_vec_via_q8_1(
     let y_size_in_bytes =
         b_size * ncols_padded * GgmlDType::Q8_1.type_size() / GgmlDType::Q8_1.block_size();
     let mut y_q8_1 = dev.alloc_zeros::<u8>(y_size_in_bytes)?;
-    quantize_q8_1(y, &mut y_q8_1, ncols, b_size, dev)?;
+    quantize_q8_1(y, &mut y_q8_1, ncols, b_size, false, dev)?;
 
     let kernel_name = match dtype {
         GgmlDType::Q4_0 => "mul_mat_vec_q4_0_q8_1_cuda",
@@ -458,7 +464,7 @@ fn mul_mat_via_q8_1(
     let y_size_in_bytes =
         k_padded * y_cols * GgmlDType::Q8_1.type_size() / GgmlDType::Q8_1.block_size();
     let mut y_q8_1 = dev.alloc_zeros::<u8>(y_size_in_bytes)?;
-    quantize_q8_1(y, &mut y_q8_1, k, y_cols, dev)?;
+    quantize_q8_1(y, &mut y_q8_1, k, y_cols, dtype == GgmlDType::Q4K, dev)?;
 
     let (kernel_name, mmq_x, mmq_y) = match dtype {
         GgmlDType::Q4_0 => ("mul_mat_q4_0", 64, 128),
@@ -533,7 +539,7 @@ fn indexed_moe_forward_fused_q8_1_input(
     let mut input_quant = dev.alloc_zeros::<u8>(y_size_in_bytes)?;
 
     let input_view = input.slice(0..);
-    quantize_q8_1(&input_view, &mut input_quant, k, total_rows, dev)?;
+    quantize_q8_1(&input_view, &mut input_quant, k, total_rows, false, dev)?;
 
     // output buffer
     let outsize = batch * topk * n;
@@ -922,6 +928,119 @@ impl QCudaStorage {
 }
 
 impl QCudaStorage {
+    pub(crate) fn matmul_with_q8k(
+        &self,
+        shape: &crate::Shape,
+        storage: &CudaStorage,
+        layout: &crate::Layout,
+        projection: super::Q8KProjection,
+    ) -> Result<(CudaStorage, crate::Shape)> {
+        let (columns, width) = shape.dims2()?;
+        let dimensions = layout.shape().dims();
+        let (rows, input_width) = match *dimensions {
+            [rows, width] | [_, rows, width] => (rows, width),
+            _ => crate::bail!("Q8_K CUDA projection requires a matrix or batched matrix"),
+        };
+        const BLOCK: usize = 256;
+        if input_width != width
+            || width == 0
+            || !width.is_multiple_of(BLOCK)
+            || rows == 0
+            || columns == 0
+        {
+            crate::bail!("invalid Q8_K CUDA projection dimensions")
+        }
+        let (start, end) = layout.contiguous_offsets().ok_or_else(|| {
+            crate::Error::RequiresContiguous {
+                op: "cuda-matmul-with-q8k",
+            }
+            .bt()
+        })?;
+        let input = storage.as_cuda_slice::<f32>()?.slice(start..end);
+        let total_rows = (end - start) / width;
+        if total_rows == 0 {
+            crate::bail!("empty Q8_K CUDA activation")
+        }
+        let plain_q6k = match projection {
+            super::Q8KProjection::Standard => false,
+            super::Q8KProjection::DenseQ6K => total_rows == 1,
+            super::Q8KProjection::Indexed => total_rows < 8,
+        };
+        let kernel = match self.dtype {
+            GgmlDType::Q4K => "matmul_q4_k_q8_k_activation",
+            GgmlDType::Q6K if plain_q6k => "matmul_q6_k_q8_k_plain_activation",
+            GgmlDType::Q6K => "matmul_q6_k_q8_k_activation",
+            _ => crate::bail!("Q8_K CUDA projection requires Q4_K or Q6_K weights"),
+        };
+        let blocks_per_row = width / BLOCK;
+        let checked_product = |a: usize, b: usize| {
+            a.checked_mul(b)
+                .ok_or_else(|| crate::Error::Msg("Q8_K CUDA projection allocation overflow".into()))
+        };
+        let expected = checked_product(
+            checked_product(columns, blocks_per_row)?,
+            self.dtype.type_size(),
+        )?;
+        if self.data.len != expected {
+            crate::bail!("Q8_K CUDA projection weight storage size differs")
+        }
+        let blocks = checked_product(total_rows, blocks_per_row)?;
+        let cells = checked_product(total_rows, columns)?;
+        let block_count = u32::try_from(blocks).map_err(crate::Error::wrap)?;
+        let cell_count = u32::try_from(cells).map_err(crate::Error::wrap)?;
+        let columns_arg = u32::try_from(columns).map_err(crate::Error::wrap)?;
+        let width_arg = u32::try_from(blocks_per_row).map_err(crate::Error::wrap)?;
+        // With one row per group, Q4_K takes the full-block fold for every
+        // gathered row while still quantizing and projecting in one launch.
+        let rows_arg = if matches!(projection, super::Q8KProjection::Indexed) {
+            1
+        } else {
+            u32::try_from(rows).map_err(crate::Error::wrap)?
+        };
+        // F32 scale, 256 signed quants, and sixteen I16 partial sums.
+        let mut activations = unsafe { self.device.alloc::<u32>(checked_product(blocks, 73)?)? };
+        let mut result = unsafe { self.device.alloc::<f32>(cells)? };
+        let quantize = self
+            .device
+            .get_or_load_func("quantize_q8_k_activation", &candle_kernels::QUANTIZED)?;
+        let dot = self
+            .device
+            .get_or_load_func(kernel, &candle_kernels::QUANTIZED)?;
+        let mut quantize = quantize.builder();
+        quantize.arg(&input).arg(&mut activations);
+        barg!(quantize, block_count);
+        unsafe {
+            quantize.launch(cudarc::driver::LaunchConfig {
+                grid_dim: (block_count.div_ceil(128), 1, 1),
+                block_dim: (128, 1, 1),
+                shared_mem_bytes: 0,
+            })
+        }
+        .w()?;
+        drop(quantize);
+        let mut dot = dot.builder();
+        dot.arg(&self.data.inner).arg(&activations).arg(&mut result);
+        barg!(dot, cell_count, columns_arg, width_arg);
+        if self.dtype == GgmlDType::Q4K {
+            dot.arg(&rows_arg);
+        }
+        unsafe {
+            dot.launch(cudarc::driver::LaunchConfig {
+                grid_dim: (cell_count.div_ceil(4), 1, 1),
+                block_dim: (32, 4, 1),
+                shared_mem_bytes: 0,
+            })
+        }
+        .w()?;
+        drop(dot);
+        let mut output_shape = dimensions.to_vec();
+        output_shape[dimensions.len() - 1] = columns;
+        Ok((
+            CudaStorage::wrap_cuda_slice(result, self.device.clone()),
+            output_shape.into(),
+        ))
+    }
+
     fn native_f32_q8(
         &self,
         shape: &crate::Shape,
@@ -1139,9 +1258,23 @@ mod test {
         let y_size_in_bytes =
             el_padded * GgmlDType::Q8_1.type_size() / GgmlDType::Q8_1.block_size();
         let mut y_q8_1 = unsafe { dev.alloc::<u8>(y_size_in_bytes)? };
-        let vs: Vec<f32> = (0..el).map(|v| v as f32).collect();
+        let mut vs = vec![0.25f32; el];
+        vs[0] = 1.0;
         let y = dev.clone_htod(&vs)?;
-        quantize_q8_1(&y.as_view(), &mut y_q8_1, el, 1, &dev)?;
+        for quantized_sum in [false, true] {
+            quantize_q8_1(&y.as_view(), &mut y_q8_1, el, 1, quantized_sum, &dev)?;
+            let mut block = vec![0u8; 36];
+            dev.memcpy_dtoh(&y_q8_1.slice(..block.len()), &mut block)?;
+            assert_eq!(block[4], 127);
+            assert!(block[5..].iter().all(|&value| value == 32));
+            let expected = if quantized_sum {
+                (127 + 31 * 32) as f32 / 127.0
+            } else {
+                1.0 + 31.0 * 0.25
+            };
+            let actual = u16::from_le_bytes([block[2], block[3]]);
+            assert_eq!(actual, f16::from_f32(expected).to_bits());
+        }
         Ok(())
     }
 

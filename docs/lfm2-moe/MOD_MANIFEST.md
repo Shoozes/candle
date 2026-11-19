@@ -5,6 +5,8 @@ release inventories, D1 proof and consumer pins remain unchanged.
 
 ## Owned additions
 
+- `candle-kernels/src/quantized.cu`
+- `candle-kernels/src/reduce.cu`
 - `candle-examples/examples/lfm2-moe/README.md`
 - `candle-examples/examples/lfm2-moe/main.rs`
 - `candle-transformers/src/models/lfm2_moe/config.rs`
@@ -15,6 +17,8 @@ release inventories, D1 proof and consumer pins remain unchanged.
 - `candle-transformers/src/models/quantized_lfm2/mixer.rs`
 - `candle-transformers/src/models/quantized_lfm2_moe/cpu.rs`
 - `candle-transformers/src/models/quantized_lfm2_moe/cpu_attention.rs`
+- `candle-transformers/src/models/quantized_lfm2_moe/cuda.rs`
+- `candle-transformers/src/models/quantized_lfm2_moe/cuda_attention.rs`
 - `candle-transformers/src/models/quantized_lfm2_moe/metadata.rs`
 - `candle-transformers/src/models/quantized_lfm2_moe/mod.rs`
 - `candle-transformers/src/models/quantized_lfm2_moe/model.rs`
@@ -48,6 +52,11 @@ release inventories, D1 proof and consumer pins remain unchanged.
 
 ## Shared hunk ownership
 
+- `candle-core/src/quantized/cuda.rs`
+- `candle-core/src/quantized/mod.rs`
+- `candle-core/src/quantized/fast_mmq.rs`
+- `candle-kernels/src/ffi.rs`
+- `candle-kernels/src/mmq_gguf/mmq_quantize.cu`
 - `Cargo.lock`
 - `candle-transformers/Cargo.toml`
 - `.gitignore`
@@ -71,6 +80,11 @@ mixer callbacks and read-only norm parameters, and the direct dependency
 edge to the workspace-pinned `half` package for packed CPU weight scales.
 MoE owns the CPU ordered ShortConv dispatch and +0 seed. LFM2-VL owns the
 shared causal helper and its CUDA path.
+MoE owns the Q4_K CUDA matrix-matrix activation sum correction, including
+the fallback Q8_1 regression and the fast MMQ DS4 launcher and dispatch.
+It also owns the explicit Q8_K projection used by its Q4_K ShortConv
+and dense gate/up paths and by dense Q6_K down.
 
 ---
 AI-edited: 2026-11-12 | agent=Codex/root | task=lfm2-moe-review | change=register the qualification packet inventory regression test
+AI-edited: 2026-11-17 | agent=Codex/root | task=moe-cuda-shortconv | change=bind the crossed replay and Q4_K activation sum correction

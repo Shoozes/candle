@@ -565,7 +565,7 @@
       ]
     },
     "issue__oracle_memory_containment": {
-      "description": "The Windows llama.cpp residency incident, mandatory Job Object owner, post-assignment owner-exit handshake, exact failure cleanup, smoke proof, and guarded future oracle workflow.",
+      "description": "The Windows llama.cpp residency incident, mandatory Job Object owner, post-assignment owner-exit handshake, exact failure cleanup, and smoke proof. Read FAILURE_LOG.md F-0008 and F-0037 for incident and owner-exit details.",
       "status": "active",
       "paths": [
         "scripts/lfm2-vl/preflight.ps1",
@@ -573,7 +573,6 @@
         "scripts/lfm2-vl/test-bounded-oracle.ps1",
         "scripts/lfm2-vl/test-preflight.ps1",
         "tools/lfm2_vl/README.md",
-        "docs/lfm2-vl/FAILURE_LOG.md",
         "docs/lfm2-vl/PARITY.md"
       ]
     },
@@ -945,7 +944,7 @@
       ]
     },
     "feature__lfm2_moe": {
-      "description": "Native and mixed quantized LFM2-MoE routing/loading, CPU/CUDA synthetic proof and local example. Expand feature__lfm2_moe_cpu_schedules for CPU arithmetic, feature__lfm2_text for shared mixers, and workflow__lfm2_moe_qualification for production. Read docs/lfm2-moe/HISTORY.md for completed work.",
+      "description": "Native and mixed quantized LFM2-MoE routing/loading, CPU/CUDA synthetic proof and local example. Expand feature__lfm2_moe_cpu_schedules for CPU arithmetic, feature__lfm2_moe_cuda_q4k for CUDA Q4_K projection, feature__lfm2_text for shared mixers, and workflow__lfm2_moe_qualification for production. Read docs/lfm2-moe/HISTORY.md for completed work.",
       "status": "active",
       "paths": [
         "candle-examples/examples/lfm2-moe/README.md",
@@ -960,9 +959,7 @@
         "candle-transformers/src/models/quantized_lfm2_moe/mod.rs",
         "candle-transformers/src/models/quantized_lfm2_moe/model.rs",
         "candle-transformers/src/models/quantized_lfm2_moe/tests.rs",
-        "docs/lfm2-moe/DECISIONS.md",
         "docs/lfm2-moe/MOD_MANIFEST.md",
-        "docs/lfm2-moe/SOURCES.md",
         "docs/lfm2-moe/STATUS.md",
         "docs/lfm2-moe/TODO.md",
         "docs/lfm2-moe/source-lock.json",
@@ -971,20 +968,39 @@
         "tests/fixtures/lfm2_moe_tiny/tokenizer_reference.json",
         "tools/lfm2_moe/export_fixture.py",
         "tools/lfm2_moe/export_tokenizer_fixture.py",
-        "tools/lfm2_moe/prepare_packet.py",
-        "tools/lfm2_moe/test_prepare_packet.py",
         "tools/lfm2_moe/verify_tokenizer.py"
       ]
     },
     "feature__lfm2_moe_cpu_schedules": {
-      "description": "Quantized LFM2-MoE CPU projections, reference-order attention, and the frozen attention regression. Expand feature__lfm2_text for the shared attention layer and feature__lfm2_moe for the full model.",
+      "description": "Quantized LFM2-MoE reference-order CPU and CUDA attention, CPU projection schedules, and ordered CUDA RMSNorm, RoPE, SiLU and router. Expand feature__lfm2_text for shared attention and feature__lfm2_moe for the full model. Failure log F-0054 and F-0055 cover attention and indexed experts.",
       "status": "active",
       "paths": [
         "candle-transformers/src/models/quantized_lfm2/mixer.rs",
         "candle-transformers/src/models/quantized_lfm2_moe/cpu.rs",
         "candle-transformers/src/models/quantized_lfm2_moe/cpu_attention.rs",
+        "candle-transformers/src/models/quantized_lfm2_moe/cuda.rs",
+        "candle-transformers/src/models/quantized_lfm2_moe/cuda_attention.rs",
+        "candle-kernels/src/reduce.cu",
         "docs/lfm2-moe/DECISIONS.md",
         "docs/lfm2-moe/SOURCES.md"
+      ]
+    },
+    "feature__lfm2_moe_cuda_q4k": {
+      "description": "Q4_K CUDA fallback and the explicit Q8_K activation used by MoE ShortConv, attention projections, and dense FFN gate/up/down. Read feature__lfm2_moe_cpu_schedules for projection dispatch, feature__lfm2_moe_cuda_fast_mmq for fast MMQ, and workflow__lfm2_moe_qualification for production checks.",
+      "status": "active",
+      "paths": [
+        "candle-core/src/quantized/cuda.rs",
+        "candle-kernels/src/quantized.cu"
+      ]
+    },
+    "feature__lfm2_moe_cuda_fast_mmq": {
+      "description": "Fast MMQ dispatch, Q4_K DS4 activation metadata, and the CUDA instantiation used in the shared-input replay. Read docs/lfm2-moe/HISTORY.md for evidence.",
+      "status": "active",
+      "paths": [
+        "candle-core/src/quantized/fast_mmq.rs",
+        "candle-kernels/src/ffi.rs",
+        "candle-kernels/src/mmq_gguf/mmq_quantize.cu",
+        "candle-kernels/src/mmq_gguf/mmq_instance_q4_k.cu"
       ]
     },
     "workflow__lfm2_moe_qualification": {
@@ -996,8 +1012,10 @@
         "tools/lfm2_moe/CMakeLists.txt",
         "tools/lfm2_moe/compare_probes.py",
         "tools/lfm2_moe/llama_probe.cpp",
+        "tools/lfm2_moe/prepare_packet.py",
         "tools/lfm2_moe/prepare_qualification.py",
-        "tools/lfm2_moe/test_compare_probes.py"
+        "tools/lfm2_moe/test_compare_probes.py",
+        "tools/lfm2_moe/test_prepare_packet.py"
       ]
     }
   },

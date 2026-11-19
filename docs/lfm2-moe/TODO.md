@@ -23,36 +23,26 @@
 
 ## Remaining gates in order
 
-1. **Next bounded step.** Review the paired arithmetic prefill packet for
-   this checkout. After exact run authorization, fresh quiet/resource
-   admission and whole-model SHA-256 verification, capture one prefill per
-   device on the same 37 frozen IDs, with zero decode steps. Require both
-   position-0 controls before comparing all 43 ordered checkpoints for the
-   first difference. Preserve the original limits. Hold Edge repin and push.
-   [Current paired packet](D:/Compact_Evidence/candle/runs/lfm2-moe-rtx-arithmetic-prefill-publish-20261117/packet.json).
-   [Bound trace proof](HISTORY.md#2026-11-17---bound-rtx-4090-arithmetic-prefill-probe).
-2. Production qualification remains open under the [original limits](QUALIFICATION.md).
-   - Done when: The pinned CPU reference, Candle CPU and RTX 4090 complete the
-     two frozen cases with exact teacher-forced selections, four frozen-input
-     comparisons, finite logit differences, observed peaks and terminal cleanup.
-     Stop on any admission or execution failure without retry or relaxed limits.
-3. After supplier parity, explicitly select the bounded Edge qualification
-   admission through its held candidate gate. Prove CLI/API chat, strict JSON,
-   cancellation, unload/reload and a successful recovery request on both devices.
-4. After confirmed Candle source publication and separately authorized Edge
-   adoption, reconcile only Edge's
-   reviewed Candle pin and affected locks, rerun its selected graph/gates and
-   record adoption. Other consumers retain their exact qualified identities.
+The frozen Candle supplier gate passed on one executable. The two pinned CPU
+references and all four Candle comparisons have release evidence.
+[Qualification audit](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/qualification-audit.json).
+
+Edge's isolated CLI/API qualification passed on Windows CPU and RTX 4090,
+including chat, strict JSON, active cancellation, unload/reload and recovery.
+[Edge terminal audit](D:/Compact_Evidence/edgesymbio/runs/lfm2-moe-frozen-candle-20261118-strict-prefill/terminal-audit.json).
+
+1. Publish the reviewed Candle MoE supplier batch through Candle's guarded
+   helper after explicit authorization.
+2. After the published source identity is verified and Edge adoption is
+   separately authorized, reconcile the reviewed Candle pin and affected locks.
+   Rerun Edge's selected graph and gates, then record the adopted identity.
 
 Local implementation, native/GGUF/CUDA fixtures, opt-in profile, tokenizer/output
 contracts, typed memory admission and ownership routes are implemented. Their
-current proof is in STATUS and the compact run record. Those local results do
-not close the remaining production/adoption criteria or authorize new work for
-completed D1. No mandatory package, installation or activation task is selected.
+current proof is in STATUS and the compact run record. The remaining criteria
+are the supplier publication and consumer adoption gates above.
 
-Standalone LFM3 text has tiny fixtures and an offline runner. See the
-[standalone qualification gate](../lfm3-audio/TODO.md#standalone-lfm3-text-qualification)
-for pinned checkpoint proof. Shared ShortConv optimization follows the corresponding
+Shared ShortConv optimization follows the corresponding
 correctness baseline. Device-resident MoE execution follows validation of
 the indexed CUDA path against the grouped implementation on identical weights.
 LFM3 GGUF, lower precision and the broader model family have separate gates.
@@ -151,3 +141,12 @@ AI-edited: 2026-11-15 | agent=Codex/root | task=moe-swiglu-cross | change=select
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-cross | change=select one inert successor with both controls
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-connected-down-seal | change=route the new seal to review and held connected execution
 AI-edited: 2026-11-15 | agent=Codex/root | task=moe-down-seal-review | change=queue the exact connected attempt after inert review
+AI-edited: 2026-11-17 | agent=Codex/root | task=lfm3-moe-qualification | change=record LFM3 admission and the completed MoE trace
+AI-edited: 2026-11-17 | agent=Codex/root | task=lfm3-resource-gated-qualification | change=point to standalone production proof
+AI-edited: 2026-11-17 | agent=Codex/root | task=moe-cuda-shortconv | change=bind the crossed replay and Q4_K activation sum correction
+AI-edited: 2026-11-17 | agent=Codex/root | task=moe-resource-replay | change=queue the fast MMQ shared-input check
+AI-edited: 2026-11-18 | agent=Codex/root | task=portfolio-dropin | change=advance the numerical queue past the matched-input projection replay
+AI-edited: 2026-11-18 | agent=Codex/root | task=moe-unicode-position2 | change=queue the connected layer-2 prefill replay
+AI-edited: 2026-11-18 | agent=Codex/root | task=moe-ordered-attention | change=queue the remaining arithmetic position-2 isolation
+AI-edited: 2026-11-18 | agent=Codex/root | task=moe-frozen-qualification | change=close the Candle supplier gate and retain the separate Edge gates
+AI-edited: 2026-11-18 | agent=Codex/root | task=moe-edge-qualification | change=close the live Edge gate and select reviewed dependency adoption

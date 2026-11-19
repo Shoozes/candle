@@ -866,7 +866,81 @@ thread_local! {
     }
 }
 
+#[cfg(feature = "cuda")]
+#[derive(Clone, Copy)]
+pub(crate) enum Q8KProjection {
+    Standard,
+    DenseQ6K,
+    Indexed,
+}
+
 impl QMatMul {
+    /// Projects F32 CUDA inputs with Q4_K weights using Q8_K activations.
+    /// Each complete group of four rows uses the paired-subgroup F32 fold.
+    /// The remaining rows use the single-row full-block fold.
+    #[cfg(feature = "cuda")]
+    pub fn forward_cuda_q4k_q8k(&self, xs: &Tensor) -> Result<Tensor> {
+        self.forward_cuda_with_q8k(xs, Some(GgmlDType::Q4K), Q8KProjection::Standard)
+    }
+
+    /// Projects F32 CUDA inputs with Q6_K weights and Q8_K activations
+    /// using the tiled CPU fold with separate rounded F32 products and adds.
+    #[cfg(feature = "cuda")]
+    pub fn forward_cuda_q6k_q8k(&self, xs: &Tensor) -> Result<Tensor> {
+        self.forward_cuda_with_q8k(xs, Some(GgmlDType::Q6K), Q8KProjection::Standard)
+    }
+
+    /// Projects a dense Q6_K matrix with Q8_K activations. A single input row
+    /// uses the plain CPU dot fold and multiple rows use the tiled CPU fold.
+    #[cfg(feature = "cuda")]
+    pub fn forward_cuda_q6k_q8k_dense(&self, xs: &Tensor) -> Result<Tensor> {
+        self.forward_cuda_with_q8k(xs, Some(GgmlDType::Q6K), Q8KProjection::DenseQ6K)
+    }
+
+    /// Projects the gathered rows of a single expert with Q8_K activations.
+    /// Q4_K uses the full-block fold. Q6_K uses the plain CPU dot below
+    /// eight gathered rows and the tiled fold otherwise.
+    #[cfg(feature = "cuda")]
+    pub fn forward_cuda_indexed_q8k(&self, xs: &Tensor) -> Result<Tensor> {
+        self.forward_cuda_with_q8k(xs, None, Q8KProjection::Indexed)
+    }
+
+    #[cfg(feature = "cuda")]
+    fn forward_cuda_with_q8k(
+        &self,
+        xs: &Tensor,
+        expected: Option<GgmlDType>,
+        projection: Q8KProjection,
+    ) -> Result<Tensor> {
+        if native_q8::required() {
+            crate::bail!("native Q8 execution rejects the Q8_K projection")
+        }
+        let Self::QTensor(weights) = self else {
+            crate::bail!("Q8_K CUDA projection requires packed weights")
+        };
+        if let Some(expected) = expected {
+            if weights.dtype() != expected {
+                crate::bail!("Q8_K CUDA projection expected {expected:?} weights")
+            }
+        }
+        let (storage, layout) = xs.storage_and_layout();
+        let (QStorage::Cuda(weights_storage), Storage::Cuda(input)) = (&weights.storage, &*storage)
+        else {
+            crate::bail!("Q8_K projection requires CUDA inputs and weights")
+        };
+        if !xs.device().same_device(&weights.device()) {
+            crate::bail!("Q8_K projection requires inputs and weights on the same CUDA device")
+        }
+        let (storage, shape) =
+            weights_storage.matmul_with_q8k(&weights.shape, input, layout, projection)?;
+        Ok(Tensor::from_storage(
+            Storage::Cuda(storage),
+            shape,
+            crate::op::BackpropOp::none(),
+            false,
+        ))
+    }
+
     /// Uses ggml's x86 Q8_0 activation quantization for this CPU call only.
     pub fn forward_ggml_q8_0(&self, xs: &Tensor) -> Result<Tensor> {
         k_quants::with_ggml_q8_0_activation(|| crate::Module::forward(self, xs))

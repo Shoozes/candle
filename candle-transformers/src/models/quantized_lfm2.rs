@@ -127,12 +127,17 @@ fn precomput_freqs_cis(
 }
 
 impl AttentionLayer {
-    fn apply_rotary_emb(&self, x: &Tensor, index_pos: usize) -> Result<Tensor> {
+    fn apply_rotary_emb(
+        &self,
+        x: &Tensor,
+        index_pos: usize,
+        rotate: impl Fn(&Tensor, &Tensor, &Tensor) -> Result<Tensor>,
+    ) -> Result<Tensor> {
         let _enter = self.span_rot.enter();
         let (_b, _n, seq_len, _d) = x.dims4()?;
         let cos = self.cos.narrow(0, index_pos, seq_len)?;
         let sin = self.sin.narrow(0, index_pos, seq_len)?;
-        candle_nn::rotary_emb::rope(&x.contiguous()?, &cos, &sin)
+        rotate(&x.contiguous()?, &cos, &sin)
     }
 
     fn forward(&mut self, xs: &Tensor, mask: Option<&Tensor>, index_pos: usize) -> Result<Tensor> {
@@ -140,8 +145,8 @@ impl AttentionLayer {
             xs,
             mask,
             index_pos,
-            QMatMul::forward,
-            RmsNorm::forward,
+            (QMatMul::forward, QMatMul::forward),
+            (RmsNorm::forward, candle_nn::rotary_emb::rope),
             |_, _, _, _| Ok(None),
         )
     }
@@ -151,8 +156,14 @@ impl AttentionLayer {
         xs: &Tensor,
         mask: Option<&Tensor>,
         index_pos: usize,
-        project: impl Fn(&QMatMul, &Tensor) -> Result<Tensor> + Copy,
-        norm: impl Fn(&RmsNorm, &Tensor) -> Result<Tensor>,
+        (project, project_output): (
+            impl Fn(&QMatMul, &Tensor) -> Result<Tensor> + Copy,
+            impl Fn(&QMatMul, &Tensor) -> Result<Tensor>,
+        ),
+        (norm, rotate): (
+            impl Fn(&RmsNorm, &Tensor) -> Result<Tensor>,
+            impl Fn(&Tensor, &Tensor, &Tensor) -> Result<Tensor>,
+        ),
         attend: impl Fn(&Tensor, &Tensor, &Tensor, Option<&Tensor>) -> Result<Option<Tensor>>,
     ) -> Result<Tensor> {
         let _enter = self.span_attn.enter();
@@ -176,8 +187,8 @@ impl AttentionLayer {
         let q = norm(&self.q_norm, &q.contiguous()?)?;
         let k = norm(&self.k_norm, &k.contiguous()?)?;
 
-        let q = self.apply_rotary_emb(&q, index_pos)?;
-        let k = self.apply_rotary_emb(&k, index_pos)?;
+        let q = self.apply_rotary_emb(&q, index_pos, &rotate)?;
+        let k = self.apply_rotary_emb(&k, index_pos, rotate)?;
 
         let (k, v) = match &self.kv_cache {
             None => (k, v),
@@ -198,7 +209,7 @@ impl AttentionLayer {
             None => self.stock_attention(&q, k, v, mask)?,
         };
         let y = y.transpose(1, 2)?.reshape(&[b_sz, seq_len, n_embd])?;
-        self.wo.forward_with(&y, project)
+        self.wo.forward_with(&y, project_output)
     }
 
     fn stock_attention(

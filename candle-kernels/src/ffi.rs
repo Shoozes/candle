@@ -496,6 +496,22 @@ extern "C" {
         ne3: i64,
         stream: *mut c_void,
     );
+    pub fn launch_mmq_quantize_q8_1_DS4_q4_k(
+        x: *const std::ffi::c_void,
+        ids: *const i32,
+        vy: *mut std::ffi::c_void,
+        type_x: i32,
+        ne00: i64,
+        s01: i64,
+        s02: i64,
+        s03: i64,
+        ne0: i64,
+        ne1: i64,
+        ne2: i64,
+        ne3: i64,
+        stream: *mut std::ffi::c_void,
+    );
+
     pub fn launch_mmq_quantize_q8_1_D2S6(
         x: *const c_void,
         ids: *const i32,

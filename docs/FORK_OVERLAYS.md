@@ -26,7 +26,7 @@ native Windows and WSL report the same candidate paths.
 | GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Packed CPU/CUDA interfaces and source-bound short-parity/2,080-token receipt; no new production claim from upstream sync |
 | Qwen3.5 GGUF compatibility | `docs/qwen35/MOD_MANIFEST.md` | Bounded Q8_0/F32 text admission, proven CPU parity, and scoped CUDA quantization under qualification; no Edge activation |
 | LFM3-Audio | `docs/lfm3-audio/MOD_MANIFEST.md` | Published native CPU-F32 TTS/ASR and WAV repair with source-bound cache/codec proof; independent from D1 and consumer defaults |
-| LFM2-MoE | `docs/lfm2-moe/MOD_MANIFEST.md` | Native/split-expert GGUF CPU/CUDA implementation and synthetic proof; production qualification and Edge adoption held |
+| LFM2-MoE | `docs/lfm2-moe/MOD_MANIFEST.md` | Native fixtures and local frozen Q4_K_M production proof on Windows CPU and RTX 4090. [Candle qualification](lfm2-moe/STATUS.md). Edge passed the isolated CPU and RTX 4090 lifecycle. Supplier publication and Edge pin adoption remain open. |
 
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each
@@ -209,6 +209,14 @@ The Qwen3.5 overlay owns only the scoped GGML Q8_0 activation parameter added
 to the existing MMVQ F32 declaration in `candle-kernels/src/ffi.rs`; GPT-OSS
 retains its independent declarations and qualification.
 
+LFM2-MoE owns the Q4_K CUDA matrix-matrix Q8_1 activation sum correction
+in `quantized/cuda.rs` and `candle-kernels/src/quantized.cu`, plus the
+Q4_K DS4 launcher and dispatch in `mmq_quantize.cu`, `ffi.rs`, and
+`fast_mmq.rs`.
+LFM2-MoE also owns the explicit CUDA Q8_K projection entry points for
+Q4_K and dense Q6_K in `quantized/mod.rs` and their shared dispatch in
+`quantized/cuda.rs`.
+
 The LFM2-VL overlay owns d1's call-scoped native-Q8 admission and dispatch
 accounting hunks in `quantized/mod.rs` and `quantized/cuda.rs`. Qwen3.5 retains
 its independent GGML activation scope and kernels. D1 rendering and consumer
@@ -241,3 +249,5 @@ publishing a newer Candle source snapshot does not require a consumer repin.
 
 ---
 AI-edited: 2026-11-10 | agent=Codex/root | task=lfm2-moe | change=register independent capability ownership and proof routes
+AI-edited: 2026-11-17 | agent=Codex/root | task=moe-cuda-shortconv | change=bind the crossed replay and Q4_K activation sum correction
+AI-edited: 2026-11-18 | agent=Codex/root | task=moe-candle-qualification | change=align the overlay registry with the frozen CPU and CUDA result

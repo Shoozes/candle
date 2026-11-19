@@ -530,6 +530,117 @@ fn cuda_quantized_fixture_matches_cpu_and_recovers() -> Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "cuda")]
+#[test]
+fn cuda_q4k_dispatch_matches_cpu_group_and_tail_folds() -> Result<()> {
+    use candle::quantized::{ggml_file::qtensor_from_ggml, QMatMul};
+
+    let device = Device::new_cuda(0)?;
+    let host = Device::Cpu;
+    let (width, columns) = (512, 7);
+    let weights = Tensor::from_vec(
+        (0..width * columns)
+            .map(|i| (((i * 29) % 127) as f32 - 63.0) / 64.0)
+            .collect::<Vec<_>>(),
+        (columns, width),
+        &host,
+    )?;
+    let packed = QTensor::quantize(&weights, GgmlDType::Q4K)?;
+    let gpu = qtensor_from_ggml(
+        GgmlDType::Q4K,
+        &packed.data()?,
+        vec![columns, width],
+        &device,
+    )?;
+    let cpu = QMatMul::from_qtensor(packed)?;
+    let gpu = QMatMul::from_qtensor(gpu)?;
+
+    for (batch, rows) in [(1, 1), (2, 5)] {
+        let inputs = Tensor::from_vec(
+            (0..batch * rows * width)
+                .map(|i| {
+                    if i % width < width / 2 {
+                        0.0
+                    } else {
+                        (((i * 39) % 255) as f32 - 127.0) / 128.0
+                    }
+                })
+                .collect::<Vec<_>>(),
+            (batch, rows, width),
+            &host,
+        )?;
+        let expected = super::cpu::project(&cpu, &inputs, super::cpu::Projection::DenseGemmGemv)?;
+        let actual = project_q4_gemm_gemv(&gpu, &inputs.to_device(&device)?, |_, _| {
+            candle::bail!("expected the packed Q4_K CUDA projection")
+        })?;
+        let bits = |t: Tensor| -> Result<Vec<u32>> {
+            Ok(t.flatten_all()?
+                .to_vec1::<f32>()?
+                .into_iter()
+                .map(f32::to_bits)
+                .collect())
+        };
+        assert_eq!(actual.dims(), [batch, rows, columns]);
+        assert_eq!(bits(actual)?, bits(expected)?);
+    }
+    Ok(())
+}
+
+#[test]
+#[cfg(feature = "cuda")]
+fn cuda_dense_q6k_down_uses_plain_fold_for_one_row() -> Result<()> {
+    use candle::quantized::{ggml_file::qtensor_from_ggml, QMatMul};
+
+    let host = Device::Cpu;
+    let device = Device::new_cuda(0)?;
+    let (width, columns) = (1024, 7);
+    let values = |count, multiplier, modulus| {
+        (0..count)
+            .map(|i| ((i * multiplier) % modulus) as f32 / (modulus as f32) - 0.5)
+            .collect::<Vec<f32>>()
+    };
+    let weights = Tensor::from_vec(values(width * columns, 29, 127), (columns, width), &host)?;
+    let packed = QTensor::quantize(&weights, GgmlDType::Q6K)?;
+    let gpu = qtensor_from_ggml(
+        GgmlDType::Q6K,
+        &packed.data()?,
+        vec![columns, width],
+        &device,
+    )?;
+    let cpu = QMatMul::from_qtensor(packed)?;
+    let gpu = QMatMul::from_qtensor(gpu)?;
+    let bits = |t: Tensor| -> Result<Vec<u32>> {
+        Ok(t.flatten_all()?
+            .to_vec1::<f32>()?
+            .into_iter()
+            .map(f32::to_bits)
+            .collect())
+    };
+    for (batch, rows) in [(1, 1), (1, 3), (2, 1)] {
+        let input = Tensor::from_vec(
+            values(batch * rows * width, 39, 251),
+            (batch, rows, width),
+            &host,
+        )?;
+        let expected = bits(super::cpu::project(
+            &cpu,
+            &input,
+            super::cpu::Projection::DenseQ6KSingleRow,
+        )?)?;
+        let gpu_input = input.to_device(&device)?;
+        let actual = gpu.forward_cuda_q6k_q8k_dense(&gpu_input)?;
+        assert_eq!(actual.dims(), [batch, rows, columns]);
+        assert_eq!(bits(actual)?, expected);
+        let tiled = bits(gpu.forward_cuda_q6k_q8k(&gpu_input)?)?;
+        if batch * rows == 1 {
+            assert_ne!(tiled, expected);
+        } else {
+            assert_eq!(tiled, expected);
+        }
+    }
+    Ok(())
+}
+
 #[test]
 fn eos_uses_checked_integer_normalization() -> Result<()> {
     use gguf_file::Value;

@@ -1939,5 +1939,361 @@ Clippy passed with `-D warnings` and still compiled the dataset test target.
 upstream replaces this live test with a deterministic fixture or explicitly
 marks it network-dependent.
 
+## F-0054: Matching Q/K/V Does Not Prove Attention Parity
+
+### Q: Why did the first pinned attention value still differ after Q/K/V matched?
+
+**Story ID / status / search synopsis:** F-0054; resolved at the frozen
+attention boundary; LFM2-MoE Unicode position 2, identical rotary Q/K/V,
+Q·K `0x42192f91` versus `0x42192f90`, independent softmax and V drift.
+
+**Sources:** Candle GGUF LFM2-MoE on native Windows RTX 4090. Donor
+llama.cpp `582eab71` x86-64 AVX2/FMA attention.
+
+**What:** The stock CUDA attention context drifted on identical inputs.
+Layer-2 output quantization amplified the small context error.
+
+**Context and constraints:** The frozen 32-token Unicode prefill precedes
+two forced decode steps. The production gate compares exact selections.
+
+**Why it happened:** CUDA and pinned CPU used different arithmetic orders
+for Q·K, softmax, and value reduction. Supplying pinned raw scores or
+probabilities exposed independent drift in the two later operators.
+
+**Where:** Quantized MoE mixer, CUDA attention kernels, frozen Unicode
+attention regression.
+
+**Evidence:** Stock CUDA reproduced the integrated trace and differed in
+12,251 of 16,896 raw scores. Shared pinned context restored all 65,536
+projected residual values. The compiled CUDA path matched the frozen
+scores, probabilities and values bitwise.
+[Crossed proof](D:/Compact_Evidence/candle/runs/lfm2-moe-unicode-blocker-cross-20261118/shared-attention-proof.json) ·
+[Frozen regression](D:/Compact_Evidence/candle/runs/lfm2-moe-ordered-attention-repair-20261118/frozen-cuda-attention.result.json).
+
+**Developer story:** Replaying only the output projection cleared that
+boundary. Crossing the three attention operators separately located the
+remaining drift before the router sum.
+
+**How to catch it:** Run `unicode_attention_frozen` with the hash-bound
+fixture, plus grouped rectangular prefill and cached decode tests.
+
+**Solutions tried:** The stock schedule failed the crossed controls.
+Reference-order CUDA passed the frozen stage checks.
+
+**Current solution:** Maintain the four-accumulator Q·K fold, ordered
+softmax exponent and sums, and key-modulo-eight value FMA in the MoE CUDA path.
+
+**Decision rationale:** Stage tests reproduce the first failure and check
+the arithmetic that propagates it through the residual.
+
+**Effectiveness:** Unknown for end-to-end Unicode selection. Frozen
+operator and residual controls are verified.
+
+**Relevance check:** Current for attention, masking, cache and projection
+changes in the quantized MoE path.
+
+**Next prevention step:** Keep the full-model acceptance gate after any
+change to these schedules.
+
+## F-0055: Grouped Expert GEMM Can Pick the Wrong Fold
+
+### Q: Why did expert 37 drift when its inputs and route were already exact?
+
+**Story ID / status / search synopsis:** F-0055; resolved on the shared
+projection witnesses; expert 37 Q4_K gate/up, Q8_1 versus Q8_K, Q6_K
+indexed rows below eight, slots unchanged.
+
+**Sources:** Candle GGUF LFM2-MoE CUDA projections and llama.cpp
+`582eab71` layer-2 reference tensors on the frozen Unicode prefill.
+
+**What:** Default CUDA matmul changed every sampled expert-37 gate and up
+value on the exact normalized inputs.
+
+**Context and constraints:** Routing selected 16 rows for expert 37 and
+one for expert 0. Both expert projections consume packed GGUF weights.
+
+**Why it happened:** Packed activation format and fold selection both
+depend on the reference operator. Indexed Q4_K keeps the full-block fold
+for every row, and Q6_K switches folds at eight gathered rows.
+
+**Where:** `Expert::forward_indexed` and Q8_K CUDA projection dispatch.
+
+**Evidence:** The shared replay matched 49,152 ordered gate/up values,
+34,816 ordered down values across the two group sizes, and 196,608
+SwiGLU values bitwise.
+[Sparse witness](D:/Compact_Evidence/candle/runs/lfm2-moe-ordered-attention-repair-20261118/sparse/down.log).
+
+**Developer story:** Once attention context was pinned, the FFN norm,
+router logits, IDs, and gathered probabilities matched. Replaying the
+actual expert rows exposed projection drift even with the route fixed.
+
+**How to catch it:** Compare packed activation and projection outputs at
+identical row counts. Exercise both sides of the eight-row Q6_K cutoff.
+
+**Solutions tried:** Stock CUDA failed the shared expert controls. The
+explicit Q8_K indexed schedules matched the pinned witnesses.
+
+**Current solution:** Use the indexed activation and fold choices in the
+grouped CUDA expert path.
+
+**Decision rationale:** Exact weights and row grouping identify which
+arithmetic schedule each projection needs.
+
+**Effectiveness:** Unknown for full-model selection. The two retained
+expert shapes and indexed projection witnesses are verified.
+
+**Relevance check:** Current for changes to quantized expert dispatch and
+grouping.
+
+**Next prevention step:** Rerun the grouped-expert regression at 1, 7, 8
+and 16 rows whenever the indexed projection strategy changes.
+
+The later layer-5 arithmetic replay reproduced its full stock output.
+Its Q4_K down bank sent the entire expert through stock arithmetic even
+though gate and up were eligible for indexed Q8_K. The indexed Q4_K down
+replay matched all 75,776 pinned block values. The current checkpoint has
+20 Q4_K down banks and 18 Q6_K down banks, so the dispatch regression
+covers both. [Layer-5 proof](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/next-boundaries/boundary-summary.json).
+
+## F-0056: Passing Cases on Different Binaries Do Not Qualify One Candidate
+
+### Q: How did the arithmetic mismatch return after Unicode passed?
+
+**Story ID / status / search synopsis:** F-0056; current qualification
+hazard; `1113` versus `6986`, arithmetic position 2, mixed candidate
+identities, `2f1ea476` and `5568f52b`.
+
+**Sources:** Frozen Windows RTX 4090 LFM2-MoE packets against llama.cpp
+`582eab71`.
+
+**What:** An older candidate passed all eight arithmetic selections. The
+candidate that repaired Unicode passed all eight Unicode selections and
+matched seven arithmetic selections.
+
+**Context and constraints:** Exact selections, one source/binary identity,
+observed resource peaks and Job release are required for both cases.
+
+**Why it happened:** The two binaries use different arithmetic schedules.
+The current crossed arithmetic prefill is exact through expert projections.
+The denominator and mixture addition order still differ. Their influence
+on the final arithmetic token has not been isolated.
+
+**Where:** The two-case packet verifier, operator replay, and MoE TODO.
+
+**Evidence:** Packet `5568f52b` bound one executable and ran both cases.
+Pinned clamp and slot order made the offline sparse FFN match all 75,776
+arithmetic values. The production arithmetic lane still differed at position 2.
+[Two-case audit](D:/Compact_Evidence/candle/runs/lfm2-moe-ordered-attention-repair-20261118/production/terminal-audit.json) ·
+[Crossed proof](D:/Compact_Evidence/candle/runs/lfm2-moe-ordered-attention-repair-20261118/crossed-cases-proof.json).
+
+**Developer story:** The previous arithmetic pass was retained as historical
+proof. Rechecking arithmetic on the Unicode repair exposed the unresolved gate.
+
+**How to catch it:** Require both frozen case receipts to bind the same
+candidate SHA-256 and retain every position.
+
+**Solutions tried:** The same-binary gate caught the regression. On the
+37-row arithmetic prefill, clamp alone left 28,731 mixture differences
+and slot order alone left 75,331. Together they matched all 75,776 values.
+The CUDA scatter and slot-fold replay also matched the full retained
+mixtures for both cases. Final-token causality requires a separate
+teacher-forced comparison.
+[Four prefill controls](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118/prefill-mixture-matrix.json) ·
+[CUDA slot-fold receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118/scatter-control.job.json).
+
+**Current solution:** Keep the two-case gate and isolate arithmetic before
+changing the established GGUF normalization behavior.
+
+The added arithmetic controls completed with the same traced binary.
+Clamp only, slot order only, and both together all kept `6986` at
+position 2. Together they moved the first prefill difference to layer 5,
+while the first decode difference stayed at layer 2. The final margin
+became `-0.423046`, compared with `-0.086622` on the verified baseline.
+[Four-control audit](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/ablation-audit.json).
+
+**Decision rationale:** A verified intermediate difference does not identify
+which change will restore both full-model selections.
+
+**Effectiveness:** Unknown for repair. The same-binary gate detected the
+failure and both Jobs released.
+
+**Relevance check:** Current for changes to quantization, attention,
+routing, and model candidate identity.
+
+**Next prevention step:** Qualify a coherent successor on both prompts
+before using its result for Edge.
+
+## F-0057: A Copied Comparator Count Consumed a Diagnostic Attempt
+
+### Q: Why did a clean arithmetic trace stop before its controls ran?
+
+**Story ID / status / search synopsis:** F-0057; resolved for the comparison
+harness; `assert len(row)==9 and all(map(math.isfinite,row))`, ten arithmetic
+logits, `2cdd588a`, retained baseline and unused control modes.
+
+**Sources:** Candle Windows RTX 4090 arithmetic mixture diagnostic,
+derived from the prior Unicode trace comparator.
+
+**What:** The baseline child completed and released. Its comparator
+expected nine values per row, but the sealed arithmetic probe list had ten.
+
+**Context and constraints:** The packet stops after a failed comparison.
+Each new execution needs an exact owner grant.
+
+**Why it happened:** Unicode used seven standard probes and two additional
+IDs. Arithmetic used seven standard probes and three additional IDs.
+The fixture check bound the IDs but the row validator retained the old
+literal count.
+
+**Where:** The diagnostic `compare.py` and its frozen `probe-ids.json`.
+
+**Evidence:** The original terminal stopped on baseline comparison.
+An offline recheck verified all three rows, the full head and the
+reference anchors. It recovered the baseline margin of `-0.086622` for
+`1113` minus `6986` and verified the Job released.
+[Original terminal](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118/attempt/terminal.json) ·
+[Recovered baseline](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118/attempt/baseline/position2.json).
+
+**Developer story:** The child evidence established a completed baseline.
+The retained data supported the comparison repair without another model
+load. The successor bound that result and selected only the unrun modes.
+
+**How to catch it:** Derive the expected width from the bound probe list
+and compare the harness against a retained result with that list before
+sealing an expensive runtime packet.
+
+**Solutions tried:** The copied literal failed. The probe-derived width
+passed the complete offline baseline recheck.
+
+**Current solution:** The successor validates the actual probe width and
+passes down the verified baseline receipt.
+
+**Decision rationale:** A comparator defect can be repaired using retained
+data when the complete child evidence already exists.
+
+**Effectiveness:** Verified for the baseline evidence. Full-model
+arithmetic acceptance is a separate gate.
+
+**Relevance check:** Current when a diagnostic adds probes or inherits a
+comparison harness from another frozen case.
+
+**Next prevention step:** Generate both invocation and comparison
+commands from the same bound probe list.
+
+## F-0058: A GGML Callback Name Can Label Multiple Views
+
+### Q: Why did the pinned trace stop at a checkpoint it had already captured?
+
+**Story ID / status / search synopsis:** F-0058; resolved;
+`checkpoint exists at q_proj`, `Qcur-2`, GGML reshape view and strided
+expert IDs.
+
+**Sources:** Pinned llama.cpp `582eab71`, Windows CPU arithmetic trace.
+
+**What:** The capture treated a callback name as a unique tensor identity.
+The same name identified both a projection and its reshaped view.
+
+**Context and constraints:** The trace must preserve raw bytes, shape
+order, and evidence for each frozen decode step.
+
+**Why it happened:** The pinned graph names the matmul result and names
+its reshaped view again. The original capture used one file per stage.
+
+**Where:** The pinned callback, its raw tensor extractor, and the
+arithmetic decode packet.
+
+**Evidence:** The original CPU Job stopped on the repeated Q label and
+released. The model-free regression captured both named views and
+verified a strided integer selection. The successor completed and
+matched all retained head and block outputs.
+[Self-test receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/pinned-decode-views/self-test.job.json) ·
+[Successor terminal](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/pinned-decode-views/attempt/terminal.json).
+
+**Developer story:** Source inspection found the two Q callbacks, and
+the retained projection matched all three CUDA checkpoints. Recording
+callback occurrences recovered the remaining stages.
+
+**How to catch it:** Exercise two named views and one non-contiguous
+integer tensor in a small callback graph before a production trace.
+
+**Solutions tried:** Unique names failed. Occurrence-indexed captures and
+stride-aware extraction passed the model-free and pinned-model checks.
+
+**Current solution:** Preserve every capture with a deterministic suffix
+and compare the projection and reshaped view separately.
+
+**Decision rationale:** The trace keeps evidence without assuming name
+uniqueness or inferring storage layout from tensor rank.
+
+**Effectiveness:** Verified for the selected pinned graph and model-free
+views.
+
+**Relevance check:** Current for new `cb_eval` checkpoints on this oracle.
+
+**Next prevention step:** Keep the callback self-test with the retained
+packet and reuse it when expanding the trace.
+
+## F-0059: Single-Row Decode Can Change the Reference Dot Fold
+
+### Q: Why did decode drift when the same model’s prefill matched?
+
+**Story ID / status / search synopsis:** F-0059; resolved on the
+retained arithmetic decode boundary; position 2, Q6_K V projection,
+single-query attention and single-row F32 router.
+
+**Sources:** Candle Windows CPU and RTX 4090 with the GGUF production
+weights. Reference llama.cpp `582eab71` and its single-row dot dispatch.
+
+**What:** The prompt folds persisted into decode for three operators.
+The first mismatches appeared with identical normalized inputs.
+
+**Context and constraints:** Frozen arithmetic prefill has 37 rows.
+Forced IDs `49, 1252` each pass one new query through the cache.
+
+**Why it happened:** The pinned prompt and single-row branches use
+different F32 reductions. Q6_K V also switches from the tiled dot to a
+plain Q8_K dot when the projection has one row.
+
+**Where:** The quantized MoE Q/K/V projection, ordered attention value
+reduction and router.
+
+**Evidence:** The plain V fold restored all 1,024 projected values
+across both forced steps. The single-query value dot restored all 4,096
+context and 4,096 output values. Matching the single-row router then
+restored all 128 logits and the isolated sparse FFN with pinned weights
+and slot order.
+[Pinned decode trace](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/pinned-decode-views/attempt/terminal.json) ·
+[Attention proof](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/compiled-boundaries/compiled-boundary-proof.json) ·
+[Router fold control](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/compiled-boundaries/ffn/router-fold.log).
+
+**Developer story:** The V-only control closed the first local mismatch.
+Crossing its exact cached operands showed an independent value fold.
+Once attention output was exact, the next shared-input comparison
+located the router dot.
+
+**How to catch it:** Compare prompt and single-row decode against their
+own pinned controls. Test context, output projection, and router before
+following mixture drift downstream.
+
+**Solutions tried:** Reusing prompt folds reproduced the drift. Matching
+the actual single-row schedules restored the retained controls.
+
+**Current solution:** Scope the pinned plain dots to single-row GGUF MoE
+projections and single-query attention.
+
+**Decision rationale:** The dispatch depends on the number of active
+rows, and equal operands alone leave the arithmetic schedule open.
+
+**Effectiveness:** Bitwise on the pinned decode operators. Full-model
+acceptance remains a separate gate.
+
+**Relevance check:** Current for batching, chunking, cache and expert
+router changes.
+
+**Next prevention step:** Run both prompt and cached-decode witnesses
+when changing an ordered fold.
+
 ---
 AI-edited: 2026-10-10 | agent=Codex/root | model=unknown | effort=unknown | task=d1-output-integrity | change=extended exclusive-publication prevention to d1 outputs
+AI-edited: 2026-11-18 | agent=Codex/root | task=moe-ordered-attention | change=record crossed attention and expert fold pitfalls
+AI-edited: 2026-11-18 | agent=Codex/root | task=moe-arithmetic-mixture | change=record the two-factor replay and the copied probe-count pitfall
