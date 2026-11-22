@@ -29,6 +29,10 @@ row-wise scheduling; see the [API and example options](./docs/lfm2-vl/UPSTREAM_S
 Model weights, caches, runtime evidence, and downloads are
 external inputs and are never part of normal source setup or publication.
 
+The [Symbio product direction](./docs/FORK_OVERLAYS.md#symbio-product-direction)
+records Candle's reusable-framework role and links the GenAce architecture hub
+for products that select only the capabilities they need.
+
 ## Get started
 
 Make sure that you have [`candle-core`](https://github.com/huggingface/candle/tree/main/candle-core) correctly installed as described in [**Installation**](https://huggingface.github.io/candle/guide/installation.html).

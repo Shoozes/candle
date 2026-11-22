@@ -5,6 +5,62 @@ review and release identity of each independently promoted feature family.
 The registry is the authority for overlay ownership; it is not an application
 integration plan.
 
+## Symbio product direction
+
+Decision `SYMBIO-COMPOSITION-2026-11-19` records the operator's composition
+direction. [GenAce's product direction](https://github.com/Shoozes/GenAce/blob/main/docs/dev/product/SYMBIO_PRODUCT_DIRECTION.md)
+owns the shared rationale and cross-repository decision history. This registry
+continues to own Candle's overlay and dependency boundaries.
+
+GenAce is the architecture hub and intended full consumer of the Symbio
+components, not a runtime dependency required by every product. EdgeSymbio is
+both a reusable Rust backend and its own standalone local chat/RAG/session
+application. Smaller products select only the capabilities they need and own
+their UI, domain state, packaging, startup, shutdown, and recovery.
+
+For example, a contained Windows voice application may select EdgeSymbio plus
+SymbioVoice and optionally add a qualified Candle-backed local text profile.
+The product supplies or provisions its selected runtime libraries and model
+assets. It need not package llama.cpp, require a user-installed Ollama/llama.cpp
+service, or include GenAce, symbio-code, RAG, diffusion, or the entire family.
+An API is an interface choice; local text and explicitly selected hosted text
+are separate provider choices. A voice engine using another selected runtime
+does not acquire a Candle dependency merely because it belongs to Symbio.
+
+Candle owns reusable model implementations, tensors, kernels, formats, loaders,
+tokenizer/runtime semantics, and their focused compatibility evidence. It does
+not own the application's launcher/TUI, UI state, product workflows, asset
+installation, process supervision, or release package. symbio-code is a separate
+Codex-based coding host; optional connections to Edge or media workflows do not
+change Candle's dependency direction. Candle must not depend on its consuming
+products.
+
+### Future consumer-driven primitive work
+
+- **Task:** Add or repair a generic Candle primitive only when a selected
+  consumer demonstrates a concrete framework gap.
+- **Why:** Shared model/runtime behavior belongs in Candle; application
+  composition and installation policy belong with the consumer.
+- **When / Where:** A bounded consumer handoff identifies the affected model,
+  format, tokenizer, kernel, or runtime behavior and its existing overlay
+  owner. Use that overlay's implementation, tests, status/TODO, and manifest;
+  this record selects no new model batch or active implementation task.
+- **How:** Reproduce the framework gap with the smallest useful fixture;
+  implement the reusable primitive without importing consumer types; apply
+  the existing overlay/source-publication gates; let each consumer choose an
+  exact revision and qualify its own integration and package separately.
+- **Done When:** The primitive's supported behavior and explicit failure cases
+  are proven, its overlay ownership is recorded, and any adopting consumer
+  holds its own source-bound acceptance without reversing dependency direction.
+
+Selective Edge builds and packages remain consumer work. Compiled code,
+included/installed assets, loaded residency, and active execution are distinct
+facts; runtime opt-in alone does not prove build exclusion. This clarification
+adds no overlay, API, dependency, asset, or runtime behavior. It changes no pin,
+frozen release scope, existing proof identity, held LFM execution allowance, or
+consumer qualification. Source publication remains separate from native model
+execution and product/release/LTS acceptance.
+
 ## Baseline modes
 
 The repository-wide verifier has two explicit baseline modes. Explicit

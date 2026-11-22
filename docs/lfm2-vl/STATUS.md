@@ -1,5 +1,14 @@
 # Candle Fork Current Status
 
+## Product direction record
+
+Decision `SYMBIO-COMPOSITION-2026-11-19` is recorded in
+[the existing fork registry](../FORK_OVERLAYS.md#symbio-product-direction),
+with the cross-repository rationale owned by GenAce. This documentation-only
+clarification selects no implementation task and changes no dependency pin,
+frozen proof, execution allowance, release scope, or current capability status.
+No native verification or model execution is claimed by this record.
+
 ## Current phase and baseline
 
 The accepted November 10 [LFM2-MoE implementation](../lfm2-moe/STATUS.md) is the
