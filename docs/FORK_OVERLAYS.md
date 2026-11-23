@@ -82,7 +82,7 @@ native Windows and WSL report the same candidate paths.
 | GPT-OSS experimental | `docs/gpt-oss/MOD_MANIFEST.md` | Packed CPU/CUDA interfaces and source-bound short-parity/2,080-token receipt; no new production claim from upstream sync |
 | Qwen3.5 GGUF compatibility | `docs/qwen35/MOD_MANIFEST.md` | Bounded Q8_0/F32 text admission, proven CPU parity, and scoped CUDA quantization under qualification; no Edge activation |
 | LFM3-Audio | `docs/lfm3-audio/MOD_MANIFEST.md` | Published native CPU-F32 TTS/ASR and WAV repair with source-bound cache/codec proof; independent from D1 and consumer defaults |
-| LFM2-MoE | `docs/lfm2-moe/MOD_MANIFEST.md` | Native fixtures and local frozen Q4_K_M production proof on Windows CPU and RTX 4090. [Candle qualification](lfm2-moe/STATUS.md). Edge passed the isolated CPU and RTX 4090 lifecycle. Supplier publication and Edge pin adoption remain open. |
+| LFM2-MoE | `docs/lfm2-moe/MOD_MANIFEST.md` | Native fixtures and local frozen Q4_K_M production proof on Windows CPU and RTX 4090. [Candle qualification](lfm2-moe/STATUS.md). Edge passed the isolated CPU and RTX 4090 lifecycle. Candle published the reviewed supplier at `d510ec92`. Edge pin and lock adoption remain open. |
 
 The repository-wide `scripts/verify-fork-overlays.sh` gate requires every
 baseline-to-current path to belong to at least one registered manifest. Each

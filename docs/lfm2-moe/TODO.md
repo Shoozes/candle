@@ -31,16 +31,18 @@ Edge's isolated CLI/API qualification passed on Windows CPU and RTX 4090,
 including chat, strict JSON, active cancellation, unload/reload and recovery.
 [Edge terminal audit](D:/Compact_Evidence/edgesymbio/runs/lfm2-moe-frozen-candle-20261118-strict-prefill/terminal-audit.json).
 
-1. Publish the reviewed Candle MoE supplier batch through Candle's guarded
-   helper after explicit authorization.
-2. After the published source identity is verified and Edge adoption is
-   separately authorized, reconcile the reviewed Candle pin and affected locks.
-   Rerun Edge's selected graph and gates, then record the adopted identity.
+Candle published the reviewed MoE supplier batch at `d510ec92be74b666a26712950e96da252d41abf5`.
+The URL maintenance publication at `2673dd4a` retains it in its ancestry.
+[Guarded supplier receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/moe-publication-d510ec92-native-checkout/candle-guarded-receipt.json).
+
+The remaining delivery gate is separately authorized Edge adoption. Reconcile
+the reviewed Candle pin and affected locks, run Edge's selected graph and gates,
+and record the adopted identity.
 
 Local implementation, native/GGUF/CUDA fixtures, opt-in profile, tokenizer/output
 contracts, typed memory admission and ownership routes are implemented. Their
-current proof is in STATUS and the compact run record. The remaining criteria
-are the supplier publication and consumer adoption gates above.
+proof remains bound to the source and scope recorded in STATUS and the compact
+run record.
 
 Shared ShortConv optimization follows the corresponding
 correctness baseline. Device-resident MoE execution follows validation of

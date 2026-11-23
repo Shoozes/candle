@@ -2,6 +2,10 @@
 
 ## Current checkpoint
 
+Candle published the reviewed MoE supplier batch at `d510ec92be74b666a26712950e96da252d41abf5`.
+The URL maintenance publication at `2673dd4a` retains it in its ancestry.
+[Guarded supplier receipt](D:/Compact_Evidence/candle/runs/lfm2-moe-arithmetic-mixture-ablation-20261118-remaining/moe-publication-d510ec92-native-checkout/candle-guarded-receipt.json).
+
 Candle passed the frozen Q4_K_M production gate at working-tree base
 `a6dc22718451176b48fb8fee8cae82cea84c96fa`. Packet `c8157131` on Windows CPU
 and packet `4d2b97b1` on RTX 4090 used the same source-bound executable.
@@ -23,8 +27,8 @@ Exact packet `8f796dc3` passed the complete isolated Windows CPU and RTX
 4090 CLI/API qualification. Both devices passed authenticated chat, strict
 JSON, cancellation during active execution, model release and reload, and
 a successful recovery reply. The final Job had no active children and
-the post-exit census found no model processes. The published supplier
-source and consumer pin/lock reconciliation remain the next gate.
+the post-exit census found no model processes. Edge owns the remaining pin and
+lock adoption gate.
 [Edge terminal audit](D:/Compact_Evidence/edgesymbio/runs/lfm2-moe-frozen-candle-20261118-strict-prefill/terminal-audit.json).
 
 The qualified candidate extends indexed Q8_K dispatch to Q4_K expert down
